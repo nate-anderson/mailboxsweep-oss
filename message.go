@@ -1,9 +1,14 @@
 package mailsweeper
 
+import "time"
+
 type Message struct {
-	ID      uint32
+	ID      string
 	Subject string
 	Sender  Sender
+	// message ID being replied to
+	InReplyTo string
+	SendDate  time.Time
 }
 
 type Sender struct {

@@ -41,8 +41,9 @@ func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
 func imapToMessage(i imap.Message) Message {
 	sender := i.Envelope.Sender[0]
 	return Message{
-		Subject: i.Envelope.Subject,
-		ID:      i.Uid,
+		Subject:   i.Envelope.Subject,
+		ID:        i.Envelope.MessageId,
+		InReplyTo: i.Envelope.InReplyTo,
 		Sender: Sender{
 			Name: firstNotEqual(
 				"",
@@ -52,6 +53,7 @@ func imapToMessage(i imap.Message) Message {
 			),
 			Address: sender.Address(),
 		},
+		SendDate: i.Envelope.Date,
 	}
 }
 
