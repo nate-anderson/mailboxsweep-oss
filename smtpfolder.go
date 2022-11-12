@@ -39,12 +39,29 @@ func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
 }
 
 func imapToMessage(i imap.Message) Message {
+	sender := i.Envelope.Sender[0]
 	return Message{
 		Subject: i.Envelope.Subject,
 		ID:      i.Uid,
 		Sender: Sender{
-			Name:    i.Envelope.Sender[0].PersonalName,
-			Address: i.Envelope.Sender[0].Address(),
+			Name: firstNotEqual(
+				"",
+				sender.PersonalName,
+				sender.MailboxName,
+				sender.Address(),
+			),
+			Address: sender.Address(),
 		},
 	}
+}
+
+// returns the first value in list not equal to not
+// if all values equal not, it returns not
+func firstNotEqual[T comparable](not T, list ...T) T {
+	for _, item := range list {
+		if item != not {
+			return item
+		}
+	}
+	return not
 }
