@@ -1,7 +1,8 @@
 package mailsweeper
 
+// Folder is a grouping of messages within an email inbox
+// called "inboxes" in IMAP but that name is confusing
 type Folder interface {
-	// @TODO don't use IMAP type here
 	Messages(start, end uint32) ([]Message, error)
 	Count() uint32
 }
