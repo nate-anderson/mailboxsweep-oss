@@ -118,16 +118,21 @@ var listMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		messages, err := folder.Messages(1, 10)
-		if err != nil {
-			log.Fatal(err)
-		}
+		msgChan := make(chan mailsweeper.Message)
+		errChan := make(chan error)
+		go folder.Messages(1, 10, msgChan, errChan)
 
-		log.Printf("Retrieved %d messages\n", len(messages))
+		go func() {
+			for m := range msgChan {
+				log.Printf("%+v \n", m)
+			}
+		}()
 
-		for _, m := range messages {
-			log.Printf("%+v \n", m)
+		if err := <-errChan; err != nil {
+			panic(err)
 		}
+		log.Println("Exited!")
+
 	},
 }
 

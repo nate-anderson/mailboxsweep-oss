@@ -17,7 +17,7 @@ func (f SMTPFolder) Count() uint32 {
 	return f.mailbox.Messages
 }
 
-func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
+func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)
 
@@ -28,19 +28,18 @@ func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
 		done <- f.client.Fetch(&seq, []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid}, messageChan)
 	}()
 
-	messages := []Message{}
 	for {
 		select {
 		case msg := <-messageChan:
-			m, err := imapToMessage(*msg)
-			if err != nil {
-				return messages, err
-			}
 			if msg != nil {
-				messages = append(messages, m)
+				message, err := imapToMessage(*msg)
+				if err != nil {
+					e <- err
+				}
+				m <- message
 			}
 		case err := <-done:
-			return messages, err
+			e <- err
 		}
 	}
 }
