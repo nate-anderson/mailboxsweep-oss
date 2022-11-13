@@ -1,5 +1,13 @@
 package mailsweeper
 
-var _ Inbox = &SMTPInbox{}
-var _ Folder = &SMTPFolder{}
-var _ Provider = &SMTPProvider{}
+var (
+	_ Inbox    = &SMTPInbox{}
+	_ Folder   = &SMTPFolder{}
+	_ Provider = &SMTPProvider{}
+)
+
+var (
+	_ Classifier = SenderDomainClassifier{}
+	_ Classifier = SenderUsernameClassifier{}
+	_ Classifier = SendDateClassifier{}
+)
