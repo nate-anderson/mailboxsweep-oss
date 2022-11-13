@@ -12,6 +12,8 @@ type Message struct {
 }
 
 type Sender struct {
-	Name    string
-	Address string
+	Address  string
+	Name     string
+	Username string
+	Domain   string
 }

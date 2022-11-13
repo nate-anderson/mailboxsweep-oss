@@ -1,8 +1,11 @@
 package mailsweeper
 
 import (
+	"net/mail"
+
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/mcnijman/go-emailaddress"
 )
 
 type SMTPFolder struct {
@@ -29,8 +32,12 @@ func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
 	for {
 		select {
 		case msg := <-messageChan:
+			m, err := imapToMessage(*msg)
+			if err != nil {
+				return messages, err
+			}
 			if msg != nil {
-				messages = append(messages, imapToMessage(*msg))
+				messages = append(messages, m)
 			}
 		case err := <-done:
 			return messages, err
@@ -38,8 +45,20 @@ func (f SMTPFolder) Messages(start, end uint32) ([]Message, error) {
 	}
 }
 
-func imapToMessage(i imap.Message) Message {
+func imapToMessage(i imap.Message) (Message, error) {
 	sender := i.Envelope.Sender[0]
+	var imapSenderName string
+	senderEmail := i.Envelope.Sender[0].Address()
+	parsed, err := mail.ParseAddress(senderEmail)
+	if err == nil && parsed != nil {
+		imapSenderName = parsed.Name
+	}
+	var username, domain string
+	mailAddr, err := emailaddress.Parse(senderEmail)
+	if err == nil && mailAddr != nil {
+		username = mailAddr.LocalPart
+		domain = mailAddr.Domain
+	}
 	return Message{
 		Subject:   i.Envelope.Subject,
 		ID:        i.Envelope.MessageId,
@@ -49,12 +68,16 @@ func imapToMessage(i imap.Message) Message {
 				"",
 				sender.PersonalName,
 				sender.MailboxName,
+				imapSenderName,
+				username,
 				sender.Address(),
 			),
-			Address: sender.Address(),
+			Address:  sender.Address(),
+			Domain:   domain,
+			Username: username,
 		},
 		SendDate: i.Envelope.Date,
-	}
+	}, nil
 }
 
 // returns the first value in list not equal to not
