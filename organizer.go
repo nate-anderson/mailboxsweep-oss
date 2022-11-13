@@ -11,6 +11,14 @@ type Organizer struct {
 	classifiers []Classifier
 }
 
+func NewOrganizer(repo ClassificationRepository, folders []Folder, classifiers []Classifier) *Organizer {
+	return &Organizer{
+		repo:        repo,
+		folders:     folders,
+		classifiers: classifiers,
+	}
+}
+
 func (o Organizer) Organize(m chan Message, classifierIndex int) {
 	/*
 		This function should accept a chan Message and process each message as it is read,

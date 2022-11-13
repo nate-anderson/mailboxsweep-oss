@@ -11,3 +11,7 @@ var (
 	_ Classifier = SenderUsernameClassifier{}
 	_ Classifier = SendDateClassifier{}
 )
+
+var (
+	_ ClassificationRepository = &FileClassificationRepository{}
+)
