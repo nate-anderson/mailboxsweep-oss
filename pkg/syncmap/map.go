@@ -12,8 +12,8 @@ type Map[keyT comparable, valueT any] struct {
 	mux sync.Mutex
 }
 
-func New[keyT comparable, valueT any]() *Map[keyT, valueT] {
-	return &Map[keyT, valueT]{
+func New[keyT comparable, valueT any]() Map[keyT, valueT] {
+	return Map[keyT, valueT]{
 		m:   make(map[keyT]valueT),
 		mux: sync.Mutex{},
 	}
