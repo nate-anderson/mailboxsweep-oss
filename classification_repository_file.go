@@ -4,37 +4,59 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
-type FileClassificationRepository struct {
-	Inbox          string          `json:"inbox"`
-	Classification *Classification `json:"classification"`
+type FileClassificationRepository struct{}
+
+func NewFileClassificationRepository() *FileClassificationRepository {
+	return &FileClassificationRepository{}
 }
 
-func NewFileClassificationRepository(inbox string) *FileClassificationRepository {
-	return &FileClassificationRepository{
-		Inbox: inbox,
-	}
+func (r *FileClassificationRepository) formatFileName(inbox string) string {
+	return fmt.Sprintf("classification_%s.json", inbox)
 }
 
 func (r *FileClassificationRepository) Store(inbox string, classification *Classification) error {
-	if inbox != r.Inbox {
-		return fmt.Errorf("inbox changed during repository lifecycle (store): had' %s' but '%s' was requested", r.Inbox, inbox)
+	filename := r.formatFileName(inbox)
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
 	}
-	r.Classification = classification
-
-	return nil
+	encoder := json.NewEncoder(file)
+	return encoder.Encode(classification)
 }
 
-func (r *FileClassificationRepository) Fetch(inbox string) (*Classification, error) {
-	if inbox != r.Inbox {
-		return &Classification{}, fmt.Errorf("inbox changed during repository lifecycle (fetch): had' %s' but '%s' was requested", r.Inbox, inbox)
+func (r *FileClassificationRepository) Fetch(inbox string, path []string) (*Classification, error) {
+	file, err := os.Open(
+		r.formatFileName(inbox),
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return r.Classification, fmt.Errorf("classification for inbox/folder %s not found", inbox)
+	var classification *Classification
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&classification); err != nil {
+		return nil, err
+	}
+
+	if len(path) == 0 {
+		return classification, nil
+	}
+
+	node := classification
+	for _, entry := range path {
+		var ok bool
+		node, ok = node.Children.Get(entry)
+		if !ok {
+			return nil, fmt.Errorf("no classification found at path %s", strings.Join(path, "/"))
+		}
+	}
+	return node, nil
 }
 
-func (r FileClassificationRepository) Write(fileName string) error {
+func (r FileClassificationRepository) write(fileName string) error {
 	data, err := json.Marshal(r)
 	if err != nil {
 		return err

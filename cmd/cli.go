@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"mailsweeper"
 
@@ -18,6 +20,7 @@ var (
 	port     int
 
 	folderName string
+	path       []string
 )
 
 func init() {
@@ -28,6 +31,7 @@ func init() {
 
 	listMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
 	classifyMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
+	queryCmd.PersistentFlags().StringSliceVar(&path, "path", []string{}, "the path to the node to query")
 }
 
 var listMailboxesCmd = &cobra.Command{
@@ -181,7 +185,7 @@ var classifyMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		repo := mailsweeper.NewFileClassificationRepository(username)
+		repo := mailsweeper.NewFileClassificationRepository()
 		organizer := mailsweeper.NewOrganizer(username, repo, []mailsweeper.Folder{folder}, []mailsweeper.Classifier{
 			mailsweeper.NewSenderDomainClassifier(),
 			mailsweeper.NewSenderUsernameClassifier(),
@@ -192,10 +196,30 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatalf("Organize failed: %s", err)
 		}
 
-		if err := repo.Write("classifications.json"); err != nil {
+		log.Println("Done!")
+	},
+}
+
+var queryCmd = &cobra.Command{
+	Use:   "query",
+	Short: "query a stored inbox summary",
+	Run: func(cmd *cobra.Command, args []string) {
+		if username == "" {
+			log.Fatal("username is required")
+		}
+
+		repo := mailsweeper.NewFileClassificationRepository()
+		classification, err := repo.Fetch(username, path)
+		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println("Done!")
+
+		data, err := json.MarshalIndent(classification, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(string(data))
 	},
 }
 
@@ -203,6 +227,7 @@ func main() {
 	rootCmd.AddCommand(listMailboxesCmd)
 	rootCmd.AddCommand(listMessagesCmd)
 	rootCmd.AddCommand(classifyMessagesCmd)
+	rootCmd.AddCommand(queryCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatal(err)
