@@ -1,6 +1,8 @@
 package mailsweeper
 
 import (
+	"fmt"
+	"log"
 	"net/mail"
 
 	"github.com/emersion/go-imap"
@@ -18,6 +20,7 @@ func (f SMTPFolder) Count() uint32 {
 }
 
 func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
+	fmt.Println("messages called")
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)
 
@@ -34,20 +37,30 @@ func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 			if msg != nil {
 				message, err := imapToMessage(*msg)
 				if err != nil {
+					close(m)
 					e <- err
 				}
 				m <- message
+				log.Println("Sent message on stream")
 			}
 		case err := <-done:
+			close(m)
 			e <- err
 		}
 	}
 }
 
 func imapToMessage(i imap.Message) (Message, error) {
-	sender := i.Envelope.Sender[0]
+	var sender *imap.Address
+	if len(i.Envelope.Sender) >= 1 {
+		sender = i.Envelope.Sender[0]
+	} else if len(i.Envelope.From) >= 1 {
+		sender = i.Envelope.From[0]
+	} else {
+		return Message{}, fmt.Errorf("message %s doesn't have a SENDER or FROM address", i.Envelope.MessageId)
+	}
 	var imapSenderName string
-	senderEmail := i.Envelope.Sender[0].Address()
+	senderEmail := sender.Address()
 	parsed, err := mail.ParseAddress(senderEmail)
 	if err == nil && parsed != nil {
 		imapSenderName = parsed.Name

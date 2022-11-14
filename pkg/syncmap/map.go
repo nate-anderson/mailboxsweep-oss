@@ -9,25 +9,27 @@ import (
 
 type Map[keyT comparable, valueT any] struct {
 	m   map[keyT]valueT
-	mux sync.Mutex
+	mux sync.RWMutex
 }
 
 func New[keyT comparable, valueT any]() Map[keyT, valueT] {
 	return Map[keyT, valueT]{
 		m:   make(map[keyT]valueT),
-		mux: sync.Mutex{},
+		mux: sync.RWMutex{},
 	}
 }
 
 func (m *Map[keyT, valueT]) Get(key keyT) (valueT, bool) {
+	m.mux.RLock()
 	v, ok := m.m[key]
+	m.mux.RUnlock()
 	return v, ok
 }
 
 func (m *Map[keyT, valueT]) Set(key keyT, value valueT) {
 	m.mux.Lock()
-	defer m.mux.Unlock()
 	m.m[key] = value
+	m.mux.Unlock()
 }
 
 func (m *Map[keyT, valueT]) MarshalJSON() ([]byte, error) {
@@ -36,6 +38,7 @@ func (m *Map[keyT, valueT]) MarshalJSON() ([]byte, error) {
 
 func (m *Map[keyT, valueT]) UnmarshalJSON(data []byte) error {
 	m.mux.Lock()
-	defer m.mux.Unlock()
-	return json.Unmarshal(data, &m.m)
+	err := json.Unmarshal(data, &m.m)
+	m.mux.Unlock()
+	return err
 }

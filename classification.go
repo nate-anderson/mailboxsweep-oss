@@ -10,7 +10,7 @@ type Classification struct {
 	Children syncmap.Map[string, *Classification] `json:"children,omitempty"`
 }
 
-func NewClassificaion(label string) *Classification {
+func NewClassification(label string) *Classification {
 	return &Classification{
 		Label:    label,
 		Children: syncmap.New[string, *Classification](),
@@ -54,6 +54,6 @@ func NewClassificaion(label string) *Classification {
 
 // Store and retrieve classified messages
 type ClassificationRepository interface {
-	Store(inbox, folder string, classification *Classification) error
-	Fetch(inbox, folder string) (root *Classification, err error)
+	Store(inbox string, classification *Classification) error
+	Fetch(inbox string) (root *Classification, err error)
 }

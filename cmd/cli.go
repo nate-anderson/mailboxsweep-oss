@@ -27,6 +27,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&port, "port", "P", 993, "IMAP port")
 
 	listMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
+	classifyMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
 }
 
 var listMailboxesCmd = &cobra.Command{
@@ -136,9 +137,73 @@ var listMessagesCmd = &cobra.Command{
 	},
 }
 
+var classifyMessagesCmd = &cobra.Command{
+	Use:   "classify",
+	Short: "Classify inbox messages",
+	Run: func(cmd *cobra.Command, args []string) {
+		if host == "" {
+			log.Fatal("host is required")
+		}
+
+		if username == "" {
+			log.Fatal("username is required")
+		}
+
+		if port == 0 {
+			log.Fatal("port must be greater than zero")
+		}
+
+		if password == "" {
+			log.Fatal("password is required")
+		}
+
+		provider, err := mailsweeper.NewSMTPProvider(host, port)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := provider.Connect(); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Connected!")
+
+		inbox, err := provider.Login(username, password)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("Logged in!")
+
+		folder, err := inbox.Folder(folderName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		count := folder.Count()
+		log.Printf("Messages: %d\n", count)
+
+		repo := mailsweeper.NewFileClassificationRepository(username)
+		organizer := mailsweeper.NewOrganizer(username, repo, []mailsweeper.Folder{folder}, []mailsweeper.Classifier{
+			mailsweeper.NewSenderDomainClassifier(),
+			mailsweeper.NewSenderUsernameClassifier(),
+		})
+
+		err = organizer.Organize()
+		if err != nil {
+			log.Fatalf("Organize failed: %s", err)
+		}
+
+		if err := repo.Write("classifications.json"); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Done!")
+		log.Println("FOLDER CLASSES", repo.Classification)
+	},
+}
+
 func main() {
 	rootCmd.AddCommand(listMailboxesCmd)
 	rootCmd.AddCommand(listMessagesCmd)
+	rootCmd.AddCommand(classifyMessagesCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatal(err)

@@ -1,30 +1,44 @@
 package mailsweeper
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
 type FileClassificationRepository struct {
-	Inbox                 string                     `json:"inbox"`
-	FolderClassifications map[string]*Classification `json:"folderClassificagions"`
+	Inbox          string          `json:"inbox"`
+	Classification *Classification `json:"classification"`
 }
 
-func (r *FileClassificationRepository) Store(inbox, folder string, classification *Classification) error {
+func NewFileClassificationRepository(inbox string) *FileClassificationRepository {
+	return &FileClassificationRepository{
+		Inbox: inbox,
+	}
+}
+
+func (r *FileClassificationRepository) Store(inbox string, classification *Classification) error {
 	if inbox != r.Inbox {
 		return fmt.Errorf("inbox changed during repository lifecycle (store): had' %s' but '%s' was requested", r.Inbox, inbox)
 	}
-	r.FolderClassifications[folder] = classification
+	r.Classification = classification
 
 	return nil
 }
 
-func (r *FileClassificationRepository) Fetch(inbox, folder string) (*Classification, error) {
+func (r *FileClassificationRepository) Fetch(inbox string) (*Classification, error) {
 	if inbox != r.Inbox {
 		return &Classification{}, fmt.Errorf("inbox changed during repository lifecycle (fetch): had' %s' but '%s' was requested", r.Inbox, inbox)
 	}
 
-	cl, ok := r.FolderClassifications[folder]
-	if ok {
-		return cl, nil
+	return r.Classification, fmt.Errorf("classification for inbox/folder %s not found", inbox)
+}
+
+func (r FileClassificationRepository) Write(fileName string) error {
+	data, err := json.Marshal(r)
+	if err != nil {
+		return err
 	}
 
-	return &Classification{}, fmt.Errorf("classification for inbox/folder %s/%s not found", inbox, folder)
+	return os.WriteFile(fileName, data, 0666)
 }
