@@ -196,7 +196,6 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		log.Println("Done!")
-		log.Println("FOLDER CLASSES", repo.Classification)
 	},
 }
 

@@ -1,7 +1,6 @@
 package mailsweeper
 
 import (
-	"fmt"
 	"mailsweeper/pkg/syncmap"
 )
 
@@ -43,7 +42,6 @@ func (o Organizer) Organize() error {
 
 		go func() {
 			for msg := range m {
-				fmt.Println("Read from stream!")
 				go o.organizeMessage(msg, root)
 			}
 		}()
@@ -68,12 +66,12 @@ func (o Organizer) organizeMessage(message Message, parent *Classification) {
 		child, ok := node.Children.Get(value)
 		if !ok {
 			child = NewClassification(value)
-			child.Messages = append(child.Messages, message)
 		} else {
-			child.Messages = append(child.Messages, message)
 		}
 		node.Children.Set(value, child)
 		path = append(path, value)
 		node = child
+		node.Count++
 	}
+	node.Messages = append(node.Messages, message)
 }

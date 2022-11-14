@@ -2,7 +2,6 @@ package mailsweeper
 
 import (
 	"fmt"
-	"log"
 	"net/mail"
 
 	"github.com/emersion/go-imap"
@@ -20,7 +19,6 @@ func (f SMTPFolder) Count() uint32 {
 }
 
 func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
-	fmt.Println("messages called")
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)
 
@@ -41,7 +39,6 @@ func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 					e <- err
 				}
 				m <- message
-				log.Println("Sent message on stream")
 			}
 		case err := <-done:
 			close(m)
