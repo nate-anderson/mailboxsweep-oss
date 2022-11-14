@@ -46,7 +46,8 @@ func (o Organizer) Organize() error {
 			}
 		}()
 
-		go f.Messages(1, 100, m, e)
+		msgCount := f.Count()
+		go f.Messages(1, msgCount, m, e)
 	}
 
 	err := <-e
@@ -58,8 +59,8 @@ func (o Organizer) Organize() error {
 	return err
 }
 
-func (o Organizer) organizeMessage(message Message, parent *Classification) {
-	node := parent
+func (o Organizer) organizeMessage(message Message, root *Classification) {
+	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {
 		value := classifier.Classify(message)
@@ -74,4 +75,6 @@ func (o Organizer) organizeMessage(message Message, parent *Classification) {
 		node.Count++
 	}
 	node.Messages = append(node.Messages, message)
+	// only append to leaf node
+	root.Count++
 }
