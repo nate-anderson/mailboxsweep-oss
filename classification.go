@@ -4,16 +4,18 @@ import "mailsweeper/pkg/syncmap"
 
 // Classifications act as a tree. Only leaf nodes should have messages
 type Classification struct {
-	Label    string                               `json:"label"`
-	Messages []Message                            `json:"messages,omitempty"`
-	Count    uint                                 `json:"count"`
-	Children syncmap.Map[string, *Classification] `json:"children,omitempty"`
+	Dimension string                               `json:"dimension"`
+	Label     string                               `json:"label"`
+	Messages  []Message                            `json:"messages,omitempty"`
+	Count     uint                                 `json:"count"`
+	Children  syncmap.Map[string, *Classification] `json:"children,omitempty"`
 }
 
-func NewClassification(label string) *Classification {
+func NewClassification(dimension, label string) *Classification {
 	return &Classification{
-		Label:    label,
-		Children: syncmap.New[string, *Classification](),
+		Dimension: dimension,
+		Label:     label,
+		Children:  syncmap.New[string, *Classification](),
 	}
 }
 

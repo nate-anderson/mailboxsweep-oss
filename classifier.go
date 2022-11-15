@@ -7,10 +7,12 @@ import (
 )
 
 type Classifier interface {
-	// the classification key for this classifier run
-	Key() string
-	// classifies messages
+	// the object key/path entry to use
+	Key(m Message) string
+	// the string to display to users
 	Classify(m Message) string
+	// what is this thing classifying by?
+	Dimension() string
 }
 
 /*
@@ -23,12 +25,16 @@ func NewSenderDomainClassifier() SenderDomainClassifier {
 	return SenderDomainClassifier{}
 }
 
-func (c SenderDomainClassifier) Key() string {
-	return "Sender Domain"
+func (c SenderDomainClassifier) Key(m Message) string {
+	return fmt.Sprintf("domain=%s", m.Sender.Domain)
 }
 
 func (c SenderDomainClassifier) Classify(m Message) string {
 	return m.Sender.Domain
+}
+
+func (c SenderDomainClassifier) Dimension() string {
+	return "sender_domain"
 }
 
 /*
@@ -42,8 +48,8 @@ func NewSenderUsernameClassifier() SenderUsernameClassifier {
 	return SenderUsernameClassifier{}
 }
 
-func (c SenderUsernameClassifier) Key() string {
-	return "Sender"
+func (c SenderUsernameClassifier) Key(m Message) string {
+	return "sender=" + m.Sender.Address
 }
 
 func (c SenderUsernameClassifier) formatSender(name, address string) string {
@@ -60,6 +66,10 @@ func (c SenderUsernameClassifier) formatSender(name, address string) string {
 
 func (c SenderUsernameClassifier) Classify(m Message) string {
 	return c.formatSender(m.Sender.Name, m.Sender.Address)
+}
+
+func (c SenderUsernameClassifier) Dimension() string {
+	return "sender"
 }
 
 /*
@@ -80,8 +90,11 @@ func NewSendDateClassifier(cutoff time.Time) SendDateClassifier {
 	}
 }
 
-func (s SendDateClassifier) Key() string {
-	return "Cutoff date " + s.formattedCutoff
+func (s SendDateClassifier) Key(m Message) string {
+	if m.SendDate.Before(s.cutoff) {
+		return "before_" + s.formattedCutoff
+	}
+	return "on_or_after_" + s.formattedCutoff
 }
 
 func (s SendDateClassifier) Classify(m Message) string {
@@ -89,4 +102,8 @@ func (s SendDateClassifier) Classify(m Message) string {
 		return "Before " + s.formattedCutoff
 	}
 	return "On or after " + s.formattedCutoff
+}
+
+func (s SendDateClassifier) Dimension() string {
+	return fmt.Sprintf("send_date_before_or_after_%s", s.formattedCutoff)
 }

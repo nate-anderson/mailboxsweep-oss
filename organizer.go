@@ -63,14 +63,16 @@ func (o Organizer) organizeMessage(message Message, root *Classification) {
 	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {
-		value := classifier.Classify(message)
-		child, ok := node.Children.Get(value)
+		label := classifier.Classify(message)
+		key := classifier.Key(message)
+		dimension := classifier.Dimension()
+		child, ok := node.Children.Get(key)
 		if !ok {
-			child = NewClassification(value)
+			child = NewClassification(dimension, label)
 		} else {
 		}
-		node.Children.Set(value, child)
-		path = append(path, value)
+		node.Children.Set(key, child)
+		path = append(path, label)
 		node = child
 		node.Count++
 	}
