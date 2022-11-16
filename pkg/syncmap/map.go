@@ -42,3 +42,20 @@ func (m *Map[keyT, valueT]) UnmarshalJSON(data []byte) error {
 	m.mux.Unlock()
 	return err
 }
+
+// use sparingly.
+// iterate over the map's keys and values, with the ability to mutate it
+func (m *Map[keyT, valueT]) RangeWrite(fn func(key keyT, value valueT)) {
+	m.mux.Lock()
+	for key, value := range m.m {
+		fn(key, value)
+	}
+	m.mux.Unlock()
+}
+
+func (m *Map[keyT, valueT]) Len() int {
+	m.mux.RLock()
+	l := len(m.m)
+	m.mux.RUnlock()
+	return l
+}

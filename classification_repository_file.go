@@ -23,17 +23,19 @@ func (r *FileClassificationRepository) Store(inbox string, classification *Class
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	encoder := json.NewEncoder(file)
 	return encoder.Encode(classification)
 }
 
-func (r *FileClassificationRepository) Fetch(inbox string, path []string) (*Classification, error) {
+func (r *FileClassificationRepository) Fetch(inbox string, path []string, includeMessages bool) (*Classification, error) {
 	file, err := os.Open(
 		r.formatFileName(inbox),
 	)
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	var classification *Classification
 	decoder := json.NewDecoder(file)
@@ -53,14 +55,9 @@ func (r *FileClassificationRepository) Fetch(inbox string, path []string) (*Clas
 			return nil, fmt.Errorf("no classification found at path %s", strings.Join(path, "/"))
 		}
 	}
-	return node, nil
-}
 
-func (r FileClassificationRepository) write(fileName string) error {
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
+	if !includeMessages {
+		stripMessages(node)
 	}
-
-	return os.WriteFile(fileName, data, 0666)
+	return node, nil
 }

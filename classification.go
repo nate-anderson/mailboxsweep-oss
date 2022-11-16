@@ -57,5 +57,16 @@ func NewClassification(dimension, label string) *Classification {
 // Store and retrieve classified messages
 type ClassificationRepository interface {
 	Store(inbox string, classification *Classification) error
-	Fetch(inbox string, path []string) (root *Classification, err error)
+	Fetch(inbox string, path []string, includeMessages bool) (root *Classification, err error)
+}
+
+// strip messages from the whole tree
+func stripMessages(c *Classification) {
+	if len(c.Messages) > 0 {
+		c.Messages = nil
+	}
+
+	c.Children.RangeWrite(func(key string, value *Classification) {
+		stripMessages(value)
+	})
 }
