@@ -7,9 +7,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-func testS3Client() *s3.Client {
+func setupTestBucket(ctx context.Context, bucket string) (*s3.Client, func() error) {
 	endpoint := "http://localhost:4566"
 	region := "us-west-2"
 
@@ -39,5 +40,22 @@ func testS3Client() *s3.Client {
 		o.UsePathStyle = true
 	})
 
-	return client
+	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: &bucket,
+		CreateBucketConfiguration: &types.CreateBucketConfiguration{
+			LocationConstraint: "us-west-2",
+		},
+	})
+	if err != nil {
+		log.Fatalf("failed to create test bucket: %s", err)
+	}
+
+	teardown := func() error {
+		_, err := client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+			Bucket: &bucket,
+		})
+		return err
+	}
+
+	return client, teardown
 }
