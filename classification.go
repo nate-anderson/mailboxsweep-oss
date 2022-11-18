@@ -1,6 +1,10 @@
 package mailsweeper
 
-import "mailsweeper/pkg/syncmap"
+import (
+	"fmt"
+	"mailsweeper/pkg/syncmap"
+	"path/filepath"
+)
 
 // Classifications act as a tree. Only leaf nodes should have messages
 type Classification struct {
@@ -69,4 +73,38 @@ func stripMessages(c *Classification) {
 	c.Children.RangeWrite(func(key string, value *Classification) {
 		stripMessages(value)
 	})
+}
+
+func (c *Classification) Leaves(path string) map[string]*Classification {
+	if c.Children.Len() == 0 {
+		return map[string]*Classification{path: c}
+	}
+
+	cls := map[string]*Classification{}
+	c.Children.RangeRead(func(key string, cl *Classification) {
+		p := filepath.Join(path, key)
+		leaves := cl.Leaves(p)
+		for childKey, childLeaf := range leaves {
+			cls[childKey] = childLeaf
+		}
+	})
+
+	return cls
+}
+
+func (c *Classification) String() string {
+	return fmt.Sprintf("LABEL: '%s' (%d messages, %d children, dimension '%s')", c.Label, len(c.Messages), c.Children.Len(), c.Dimension)
+}
+
+func (c *Classification) TreeString() string {
+	if c.Children.Len() == 0 {
+		return c.String()
+	}
+
+	str := c.String() + "\n"
+	c.Children.RangeRead(func(key string, value *Classification) {
+		str += fmt.Sprintf("    %s :: %s\n", key, value.TreeString())
+	})
+
+	return str
 }
