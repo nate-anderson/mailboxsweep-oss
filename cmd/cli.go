@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -191,7 +192,7 @@ var classifyMessagesCmd = &cobra.Command{
 			mailsweeper.NewSenderUsernameClassifier(),
 		})
 
-		err = organizer.Organize()
+		err = organizer.Organize(context.Background())
 		if err != nil {
 			log.Fatalf("Organize failed: %s", err)
 		}
@@ -209,7 +210,7 @@ var queryCmd = &cobra.Command{
 		}
 
 		repo := mailsweeper.NewFileClassificationRepository()
-		classification, err := repo.Fetch(username, path)
+		classification, err := repo.Fetch(context.Background(), username, path, true)
 		if err != nil {
 			log.Fatal(err)
 		}

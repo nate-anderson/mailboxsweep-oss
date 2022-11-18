@@ -4,6 +4,7 @@ package syncmap
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -53,9 +54,26 @@ func (m *Map[keyT, valueT]) RangeWrite(fn func(key keyT, value valueT)) {
 	m.mux.Unlock()
 }
 
+// use sparingly.
+// iterate over the map's keys and values,
+func (m *Map[keyT, valueT]) RangeRead(fn func(key keyT, value valueT)) {
+	m.mux.RLock()
+	for key, value := range m.m {
+		fn(key, value)
+	}
+	m.mux.RUnlock()
+}
+
 func (m *Map[keyT, valueT]) Len() int {
 	m.mux.RLock()
 	l := len(m.m)
 	m.mux.RUnlock()
 	return l
+}
+
+func (m *Map[keyT, valueT]) String() string {
+	m.mux.RLock()
+	str := fmt.Sprintf("%+v", m.m)
+	m.mux.RUnlock()
+	return str
 }

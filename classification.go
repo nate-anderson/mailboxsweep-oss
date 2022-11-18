@@ -1,6 +1,7 @@
 package mailsweeper
 
 import (
+	"context"
 	"fmt"
 	"mailsweeper/pkg/syncmap"
 	"path/filepath"
@@ -60,8 +61,8 @@ func NewClassification(dimension, label string) *Classification {
 
 // Store and retrieve classified messages
 type ClassificationRepository interface {
-	Store(inbox string, classification *Classification) error
-	Fetch(inbox string, path []string, includeMessages bool) (root *Classification, err error)
+	Store(ctx context.Context, inbox string, classification *Classification) error
+	Fetch(ctx context.Context, inbox string, path []string, includeMessages bool) (root *Classification, err error)
 }
 
 // strip messages from the whole tree

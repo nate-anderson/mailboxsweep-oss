@@ -1,6 +1,7 @@
 package mailsweeper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,7 +18,7 @@ func (r *FileClassificationRepository) formatFileName(inbox string) string {
 	return fmt.Sprintf("classification_%s.json", inbox)
 }
 
-func (r *FileClassificationRepository) Store(inbox string, classification *Classification) error {
+func (r *FileClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification) error {
 	filename := r.formatFileName(inbox)
 	file, err := os.Create(filename)
 	if err != nil {
@@ -28,7 +29,7 @@ func (r *FileClassificationRepository) Store(inbox string, classification *Class
 	return encoder.Encode(classification)
 }
 
-func (r *FileClassificationRepository) Fetch(inbox string, path []string, includeMessages bool) (*Classification, error) {
+func (r *FileClassificationRepository) Fetch(ctx context.Context, inbox string, path []string, includeMessages bool) (*Classification, error) {
 	file, err := os.Open(
 		r.formatFileName(inbox),
 	)

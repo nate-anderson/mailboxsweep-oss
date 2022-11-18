@@ -1,6 +1,7 @@
 package mailsweeper
 
 import (
+	"context"
 	"mailsweeper/pkg/syncmap"
 )
 
@@ -23,7 +24,7 @@ func NewOrganizer(inbox string, repo ClassificationRepository, folders []Folder,
 	}
 }
 
-func (o Organizer) Organize() error {
+func (o Organizer) Organize(ctx context.Context) error {
 	/*
 		This function should accept a chan Message and process each message as it is read,
 		traversing the tree and calling the classifier functions one at a time.
@@ -55,7 +56,7 @@ func (o Organizer) Organize() error {
 		return err
 	}
 
-	o.repo.Store(o.inbox, root)
+	o.repo.Store(ctx, o.inbox, root)
 	return err
 }
 
