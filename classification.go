@@ -109,3 +109,15 @@ func (c *Classification) TreeString() string {
 
 	return str
 }
+
+func (c *Classification) Copy() *Classification {
+	msgs := make([]Message, len(c.Messages))
+	copy(msgs, c.Messages)
+	return &Classification{
+		Dimension: c.Dimension,
+		Label:     c.Label,
+		Messages:  msgs,
+		Count:     c.Count,
+		Children:  syncmap.Map[string, *Classification]{},
+	}
+}
