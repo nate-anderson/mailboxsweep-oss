@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -25,30 +26,7 @@ func NewS3ClassificationRepository(client *s3.Client, bucket string) *S3Classifi
 	}
 }
 
-/*
-Store a summary document so that all tree nodes don't have to be fetched to reconstruct the
-summary, then store all leaf nodes in full using their classification path
-*/
-
-func (r S3ClassificationRepository) Fetch(ctx context.Context, inbox string, path []string, includeMessages bool) (*Classification, error) {
-	if includeMessages && len(path) > 0 {
-		return r.fetchLeaf(ctx, inbox, path)
-	}
-
-	summary, err := r.fetchSummary(ctx, inbox)
-	if err != nil {
-		return nil, err
-	}
-
-	if !includeMessages {
-		return summary, nil
-	}
-
-	// @TODO: need to fetch leaves here
-	return summary, nil
-}
-
-func (r S3ClassificationRepository) fetchSummary(ctx context.Context, inbox string) (*Classification, error) {
+func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*Classification, error) {
 	pathStr := r.summaryPath(inbox)
 
 	obj, err := r.client.GetObject(ctx, &s3.GetObjectInput{
@@ -64,7 +42,6 @@ func (r S3ClassificationRepository) fetchSummary(ctx context.Context, inbox stri
 
 	summary := Classification{}
 	err = json.NewDecoder(obj.Body).Decode(&summary)
-
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +49,7 @@ func (r S3ClassificationRepository) fetchSummary(ctx context.Context, inbox stri
 	return &summary, nil
 }
 
-func (r S3ClassificationRepository) fetchLeaf(ctx context.Context, inbox string, path []string) (*Classification, error) {
+func (r S3ClassificationRepository) FetchLeaf(ctx context.Context, inbox string, path []string) (*Classification, error) {
 	pathStr := r.leafPath(inbox, filepath.Join(path...))
 
 	obj, err := r.client.GetObject(ctx, &s3.GetObjectInput{
@@ -94,6 +71,71 @@ func (r S3ClassificationRepository) fetchLeaf(ctx context.Context, inbox string,
 	return &cl, nil
 }
 
+type pathLeafTuple struct {
+	path string
+	leaf Classification
+}
+
+func (r S3ClassificationRepository) fetchLeaves(ctx context.Context, inbox string) (map[string]Classification, error) {
+	prefix := r.leavesPrefix(inbox)
+	list, err := r.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: &r.bucketName,
+		Prefix: &prefix,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list bucket contents with prefix '%s': %w", prefix, err)
+	}
+
+	group, groupCtx := errgroup.WithContext(ctx)
+
+	resultChan := make(chan pathLeafTuple)
+	results := make(map[string]Classification)
+
+	go func() {
+		for tuple := range resultChan {
+			results[tuple.path] = tuple.leaf
+		}
+	}()
+
+	// exclude summary, len - 1
+	for _, obj := range list.Contents {
+		if strings.HasSuffix(*obj.Key, "summary") {
+			continue
+		}
+		o := obj
+		group.Go(func() error {
+			doc, err := r.client.GetObject(groupCtx, &s3.GetObjectInput{
+				Bucket: &r.bucketName,
+				Key:    o.Key,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to fetch leaf document '%s': %w", *o.Key, err)
+			}
+
+			cl := Classification{}
+			err = json.NewDecoder(doc.Body).Decode(&cl)
+			if err != nil {
+				return fmt.Errorf("failed to decode leaf document '%s': %w", *o.Key, err)
+			}
+
+			resultChan <- pathLeafTuple{
+				leaf: cl,
+				path: strings.TrimPrefix(*o.Key, inbox+"/"),
+			}
+
+			return nil
+		})
+	}
+
+	err = group.Wait()
+	close(resultChan)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
 func (r S3ClassificationRepository) summaryPath(inbox string) string {
 	return filepath.Join(inbox, "summary")
 }
@@ -102,22 +144,29 @@ func (r S3ClassificationRepository) leafPath(inbox string, path string) string {
 	return filepath.Join(inbox, path)
 }
 
+func (r S3ClassificationRepository) leavesPrefix(inbox string) string {
+	return fmt.Sprintf("%s/", inbox)
+}
+
+/*
+Store a summary document so that all tree nodes don't have to be fetched to reconstruct the
+summary, then store all leaf nodes in full using their classification path
+*/
+
 func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification) error {
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.Go(func() error {
-		return r.storeSummaryDocument(groupCtx, inbox, classification)
-	})
+	if err := r.storeLeaves(ctx, inbox, classification); err != nil {
+		return fmt.Errorf("failed to store leaves")
+	}
 
-	group.Go(func() error {
-		return r.storeLeaves(groupCtx, inbox, classification)
-	})
+	if err := r.storeSummaryDocument(ctx, inbox, classification); err != nil {
+		return fmt.Errorf("failed to store summary: %w", err)
+	}
 
-	err := group.Wait()
-	return err
+	return nil
 }
 
 func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox string, classification *Classification) error {
-	leaves := classification.Leaves("/")
+	leaves := classification.Leaves()
 	group, groupCtx := errgroup.WithContext(ctx)
 	for classPath, clPtr := range leaves {
 		cl := clPtr
@@ -129,9 +178,10 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 				return err
 			}
 
+			p := r.leafPath(inbox, path)
 			_, err = r.client.PutObject(groupCtx, &s3.PutObjectInput{
 				Bucket: &r.bucketName,
-				Key:    ptr(r.leafPath(inbox, path)),
+				Key:    &p,
 				Body:   bytes.NewReader(leafDoc.Bytes()),
 			})
 			if err != nil {
@@ -146,8 +196,7 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 
 func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, inbox string, classification *Classification) error {
 	// copy before stripping
-	summary := classification.Copy()
-	stripMessages(summary)
+	summary := classification.withoutMessages()
 
 	summaryDocument := bytes.Buffer{}
 	err := json.NewEncoder(&summaryDocument).Encode(summary)
