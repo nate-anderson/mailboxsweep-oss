@@ -74,7 +74,8 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 		// if the bucket already exists, just use it
 		// @TODO: revisit this later, test teardown should be cleaner
 		if !errors.As(err, &errExist) {
-			log.Fatalf("failed to create test bucket '%s': %s", bucket, err)
+			panic(err)
+			// log.Fatalf("failed to create test bucket '%s': %s", bucket, err)
 		}
 	}
 
