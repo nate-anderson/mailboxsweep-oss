@@ -23,8 +23,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 
 	inbox := "admin@example.com"
 
-	// tmpDir := os.TempDir()
-	fileRepo := NewFileClassificationRepository("./testdata")
+	fileRepo := NewFileClassificationRepository(t.TempDir())
 
 	repositories := map[string]ClassificationRepository{
 		"s3":   s3repo,
