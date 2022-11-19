@@ -186,7 +186,7 @@ var classifyMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		repo := mailsweeper.NewFileClassificationRepository()
+		repo := mailsweeper.NewFileClassificationRepository("testdata")
 		organizer := mailsweeper.NewOrganizer(username, repo, []mailsweeper.Folder{folder}, []mailsweeper.Classifier{
 			mailsweeper.NewSenderDomainClassifier(),
 			mailsweeper.NewSenderUsernameClassifier(),
@@ -209,8 +209,8 @@ var queryCmd = &cobra.Command{
 			log.Fatal("username is required")
 		}
 
-		repo := mailsweeper.NewFileClassificationRepository()
-		classification, err := repo.Fetch(context.Background(), username, path, true)
+		repo := mailsweeper.NewFileClassificationRepository("testdata")
+		classification, err := repo.FetchSummary(context.Background(), username)
 		if err != nil {
 			log.Fatal(err)
 		}
