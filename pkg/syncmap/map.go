@@ -77,3 +77,23 @@ func (m *Map[keyT, valueT]) String() string {
 	m.mux.RUnlock()
 	return str
 }
+
+func (m *Map[keyT, valueT]) Copy() *Map[keyT, valueT] {
+	newMap := make(map[keyT]valueT)
+	m.mux.RLock()
+	for key, value := range m.m {
+		newMap[key] = value
+	}
+	m.mux.RUnlock()
+	return &Map[keyT, valueT]{
+		m:   newMap,
+		mux: sync.RWMutex{},
+	}
+}
+
+func (m *Map[keyT, valueT]) Map() map[keyT]valueT {
+	m.mux.RLock()
+	mmap := m.m
+	m.mux.RUnlock()
+	return mmap
+}

@@ -2,7 +2,13 @@ package mailsweeper
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"io"
 	"log"
+	"strings"
+	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -10,9 +16,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-func setupTestBucket(ctx context.Context, bucket string) (*s3.Client, func() error) {
+func randToken(l int) (string, error) {
+	bytes := make([]byte, l)
+	_, err := io.ReadFull(rand.Reader, bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
 	endpoint := "http://localhost:4566"
 	region := "us-west-2"
+	token, err := randToken(5)
+	if err != nil {
+		log.Fatalf("failed to generate a test bucket name: %s", err)
+	}
+	bucket := strings.ToLower(t.Name() + "-" + token)
 
 	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
 		if endpoint != "" {
@@ -46,8 +66,14 @@ func setupTestBucket(ctx context.Context, bucket string) (*s3.Client, func() err
 			LocationConstraint: "us-west-2",
 		},
 	})
+
 	if err != nil {
-		log.Fatalf("failed to create test bucket: %s", err)
+		var errExist *types.BucketAlreadyOwnedByYou
+		// if the bucket already exists, just use it
+		// @TODO: revisit this later, test teardown should be cleaner
+		if !errors.As(err, &errExist) {
+			log.Fatalf("failed to create test bucket '%s': %s", bucket, err)
+		}
 	}
 
 	teardown := func() error {
@@ -57,5 +83,5 @@ func setupTestBucket(ctx context.Context, bucket string) (*s3.Client, func() err
 		return err
 	}
 
-	return client, teardown
+	return client, bucket, teardown
 }

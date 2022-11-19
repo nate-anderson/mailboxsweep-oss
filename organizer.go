@@ -32,9 +32,9 @@ func (o Organizer) Organize(ctx context.Context) error {
 		concurrently with fetching them.
 	*/
 
-	root := &Classification{
+	root := &SafeClassification{
 		Label:    "All Messages",
-		Children: syncmap.New[string, *Classification](),
+		Children: syncmap.New[string, *SafeClassification](),
 	}
 
 	m := make(chan Message)
@@ -56,11 +56,12 @@ func (o Organizer) Organize(ctx context.Context) error {
 		return err
 	}
 
-	o.repo.Store(ctx, o.inbox, root)
+	rootDTO := root.Classification()
+	o.repo.Store(ctx, o.inbox, &rootDTO)
 	return err
 }
 
-func (o Organizer) organizeMessage(message Message, root *Classification) {
+func (o Organizer) organizeMessage(message Message, root *SafeClassification) {
 	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {
@@ -69,7 +70,7 @@ func (o Organizer) organizeMessage(message Message, root *Classification) {
 		dimension := classifier.Dimension()
 		child, ok := node.Children.Get(key)
 		if !ok {
-			child = NewClassification(dimension, label)
+			child = NewSafeClassification(dimension, label)
 		} else {
 		}
 		node.Children.Set(key, child)
