@@ -43,6 +43,8 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 			}, nil
 		}
 
+		log.Printf("Test setup using service %s and region %s", service, region)
+
 		// returning EndpointNotFoundError will allow the service to fallback to its default resolution
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	})
