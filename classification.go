@@ -8,19 +8,20 @@ import (
 )
 
 // Classifications act as a tree. Only leaf nodes should have messages
+// this is the DTO type used for writing files and API responses
 type Classification struct {
-	Dimension string                               `json:"dimension"`
-	Label     string                               `json:"label"`
-	Messages  []Message                            `json:"messages,omitempty"`
-	Count     uint                                 `json:"count"`
-	Children  syncmap.Map[string, *Classification] `json:"children,omitempty"`
+	Dimension string                    `json:"dimension"`
+	Label     string                    `json:"label"`
+	Messages  []Message                 `json:"messages,omitempty"`
+	Count     uint                      `json:"count"`
+	Children  map[string]Classification `json:"children,omitempty"`
 }
 
-func NewClassification(dimension, label string) *Classification {
-	return &Classification{
+func NewClassification(dimension, label string) Classification {
+	return Classification{
 		Dimension: dimension,
 		Label:     label,
-		Children:  syncmap.New[string, *Classification](),
+		Children:  make(map[string]Classification),
 	}
 }
 
@@ -62,62 +63,108 @@ func NewClassification(dimension, label string) *Classification {
 // Store and retrieve classified messages
 type ClassificationRepository interface {
 	Store(ctx context.Context, inbox string, classification *Classification) error
-	Fetch(ctx context.Context, inbox string, path []string, includeMessages bool) (root *Classification, err error)
+	FetchSummary(ctx context.Context, inbox string) (root *Classification, err error)
+	FetchLeaf(ctx context.Context, inbox string, path []string) (leaf *Classification, err error)
 }
 
-// strip messages from the whole tree
-func stripMessages(c *Classification) {
-	if len(c.Messages) > 0 {
-		c.Messages = nil
+// return a copy of c with the messages removed recursively
+func (c Classification) withoutMessages() Classification {
+	cop := c
+	cop.Messages = nil
+	if len(c.Children) == 0 {
+		return cop
 	}
 
-	c.Children.RangeWrite(func(key string, value *Classification) {
-		stripMessages(value)
-	})
+	for key, value := range cop.Children {
+		cop.Children[key] = value.withoutMessages()
+	}
+
+	return cop
 }
 
-func (c *Classification) Leaves(path string) map[string]*Classification {
-	if c.Children.Len() == 0 {
-		return map[string]*Classification{path: c}
+func (c *Classification) Leaves() map[string]Classification {
+	if len(c.Children) == 0 {
+		// this is a leaf
+		return map[string]Classification{"/": *c}
 	}
 
-	cls := map[string]*Classification{}
-	c.Children.RangeRead(func(key string, cl *Classification) {
-		p := filepath.Join(path, key)
-		leaves := cl.Leaves(p)
+	cls := map[string]Classification{}
+	for key, cl := range c.Children {
+		// recursively filter out non-leaves
+		leaves := cl.Leaves()
 		for childKey, childLeaf := range leaves {
-			cls[childKey] = childLeaf
+			p := filepath.Join("/", key, childKey)
+			cls[p] = childLeaf
 		}
-	})
+	}
 
 	return cls
 }
 
-func (c *Classification) String() string {
-	return fmt.Sprintf("LABEL: '%s' (%d messages, %d children, dimension '%s')", c.Label, len(c.Messages), c.Children.Len(), c.Dimension)
+func (c Classification) Traverse(path []string) (Classification, bool) {
+	node := c
+	for _, key := range path {
+		var ok bool
+		node, ok = node.Children[key]
+		if !ok {
+			return Classification{}, false
+		}
+	}
+	return node, true
+}
+
+func (c *Classification) DebugString() string {
+	return fmt.Sprintf("LABEL: '%s' (%d count, %d messages, %d children, dimension '%s')", c.Label, c.Count, len(c.Messages), len(c.Children), c.Dimension)
 }
 
 func (c *Classification) TreeString() string {
-	if c.Children.Len() == 0 {
-		return c.String()
+	if len(c.Children) == 0 {
+		return c.DebugString()
 	}
 
-	str := c.String() + "\n"
-	c.Children.RangeRead(func(key string, value *Classification) {
+	str := c.DebugString() + "\n"
+	for key, value := range c.Children {
 		str += fmt.Sprintf("    %s :: %s\n", key, value.TreeString())
-	})
+	}
 
 	return str
 }
 
-func (c *Classification) Copy() *Classification {
-	msgs := make([]Message, len(c.Messages))
-	copy(msgs, c.Messages)
-	return &Classification{
-		Dimension: c.Dimension,
-		Label:     c.Label,
-		Messages:  msgs,
-		Count:     c.Count,
-		Children:  syncmap.Map[string, *Classification]{},
+// Like a classification, but safe for concurrent writes
+// this is needed internally because we receive IMAP messages over
+// one or more goroutines, and need to safely update the classification
+// tree
+type SafeClassification struct {
+	Dimension string
+	Label     string
+	Messages  []Message
+	Count     uint
+	Children  syncmap.Map[string, *SafeClassification]
+}
+
+func NewSafeClassification(dimension, label string) *SafeClassification {
+	return &SafeClassification{
+		Dimension: dimension,
+		Label:     label,
+		Children:  syncmap.New[string, *SafeClassification](),
+	}
+}
+
+func (sc *SafeClassification) Classification() Classification {
+	children := sc.Children.Map()
+	dtoChildren := make(map[string]Classification)
+	if len(children) > 0 {
+		for key, value := range children {
+			cl := value.Classification()
+			dtoChildren[key] = cl
+		}
+	}
+
+	return Classification{
+		Dimension: sc.Dimension,
+		Label:     sc.Label,
+		Messages:  sc.Messages,
+		Count:     sc.Count,
+		Children:  dtoChildren,
 	}
 }
