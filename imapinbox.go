@@ -5,17 +5,17 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-type SMTPInbox struct {
+type IMAPInbox struct {
 	client *client.Client
 }
 
-func NewSMTPInbox(client *client.Client) *SMTPInbox {
-	return &SMTPInbox{
+func NewIMAPInbox(client *client.Client) *IMAPInbox {
+	return &IMAPInbox{
 		client: client,
 	}
 }
 
-func (i SMTPInbox) Folders() ([]string, error) {
+func (i IMAPInbox) Folders() ([]string, error) {
 	mailboxChan := make(chan *imap.MailboxInfo)
 	done := make(chan error)
 	go func() {
@@ -46,13 +46,13 @@ BuildRet:
 	return mailboxNames, nil
 }
 
-func (i *SMTPInbox) Folder(mailbox string) (Folder, error) {
+func (i *IMAPInbox) Folder(mailbox string) (Folder, error) {
 	mbox, err := i.client.Select(mailbox, true)
 	if err != nil {
 		return nil, err
 	}
 
-	return SMTPFolder{
+	return IMAPFolder{
 		client:  i.client,
 		mailbox: mbox,
 	}, nil

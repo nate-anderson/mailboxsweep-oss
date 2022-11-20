@@ -9,16 +9,16 @@ import (
 	"github.com/mcnijman/go-emailaddress"
 )
 
-type SMTPFolder struct {
+type IMAPFolder struct {
 	client  *client.Client
 	mailbox *imap.MailboxStatus
 }
 
-func (f SMTPFolder) Count() uint32 {
+func (f IMAPFolder) Count() uint32 {
 	return f.mailbox.Messages
 }
 
-func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
+func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)
 
@@ -26,7 +26,7 @@ func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 	done := make(chan error)
 	go func() {
 		// set the components fetched here
-		done <- f.client.Fetch(&seq, []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid}, messageChan)
+		done <- f.client.Fetch(&seq, []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchFlags}, messageChan)
 	}()
 
 	for {
@@ -45,6 +45,20 @@ func (f SMTPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 			e <- err
 		}
 	}
+}
+
+// @TODO: test this and make a DeleteMany method, add to interface
+func (f IMAPFolder) DeleteOne(id string) error {
+	set := imap.SeqSet{}
+	set.Add(id)
+	item := imap.FormatFlagsOp(imap.AddFlags, true)
+	flags := []any{imap.DeletedFlag}
+	err := f.client.UidStore(&set, item, flags, nil)
+	if err != nil {
+		return err
+	}
+
+	return f.client.Expunge(nil)
 }
 
 func imapToMessage(i imap.Message) (Message, error) {
