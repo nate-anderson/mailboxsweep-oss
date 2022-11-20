@@ -1,2 +1,4 @@
 .docker-dev/volumes/*
 ./testdata/
+
+./pkg/clients/greenmail/openapi.yml
