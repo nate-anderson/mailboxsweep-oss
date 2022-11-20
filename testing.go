@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
@@ -28,7 +27,7 @@ func randToken(l int) (string, error) {
 
 func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
 	endpoint := "http://localhost:4566"
-	region := "us-east-1"
+	region := "us-west-2"
 	token, err := randToken(5)
 	if err != nil {
 		log.Fatalf("failed to generate a test bucket name: %s", err)
@@ -47,13 +46,12 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 		context.Background(),
 		config.WithRegion(region),
 		config.WithEndpointResolver(customResolver),
-		config.WithEC2IMDSClientEnableState(imds.ClientDisabled),
+		config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody),
 	)
 	if err != nil {
 		log.Fatalf("Cannot load the AWS configs: %s", err)
 	}
 
-	// Create the resource client
 	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
