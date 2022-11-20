@@ -55,7 +55,7 @@ var listMailboxesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewSMTPProvider(host, port)
+		provider, err := mailsweeper.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -100,7 +100,7 @@ var listMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewSMTPProvider(host, port)
+		provider, err := mailsweeper.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -162,7 +162,7 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewSMTPProvider(host, port)
+		provider, err := mailsweeper.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
