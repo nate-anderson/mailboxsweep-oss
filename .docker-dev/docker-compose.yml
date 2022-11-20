@@ -15,4 +15,5 @@ services:
     image: greenmail/standalone:1.6.11
     ports:
       - "3993:3993" # IMAP w/SSL
+      - "3143:3143" # IMAP 
       - "8080:8085" # GreenMail HTTP API

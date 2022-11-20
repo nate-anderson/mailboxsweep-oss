@@ -1,9 +1,9 @@
 package mailsweeper
 
 var (
-	_ Inbox    = &SMTPInbox{}
-	_ Folder   = &SMTPFolder{}
-	_ Provider = &SMTPProvider{}
+	_ Inbox    = &IMAPInbox{}
+	_ Folder   = &IMAPFolder{}
+	_ Provider = &IMAPProvider{}
 )
 
 var (

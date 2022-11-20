@@ -31,7 +31,7 @@ func NewIMAPProvider(host string, port int) (*IMAPProvider, error) {
 
 func NewTestIMAPProvider(host string, port int) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
-	cl, err := client.DialTLS(addr, nil)
+	cl, err := client.Dial(addr)
 	if err != nil {
 		return nil, err
 	}
