@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
@@ -46,6 +47,7 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 		context.Background(),
 		config.WithRegion(region),
 		config.WithEndpointResolver(customResolver),
+		config.WithEC2IMDSClientEnableState(imds.ClientDisabled),
 	)
 	if err != nil {
 		log.Fatalf("Cannot load the AWS configs: %s", err)
