@@ -27,7 +27,7 @@ func randToken(l int) (string, error) {
 
 func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
 	endpoint := "http://localhost:4566"
-	region := "us-west-2"
+	region := "us-east-1"
 	token, err := randToken(5)
 	if err != nil {
 		log.Fatalf("failed to generate a test bucket name: %s", err)
