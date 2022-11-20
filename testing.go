@@ -35,21 +35,15 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 	bucket := strings.ToLower(t.Name() + "-" + token)
 
 	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-		if endpoint != "" {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           endpoint,
-				SigningRegion: region,
-			}, nil
-		}
-
-		log.Printf("Test setup using service %s and region %s", service, region)
-
-		// returning EndpointNotFoundError will allow the service to fallback to its default resolution
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+		return aws.Endpoint{
+			PartitionID:   "aws",
+			URL:           endpoint,
+			SigningRegion: region,
+		}, nil
 	})
 
-	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
+	awsCfg, err := config.LoadDefaultConfig(
+		context.Background(),
 		config.WithRegion(region),
 		config.WithEndpointResolver(customResolver),
 	)
