@@ -1,4 +1,5 @@
 .docker-dev/volumes/*
 ./testdata/
 
+**/*.gen.go
 ./pkg/clients/greenmail/openapi.yml

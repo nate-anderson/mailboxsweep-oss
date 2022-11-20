@@ -1,0 +1,5 @@
+package: greenmail
+generate:
+  models: true
+  client: true
+output: pkg/clients/greenmail/greenmail.gen.go
