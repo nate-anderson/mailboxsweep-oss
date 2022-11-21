@@ -8,12 +8,12 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/smtp"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/emersion/go-smtp"
 	"github.com/joho/godotenv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -92,28 +92,26 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 type testSMTPSender struct {
 	host string
 	addr string
+	auth smtp.Auth
 }
 
-func newTestSMTPSender(t *testing.T) *testSMTPSender {
-	const (
-		hostAddr = "smtp.gmail.com"
-		hostPort = 465
-	)
-
-	addr := net.JoinHostPort(hostAddr, strconv.Itoa(hostPort))
-
+func newTestSMTPSender(conf testConfig) *testSMTPSender {
+	addr := net.JoinHostPort(conf.SMTPHost, strconv.Itoa(conf.SMTPPort))
+	auth := smtp.PlainAuth("", conf.Address, conf.Password, conf.SMTPHost)
 	return &testSMTPSender{
-		host: hostAddr,
+		host: conf.SMTPHost,
 		addr: addr,
+		auth: auth,
 	}
 }
 
 func (s testSMTPSender) Send(to, from, subj, body string) error {
-	return smtp.SendMail(s.addr, nil, from, []string{to}, strings.NewReader(body))
+	return smtp.SendMail(s.addr, s.auth, from, []string{to}, []byte(body))
 }
 
 type testConfig struct {
 	Address  string
+	Password string
 	IMAPHost string
 	IMAPPort int
 	SMTPHost string
@@ -129,6 +127,7 @@ func getTestConfig() (testConfig, error) {
 	tc.Address = os.Getenv("TEST_ADDRESS")
 	tc.IMAPHost = os.Getenv("TEST_IMAP_HOST")
 	tc.SMTPHost = os.Getenv("TEST_SMTP_HOST")
+	tc.Password = os.Getenv("TEST_PASSWORD")
 
 	imapPort, err := strconv.Atoi(os.Getenv("TEST_IMAP_PORT"))
 	if err != nil {
