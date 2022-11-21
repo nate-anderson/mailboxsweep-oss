@@ -7,8 +7,12 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/emersion/go-smtp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -81,4 +85,27 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 	}
 
 	return client, bucket, teardown
+}
+
+type testSMTPSender struct {
+	host string
+	addr string
+}
+
+func newTestSMTPSender(t *testing.T) *testSMTPSender {
+	const (
+		hostAddr = "localhost"
+		hostPort = 3025
+	)
+
+	addr := net.JoinHostPort(hostAddr, strconv.Itoa(hostPort))
+
+	return &testSMTPSender{
+		host: hostAddr,
+		addr: addr,
+	}
+}
+
+func (s testSMTPSender) Send(to, from, subj, body string) error {
+	return smtp.SendMail(s.addr, nil, from, []string{to}, strings.NewReader(body))
 }

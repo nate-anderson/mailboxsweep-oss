@@ -2,4 +2,4 @@
 ./testdata/
 
 **/*.gen.go
-./pkg/clients/greenmail/openapi.yml
+pkg/clients/greenmail/openapi.yml
