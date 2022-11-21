@@ -47,7 +47,7 @@ BuildRet:
 }
 
 func (i *IMAPInbox) Folder(mailbox string) (Folder, error) {
-	mbox, err := i.client.Select(mailbox, true)
+	mbox, err := i.client.Select(mailbox, false)
 	if err != nil {
 		return nil, err
 	}

@@ -33,7 +33,7 @@ func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 		select {
 		case msg := <-messageChan:
 			if msg != nil {
-				message, err := imapToMessage(*msg)
+				message, err := imapToMessage(*msg, f.mailbox.Name)
 				if err != nil {
 					e <- err
 					goto Break
@@ -50,21 +50,7 @@ Break:
 	close(e)
 }
 
-// @TODO: test this and make a DeleteMany method, add to interface
-func (f IMAPFolder) DeleteOne(id string) error {
-	set := imap.SeqSet{}
-	set.Add(id)
-	item := imap.FormatFlagsOp(imap.AddFlags, true)
-	flags := []any{imap.DeletedFlag}
-	err := f.client.UidStore(&set, item, flags, nil)
-	if err != nil {
-		return err
-	}
-
-	return f.client.Expunge(nil)
-}
-
-func imapToMessage(i imap.Message) (Message, error) {
+func imapToMessage(i imap.Message, folder string) (Message, error) {
 	var sender *imap.Address
 	if len(i.Envelope.Sender) >= 1 {
 		sender = i.Envelope.Sender[0]
@@ -88,6 +74,8 @@ func imapToMessage(i imap.Message) (Message, error) {
 	return Message{
 		Subject:   i.Envelope.Subject,
 		ID:        i.Envelope.MessageId,
+		UID:       i.Uid,
+		Folder:    folder,
 		InReplyTo: i.Envelope.InReplyTo,
 		Sender: Sender{
 			Name: firstNotEqual(
@@ -115,4 +103,21 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 		}
 	}
 	return not
+}
+
+// @TODO: test this
+func (f IMAPFolder) Delete(del DeletionSet) error {
+	set := imap.SeqSet{}
+	set.AddNum(del.UIDs...)
+	item := imap.FormatFlagsOp(imap.AddFlags, true)
+	flags := []any{imap.DeletedFlag}
+	err := f.client.UidStore(&set, item, flags, nil)
+	if err != nil {
+		return fmt.Errorf("delete (UidStore) failed: %w", err)
+	}
+
+	if err = f.client.Expunge(nil); err != nil {
+		return fmt.Errorf("failed to expunge: %w", err)
+	}
+	return nil
 }

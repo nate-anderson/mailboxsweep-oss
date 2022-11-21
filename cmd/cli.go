@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"mailsweeper"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -32,6 +33,7 @@ func init() {
 
 	listMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
 	classifyMessagesCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to read from")
+	deleteCmd.PersistentFlags().StringVar(&folderName, "folder", "", "the inbox folder to delete from")
 	queryCmd.PersistentFlags().StringSliceVar(&path, "path", []string{}, "the path to the node to query")
 }
 
@@ -224,11 +226,70 @@ var queryCmd = &cobra.Command{
 	},
 }
 
+var deleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "delete some UIDs from the inbox",
+	Run: func(cmd *cobra.Command, args []string) {
+		if host == "" {
+			log.Fatal("host is required")
+		}
+
+		if username == "" {
+			log.Fatal("username is required")
+		}
+
+		if port == 0 {
+			log.Fatal("port must be greater than zero")
+		}
+
+		if password == "" {
+			log.Fatal("password is required")
+		}
+
+		provider, err := mailsweeper.NewIMAPProvider(host, port)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := provider.Connect(); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Connected!")
+
+		inbox, err := provider.Login(username, password)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("Logged in!")
+
+		folder, err := inbox.Folder(folderName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		del := mailsweeper.DeletionSet{}
+		for _, arg := range args {
+			uid, err := strconv.Atoi(arg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			del.AddUID(uint32(uid))
+		}
+
+		if err := folder.Delete(del); err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("Done!")
+	},
+}
+
 func main() {
 	rootCmd.AddCommand(listMailboxesCmd)
 	rootCmd.AddCommand(listMessagesCmd)
 	rootCmd.AddCommand(classifyMessagesCmd)
 	rootCmd.AddCommand(queryCmd)
+	rootCmd.AddCommand(deleteCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatal(err)

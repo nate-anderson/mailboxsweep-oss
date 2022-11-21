@@ -5,4 +5,5 @@ package mailsweeper
 type Folder interface {
 	Messages(start, end uint32, m chan<- Message, e chan<- error)
 	Count() uint32
+	Delete(del DeletionSet) error
 }

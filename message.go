@@ -4,6 +4,8 @@ import "time"
 
 type Message struct {
 	ID      string `json:"id"`
+	UID     uint32 `json:"uid"`
+	Folder  string `json:"folder"`
 	Subject string `json:"subject"`
 	Sender  Sender `json:"sender"`
 	// message ID being replied to
