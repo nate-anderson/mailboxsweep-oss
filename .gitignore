@@ -3,3 +3,5 @@
 
 **/*.gen.go
 pkg/clients/greenmail/openapi.yml
+
+*.env

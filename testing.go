@@ -8,11 +8,13 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/emersion/go-smtp"
+	"github.com/joho/godotenv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -94,8 +96,8 @@ type testSMTPSender struct {
 
 func newTestSMTPSender(t *testing.T) *testSMTPSender {
 	const (
-		hostAddr = "localhost"
-		hostPort = 3025
+		hostAddr = "smtp.gmail.com"
+		hostPort = 465
 	)
 
 	addr := net.JoinHostPort(hostAddr, strconv.Itoa(hostPort))
@@ -108,4 +110,37 @@ func newTestSMTPSender(t *testing.T) *testSMTPSender {
 
 func (s testSMTPSender) Send(to, from, subj, body string) error {
 	return smtp.SendMail(s.addr, nil, from, []string{to}, strings.NewReader(body))
+}
+
+type testConfig struct {
+	Address  string
+	IMAPHost string
+	IMAPPort int
+	SMTPHost string
+	SMTPPort int
+}
+
+func getTestConfig() (testConfig, error) {
+	tc := testConfig{}
+	if err := godotenv.Load("test.env"); err != nil {
+		return tc, err
+	}
+
+	tc.Address = os.Getenv("TEST_ADDRESS")
+	tc.IMAPHost = os.Getenv("TEST_IMAP_HOST")
+	tc.SMTPHost = os.Getenv("TEST_SMTP_HOST")
+
+	imapPort, err := strconv.Atoi(os.Getenv("TEST_IMAP_PORT"))
+	if err != nil {
+		return tc, err
+	}
+	tc.IMAPPort = imapPort
+
+	smtpPort, err := strconv.Atoi(os.Getenv("TEST_SMTP_PORT"))
+	if err != nil {
+		return tc, err
+	}
+	tc.SMTPPort = smtpPort
+
+	return tc, nil
 }
