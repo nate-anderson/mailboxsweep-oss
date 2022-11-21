@@ -35,16 +35,19 @@ func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 			if msg != nil {
 				message, err := imapToMessage(*msg)
 				if err != nil {
-					close(m)
 					e <- err
+					goto Break
 				}
 				m <- message
 			}
 		case err := <-done:
-			close(m)
 			e <- err
+			goto Break
 		}
 	}
+Break:
+	close(m)
+	close(e)
 }
 
 // @TODO: test this and make a DeleteMany method, add to interface
