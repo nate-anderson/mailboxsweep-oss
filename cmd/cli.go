@@ -189,7 +189,7 @@ var classifyMessagesCmd = &cobra.Command{
 		log.Printf("Messages: %d\n", count)
 
 		repo := mailsweeper.NewFileClassificationRepository("testdata")
-		organizer := mailsweeper.NewOrganizer(username, repo, []mailsweeper.Folder{folder}, []mailsweeper.Classifier{
+		organizer := mailsweeper.NewOrganizer(username, repo, []mailsweeper.Folder[uint32]{folder}, []mailsweeper.Classifier{
 			mailsweeper.NewSenderDomainClassifier(),
 			mailsweeper.NewSenderUsernameClassifier(),
 		})
@@ -267,7 +267,7 @@ var deleteCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		del := mailsweeper.DeletionSet{}
+		del := mailsweeper.DeletionSet[uint32]{}
 		for _, arg := range args {
 			uid, err := strconv.Atoi(arg)
 			if err != nil {

@@ -1,10 +1,14 @@
 package mailsweeper
 
-type DeletionSet struct {
-	Inbox string
-	UIDs  []uint32
+type MessageID interface {
+	uint32 | string
 }
 
-func (d *DeletionSet) AddUID(uid uint32) {
+type DeletionSet[messageIDType MessageID] struct {
+	Inbox string
+	UIDs  []messageIDType
+}
+
+func (d *DeletionSet[t]) AddUID(uid t) {
 	d.UIDs = append(d.UIDs, uid)
 }

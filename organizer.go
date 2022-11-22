@@ -8,15 +8,15 @@ import (
 // A message must have exactly one value for every dimension it is classified by
 // example: { "sender": "nate@gmail.com" }, { "sender_domain" : "costco.com" }
 
-type Organizer struct {
+type Organizer[messageIDType MessageID] struct {
 	inbox       string
 	repo        ClassificationRepository
-	folders     []Folder
+	folders     []Folder[messageIDType]
 	classifiers []Classifier
 }
 
-func NewOrganizer(inbox string, repo ClassificationRepository, folders []Folder, classifiers []Classifier) *Organizer {
-	return &Organizer{
+func NewOrganizer[messageIDType MessageID](inbox string, repo ClassificationRepository, folders []Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
+	return &Organizer[messageIDType]{
 		inbox:       inbox,
 		repo:        repo,
 		folders:     folders,
@@ -24,7 +24,7 @@ func NewOrganizer(inbox string, repo ClassificationRepository, folders []Folder,
 	}
 }
 
-func (o Organizer) Organize(ctx context.Context) error {
+func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 	/*
 		This function should accept a chan Message and process each message as it is read,
 		traversing the tree and calling the classifier functions one at a time.
@@ -61,7 +61,7 @@ func (o Organizer) Organize(ctx context.Context) error {
 	return err
 }
 
-func (o Organizer) organizeMessage(message Message, root *SafeClassification) {
+func (o Organizer[messageIDType]) organizeMessage(message Message, root *SafeClassification) {
 	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {

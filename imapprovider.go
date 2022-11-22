@@ -54,7 +54,7 @@ func (p *IMAPProvider) Connect() error {
 	return nil
 }
 
-func (p *IMAPProvider) Login(username, password string) (Inbox, error) {
+func (p *IMAPProvider) Login(username, password string) (Inbox[uint32], error) {
 	err := p.client.Login(username, password)
 	if err != nil {
 		return nil, err

@@ -1,7 +1,7 @@
 package mailsweeper
 
 // Inbox is an authenticated mail account
-type Inbox interface {
+type Inbox[messageIDType MessageID] interface {
 	Folders() ([]string, error)
-	Folder(name string) (Folder, error)
+	Folder(name string) (Folder[messageIDType], error)
 }
