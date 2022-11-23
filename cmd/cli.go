@@ -128,7 +128,7 @@ var listMessagesCmd = &cobra.Command{
 
 		msgChan := make(chan mailsweeper.Message)
 		errChan := make(chan error)
-		go folder.Messages(1, 10, msgChan, errChan)
+		go folder.Messages(1, count, msgChan, errChan)
 
 		go func() {
 			for m := range msgChan {

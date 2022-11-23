@@ -30,6 +30,8 @@ func (i IMAPInbox) Folders() ([]string, error) {
 	for {
 		select {
 		case m := <-mailboxChan:
+			// don't include noselect folders here,
+			// there's no use for them in this application
 			if m != nil && !contains(m.Attributes, attributeNoSelect) {
 				mailboxes = append(mailboxes, *m)
 			}
@@ -71,6 +73,12 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 
 	keys := make(map[string]uint32)
 
+	selected := i.client.Mailbox()
+	var (
+		prevName     = selected.Name
+		prevReadOnly = selected.ReadOnly
+	)
+
 	for _, f := range folders {
 		stat, err := i.client.Select(f, true)
 		if err != nil {
@@ -79,6 +87,8 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 
 		keys[f] = stat.UidValidity
 	}
+
+	i.client.Select(prevName, prevReadOnly)
 	return keys, nil
 }
 

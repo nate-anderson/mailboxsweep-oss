@@ -2,6 +2,7 @@ package mailsweeper
 
 import (
 	"context"
+	"fmt"
 	"mailsweeper/pkg/syncmap"
 )
 
@@ -37,9 +38,17 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 		Children: syncmap.New[string, *SafeClassification](),
 	}
 
+	validityKeys, err := o.inbox.ValidityKeys()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve inbox UidValidities: %w", err)
+	}
+	selectedFolderValidityKeys := map[string]uint32{}
+
 	m := make(chan Message)
 	e := make(chan error)
 	for _, f := range o.folders {
+		name := f.Name()
+		selectedFolderValidityKeys[name] = validityKeys[name]
 
 		go func() {
 			for msg := range m {
@@ -51,18 +60,13 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 		go f.Messages(1, msgCount, m, e)
 	}
 
-	err := <-e
-	if err != nil {
-		return err
-	}
-
-	validityKeys, err := o.inbox.ValidityKeys()
+	err = <-e
 	if err != nil {
 		return err
 	}
 
 	rootDTO := root.Classification()
-	o.repo.Store(ctx, o.inbox.Name(), &rootDTO, validityKeys)
+	err = o.repo.Store(ctx, o.inbox.Name(), &rootDTO, selectedFolderValidityKeys)
 	return err
 }
 
