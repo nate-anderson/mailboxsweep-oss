@@ -1,4 +1,4 @@
-# mailsweeper
+# mailboxsweep
 
 Running out of space in your Gmail account? Got too many unread emails
 showing up on your iPhone home screen?

@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 // Provider is an email service provider
 type Provider[messageIDType MessageID] interface {

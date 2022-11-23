@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 // Folder is a grouping of messages within an email inbox
 // called "inboxes" in IMAP but that name is confusing

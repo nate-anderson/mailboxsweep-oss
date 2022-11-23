@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 // Inbox is an authenticated mail account
 type Inbox[messageIDType MessageID] interface {

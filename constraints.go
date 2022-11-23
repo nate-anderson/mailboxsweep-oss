@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 var (
 	_ Inbox[uint32]    = &IMAPInbox{}

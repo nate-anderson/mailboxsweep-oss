@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"mailsweeper"
+	"mailboxsweep"
 	"strconv"
 
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use: "mailsweeper",
+	Use: "mailboxsweep",
 }
 
 var (
@@ -57,7 +57,7 @@ var listMailboxesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewIMAPProvider(host, port)
+		provider, err := mailboxsweep.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -102,7 +102,7 @@ var listMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewIMAPProvider(host, port)
+		provider, err := mailboxsweep.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -126,7 +126,7 @@ var listMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		msgChan := make(chan mailsweeper.Message)
+		msgChan := make(chan mailboxsweep.Message)
 		errChan := make(chan error)
 		go folder.Messages(1, count, msgChan, errChan)
 
@@ -164,7 +164,7 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewIMAPProvider(host, port)
+		provider, err := mailboxsweep.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -188,10 +188,10 @@ var classifyMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		repo := mailsweeper.NewFileClassificationRepository("testdata")
-		organizer := mailsweeper.NewOrganizer(inbox, repo, []mailsweeper.Folder[uint32]{folder}, []mailsweeper.Classifier{
-			mailsweeper.NewSenderDomainClassifier(),
-			mailsweeper.NewSenderUsernameClassifier(),
+		repo := mailboxsweep.NewFileClassificationRepository("testdata")
+		organizer := mailboxsweep.NewOrganizer(inbox, repo, []mailboxsweep.Folder[uint32]{folder}, []mailboxsweep.Classifier{
+			mailboxsweep.NewSenderDomainClassifier(),
+			mailboxsweep.NewSenderUsernameClassifier(),
 		})
 
 		err = organizer.Organize(context.Background())
@@ -211,7 +211,7 @@ var queryCmd = &cobra.Command{
 			log.Fatal("username is required")
 		}
 
-		repo := mailsweeper.NewFileClassificationRepository("testdata")
+		repo := mailboxsweep.NewFileClassificationRepository("testdata")
 		classification, err := repo.FetchSummary(context.Background(), username)
 		if err != nil {
 			log.Fatal(err)
@@ -246,7 +246,7 @@ var deleteCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := mailsweeper.NewIMAPProvider(host, port)
+		provider, err := mailboxsweep.NewIMAPProvider(host, port)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -267,7 +267,7 @@ var deleteCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		del := mailsweeper.DeletionSet[uint32]{}
+		del := mailboxsweep.DeletionSet[uint32]{}
 		for _, arg := range args {
 			uid, err := strconv.Atoi(arg)
 			if err != nil {

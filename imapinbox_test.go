@@ -1,7 +1,7 @@
-package mailsweeper
+package mailboxsweep
 
 import (
-	"mailsweeper/assert"
+	"mailboxsweep/assert"
 	"testing"
 )
 

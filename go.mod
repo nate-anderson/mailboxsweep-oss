@@ -1,4 +1,4 @@
-module mailsweeper
+module mailboxsweep
 
 go 1.19
 

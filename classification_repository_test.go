@@ -1,8 +1,8 @@
-package mailsweeper
+package mailboxsweep
 
 import (
 	"context"
-	"mailsweeper/assert"
+	"mailboxsweep/assert"
 	"testing"
 	"time"
 )

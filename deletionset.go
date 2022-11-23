@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 type MessageID interface {
 	uint32 | string

@@ -1,4 +1,4 @@
-package mailsweeper
+package mailboxsweep
 
 import (
 	"bytes"

@@ -1,9 +1,9 @@
-package mailsweeper
+package mailboxsweep
 
 import (
 	"context"
 	"fmt"
-	"mailsweeper/pkg/syncmap"
+	"mailboxsweep/pkg/syncmap"
 )
 
 // A message must have exactly one value for every dimension it is classified by

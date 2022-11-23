@@ -1,8 +1,8 @@
-package mailsweeper
+package mailboxsweep
 
 import (
 	"fmt"
-	"mailsweeper/assert"
+	"mailboxsweep/assert"
 	"testing"
 )
 

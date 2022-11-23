@@ -1,9 +1,9 @@
-package mailsweeper
+package mailboxsweep
 
 import (
 	"context"
 	"fmt"
-	"mailsweeper/pkg/syncmap"
+	"mailboxsweep/pkg/syncmap"
 	"path/filepath"
 	"time"
 )
