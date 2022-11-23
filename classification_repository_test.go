@@ -20,7 +20,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		Domain:   "example.com",
 		Name:     "Administrator",
 	}
-
+	validityKeys := map[string]uint32{"INBOX": 1}
 	inbox := "admin@example.com"
 
 	fileRepo := NewFileClassificationRepository(t.TempDir())
@@ -52,7 +52,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		c.Children["right"] = c2
 
 		t.Run("store", func(t *testing.T) {
-			err := repo.Store(ctx, inbox, &c)
+			err := repo.Store(ctx, inbox, &c, validityKeys)
 			assert.ThatError(t, err).IsNil()
 		})
 
@@ -66,19 +66,22 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				NotEqual(nil)
 
 			assert.
-				That(t, classification.Label).
+				That(t, classification.Classification.Label).
 				SoThat(repoType + " should return correct top-level label").
 				Equals("level 1")
 
 			assert.
-				That(t, classification.Dimension).
+				That(t, classification.Classification.Dimension).
 				SoThat(repoType + " should return correct top-level dimension").
 				Equals("none1")
 		})
 
 		t.Run("fetch leaf", func(t *testing.T) {
 			classification, err := repo.FetchLeaf(ctx, inbox, []string{"left"})
-			assert.ThatError(t, err).IsNil()
+			assert.
+				ThatError(t, err).
+				SoThat(repoType + " returns leaf").
+				IsNil()
 			assert.
 				That(t, classification.Label).
 				SoThat(repoType + " fetches correct label").
@@ -110,78 +113,5 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				SoThat(repoType + " message sender address is correct").
 				Equals(testSender)
 		})
-
-		/*
-			t.Run("fetch hydrated summary", func(t *testing.T) {
-				// t.Skip()
-				classification, err := repo.Fetch(ctx, inbox, []string{}, true)
-				assert.
-					ThatError(t, err).
-					SoThat(repoType + " fetches without error").
-					IsNil()
-
-				assert.
-					That(t, classification).
-					SoThat(repoType + " should fetch without error").
-					NotEqual(nil)
-
-				assert.
-					That(t, classification.Label).
-					SoThat(repoType + " should return correct top-level label").
-					Equals("level 1")
-
-				assert.
-					That(t, classification.Dimension).
-					SoThat(repoType + " should return correct top-level dimension").
-					Equals("none1")
-
-				assert.
-					That(t, len(classification.Children)).
-					SoThat(repoType + " should return all children").
-					Equals(2)
-
-				leftChild, ok := classification.Children["left"]
-				assert.
-					That(t, ok).
-					Equals(true)
-
-				assert.
-					That(t, leftChild.Label).
-					SoThat(repoType + " returns leaf label").
-					Equals("level 2 left")
-
-				assert.
-					That(t, leftChild.Dimension).
-					SoThat(repoType + " returns leaf dimension").
-					Equals("none2")
-
-				assert.
-					ThatSlice(t, leftChild.Messages).
-					SoThat(repoType + " returns leaf messages").
-					HasLength(1)
-
-				msg := leftChild.Messages[0]
-				assert.
-					That(t, msg.ID).
-					SoThat(repoType + " returns correct message ID").
-					Equals("message2")
-
-				assert.
-					That(t, msg.Subject).
-					SoThat(repoType + " returns correct subject").
-					Equals("left child subject")
-
-				assert.
-					That(t, msg.SendDate.Equal(sendDate)).
-					SoThat(repoType + " returns correct send date").
-					Equals(true)
-
-				assert.
-					That(t, msg.Sender).
-					SoThat(repoType + " returns correct sender data").
-					Equals(testSender)
-
-			})
-		*/
 	}
 }

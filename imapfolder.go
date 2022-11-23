@@ -106,7 +106,7 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 }
 
 // @TODO: test this
-func (f IMAPFolder) Delete(del DeletionSet) error {
+func (f IMAPFolder) Delete(del DeletionSet[uint32]) error {
 	set := imap.SeqSet{}
 	set.AddNum(del.UIDs...)
 	item := imap.FormatFlagsOp(imap.AddFlags, true)

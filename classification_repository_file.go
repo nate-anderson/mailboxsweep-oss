@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type FileClassificationRepository struct {
@@ -30,7 +31,7 @@ func (r FileClassificationRepository) formatFilePath(inbox string) string {
 	return filepath.Join(r.dir, r.formatFileName(inbox))
 }
 
-func (r FileClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification) error {
+func (r FileClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error {
 	filename := r.formatFilePath(inbox)
 	file, err := os.Create(filename)
 	if err != nil {
@@ -38,10 +39,16 @@ func (r FileClassificationRepository) Store(ctx context.Context, inbox string, c
 	}
 	defer file.Close()
 	encoder := json.NewEncoder(file)
-	return encoder.Encode(classification)
+	return encoder.Encode(ClassificationDocument{
+		Meta: ClassificationMeta{
+			Created:      time.Now(),
+			ValidityKeys: validityKeys,
+		},
+		Classification: classification,
+	})
 }
 
-func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*Classification, error) {
+func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*ClassificationDocument, error) {
 	file, err := os.Open(
 		r.formatFilePath(inbox),
 	)
@@ -50,14 +57,15 @@ func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox st
 	}
 	defer file.Close()
 
-	var classification Classification
+	var classification ClassificationDocument
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&classification); err != nil {
 		return nil, err
 	}
 
-	summary, err := classification.withoutMessages(), nil
-	return &summary, err
+	cl := classification.Classification.withoutMessages()
+	classification.Classification = &cl
+	return &classification, err
 }
 
 func (r FileClassificationRepository) FetchLeaf(ctx context.Context, inbox string, path []string) (*Classification, error) {
@@ -69,13 +77,13 @@ func (r FileClassificationRepository) FetchLeaf(ctx context.Context, inbox strin
 	}
 	defer file.Close()
 
-	var classification Classification
+	var classificationDoc ClassificationDocument
 	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&classification); err != nil {
+	if err := decoder.Decode(&classificationDoc); err != nil {
 		return nil, err
 	}
 
-	cl, ok := classification.Traverse(path)
+	cl, ok := classificationDoc.Classification.Traverse(path)
 	if !ok {
 		return nil, fmt.Errorf("could not find classification at path %v in tree", path)
 	}

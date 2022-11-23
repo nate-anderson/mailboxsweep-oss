@@ -60,5 +60,5 @@ func (p *IMAPProvider) Login(username, password string) (Inbox[uint32], error) {
 		return nil, err
 	}
 
-	return NewIMAPInbox(p.client), nil
+	return NewIMAPInbox(p.client, username), nil
 }

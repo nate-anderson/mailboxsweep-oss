@@ -9,13 +9,13 @@ import (
 // example: { "sender": "nate@gmail.com" }, { "sender_domain" : "costco.com" }
 
 type Organizer[messageIDType MessageID] struct {
-	inbox       string
+	inbox       Inbox[messageIDType]
 	repo        ClassificationRepository
 	folders     []Folder[messageIDType]
 	classifiers []Classifier
 }
 
-func NewOrganizer[messageIDType MessageID](inbox string, repo ClassificationRepository, folders []Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
+func NewOrganizer[messageIDType MessageID](inbox Inbox[messageIDType], repo ClassificationRepository, folders []Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
 	return &Organizer[messageIDType]{
 		inbox:       inbox,
 		repo:        repo,
@@ -56,8 +56,13 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 		return err
 	}
 
+	validityKeys, err := o.inbox.ValidityKeys()
+	if err != nil {
+		return err
+	}
+
 	rootDTO := root.Classification()
-	o.repo.Store(ctx, o.inbox, &rootDTO)
+	o.repo.Store(ctx, o.inbox.Name(), &rootDTO, validityKeys)
 	return err
 }
 

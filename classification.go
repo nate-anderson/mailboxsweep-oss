@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mailsweeper/pkg/syncmap"
 	"path/filepath"
+	"time"
 )
 
 // Classifications act as a tree. Only leaf nodes should have messages
@@ -60,10 +61,21 @@ func NewClassification(dimension, label string) Classification {
 		- Delete all from this sender sent before the specified date?
 */
 
+type ClassificationMeta struct {
+	Created time.Time `json:"created"`
+	// store folder validity key maps to know when our stored UIDs are invalidated
+	ValidityKeys map[string]uint32 `json:"validityKeys"`
+}
+
+type ClassificationDocument struct {
+	Meta           ClassificationMeta `json:"meta"`
+	Classification *Classification    `json:"classification"`
+}
+
 // Store and retrieve classified messages
 type ClassificationRepository interface {
-	Store(ctx context.Context, inbox string, classification *Classification) error
-	FetchSummary(ctx context.Context, inbox string) (root *Classification, err error)
+	Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error
+	FetchSummary(ctx context.Context, inbox string) (root *ClassificationDocument, err error)
 	FetchLeaf(ctx context.Context, inbox string, path []string) (leaf *Classification, err error)
 }
 

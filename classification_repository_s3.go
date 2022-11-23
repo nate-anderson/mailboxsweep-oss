@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -26,7 +27,7 @@ func NewS3ClassificationRepository(client *s3.Client, bucket string) *S3Classifi
 	}
 }
 
-func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*Classification, error) {
+func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*ClassificationDocument, error) {
 	pathStr := r.summaryPath(inbox)
 
 	obj, err := r.client.GetObject(ctx, &s3.GetObjectInput{
@@ -40,7 +41,7 @@ func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox stri
 		}
 	}
 
-	summary := Classification{}
+	summary := ClassificationDocument{}
 	err = json.NewDecoder(obj.Body).Decode(&summary)
 	if err != nil {
 		return nil, err
@@ -153,12 +154,12 @@ Store a summary document so that all tree nodes don't have to be fetched to reco
 summary, then store all leaf nodes in full using their classification path
 */
 
-func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification) error {
+func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error {
 	if err := r.storeLeaves(ctx, inbox, classification); err != nil {
 		return fmt.Errorf("failed to store leaves")
 	}
 
-	if err := r.storeSummaryDocument(ctx, inbox, classification); err != nil {
+	if err := r.storeSummaryDocument(ctx, inbox, classification, validityKeys); err != nil {
 		return fmt.Errorf("failed to store summary: %w", err)
 	}
 
@@ -194,12 +195,19 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 	return err
 }
 
-func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, inbox string, classification *Classification) error {
+func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error {
 	// copy before stripping
 	summary := classification.withoutMessages()
+	doc := ClassificationDocument{
+		Meta: ClassificationMeta{
+			Created:      time.Now(),
+			ValidityKeys: validityKeys,
+		},
+		Classification: &summary,
+	}
 
 	summaryDocument := bytes.Buffer{}
-	err := json.NewEncoder(&summaryDocument).Encode(summary)
+	err := json.NewEncoder(&summaryDocument).Encode(doc)
 	if err != nil {
 		return fmt.Errorf("failed to encode summary document: %w", err)
 	}

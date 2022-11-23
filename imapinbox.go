@@ -1,17 +1,21 @@
 package mailsweeper
 
 import (
+	"fmt"
+
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 )
 
 type IMAPInbox struct {
-	client *client.Client
+	address string
+	client  *client.Client
 }
 
-func NewIMAPInbox(client *client.Client) *IMAPInbox {
+func NewIMAPInbox(client *client.Client, address string) *IMAPInbox {
 	return &IMAPInbox{
-		client: client,
+		client:  client,
+		address: address,
 	}
 }
 
@@ -56,4 +60,27 @@ func (i *IMAPInbox) Folder(mailbox string) (Folder[uint32], error) {
 		client:  i.client,
 		mailbox: mbox,
 	}, nil
+}
+
+func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
+	folders, err := i.Folders()
+	if err != nil {
+		return nil, fmt.Errorf("failed getting validity keys: fetching folders: %w", err)
+	}
+
+	keys := make(map[string]uint32)
+
+	for _, f := range folders {
+		stat, err := i.client.Select(f, true)
+		if err != nil {
+			return nil, fmt.Errorf("failed getting validity keys: selecting folder %s: %w", f, err)
+		}
+
+		keys[f] = stat.UidValidity
+	}
+	return keys, nil
+}
+
+func (i IMAPInbox) Name() string {
+	return i.address
 }
