@@ -30,7 +30,6 @@ func TestIMAPFolder(t *testing.T) {
 	n := 5
 
 	sender := newTestSMTPSender(testConf)
-	fmt.Printf("%+v\n", testConf)
 
 	for i := 0; i < n; i++ {
 		subj := fmt.Sprintf("SUBJ %d", i)

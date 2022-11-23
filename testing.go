@@ -52,7 +52,6 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 		context.Background(),
 		config.WithRegion(region),
 		config.WithEndpointResolver(customResolver),
-		config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody),
 	)
 	if err != nil {
 		log.Fatalf("Cannot load the AWS configs: %s", err)

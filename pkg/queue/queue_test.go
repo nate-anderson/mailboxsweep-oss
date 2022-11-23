@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -16,7 +15,6 @@ func TestQueue(t *testing.T) {
 		q.Enqueue(first)
 
 		if q.Value != first {
-			fmt.Println(q.String())
 			t.Errorf("first value should equal %d: got %d", first, q.Value)
 		}
 
