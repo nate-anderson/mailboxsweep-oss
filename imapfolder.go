@@ -10,6 +10,7 @@ import (
 )
 
 type IMAPFolder struct {
+	name    string
 	client  *client.Client
 	mailbox *imap.MailboxStatus
 }
@@ -120,4 +121,8 @@ func (f IMAPFolder) Delete(del DeletionSet[uint32]) error {
 		return fmt.Errorf("failed to expunge: %w", err)
 	}
 	return nil
+}
+
+func (f IMAPFolder) Name() string {
+	return f.name
 }

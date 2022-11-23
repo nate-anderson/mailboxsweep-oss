@@ -30,7 +30,7 @@ func (i IMAPInbox) Folders() ([]string, error) {
 	for {
 		select {
 		case m := <-mailboxChan:
-			if m != nil {
+			if m != nil && !contains(m.Attributes, attributeNoSelect) {
 				mailboxes = append(mailboxes, *m)
 			}
 		case err := <-done:
@@ -57,6 +57,7 @@ func (i *IMAPInbox) Folder(mailbox string) (Folder[uint32], error) {
 	}
 
 	return IMAPFolder{
+		name:    mailbox,
 		client:  i.client,
 		mailbox: mbox,
 	}, nil
@@ -84,3 +85,8 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 func (i IMAPInbox) Name() string {
 	return i.address
 }
+
+// IMAP constants
+const (
+	attributeNoSelect = `\Noselect`
+)
