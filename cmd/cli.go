@@ -267,13 +267,13 @@ var deleteCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		del := mailboxsweep.DeletionSet[uint32]{}
+		del := mailboxsweep.ChangeSet{}
 		for _, arg := range args {
 			uid, err := strconv.Atoi(arg)
 			if err != nil {
 				log.Fatal(err)
 			}
-			del.AddUID(uint32(uid))
+			del.AddUID(strconv.Itoa(uid))
 		}
 
 		if err := folder.Delete(del); err != nil {

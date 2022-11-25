@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -19,7 +20,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 func randToken(l int) (string, error) {
@@ -63,13 +67,13 @@ func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 
 	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &bucket,
-		CreateBucketConfiguration: &types.CreateBucketConfiguration{
+		CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
 			LocationConstraint: "us-west-2",
 		},
 	})
 
 	if err != nil {
-		var errExist *types.BucketAlreadyOwnedByYou
+		var errExist *s3types.BucketAlreadyOwnedByYou
 		// if the bucket already exists, just use it
 		// @TODO: revisit this later, test teardown should be cleaner
 		if !errors.As(err, &errExist) {
@@ -141,4 +145,107 @@ func getTestConfig() (testConfig, error) {
 	tc.SMTPPort = smtpPort
 
 	return tc, nil
+}
+
+func setupTestDynamoClient() *dynamodb.Client {
+	endpoint := "http://localhost:4566"
+	region := "us-west-2"
+
+	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+		return aws.Endpoint{
+			PartitionID:   "aws",
+			URL:           endpoint,
+			SigningRegion: region,
+		}, nil
+	})
+
+	awsCfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(region),
+		config.WithEndpointResolver(customResolver),
+	)
+
+	if err != nil {
+		log.Fatalf("Cannot load the AWS configs: %s", err)
+	}
+
+	return dynamodb.NewFromConfig(awsCfg)
+}
+
+func setupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func() error) {
+	tok, err := randToken(4)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate table name: %w", err))
+	}
+	table = fmt.Sprintf("%s_%s", t.Name(), tok)
+
+	tableDef := &dynamodb.CreateTableInput{
+		TableName: &table,
+		ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
+			ReadCapacityUnits:  ptr[int64](10),
+			WriteCapacityUnits: ptr[int64](10),
+		},
+		AttributeDefinitions: []dynamoTypes.AttributeDefinition{
+			{
+				AttributeName: &DynamoPK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoSK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoGSI1PK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoGSI1SK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+		},
+		KeySchema: []dynamoTypes.KeySchemaElement{
+			{
+				AttributeName: &DynamoPK,
+				KeyType:       dynamoTypes.KeyTypeHash,
+			},
+			{
+				AttributeName: &DynamoSK,
+				KeyType:       dynamoTypes.KeyTypeRange,
+			},
+		},
+		GlobalSecondaryIndexes: []dynamoTypes.GlobalSecondaryIndex{
+			{
+				IndexName: ptr("GSI1"),
+				KeySchema: []dynamoTypes.KeySchemaElement{
+					{
+						AttributeName: &DynamoGSI1PK,
+						KeyType:       dynamoTypes.KeyTypeHash,
+					},
+					{
+						AttributeName: &DynamoGSI1SK,
+						KeyType:       dynamoTypes.KeyTypeRange,
+					},
+				},
+				Projection: &dynamoTypes.Projection{
+					ProjectionType: dynamoTypes.ProjectionTypeKeysOnly,
+				},
+				ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
+					ReadCapacityUnits:  ptr[int64](10),
+					WriteCapacityUnits: ptr[int64](10),
+				},
+			},
+		},
+	}
+
+	_, err = client.CreateTable(ctx, tableDef)
+	if err != nil {
+		panic(err)
+	}
+
+	return table, func() error {
+		_, err := client.DeleteTable(ctx, &dynamodb.DeleteTableInput{
+			TableName: &table,
+		})
+		return err
+	}
 }

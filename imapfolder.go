@@ -3,6 +3,7 @@ package mailboxsweep
 import (
 	"fmt"
 	"net/mail"
+	"strconv"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
@@ -107,9 +108,15 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 }
 
 // @TODO: test this
-func (f IMAPFolder) Delete(del DeletionSet[uint32]) error {
+func (f IMAPFolder) Delete(del ChangeSet) error {
 	set := imap.SeqSet{}
-	set.AddNum(del.UIDs...)
+	for _, uid := range del.UIDs {
+		u, err := strconv.ParseUint(uid, 10, 32)
+		if err != nil {
+			return err
+		}
+		set.AddNum(uint32(u))
+	}
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []any{imap.DeletedFlag}
 	err := f.client.UidStore(&set, item, flags, nil)

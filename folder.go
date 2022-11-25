@@ -6,5 +6,5 @@ type Folder[messageIDType MessageID] interface {
 	Name() string
 	Messages(start, end uint32, m chan<- Message, e chan<- error)
 	Count() uint32
-	Delete(del DeletionSet[messageIDType]) error
+	Delete(del ChangeSet) error
 }
