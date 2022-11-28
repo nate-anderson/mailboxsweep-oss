@@ -2,6 +2,7 @@ package mailboxsweep
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+type DynamoChangesetRepository struct {
+	db *dynamodb.Client
+
+	// how many UIDs before we split into a new document?
+	pageSize  int
+	tableName string
+
+	// used for breaking update sets into pages
+	hashFunc uidHashFunc
+}
+
 // structure used by dynamo
 type changeSetDocument struct {
 	ChangeSet
@@ -20,7 +32,7 @@ type changeSetDocument struct {
 	PK string `dynamodbav:"pk"`
 
 	// deletion_set#INBOX (folder)
-	SK string `dynamodbav:"folder"`
+	SK string `dynamodbav:"sk"`
 
 	Created time.Time `dynamodbav:"created"`
 	Updated time.Time `dynamodbav:"updated"`
@@ -29,16 +41,21 @@ type changeSetDocument struct {
 	TTL int64 `dynamodbav:"expire_at"`
 }
 
-type DynamoChangesetRepository struct {
-	db        *dynamodb.Client
-	tableName string
-}
-
-func NewDynamoChangesetRepository(db *dynamodb.Client, tableName string) *DynamoChangesetRepository {
+func NewDynamoChangesetRepository(
+	db *dynamodb.Client,
+	tableName string,
+	uidsPerDocument int,
+	hashFunc uidHashFunc,
+) (*DynamoChangesetRepository, error) {
+	if uidsPerDocument <= 0 {
+		return nil, errors.New("uidsPerDocument must be > 0")
+	}
 	return &DynamoChangesetRepository{
 		db:        db,
 		tableName: tableName,
-	}
+		pageSize:  uidsPerDocument,
+		hashFunc:  hashFunc,
+	}, nil
 }
 
 func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string) ([]ChangeSet, error) {
@@ -64,9 +81,20 @@ func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string
 		return []ChangeSet{}, err
 	}
 
-	changeSets := make([]ChangeSet, len(results))
-	for i, c := range results {
-		changeSets[i] = c.ChangeSet
+	// group changesets by folder
+	// log.Fatalf("RESULTS: %+v", results)
+	changeSetMap := make(map[string]ChangeSet, len(results))
+	for _, c := range results {
+		if existing, ok := changeSetMap[c.Folder]; !ok {
+			changeSetMap[c.Folder] = c.ChangeSet
+		} else {
+			existing.UIDs = append(existing.UIDs, c.UIDs...)
+			changeSetMap[c.Folder] = existing
+		}
+	}
+	changeSets := make([]ChangeSet, 0, len(changeSetMap))
+	for _, value := range changeSetMap {
+		changeSets = append(changeSets, value)
 	}
 	return changeSets, nil
 }
@@ -75,22 +103,59 @@ func (d DynamoChangesetRepository) formatPK(inbox string) string {
 	return "INBOX#" + strings.TrimSpace(inbox)
 }
 
-func (d DynamoChangesetRepository) formatSK(folder string) string {
-	return "FOLDER#" + strings.TrimSpace(folder)
+func (d DynamoChangesetRepository) formatSK(folder string, partitionID uint64) string {
+	return fmt.Sprintf("FOLDER#%s#%d", strings.TrimSpace(folder), partitionID)
 }
 
-func (d DynamoChangesetRepository) buildKey(inbox, folder string) map[string]types.AttributeValue {
+func (d DynamoChangesetRepository) partitionID(uid string) (uint64, error) {
+	p, err := d.hashFunc(uid)
+	if err != nil {
+		return 0, err
+	}
+
+	min := p / uint64(d.pageSize)
+	return min, nil
+}
+
+func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string]ChangeSet, error) {
+	partitionMap := make(map[uint64][]string)
+	for _, uid := range changeSet.UIDs {
+		partitionID, err := d.partitionID(uid)
+		if err != nil {
+			return nil, err
+		}
+		partitionMap[partitionID] = append(partitionMap[partitionID], uid)
+	}
+
+	res := make(map[string]ChangeSet)
+	for partitionID, uids := range partitionMap {
+		sk := d.formatSK(changeSet.Folder, partitionID)
+		c := changeSet
+		c.UIDs = uids
+		res[sk] = c
+	}
+	return res, nil
+}
+
+func (d DynamoChangesetRepository) buildKey(inbox, folder string, uid string) (map[string]types.AttributeValue, error) {
+	partitionID, err := d.partitionID(uid)
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]types.AttributeValue{
 		DynamoPK: &types.AttributeValueMemberS{
 			Value: d.formatPK(inbox),
 		},
 		DynamoSK: &types.AttributeValueMemberS{
-			Value: d.formatSK(folder),
+			Value: d.formatSK(folder, partitionID),
 		},
-	}
+	}, nil
 }
 
-func (d DynamoChangesetRepository) Upsert(ctx context.Context, changeSet ChangeSet) (int, error) {
+// Append to a changeset, splitting it into pages if it contains more UIDs than the configured
+// uidsPerDocument value
+func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
 	uids := make([]string, len(changeSet.UIDs))
 	for i, u := range changeSet.UIDs {
 		uids[i] = fmt.Sprint(u)
@@ -98,56 +163,75 @@ func (d DynamoChangesetRepository) Upsert(ctx context.Context, changeSet ChangeS
 
 	now := time.Now()
 	expires := now.Add(dynamoUserDataTTL).Unix()
-	res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-		TableName: &d.tableName,
-		Key:       d.buildKey(changeSet.Inbox, changeSet.Folder),
-		UpdateExpression: ptr(`SET
-			#inbox = :inbox,
-			#folder = :folder,
-			#uids = :uids,
-			#created = if_not_exists(created, :created),
-			#updated = :updated,
-			#expires = :expires`),
-		ExpressionAttributeNames: map[string]string{
-			"#inbox":   "inbox",
-			"#folder":  "folder",
-			"#uids":    "uids",
-			"#created": "created",
-			"#updated": "updated",
-			"#expires": DynamoExpires,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":inbox": &types.AttributeValueMemberS{
-				Value: changeSet.Inbox,
-			},
-			":folder": &types.AttributeValueMemberS{
-				Value: changeSet.Folder,
-			},
-			":uids": &types.AttributeValueMemberSS{
-				Value: uids,
-			},
-			":created": &types.AttributeValueMemberS{
-				Value: now.Format(dynamoTimeFormat),
-			},
-			":updated": &types.AttributeValueMemberS{
-				Value: now.Format(dynamoTimeFormat),
-			},
-			":expires": &types.AttributeValueMemberN{
-				Value: strconv.FormatInt(expires, 10),
-			},
-		},
-		// this function returns the number of UIDs added,
-		// fetching the old ones allows this calculation
-		ReturnValues: types.ReturnValueAllOld,
-	})
+
+	// track diff
+	oldUIDs := make([]string, 0, len(changeSet.UIDs))
+
+	partitionMap, err := d.partitionSet(changeSet)
 	if err != nil {
-		return 0, fmt.Errorf("UpdateItem failed: %w", err)
+		return 0, err
 	}
 
-	oldList := []string{}
-	if err = attributevalue.Unmarshal(res.Attributes["uids"], &oldList); err != nil {
-		return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
+	for sk, set := range partitionMap {
+		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &d.tableName,
+			Key: map[string]types.AttributeValue{
+				DynamoPK: &types.AttributeValueMemberS{
+					Value: d.formatPK(changeSet.Inbox),
+				},
+				DynamoSK: &types.AttributeValueMemberS{
+					Value: sk,
+				},
+			},
+			UpdateExpression: ptr(`SET
+				#inbox = :inbox,
+				#folder = :folder,
+				#uids = :uids,
+				#created = if_not_exists(created, :created),
+				#updated = :updated,
+				#expires = :expires`),
+			ExpressionAttributeNames: map[string]string{
+				"#inbox":   "inbox",
+				"#folder":  "folder",
+				"#uids":    "uids",
+				"#created": "created",
+				"#updated": "updated",
+				"#expires": DynamoExpires,
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":inbox": &types.AttributeValueMemberS{
+					Value: changeSet.Inbox,
+				},
+				":folder": &types.AttributeValueMemberS{
+					Value: changeSet.Folder,
+				},
+				":uids": &types.AttributeValueMemberSS{
+					Value: set.UIDs,
+				},
+				":created": &types.AttributeValueMemberS{
+					Value: now.Format(dynamoTimeFormat),
+				},
+				":updated": &types.AttributeValueMemberS{
+					Value: now.Format(dynamoTimeFormat),
+				},
+				":expires": &types.AttributeValueMemberN{
+					Value: strconv.FormatInt(expires, 10),
+				},
+			},
+			// this function returns the number of UIDs added,
+			// fetching the old ones allows this calculation
+			ReturnValues: types.ReturnValueAllOld,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("UpdateItem failed: %w", err)
+		}
+
+		oldList := []string{}
+		if err = attributevalue.Unmarshal(res.Attributes["uids"], &oldList); err != nil {
+			return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
+		}
+		oldUIDs = append(oldUIDs, oldList...)
 	}
-	diff := len(changeSet.UIDs) - len(oldList)
-	return diff, nil
+
+	return len(changeSet.UIDs) - len(oldUIDs), nil
 }
