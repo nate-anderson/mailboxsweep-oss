@@ -156,11 +156,6 @@ func (d DynamoChangesetRepository) buildKey(inbox, folder string, uid string) (m
 // Append to a changeset, splitting it into pages if it contains more UIDs than the configured
 // uidsPerDocument value
 func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
-	uids := make([]string, len(changeSet.UIDs))
-	for i, u := range changeSet.UIDs {
-		uids[i] = fmt.Sprint(u)
-	}
-
 	now := time.Now()
 	expires := now.Add(dynamoUserDataTTL).Unix()
 
@@ -172,24 +167,34 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 		return 0, err
 	}
 
+	pk := d.formatPK(changeSet.Inbox)
+
+	// do this serially because
+	// a) it requires less provisioned throughput, and
+	// b) it allows using ReturnValues to calculate the diff
+	// if performance is an issue, consider a Transaction
+	// or doing this concurrently in an errgroup
 	for sk, set := range partitionMap {
 		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 			TableName: &d.tableName,
 			Key: map[string]types.AttributeValue{
 				DynamoPK: &types.AttributeValueMemberS{
-					Value: d.formatPK(changeSet.Inbox),
+					Value: pk,
 				},
 				DynamoSK: &types.AttributeValueMemberS{
 					Value: sk,
 				},
 			},
-			UpdateExpression: ptr(`SET
+			UpdateExpression: ptr(
+				`SET
 				#inbox = :inbox,
 				#folder = :folder,
-				#uids = :uids,
 				#created = if_not_exists(created, :created),
 				#updated = :updated,
-				#expires = :expires`),
+				#expires = :expires
+				
+				ADD #uids :uids`,
+			),
 			ExpressionAttributeNames: map[string]string{
 				"#inbox":   "inbox",
 				"#folder":  "folder",
@@ -220,7 +225,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 			},
 			// this function returns the number of UIDs added,
 			// fetching the old ones allows this calculation
-			ReturnValues: types.ReturnValueAllOld,
+			ReturnValues: types.ReturnValueUpdatedOld,
 		})
 		if err != nil {
 			return 0, fmt.Errorf("UpdateItem failed: %w", err)
@@ -234,4 +239,90 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 	}
 
 	return len(changeSet.UIDs) - len(oldUIDs), nil
+}
+
+func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
+	now := time.Now()
+	expires := now.Add(dynamoUserDataTTL).Unix()
+
+	// track diff
+	oldUIDs := make([]string, 0, len(changeSet.UIDs))
+
+	partitionMap, err := d.partitionSet(changeSet)
+	if err != nil {
+		return 0, err
+	}
+
+	pk := d.formatPK(changeSet.Inbox)
+
+	// do this serially because
+	// a) it requires less provisioned throughput, and
+	// b) it allows using ReturnValues to calculate the diff
+	// if performance is an issue, consider a Transaction
+	// or doing this concurrently in an errgroup
+	for sk, set := range partitionMap {
+		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &d.tableName,
+			Key: map[string]types.AttributeValue{
+				DynamoPK: &types.AttributeValueMemberS{
+					Value: pk,
+				},
+				DynamoSK: &types.AttributeValueMemberS{
+					Value: sk,
+				},
+			},
+			ConditionExpression: ptr("#pk = :pk"),
+			UpdateExpression: ptr(
+				`SET
+				#updated = :updated,
+				#expires = :expires
+				
+				DELETE #uids :uids`,
+			),
+			ExpressionAttributeNames: map[string]string{
+				"#pk":      DynamoPK,
+				"#uids":    "uids",
+				"#updated": "updated",
+				"#expires": DynamoExpires,
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":pk": &types.AttributeValueMemberS{
+					Value: pk,
+				},
+				":uids": &types.AttributeValueMemberSS{
+					Value: set.UIDs,
+				},
+				":updated": &types.AttributeValueMemberS{
+					Value: now.Format(dynamoTimeFormat),
+				},
+				":expires": &types.AttributeValueMemberN{
+					Value: strconv.FormatInt(expires, 10),
+				},
+			},
+			// this function returns the number of UIDs added,
+			// fetching the old ones allows this calculation
+			ReturnValues: types.ReturnValueUpdatedOld,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("UpdateItem failed: %w", err)
+		}
+
+		oldList := []string{}
+		if err = attributevalue.Unmarshal(res.Attributes["uids"], &oldList); err != nil {
+			return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
+		}
+		oldUIDs = append(oldUIDs, oldList...)
+	}
+
+	presentInOld := make(map[string]bool)
+	for _, old := range oldUIDs {
+		presentInOld[old] = true
+	}
+	diff := 0
+	for _, removed := range changeSet.UIDs {
+		if _, ok := presentInOld[removed]; ok {
+			diff++
+		}
+	}
+	return diff, nil
 }

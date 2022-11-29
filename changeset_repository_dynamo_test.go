@@ -18,9 +18,9 @@ func TestDynamoChangesetRepository(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	n := 300
-	upsertUIDs := make([]string, 0, n-1)
+	upsertUIDs := []string{}
 	appendUID := "1"
-	for i := 2; i < n; i++ {
+	for i := 2; i <= n; i++ {
 		istr := strconv.Itoa(i)
 		upsertUIDs = append(upsertUIDs, istr)
 	}
@@ -28,7 +28,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 	// hacky way to keep tests from colliding
 	inbox := fmt.Sprintf("%T@example.org", *repo)
 	folder := "INBOX32"
-	t.Run("upsert change set", func(t *testing.T) {
+	t.Run("append to change set", func(t *testing.T) {
 		t.Run("insert new", func(t *testing.T) {
 			cs := ChangeSet{
 				Inbox:  inbox,
@@ -44,7 +44,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 				Equals(len(upsertUIDs))
 		})
 
-		t.Run("update existing (add, single value)", func(t *testing.T) {
+		t.Run("append to existing page", func(t *testing.T) {
 			cs := ChangeSet{
 				Inbox:  inbox,
 				Folder: folder,
@@ -63,20 +63,6 @@ func TestDynamoChangesetRepository(t *testing.T) {
 			assert.That(t, len(retrieved) == 1)
 			assert.ThatSlice(t, retrieved[0].UIDs).Contains(appendUID)
 		})
-
-		t.Run("update existing (remove, single page)", func(t *testing.T) {
-
-		})
-
-		t.Run("update existing (add, multiple pages)", func(t *testing.T) {
-
-		})
-
-		t.Run("update existing (remove, multiple pages)", func(t *testing.T) {})
-		/*
-			This will be the tricky one - if the new changeset is much smaller than the
-			stored one, later pages won't be updated
-		*/
 	})
 
 	t.Run("list for mailbox", func(t *testing.T) {
@@ -96,6 +82,24 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		for _, uid := range upsertUIDs {
 			assert.ThatSlice(t, set.UIDs).Contains(uid)
 		}
+	})
+
+	t.Run("remove from change set", func(t *testing.T) {
+		// remove all even numbers from set
+		evenUIDs := []string{}
+		for i, uid := range upsertUIDs {
+			if (i+1)%2 == 0 {
+				evenUIDs = append(evenUIDs, uid)
+			}
+		}
+		delSet := ChangeSet{
+			Inbox:  inbox,
+			Folder: folder,
+			UIDs:   evenUIDs,
+		}
+		numDeleted, err := repo.Remove(ctx, delSet)
+		assert.ThatError(t, err).IsNil()
+		assert.That(t, numDeleted).Equals(len(evenUIDs))
 	})
 
 }
