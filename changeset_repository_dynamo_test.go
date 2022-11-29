@@ -58,7 +58,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 				That(t, n).
 				Equals(1)
 
-			retrieved, err := repo.ListByInbox(ctx, inbox)
+			retrieved, err := repo.ListByInbox(ctx, inbox, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(retrieved) == 1)
 			assert.ThatSlice(t, retrieved[0].UIDs).Contains(appendUID)
@@ -66,7 +66,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 	})
 
 	t.Run("list for mailbox", func(t *testing.T) {
-		sets, err := repo.ListByInbox(ctx, inbox)
+		sets, err := repo.ListByInbox(ctx, inbox, false)
 		assert.
 			ThatError(t, err).
 			IsNil()
@@ -104,17 +104,38 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, numDeleted).Equals(len(evenUIDs))
 
-		post, err := repo.ListByInbox(ctx, inbox)
+		post, err := repo.ListByInbox(ctx, inbox, false)
 		assert.ThatError(t, err).IsNil()
 
 		p := post[0]
 		assert.That(t, p.Folder).Equals(folder)
 		assert.That(t, p.Inbox).Equals(inbox)
+		assert.ThatSlice(t, p.UIDs).HasLength(n - len(delSet.UIDs))
 		for _, odd := range oddUIDs {
 			assert.ThatSlice(t, p.UIDs).Contains(odd)
 		}
 		for _, even := range evenUIDs {
 			assert.ThatSlice(t, p.UIDs).NotContains(even)
+		}
+	})
+
+	t.Run("find by inbox and folder", func(t *testing.T) {
+		// store some
+		randFolder := "bs_folder_123"
+		cs := ChangeSet{
+			Inbox:  inbox,
+			Folder: randFolder,
+			UIDs:   []string{"19", "66", "1056"},
+		}
+		n, err := repo.Append(ctx, cs)
+		assert.ThatError(t, err).IsNil()
+		assert.That(t, n).Equals(len(cs.UIDs))
+
+		set, err := repo.FindByInboxFolder(ctx, inbox, randFolder, false)
+		assert.ThatError(t, err).IsNil()
+		assert.ThatSlice(t, set.UIDs).HasLength(3)
+		for _, uid := range cs.UIDs {
+			assert.ThatSlice(t, set.UIDs).Contains(uid)
 		}
 	})
 
