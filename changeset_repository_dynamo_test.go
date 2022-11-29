@@ -87,9 +87,12 @@ func TestDynamoChangesetRepository(t *testing.T) {
 	t.Run("remove from change set", func(t *testing.T) {
 		// remove all even numbers from set
 		evenUIDs := []string{}
+		oddUIDs := []string{}
 		for i, uid := range upsertUIDs {
 			if (i+1)%2 == 0 {
 				evenUIDs = append(evenUIDs, uid)
+			} else {
+				oddUIDs = append(oddUIDs, uid)
 			}
 		}
 		delSet := ChangeSet{
@@ -100,6 +103,19 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		numDeleted, err := repo.Remove(ctx, delSet)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, numDeleted).Equals(len(evenUIDs))
+
+		post, err := repo.ListByInbox(ctx, inbox)
+		assert.ThatError(t, err).IsNil()
+
+		p := post[0]
+		assert.That(t, p.Folder).Equals(folder)
+		assert.That(t, p.Inbox).Equals(inbox)
+		for _, odd := range oddUIDs {
+			assert.ThatSlice(t, p.UIDs).Contains(odd)
+		}
+		for _, even := range evenUIDs {
+			assert.ThatSlice(t, p.UIDs).NotContains(even)
+		}
 	})
 
 }

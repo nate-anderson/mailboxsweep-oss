@@ -46,6 +46,15 @@ func (a *sliceAssertion[E]) Contains(member E) *sliceAssertion[E] {
 	return a
 }
 
+func (a *sliceAssertion[E]) NotContains(member E) *sliceAssertion[E] {
+	for _, m := range a.actual {
+		if m == member {
+			a.failf("Expected slice to contain %v, but it did not (slice %v)", member, a.actual)
+		}
+	}
+	return a
+}
+
 func (a *sliceAssertion[E]) HasLength(n int) *sliceAssertion[E] {
 	if len(a.actual) != n {
 		a.failf("Slice did not have expected length %d (slice %v)", n, a.actual)
