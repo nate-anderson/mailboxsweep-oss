@@ -14,10 +14,3 @@ type ChangeSetRepository[messageIDType MessageID] interface {
 	// should return the number of items removed by the operation
 	Remove(ctx context.Context, inbox, folder string) error
 }
-
-type UpdateOperation uint
-
-const (
-	MarkAsRead UpdateOperation = iota + 1
-	Delete
-)
