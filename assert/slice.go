@@ -49,7 +49,7 @@ func (a *sliceAssertion[E]) Contains(member E) *sliceAssertion[E] {
 func (a *sliceAssertion[E]) NotContains(member E) *sliceAssertion[E] {
 	for _, m := range a.actual {
 		if m == member {
-			a.failf("Expected slice to contain %v, but it did not (slice %v)", member, a.actual)
+			a.failf("Expected slice not to contain %v, but it did (slice %v)", member, a.actual)
 		}
 	}
 	return a
