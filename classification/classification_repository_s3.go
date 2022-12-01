@@ -1,4 +1,4 @@
-package mailboxsweep
+package classification
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"golang.org/x/sync/errgroup"
@@ -214,7 +215,7 @@ func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, in
 
 	_, err = r.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &r.bucketName,
-		Key:    ptr(r.summaryPath(inbox)),
+		Key:    aws.String(r.summaryPath(inbox)),
 		Body:   bytes.NewReader(summaryDocument.Bytes()),
 	})
 

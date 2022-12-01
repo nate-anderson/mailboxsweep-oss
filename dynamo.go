@@ -18,8 +18,8 @@ var (
 )
 
 var (
-	dynamoTimeFormat  = time.RFC3339
-	dynamoUserDataTTL = time.Hour * 24 * 30 // 30 days
+	DynamoTimeFormat  = time.RFC3339
+	DynamoUserDataTTL = time.Hour * 24 * 30 // 30 days
 )
 
 func mergeAttributeValueMaps(maps ...map[string]types.AttributeValue) map[string]types.AttributeValue {

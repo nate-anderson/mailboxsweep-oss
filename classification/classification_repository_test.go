@@ -1,7 +1,8 @@
-package mailboxsweep
+package classification
 
 import (
 	"context"
+	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
 	"time"
@@ -10,11 +11,11 @@ import (
 func TestClassificationRepositoryImplementations(t *testing.T) {
 	ctx := context.Background()
 
-	s3Client, bucket, teardown := setupTestBucket(ctx, t)
+	s3Client, bucket, teardown := mailboxsweep.SetupTestBucket(ctx, t)
 	defer teardown()
 	s3repo := NewS3ClassificationRepository(s3Client, bucket)
 
-	testSender := Sender{
+	testSender := mailboxsweep.Sender{
 		Address:  "admin@example.com",
 		Username: "admin",
 		Domain:   "example.com",
@@ -36,7 +37,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 
 		c1 := NewClassification("none2", "level 2 left")
 		sendDate := time.Now()
-		c1.Messages = append(c1.Messages, Message{
+		c1.Messages = append(c1.Messages, mailboxsweep.Message{
 			ID:       "message2",
 			Subject:  "left child subject",
 			Sender:   testSender,
@@ -45,7 +46,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		c1.Count = 1
 
 		c2 := NewClassification("none3", "level 2 right")
-		c2.Messages = append(c2.Messages, Message{ID: "message3"})
+		c2.Messages = append(c2.Messages, mailboxsweep.Message{ID: "message3"})
 		c2.Count = 1
 
 		c.Children["left"] = c1
