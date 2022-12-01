@@ -11,9 +11,9 @@ import (
 func TestDynamoChangesetRepository(t *testing.T) {
 	cl := setupTestDynamoClient()
 	ctx := context.Background()
-	table, _ := setupDynamoTestTable(ctx, t, cl)
-	// defer teardown()
-	fmt.Println("TABLE: ", table)
+	table, teardown := setupDynamoTestTable(ctx, t, cl)
+	defer teardown()
+
 	repo, err := NewDynamoChangesetRepository(cl, table, 10, imapUIDHash)
 	assert.ThatError(t, err).IsNil()
 
