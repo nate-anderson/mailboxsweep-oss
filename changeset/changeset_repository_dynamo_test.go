@@ -1,20 +1,22 @@
-package mailboxsweep
+package changeset
 
 import (
 	"context"
 	"fmt"
+	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/pkg/imap"
 	"strconv"
 	"testing"
 )
 
 func TestDynamoChangesetRepository(t *testing.T) {
-	cl := setupTestDynamoClient()
+	cl := mailboxsweep.SetupTestDynamoClient()
 	ctx := context.Background()
-	table, teardown := setupDynamoTestTable(ctx, t, cl)
+	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, cl)
 	defer teardown()
 
-	repo, err := NewDynamoChangesetRepository(cl, table, 10, imapUIDHash)
+	repo, err := NewDynamoChangesetRepository(cl, table, 10, imap.ImapUIDHash)
 	assert.ThatError(t, err).IsNil()
 
 	n := 300

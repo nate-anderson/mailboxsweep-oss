@@ -1,13 +1,17 @@
-package mailboxsweep
+package changeset
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"mailboxsweep"
 	"strconv"
 	"strings"
 	"time"
 
+	"mailboxsweep/pkg/imap"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -21,7 +25,7 @@ type DynamoChangesetRepository struct {
 	tableName string
 
 	// used for breaking update sets into pages
-	hashFunc uidHashFunc
+	hashFunc imap.UidHashFunc
 }
 
 // structure used by dynamo
@@ -47,7 +51,7 @@ func NewDynamoChangesetRepository(
 	db *dynamodb.Client,
 	tableName string,
 	uidsPerDocument int,
-	hashFunc uidHashFunc,
+	hashFunc imap.UidHashFunc,
 ) (*DynamoChangesetRepository, error) {
 	if uidsPerDocument <= 0 {
 		return nil, errors.New("uidsPerDocument must be > 0")
@@ -63,9 +67,9 @@ func NewDynamoChangesetRepository(
 func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string, consistentRead bool) ([]ChangeSet, error) {
 	res, err := d.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:              &d.tableName,
-		KeyConditionExpression: ptr("#pk = :email"),
+		KeyConditionExpression: aws.String("#pk = :email"),
 		ExpressionAttributeNames: map[string]string{
-			"#pk": DynamoPK,
+			"#pk": mailboxsweep.DynamoPK,
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":email": &types.AttributeValueMemberS{
@@ -148,7 +152,7 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 // uidsPerDocument value
 func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
-	expires := now.Add(dynamoUserDataTTL).Unix()
+	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
 	partitionMap, err := d.partitionSet(changeSet)
 	if err != nil {
@@ -166,14 +170,14 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 		_, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 			TableName: &d.tableName,
 			Key: map[string]types.AttributeValue{
-				DynamoPK: &types.AttributeValueMemberS{
+				mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 					Value: pk,
 				},
-				DynamoSK: &types.AttributeValueMemberS{
+				mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
 					Value: sk,
 				},
 			},
-			UpdateExpression: ptr(
+			UpdateExpression: aws.String(
 				`SET
 				#inbox = :inbox,
 				#lsi1 = :lsi1,
@@ -187,13 +191,13 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 			),
 			ExpressionAttributeNames: map[string]string{
 				"#inbox":     "inbox",
-				"#lsi1":      DynamoLSI1SK,
+				"#lsi1":      mailboxsweep.DynamoLSI1SK,
 				"#folder":    "folder",
 				"#operation": "operation",
 				"#uids":      "uids",
 				"#created":   "created",
 				"#updated":   "updated",
-				"#expires":   DynamoExpires,
+				"#expires":   mailboxsweep.DynamoExpires,
 			},
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":inbox": &types.AttributeValueMemberS{
@@ -206,10 +210,10 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 					Value: set.UIDs,
 				},
 				":created": &types.AttributeValueMemberS{
-					Value: now.Format(dynamoTimeFormat),
+					Value: now.Format(mailboxsweep.DynamoTimeFormat),
 				},
 				":updated": &types.AttributeValueMemberS{
-					Value: now.Format(dynamoTimeFormat),
+					Value: now.Format(mailboxsweep.DynamoTimeFormat),
 				},
 				":expires": &types.AttributeValueMemberN{
 					Value: strconv.FormatInt(expires, 10),
@@ -235,7 +239,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 
 func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
-	expires := now.Add(dynamoUserDataTTL).Unix()
+	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
 	// track diff
 	oldUIDs := make([]string, 0, len(changeSet.UIDs))
@@ -256,15 +260,15 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 			TableName: &d.tableName,
 			Key: map[string]types.AttributeValue{
-				DynamoPK: &types.AttributeValueMemberS{
+				mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 					Value: pk,
 				},
-				DynamoSK: &types.AttributeValueMemberS{
+				mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
 					Value: sk,
 				},
 			},
-			ConditionExpression: ptr("#pk = :pk AND #sk = :sk"),
-			UpdateExpression: ptr(
+			ConditionExpression: aws.String("#pk = :pk AND #sk = :sk"),
+			UpdateExpression: aws.String(
 				`SET
 				#updated = :updated,
 				#expires = :expires
@@ -272,11 +276,11 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 				DELETE #uids :uids`,
 			),
 			ExpressionAttributeNames: map[string]string{
-				"#pk":      DynamoPK,
-				"#sk":      DynamoSK,
+				"#pk":      mailboxsweep.DynamoPK,
+				"#sk":      mailboxsweep.DynamoSK,
 				"#uids":    "uids",
 				"#updated": "updated",
-				"#expires": DynamoExpires,
+				"#expires": mailboxsweep.DynamoExpires,
 			},
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberS{
@@ -289,7 +293,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 					Value: set.UIDs,
 				},
 				":updated": &types.AttributeValueMemberS{
-					Value: now.Format(dynamoTimeFormat),
+					Value: now.Format(mailboxsweep.DynamoTimeFormat),
 				},
 				":expires": &types.AttributeValueMemberN{
 					Value: strconv.FormatInt(expires, 10),
@@ -327,12 +331,12 @@ func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox,
 	keysRes, err := d.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:              &d.tableName,
 		ConsistentRead:         &consistentRead,
-		KeyConditionExpression: ptr("#pk = :pk AND #lsi1 = :lsi1"),
+		KeyConditionExpression: aws.String("#pk = :pk AND #lsi1 = :lsi1"),
 		ExpressionAttributeNames: map[string]string{
-			"#pk":   DynamoPK,
-			"#lsi1": DynamoLSI1SK,
+			"#pk":   mailboxsweep.DynamoPK,
+			"#lsi1": mailboxsweep.DynamoLSI1SK,
 		},
-		IndexName: &DynamoLSI1,
+		IndexName: &mailboxsweep.DynamoLSI1,
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk": &types.AttributeValueMemberS{
 				Value: d.formatPK(inbox),
@@ -358,10 +362,10 @@ func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox,
 	keys := make([]map[string]types.AttributeValue, len(keyItems))
 	for i, item := range keyItems {
 		keys[i] = map[string]types.AttributeValue{
-			DynamoPK: &types.AttributeValueMemberS{
+			mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 				Value: item.PK,
 			},
-			DynamoSK: &types.AttributeValueMemberS{
+			mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
 				Value: item.SK,
 			},
 		}

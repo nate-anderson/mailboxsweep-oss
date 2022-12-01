@@ -1,8 +1,14 @@
-package mailboxsweep
+package changeset
+
+/*
+changeset defines user-selected sets of message identifiers that mailboxsweep will apply changes to
+*/
 
 import (
 	"errors"
 	"strings"
+
+	"mailboxsweep/pkg/slice"
 )
 
 type MessageID interface {
@@ -45,7 +51,7 @@ func (d ChangeSet) Validate() error {
 		return ErrNoOperation
 	}
 
-	if !contains(allUpdateOperations, d.Operation) {
+	if !slice.Contains(allUpdateOperations, d.Operation) {
 		return ErrInvalidOperation
 	}
 

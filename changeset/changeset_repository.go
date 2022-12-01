@@ -1,4 +1,4 @@
-package mailboxsweep
+package changeset
 
 import (
 	"context"

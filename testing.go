@@ -35,7 +35,7 @@ func randToken(l int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func setupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
+func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
 	endpoint := "http://localhost:4566"
 	region := "us-west-2"
 	token, err := randToken(5)
@@ -147,7 +147,7 @@ func getTestConfig() (testConfig, error) {
 	return tc, nil
 }
 
-func setupTestDynamoClient() *dynamodb.Client {
+func SetupTestDynamoClient() *dynamodb.Client {
 	endpoint := "http://localhost:4566"
 	region := "us-west-2"
 
@@ -172,7 +172,7 @@ func setupTestDynamoClient() *dynamodb.Client {
 	return dynamodb.NewFromConfig(awsCfg)
 }
 
-func setupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func() error) {
+func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func() error) {
 	tok, err := randToken(4)
 	if err != nil {
 		panic(fmt.Errorf("failed to generate table name: %w", err))

@@ -7,7 +7,7 @@ import (
 )
 
 func TestDynamoInboxCredentialRepository(t *testing.T) {
-	cl := setupTestDynamoClient()
+	cl := SetupTestDynamoClient()
 	ctx := context.Background()
 	table, teardown := setupDynamoTestTable(ctx, t, cl)
 	defer teardown()
