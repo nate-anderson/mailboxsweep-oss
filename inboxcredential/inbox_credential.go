@@ -1,4 +1,4 @@
-package mailboxsweep
+package inboxcredential
 
 import (
 	"context"

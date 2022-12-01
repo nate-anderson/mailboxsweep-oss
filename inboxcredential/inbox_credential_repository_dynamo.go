@@ -1,8 +1,9 @@
-package mailboxsweep
+package inboxcredential
 
 import (
 	"context"
 	"fmt"
+	"mailboxsweep"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -31,10 +32,10 @@ func (r DynamoInboxCredentialRepository) formatSK() string {
 
 func (r DynamoInboxCredentialRepository) buildKey(address string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		DynamoPK: &types.AttributeValueMemberS{
+		mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 			Value: r.formatPK(address),
 		},
-		DynamoSK: &types.AttributeValueMemberS{
+		mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
 			Value: r.formatSK(),
 		},
 	}
@@ -46,7 +47,7 @@ func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential 
 		return err
 	}
 
-	item := mergeAttributeValueMaps(
+	item := mailboxsweep.MergeAttributeValueMaps(
 		attrs,
 		r.buildKey(credential.Address),
 	)
@@ -70,7 +71,7 @@ func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, addr
 	}
 
 	if res.Item == nil {
-		return nil, ErrNotFound
+		return nil, mailboxsweep.ErrNotFound
 	}
 
 	ic := InboxCredential{}

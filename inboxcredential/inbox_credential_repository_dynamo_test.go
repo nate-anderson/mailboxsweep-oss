@@ -1,15 +1,16 @@
-package mailboxsweep
+package inboxcredential
 
 import (
 	"context"
+	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
 )
 
 func TestDynamoInboxCredentialRepository(t *testing.T) {
-	cl := SetupTestDynamoClient()
+	cl := mailboxsweep.SetupTestDynamoClient()
 	ctx := context.Background()
-	table, teardown := setupDynamoTestTable(ctx, t, cl)
+	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, cl)
 	defer teardown()
 
 	repo := NewDynamoInboxCredentialRepository(cl, table)
@@ -29,7 +30,7 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 	t.Run("find credential", func(t *testing.T) {
 		t.Run("doesn't exist", func(t *testing.T) {
 			retrieved, err := repo.FindByAddress(ctx, "nobody@me.com")
-			assert.ThatError(t, err).Is(ErrNotFound)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 			assert.That(t, retrieved).Equals(nil)
 		})
 

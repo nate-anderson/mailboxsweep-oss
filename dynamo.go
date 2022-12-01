@@ -22,7 +22,7 @@ var (
 	DynamoUserDataTTL = time.Hour * 24 * 30 // 30 days
 )
 
-func mergeAttributeValueMaps(maps ...map[string]types.AttributeValue) map[string]types.AttributeValue {
+func MergeAttributeValueMaps(maps ...map[string]types.AttributeValue) map[string]types.AttributeValue {
 	res := map[string]types.AttributeValue{}
 	for _, m := range maps {
 		for key, value := range m {
