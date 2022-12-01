@@ -11,9 +11,9 @@ import (
 func TestDynamoChangesetRepository(t *testing.T) {
 	cl := setupTestDynamoClient()
 	ctx := context.Background()
-	table, teardown := setupDynamoTestTable(ctx, t, cl)
-	defer teardown()
-
+	table, _ := setupDynamoTestTable(ctx, t, cl)
+	// defer teardown()
+	fmt.Println("TABLE: ", table)
 	repo, err := NewDynamoChangesetRepository(cl, table, 10, imapUIDHash)
 	assert.ThatError(t, err).IsNil()
 
@@ -31,9 +31,10 @@ func TestDynamoChangesetRepository(t *testing.T) {
 	t.Run("append to change set", func(t *testing.T) {
 		t.Run("insert new", func(t *testing.T) {
 			cs := ChangeSet{
-				Inbox:  inbox,
-				Folder: folder,
-				UIDs:   upsertUIDs,
+				Inbox:     inbox,
+				Folder:    folder,
+				UIDs:      upsertUIDs,
+				Operation: Delete,
 			}
 			n, err := repo.Append(ctx, cs)
 			assert.
@@ -46,9 +47,10 @@ func TestDynamoChangesetRepository(t *testing.T) {
 
 		t.Run("append to existing page", func(t *testing.T) {
 			cs := ChangeSet{
-				Inbox:  inbox,
-				Folder: folder,
-				UIDs:   append(upsertUIDs, appendUID),
+				Inbox:     inbox,
+				Folder:    folder,
+				UIDs:      []string{appendUID},
+				Operation: Delete,
 			}
 			n, err := repo.Append(ctx, cs)
 			assert.
@@ -62,6 +64,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(retrieved) == 1)
 			assert.ThatSlice(t, retrieved[0].UIDs).Contains(appendUID)
+			assert.That(t, retrieved[0].Operation).Equals(Delete)
 		})
 	})
 
@@ -96,9 +99,10 @@ func TestDynamoChangesetRepository(t *testing.T) {
 			}
 		}
 		delSet := ChangeSet{
-			Inbox:  inbox,
-			Folder: folder,
-			UIDs:   evenUIDs,
+			Inbox:     inbox,
+			Folder:    folder,
+			UIDs:      evenUIDs,
+			Operation: Delete,
 		}
 		numDeleted, err := repo.Remove(ctx, delSet)
 		assert.ThatError(t, err).IsNil()
@@ -123,20 +127,22 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		// store some
 		randFolder := "bs_folder_123"
 		cs := ChangeSet{
-			Inbox:  inbox,
-			Folder: randFolder,
-			UIDs:   []string{"19", "66", "1056"},
+			Inbox:     inbox,
+			Folder:    randFolder,
+			UIDs:      []string{"19", "66", "1056"},
+			Operation: MarkRead,
 		}
 		n, err := repo.Append(ctx, cs)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, n).Equals(len(cs.UIDs))
 
-		set, err := repo.FindByInboxFolder(ctx, inbox, randFolder, false)
+		sets, err := repo.FindByInboxFolder(ctx, inbox, randFolder, false)
 		assert.ThatError(t, err).IsNil()
-		assert.ThatSlice(t, set.UIDs).HasLength(3)
+		assert.ThatSlice(t, sets[MarkRead].UIDs).HasLength(3)
 		for _, uid := range cs.UIDs {
-			assert.ThatSlice(t, set.UIDs).Contains(uid)
+			assert.ThatSlice(t, sets[MarkRead].UIDs).Contains(uid)
 		}
+		assert.That(t, sets[MarkRead].Operation).Equals(MarkRead)
 	})
 
 }

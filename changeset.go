@@ -22,7 +22,7 @@ type ChangeSet struct {
 	Inbox  string `dynamodbav:"inbox"`
 	Folder string `dynamodbav:"folder"`
 	// is this a "mark-read" selection, or a "delete" selection?
-	Operation UpdateOperation `dynamodbav:"update_operation"`
+	Operation UpdateOperation `dynamodbav:"operation"`
 	// DeletionSet must be a set of specific message IDs (UIDs for IMAP). This is the only way to identify
 	// messages across folders and sessions.
 	UIDs []string `dynamodbav:"uids"`

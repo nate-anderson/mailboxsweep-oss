@@ -103,11 +103,11 @@ func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string
 }
 
 func (d DynamoChangesetRepository) formatPK(inbox string) string {
-	return "INBOX#" + strings.TrimSpace(inbox)
+	return "CHANGESET#" + strings.TrimSpace(inbox)
 }
 
-func (d DynamoChangesetRepository) formatSK(folder string, partitionID uint64) string {
-	return fmt.Sprintf("FOLDER#%s#%d", strings.TrimSpace(folder), partitionID)
+func (d DynamoChangesetRepository) formatSK(folder string, operation UpdateOperation, partitionID uint64) string {
+	return fmt.Sprintf("FOLDER#%s#%d#%s", strings.TrimSpace(folder), partitionID, operation)
 }
 
 func (d DynamoChangesetRepository) formatLSI1(folder string) string {
@@ -136,7 +136,7 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 
 	res := make(map[string]ChangeSet)
 	for partitionID, uids := range partitionMap {
-		sk := d.formatSK(changeSet.Folder, partitionID)
+		sk := d.formatSK(changeSet.Folder, changeSet.Operation, partitionID)
 		c := changeSet
 		c.UIDs = uids
 		res[sk] = c
@@ -144,30 +144,11 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 	return res, nil
 }
 
-func (d DynamoChangesetRepository) buildKey(inbox, folder string, uid string) (map[string]types.AttributeValue, error) {
-	partitionID, err := d.partitionID(uid)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]types.AttributeValue{
-		DynamoPK: &types.AttributeValueMemberS{
-			Value: d.formatPK(inbox),
-		},
-		DynamoSK: &types.AttributeValueMemberS{
-			Value: d.formatSK(folder, partitionID),
-		},
-	}, nil
-}
-
 // Append to a changeset, splitting it into pages if it contains more UIDs than the configured
 // uidsPerDocument value
 func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
 	expires := now.Add(dynamoUserDataTTL).Unix()
-
-	// track diff
-	oldUIDs := make([]string, 0, len(changeSet.UIDs))
 
 	partitionMap, err := d.partitionSet(changeSet)
 	if err != nil {
@@ -182,7 +163,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 	// if performance is an issue, consider a Transaction
 	// or doing this concurrently in an errgroup
 	for sk, set := range partitionMap {
-		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		_, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 			TableName: &d.tableName,
 			Key: map[string]types.AttributeValue{
 				DynamoPK: &types.AttributeValueMemberS{
@@ -197,6 +178,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				#inbox = :inbox,
 				#lsi1 = :lsi1,
 				#folder = :folder,
+				#operation = :operation,
 				#created = if_not_exists(created, :created),
 				#updated = :updated,
 				#expires = :expires
@@ -204,13 +186,14 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				ADD #uids :uids`,
 			),
 			ExpressionAttributeNames: map[string]string{
-				"#inbox":   "inbox",
-				"#lsi1":    DynamoLSI1SK,
-				"#folder":  "folder",
-				"#uids":    "uids",
-				"#created": "created",
-				"#updated": "updated",
-				"#expires": DynamoExpires,
+				"#inbox":     "inbox",
+				"#lsi1":      DynamoLSI1SK,
+				"#folder":    "folder",
+				"#operation": "operation",
+				"#uids":      "uids",
+				"#created":   "created",
+				"#updated":   "updated",
+				"#expires":   DynamoExpires,
 			},
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":inbox": &types.AttributeValueMemberS{
@@ -234,6 +217,9 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				":lsi1": &types.AttributeValueMemberS{
 					Value: d.formatLSI1(changeSet.Folder),
 				},
+				":operation": &types.AttributeValueMemberS{
+					Value: string(changeSet.Operation),
+				},
 			},
 			// this function returns the number of UIDs added,
 			// fetching the old ones allows this calculation
@@ -242,15 +228,9 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 		if err != nil {
 			return 0, fmt.Errorf("UpdateItem failed: %w", err)
 		}
-
-		oldList := []string{}
-		if err = attributevalue.Unmarshal(res.Attributes["uids"], &oldList); err != nil {
-			return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
-		}
-		oldUIDs = append(oldUIDs, oldList...)
 	}
 
-	return len(changeSet.UIDs) - len(oldUIDs), nil
+	return len(changeSet.UIDs), nil
 }
 
 func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
@@ -283,7 +263,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 					Value: sk,
 				},
 			},
-			ConditionExpression: ptr("#pk = :pk"),
+			ConditionExpression: ptr("#pk = :pk AND #sk = :sk"),
 			UpdateExpression: ptr(
 				`SET
 				#updated = :updated,
@@ -293,6 +273,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 			),
 			ExpressionAttributeNames: map[string]string{
 				"#pk":      DynamoPK,
+				"#sk":      DynamoSK,
 				"#uids":    "uids",
 				"#updated": "updated",
 				"#expires": DynamoExpires,
@@ -300,6 +281,9 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberS{
 					Value: pk,
+				},
+				":sk": &types.AttributeValueMemberS{
+					Value: sk,
 				},
 				":uids": &types.AttributeValueMemberSS{
 					Value: set.UIDs,
@@ -339,7 +323,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 	return diff, nil
 }
 
-func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox, folder string, consistentRead bool) (*ChangeSet, error) {
+func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error) {
 	keysRes, err := d.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:              &d.tableName,
 		ConsistentRead:         &consistentRead,
@@ -398,13 +382,16 @@ func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox,
 	if err = attributevalue.UnmarshalListOfMaps(itemsRes.Responses[d.tableName], &items); err != nil {
 		return nil, fmt.Errorf("failed to get gets for folder items: %w", err)
 	}
-	first := items[0].ChangeSet
-	cs := ChangeSet{
-		Inbox:  first.Inbox,
-		Folder: first.Folder,
-	}
+
+	operationChangeSets := map[UpdateOperation]ChangeSet{}
 	for _, item := range items {
-		cs.UIDs = append(cs.UIDs, item.UIDs...)
+		if existing, ok := operationChangeSets[item.Operation]; ok {
+			existing.UIDs = append(existing.UIDs, item.ChangeSet.UIDs...)
+			operationChangeSets[item.Operation] = existing
+		} else {
+			operationChangeSets[item.Operation] = item.ChangeSet
+		}
 	}
-	return &cs, nil
+
+	return operationChangeSets, nil
 }
