@@ -1,22 +1,24 @@
-package mailboxsweep
+package classification
 
 import (
 	"context"
 	"fmt"
+	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/pkg/syncmap"
 )
 
 // A message must have exactly one value for every dimension it is classified by
 // example: { "sender": "nate@gmail.com" }, { "sender_domain" : "costco.com" }
 
-type Organizer[messageIDType MessageID] struct {
-	inbox       Inbox[messageIDType]
+type Organizer[messageIDType changeset.MessageID] struct {
+	inbox       mailboxsweep.Inbox[messageIDType]
 	repo        ClassificationRepository
-	folders     []Folder[messageIDType]
+	folders     []mailboxsweep.Folder[messageIDType]
 	classifiers []Classifier
 }
 
-func NewOrganizer[messageIDType MessageID](inbox Inbox[messageIDType], repo ClassificationRepository, folders []Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
+func NewOrganizer[messageIDType changeset.MessageID](inbox mailboxsweep.Inbox[messageIDType], repo ClassificationRepository, folders []mailboxsweep.Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
 	return &Organizer[messageIDType]{
 		inbox:       inbox,
 		repo:        repo,
@@ -44,7 +46,7 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 	}
 	selectedFolderValidityKeys := map[string]uint32{}
 
-	m := make(chan Message)
+	m := make(chan mailboxsweep.Message)
 	e := make(chan error)
 	for _, f := range o.folders {
 		name := f.Name()
@@ -70,7 +72,7 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 	return err
 }
 
-func (o Organizer[messageIDType]) organizeMessage(message Message, root *SafeClassification) {
+func (o Organizer[messageIDType]) organizeMessage(message mailboxsweep.Message, root *SafeClassification) {
 	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {
