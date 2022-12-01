@@ -1,6 +1,10 @@
 package mailboxsweep
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 var (
 	DynamoPK      string = "pk"
@@ -17,3 +21,13 @@ var (
 	dynamoTimeFormat  = time.RFC3339
 	dynamoUserDataTTL = time.Hour * 24 * 30 // 30 days
 )
+
+func mergeAttributeValueMaps(maps ...map[string]types.AttributeValue) map[string]types.AttributeValue {
+	res := map[string]types.AttributeValue{}
+	for _, m := range maps {
+		for key, value := range m {
+			res[key] = value
+		}
+	}
+	return res
+}
