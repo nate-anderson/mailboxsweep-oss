@@ -1,4 +1,4 @@
-package mailboxsweep
+package inbox
 
 import (
 	"mailboxsweep/assert"

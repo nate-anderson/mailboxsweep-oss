@@ -4,6 +4,7 @@ import (
 	"context"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/inbox"
 	"testing"
 	"time"
 )
@@ -15,14 +16,14 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 	defer teardown()
 	s3repo := NewS3ClassificationRepository(s3Client, bucket)
 
-	testSender := mailboxsweep.Sender{
+	testSender := inbox.Sender{
 		Address:  "admin@example.com",
 		Username: "admin",
 		Domain:   "example.com",
 		Name:     "Administrator",
 	}
 	validityKeys := map[string]uint32{"INBOX": 1}
-	inbox := "admin@example.com"
+	address := "admin@example.com"
 
 	fileRepo := NewFileClassificationRepository(t.TempDir())
 
@@ -37,7 +38,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 
 		c1 := NewClassification("none2", "level 2 left")
 		sendDate := time.Now()
-		c1.Messages = append(c1.Messages, mailboxsweep.Message{
+		c1.Messages = append(c1.Messages, inbox.Message{
 			ID:       "message2",
 			Subject:  "left child subject",
 			Sender:   testSender,
@@ -46,20 +47,20 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		c1.Count = 1
 
 		c2 := NewClassification("none3", "level 2 right")
-		c2.Messages = append(c2.Messages, mailboxsweep.Message{ID: "message3"})
+		c2.Messages = append(c2.Messages, inbox.Message{ID: "message3"})
 		c2.Count = 1
 
 		c.Children["left"] = c1
 		c.Children["right"] = c2
 
 		t.Run("store", func(t *testing.T) {
-			err := repo.Store(ctx, inbox, &c, validityKeys)
+			err := repo.Store(ctx, address, &c, validityKeys)
 			assert.ThatError(t, err).IsNil()
 		})
 
 		t.Run("fetch summary", func(t *testing.T) {
 			// t.Skip()
-			classification, err := repo.FetchSummary(ctx, inbox)
+			classification, err := repo.FetchSummary(ctx, address)
 			assert.ThatError(t, err).IsNil()
 			assert.
 				That(t, classification).
@@ -78,7 +79,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		})
 
 		t.Run("fetch leaf", func(t *testing.T) {
-			classification, err := repo.FetchLeaf(ctx, inbox, []string{"left"})
+			classification, err := repo.FetchLeaf(ctx, address, []string{"left"})
 			assert.
 				ThatError(t, err).
 				SoThat(repoType + " returns leaf").

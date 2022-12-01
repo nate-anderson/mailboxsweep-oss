@@ -2,16 +2,16 @@ package classification
 
 import (
 	"fmt"
-	"mailboxsweep"
+	"mailboxsweep/inbox"
 	"strings"
 	"time"
 )
 
 type Classifier interface {
 	// the object key/path entry to use
-	Key(m mailboxsweep.Message) string
+	Key(m inbox.Message) string
 	// the string to display to users
-	Classify(m mailboxsweep.Message) string
+	Classify(m inbox.Message) string
 	// what is this thing classifying by?
 	Dimension() string
 }
@@ -26,11 +26,11 @@ func NewSenderDomainClassifier() SenderDomainClassifier {
 	return SenderDomainClassifier{}
 }
 
-func (c SenderDomainClassifier) Key(m mailboxsweep.Message) string {
+func (c SenderDomainClassifier) Key(m inbox.Message) string {
 	return fmt.Sprintf("domain=%s", m.Sender.Domain)
 }
 
-func (c SenderDomainClassifier) Classify(m mailboxsweep.Message) string {
+func (c SenderDomainClassifier) Classify(m inbox.Message) string {
 	return m.Sender.Domain
 }
 
@@ -49,7 +49,7 @@ func NewSenderUsernameClassifier() SenderUsernameClassifier {
 	return SenderUsernameClassifier{}
 }
 
-func (c SenderUsernameClassifier) Key(m mailboxsweep.Message) string {
+func (c SenderUsernameClassifier) Key(m inbox.Message) string {
 	return "sender=" + m.Sender.Address
 }
 
@@ -65,7 +65,7 @@ func (c SenderUsernameClassifier) formatSender(name, address string) string {
 	return str
 }
 
-func (c SenderUsernameClassifier) Classify(m mailboxsweep.Message) string {
+func (c SenderUsernameClassifier) Classify(m inbox.Message) string {
 	return c.formatSender(m.Sender.Name, m.Sender.Address)
 }
 
@@ -91,14 +91,14 @@ func NewSendDateClassifier(cutoff time.Time) SendDateClassifier {
 	}
 }
 
-func (s SendDateClassifier) Key(m mailboxsweep.Message) string {
+func (s SendDateClassifier) Key(m inbox.Message) string {
 	if m.SendDate.Before(s.cutoff) {
 		return "before_" + s.formattedCutoff
 	}
 	return "on_or_after_" + s.formattedCutoff
 }
 
-func (s SendDateClassifier) Classify(m mailboxsweep.Message) string {
+func (s SendDateClassifier) Classify(m inbox.Message) string {
 	if m.SendDate.Before(s.cutoff) {
 		return "Before " + s.formattedCutoff
 	}

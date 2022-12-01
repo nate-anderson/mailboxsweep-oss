@@ -98,7 +98,7 @@ type testSMTPSender struct {
 	auth smtp.Auth
 }
 
-func newTestSMTPSender(conf testConfig) *testSMTPSender {
+func NewTestSMTPSender(conf testConfig) *testSMTPSender {
 	addr := net.JoinHostPort(conf.SMTPHost, strconv.Itoa(conf.SMTPPort))
 	auth := smtp.PlainAuth("", conf.Address, conf.Password, conf.SMTPHost)
 	return &testSMTPSender{
@@ -121,7 +121,7 @@ type testConfig struct {
 	SMTPPort int
 }
 
-func getTestConfig() (testConfig, error) {
+func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
 	if err := godotenv.Load("test.env"); err != nil {
 		return tc, err

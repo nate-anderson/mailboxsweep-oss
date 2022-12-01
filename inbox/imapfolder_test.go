@@ -1,13 +1,14 @@
-package mailboxsweep
+package inbox
 
 import (
 	"fmt"
+	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
 )
 
 func TestIMAPFolder(t *testing.T) {
-	testConf, err := getTestConfig()
+	testConf, err := mailboxsweep.GetTestConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +30,7 @@ func TestIMAPFolder(t *testing.T) {
 
 	n := 5
 
-	sender := newTestSMTPSender(testConf)
+	sender := mailboxsweep.NewTestSMTPSender(testConf)
 
 	for i := 0; i < n; i++ {
 		subj := fmt.Sprintf("SUBJ %d", i)

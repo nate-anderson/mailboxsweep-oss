@@ -1,20 +1,20 @@
 package classification
 
 import (
-	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/inbox"
 	"testing"
 )
 
 func TestStripMessages(t *testing.T) {
 	c := NewClassification("none", "level 1")
-	c.Messages = append(c.Messages, mailboxsweep.Message{ID: "message1"})
+	c.Messages = append(c.Messages, inbox.Message{ID: "message1"})
 
 	c1 := NewClassification("none", "level 2 left")
-	c1.Messages = append(c1.Messages, mailboxsweep.Message{ID: "message2"})
+	c1.Messages = append(c1.Messages, inbox.Message{ID: "message2"})
 
 	c2 := NewClassification("none", "level 2 right")
-	c2.Messages = append(c2.Messages, mailboxsweep.Message{ID: "message3"})
+	c2.Messages = append(c2.Messages, inbox.Message{ID: "message3"})
 
 	c.Children["left"] = c1
 	c.Children["right"] = c2
@@ -36,17 +36,17 @@ func TestStripMessages(t *testing.T) {
 
 func TestLeafClassifications(t *testing.T) {
 	c := NewClassification("none", "level 1")
-	c.Messages = append(c.Messages, mailboxsweep.Message{ID: "message1"})
+	c.Messages = append(c.Messages, inbox.Message{ID: "message1"})
 
 	c1 := NewClassification("none", "level 2")
 
 	c2 := NewClassification("none", "level 3")
 
 	c3 := NewClassification("none", "level 4 left")
-	c3.Messages = append(c3.Messages, mailboxsweep.Message{ID: "message2"})
+	c3.Messages = append(c3.Messages, inbox.Message{ID: "message2"})
 
 	c4 := NewClassification("none", "level 4 right")
-	c4.Messages = append(c4.Messages, mailboxsweep.Message{ID: "message3"})
+	c4.Messages = append(c4.Messages, inbox.Message{ID: "message3"})
 
 	c.Children["child"] = c1
 	c1.Children["child"] = c2

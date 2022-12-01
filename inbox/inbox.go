@@ -1,7 +1,9 @@
-package mailboxsweep
+package inbox
+
+import "mailboxsweep/changeset"
 
 // Inbox is an authenticated mail account
-type Inbox[messageIDType MessageID] interface {
+type Inbox[messageIDType changeset.MessageID] interface {
 	Name() string
 	Folders() ([]string, error)
 	Folder(name string) (Folder[messageIDType], error)

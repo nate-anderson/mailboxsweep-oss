@@ -1,7 +1,8 @@
-package mailboxsweep
+package inbox
 
 import (
 	"fmt"
+	"mailboxsweep/pkg/slice"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
@@ -32,7 +33,7 @@ func (i IMAPInbox) Folders() ([]string, error) {
 		case m := <-mailboxChan:
 			// don't include noselect folders here,
 			// there's no use for them in this application
-			if m != nil && !contains(m.Attributes, attributeNoSelect) {
+			if m != nil && !slice.Contains(m.Attributes, attributeNoSelect) {
 				mailboxes = append(mailboxes, *m)
 			}
 		case err := <-done:

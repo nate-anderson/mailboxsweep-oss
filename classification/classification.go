@@ -3,7 +3,7 @@ package classification
 import (
 	"context"
 	"fmt"
-	"mailboxsweep"
+	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
 	"path/filepath"
 	"time"
@@ -14,7 +14,7 @@ import (
 type Classification struct {
 	Dimension string                    `json:"dimension"`
 	Label     string                    `json:"label"`
-	Messages  []mailboxsweep.Message    `json:"messages,omitempty"`
+	Messages  []inbox.Message           `json:"messages,omitempty"`
 	Count     uint                      `json:"count"`
 	Children  map[string]Classification `json:"children,omitempty"`
 }
@@ -150,7 +150,7 @@ func (c *Classification) TreeString() string {
 type SafeClassification struct {
 	Dimension string
 	Label     string
-	Messages  []mailboxsweep.Message
+	Messages  []inbox.Message
 	Count     uint
 	Children  syncmap.Map[string, *SafeClassification]
 }
