@@ -1,0 +1,78 @@
+openapi: 3.0.0
+info:
+  version: 0.0.1
+  title: Mailboxsweep Public API
+
+components:
+  schemas:
+    CreateCredentialRequest:
+      type: object
+      required:
+        - address
+        - password
+      properties:
+        address:
+          type: string
+        password:
+          type: string
+
+    CreateCredentialResponse:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+
+paths:
+  /credential:
+    post:
+      description: Add credentials to access an inbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCredentialRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCredentialResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+    get:
+      description: Get the currently in-use credential
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Not found - probably not created
+    
+  /inbox/classification:
+    post:
+      description: Begin classifying inbox messages
+      responses:
+        '202':
+          description: Success, processing has been enqueued
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+    get:
+      description: Get the tree of inbox classifications
+      responses:
+        '200':
+          description: Success
+        '202':
+          description: Classification still pending
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error

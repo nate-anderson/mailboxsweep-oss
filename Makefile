@@ -24,3 +24,11 @@ greenmail_fetch_spec:
 .PHONY: greenmail_gen_client
 greenmail_gen_client:
 	oapi-codegen -config $(GREENMAIL_OAPI_CODEGEN_CONFIG_PATH) $(GREENMAIL_SPEC_LOCAL_PATH)
+
+# HTTP API server codegen stuff
+HTTP_SERVER_SPEC_PATH = openapi.yml
+HTTP_SERVER_GEN_PATH = http_codegen.yml
+
+.PHONY: http_scaffold
+http_scaffold:
+	oapi-codegen -generate chi-server,types -config $(HTTP_SERVER_GEN_PATH) $(HTTP_SERVER_SPEC_PATH)

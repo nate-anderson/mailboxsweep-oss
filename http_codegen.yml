@@ -1,0 +1,2 @@
+package: httpserver
+output: httpserver/server.gen.go
