@@ -1,9 +1,7 @@
 package inbox
 
-import "mailboxsweep/changeset"
-
 // Provider is an email service provider
-type Provider[messageIDType changeset.MessageID] interface {
+type Provider interface {
 	Connect() error
-	Login(username, password string) (Inbox[messageIDType], error)
+	Login(username, password string) (Inbox, error)
 }

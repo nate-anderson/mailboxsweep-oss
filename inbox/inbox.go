@@ -1,11 +1,9 @@
 package inbox
 
-import "mailboxsweep/changeset"
-
 // Inbox is an authenticated mail account
-type Inbox[messageIDType changeset.MessageID] interface {
+type Inbox interface {
 	Name() string
 	Folders() ([]string, error)
-	Folder(name string) (Folder[messageIDType], error)
+	Folder(name string) (Folder, error)
 	ValidityKeys() (map[string]uint32, error)
 }

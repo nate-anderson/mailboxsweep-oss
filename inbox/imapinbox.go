@@ -53,7 +53,7 @@ BuildRet:
 	return mailboxNames, nil
 }
 
-func (i *IMAPInbox) Folder(mailbox string) (Folder[uint32], error) {
+func (i *IMAPInbox) Folder(mailbox string) (Folder, error) {
 	mbox, err := i.client.Select(mailbox, false)
 	if err != nil {
 		return nil, err
