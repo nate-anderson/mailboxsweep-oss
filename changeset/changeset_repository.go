@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type ChangeSetRepository[messageIDType MessageID] interface {
+type ChangeSetRepository interface {
 	ListByInbox(ctx context.Context, inbox string, consistentRead bool) ([]ChangeSet, error)
 	FindByInboxFolder(ctx context.Context, inbox, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error)
 	// create a deletion set for this inbox/folder pair if none exists

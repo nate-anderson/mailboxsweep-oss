@@ -11,10 +11,6 @@ import (
 	"mailboxsweep/pkg/slice"
 )
 
-type MessageID interface {
-	uint32 | string
-}
-
 type UpdateOperation string
 
 const (
