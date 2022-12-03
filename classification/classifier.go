@@ -14,6 +14,7 @@ type Classifier interface {
 	Classify(m inbox.Message) string
 	// what is this thing classifying by?
 	Dimension() string
+	Serializeable() SerializableClassifier
 }
 
 /*
@@ -36,6 +37,15 @@ func (c SenderDomainClassifier) Classify(m inbox.Message) string {
 
 func (c SenderDomainClassifier) Dimension() string {
 	return "sender_domain"
+}
+
+const typeKeySenderDomain = "SENDER_DOMAIN"
+
+func (c SenderDomainClassifier) Serializeable() SerializableClassifier {
+	return SerializableClassifier{
+		TypeKey:   typeKeySenderDomain,
+		InitValue: "",
+	}
 }
 
 /*
@@ -71,6 +81,15 @@ func (c SenderUsernameClassifier) Classify(m inbox.Message) string {
 
 func (c SenderUsernameClassifier) Dimension() string {
 	return "sender"
+}
+
+const typeKeySenderUsername = "SENDER_USERNAME"
+
+func (c SenderUsernameClassifier) Serializeable() SerializableClassifier {
+	return SerializableClassifier{
+		TypeKey:   typeKeySenderUsername,
+		InitValue: "",
+	}
 }
 
 /*
@@ -109,8 +128,35 @@ func (s SendDateClassifier) Dimension() string {
 	return fmt.Sprintf("send_date_before_or_after_%s", s.formattedCutoff)
 }
 
-var (
-	_ Classifier = SenderDomainClassifier{}
-	_ Classifier = SenderUsernameClassifier{}
-	_ Classifier = SendDateClassifier{}
-)
+const typeKeySendDate = "SEND_DATE"
+
+func (s SendDateClassifier) Serializeable() SerializableClassifier {
+	return SerializableClassifier{
+		TypeKey:   typeKeySendDate,
+		InitValue: s.formattedCutoff,
+	}
+}
+
+// Classifier serialization
+
+type SerializableClassifier struct {
+	TypeKey   string `json:"type_key"`
+	InitValue string `json:"init_value"`
+}
+
+func (s SerializableClassifier) Classifier() (Classifier, error) {
+	switch s.TypeKey {
+	case typeKeySenderDomain:
+		return NewSenderDomainClassifier(), nil
+	case typeKeySenderUsername:
+		return NewSenderUsernameClassifier(), nil
+	case typeKeySendDate:
+		cutoff, err := time.Parse(cutoffDateFormat, s.InitValue)
+		if err != nil {
+			return nil, fmt.Errorf("invalid cutoff date to initialize send date classifier '%s'", s.InitValue)
+		}
+		return NewSendDateClassifier(cutoff), nil
+	default:
+		return nil, fmt.Errorf("unknown type key for serialized classifier '%s'", s.TypeKey)
+	}
+}
