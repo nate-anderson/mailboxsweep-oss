@@ -3,7 +3,6 @@ package classification
 import (
 	"context"
 	"fmt"
-	"mailboxsweep/changeset"
 	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
 )
@@ -11,15 +10,15 @@ import (
 // A message must have exactly one value for every dimension it is classified by
 // example: { "sender": "nate@gmail.com" }, { "sender_domain" : "costco.com" }
 
-type Organizer[messageIDType changeset.MessageID] struct {
-	inbox       inbox.Inbox[messageIDType]
+type Organizer struct {
+	inbox       inbox.Inbox
 	repo        ClassificationRepository
-	folders     []inbox.Folder[messageIDType]
+	folders     []string
 	classifiers []Classifier
 }
 
-func NewOrganizer[messageIDType changeset.MessageID](inbox inbox.Inbox[messageIDType], repo ClassificationRepository, folders []inbox.Folder[messageIDType], classifiers []Classifier) *Organizer[messageIDType] {
-	return &Organizer[messageIDType]{
+func NewOrganizer(inbox inbox.Inbox, repo ClassificationRepository, folders []string, classifiers []Classifier) *Organizer {
+	return &Organizer{
 		inbox:       inbox,
 		repo:        repo,
 		folders:     folders,
@@ -27,7 +26,7 @@ func NewOrganizer[messageIDType changeset.MessageID](inbox inbox.Inbox[messageID
 	}
 }
 
-func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
+func (o Organizer) Organize(ctx context.Context) error {
 	/*
 		This function should accept a chan Message and process each message as it is read,
 		traversing the tree and calling the classifier functions one at a time.
@@ -48,8 +47,11 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 
 	m := make(chan inbox.Message)
 	e := make(chan error)
-	for _, f := range o.folders {
-		name := f.Name()
+	for _, name := range o.folders {
+		f, err := o.inbox.Folder(name)
+		if err != nil {
+			return err
+		}
 		selectedFolderValidityKeys[name] = validityKeys[name]
 
 		go func() {
@@ -72,7 +74,7 @@ func (o Organizer[messageIDType]) Organize(ctx context.Context) error {
 	return err
 }
 
-func (o Organizer[messageIDType]) organizeMessage(message inbox.Message, root *SafeClassification) {
+func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassification) {
 	node := root
 	path := []string{}
 	for _, classifier := range o.classifiers {

@@ -191,7 +191,7 @@ var classifyMessagesCmd = &cobra.Command{
 		log.Printf("Messages: %d\n", count)
 
 		repo := classification.NewFileClassificationRepository("testdata")
-		organizer := classification.NewOrganizer(mailbox, repo, []inbox.Folder[uint32]{folder}, []classification.Classifier{
+		organizer := classification.NewOrganizer(mailbox, repo, []string{folderName}, []classification.Classifier{
 			classification.NewSenderDomainClassifier(),
 			classification.NewSenderUsernameClassifier(),
 		})
