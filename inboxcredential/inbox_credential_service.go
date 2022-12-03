@@ -10,6 +10,7 @@ type CreateCredentialInput struct {
 type Service interface {
 	StoreCredential(ctx context.Context, input CreateCredentialInput) (address string, err error)
 	FindCredential(ctx context.Context, address string) (*InboxCredential, error)
+	DecryptCredential(ctx context.Context, cred *InboxCredential) (password string, err error)
 	DeleteCredential(ctx context.Context, address string) error
 }
 
@@ -38,4 +39,9 @@ func (s DefaultService) FindCredential(ctx context.Context, address string) (*In
 
 func (s DefaultService) DeleteCredential(ctx context.Context, address string) error {
 	return s.repo.DeleteByAddress(ctx, address)
+}
+
+func (s DefaultService) DecryptCredential(ctx context.Context, cred *InboxCredential) (password string, err error) {
+	pass, err := cred.decryptPassword(s.cipherKey)
+	return pass, err
 }

@@ -22,7 +22,7 @@ func TestInboxCredential(t *testing.T) {
 	})
 
 	t.Run("decrypt", func(t *testing.T) {
-		pass, err := i.DecryptPassword(cipherKey)
+		pass, err := i.decryptPassword(cipherKey)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, pass).Equals(password)
 	})

@@ -41,7 +41,7 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 			assert.That(t, *retrieved.Nonce).Equals(*cred.Nonce)
 			assert.That(t, retrieved.Password).NotEqual("")
 
-			decrypted, err := retrieved.DecryptPassword(cipherKey)
+			decrypted, err := retrieved.decryptPassword(cipherKey)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, decrypted).Equals(pass)
 		})
@@ -60,7 +60,7 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 		assert.That(t, *retrieved.Nonce).Equals(*cred2.Nonce)
 		assert.That(t, retrieved.Password).NotEqual("")
 
-		decrypted, err := retrieved.DecryptPassword(cipherKey)
+		decrypted, err := retrieved.decryptPassword(cipherKey)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, decrypted).Equals(pass2)
 	})

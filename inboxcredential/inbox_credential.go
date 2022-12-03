@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"mailboxsweep"
+	"time"
 )
 
 // InboxCredential represents the user-provided login information for an inbox
@@ -16,7 +18,9 @@ type InboxCredential struct {
 	// base64-encoded byte array
 	Nonce *string `dynamodbav:"nonce"`
 	// base64-encoded ciphertext
-	Password string `dynamodbav:"password"`
+	Password string    `dynamodbav:"password"`
+	Created  time.Time `dynamodbav:"created"`
+	Expires  int64     `dynamodbav:"expire_at"`
 }
 
 func NewInboxCredential(address, password string, cipherKey []byte) (*InboxCredential, error) {
@@ -38,14 +42,17 @@ func NewInboxCredential(address, password string, cipherKey []byte) (*InboxCrede
 	var b []byte
 	b = encryptor.Seal(b, nonce, []byte(password), nil)
 	encodedNonce := base64.RawStdEncoding.EncodeToString(nonce)
+	now := time.Now()
 	return &InboxCredential{
 		Address:  address,
 		Password: base64.RawStdEncoding.EncodeToString(b),
 		Nonce:    &encodedNonce,
+		Created:  now,
+		Expires:  now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
 	}, nil
 }
 
-func (i InboxCredential) DecryptPassword(cipherKey []byte) (string, error) {
+func (i InboxCredential) decryptPassword(cipherKey []byte) (string, error) {
 	if i.Nonce == nil {
 		return i.Password, nil
 	}
