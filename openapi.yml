@@ -5,6 +5,18 @@ info:
 
 components:
   schemas:
+    Classifier:
+      type: object
+      required:
+        - typeKey
+      properties:
+        typeKey:
+          type: string
+          description: the type key of the classifier
+        initValue:
+          type: string
+          description: the optional initializer for thie classifier
+
     CreateCredentialRequest:
       type: object
       required:
@@ -22,6 +34,61 @@ components:
         - address
       properties:
         address:
+          type: string
+    
+    GetCredentialResponse:
+      type: object
+      required:
+        - address
+        - created
+        - expires
+      properties:
+        address:
+          type: string
+        created:
+          type: string
+        expires:
+          type: string
+
+    GetFoldersResponse:
+      type: object
+      required:
+        - address
+        - folders
+      properties:
+        address:
+          type: string
+        folders:
+          type: array
+          items:
+            type: string
+    
+    StartInboxClassifyRequest:
+      type: object
+      required:
+        - address
+        - folders
+        - classifiers
+      properties:
+        address:
+          type: string
+        folders:
+          type: array
+          items:
+            type: string
+        classifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Classifier'
+    
+    StatusResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+        message:
           type: string
 
 paths:
@@ -51,15 +118,40 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCredentialResponse'
         '404':
           description: Not found - probably not created
     
+  /inbox/folders:
+    get:
+      description: List inbox folders
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFoldersResponse'
+
   /inbox/classification:
     post:
       description: Begin classifying inbox messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartInboxClassifyRequest'
       responses:
         '202':
           description: Success, processing has been enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
         '400':
           description: Bad request
         '500':
