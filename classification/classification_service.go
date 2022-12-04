@@ -28,6 +28,24 @@ type DefaultService struct {
 	eventBusName      string
 }
 
+func NewService(
+	credentialService inboxcredential.Service,
+	imapServerService imapserver.Service,
+	repo ClassificationRepository,
+	providerService *inbox.ProviderService,
+	bridge *eventbridge.Client,
+	eventBusName string,
+) Service {
+	return &DefaultService{
+		credentialService,
+		imapServerService,
+		repo,
+		providerService,
+		bridge,
+		eventBusName,
+	}
+}
+
 func (s DefaultService) Classify(ctx context.Context, address string, folders []string, classifiers ...Classifier) error {
 	provider, err := s.providerService.GetProvider(ctx, address)
 	if err != nil {

@@ -19,6 +19,13 @@ type DefaultService struct {
 	cipherKey []byte
 }
 
+func NewService(repo InboxCredentialRepository, cipherKey []byte) Service {
+	return &DefaultService{
+		repo,
+		cipherKey,
+	}
+}
+
 func (s DefaultService) StoreCredential(ctx context.Context, input CreateCredentialInput) (address string, err error) {
 	credential, err := NewInboxCredential(input.Address, input.Password, s.cipherKey)
 	if err != nil {

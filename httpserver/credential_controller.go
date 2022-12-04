@@ -14,6 +14,13 @@ type CredentialController struct {
 	log     *logrus.Logger
 }
 
+func NewCredentialController(credentialService inboxcredential.Service, log *logrus.Logger) *CredentialController {
+	return &CredentialController{
+		service: credentialService,
+		log:     log,
+	}
+}
+
 func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var reqBody CreateCredentialRequest
