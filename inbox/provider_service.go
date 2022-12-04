@@ -12,6 +12,12 @@ type ProviderService struct {
 	imapServerService imapserver.Service
 }
 
+func NewProviderService(imapServerService imapserver.Service) *ProviderService {
+	return &ProviderService{
+		imapServerService,
+	}
+}
+
 func (s ProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
 	_, err := mail.ParseAddress(address)
 	if err != nil {
