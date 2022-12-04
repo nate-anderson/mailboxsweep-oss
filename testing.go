@@ -15,12 +15,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/joho/godotenv"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/spf13/viper"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -123,7 +122,14 @@ type testConfig struct {
 
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
-	if err := godotenv.Load("test.env"); err != nil {
+	viper.SetConfigType("env")
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		return tc, err
+	}
+
+	if err := viper.Unmarshal(&tc); err != nil {
 		return tc, err
 	}
 
