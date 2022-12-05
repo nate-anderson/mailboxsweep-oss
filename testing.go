@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"net/smtp"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -112,18 +111,18 @@ func (s testSMTPSender) Send(to, from, subj, body string) error {
 }
 
 type testConfig struct {
-	Address  string
-	Password string
-	IMAPHost string
-	IMAPPort int
-	SMTPHost string
-	SMTPPort int
+	Address  string `mapstructure:"TEST_ADDRESS"`
+	Password string `mapstructure:"TEST_PASSWORD"`
+	IMAPHost string `mapstructure:"TEST_IMAP_HOST"`
+	IMAPPort int    `mapstructure:"TEST_IMAP_PORT"`
+	SMTPHost string `mapstructure:"TEST_SMTP_HOST"`
+	SMTPPort int    `mapstructure:"TEST_SMTP_PORT"`
 }
 
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
 	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
+	viper.SetConfigFile("test.env")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
 		return tc, err
@@ -132,23 +131,6 @@ func GetTestConfig() (testConfig, error) {
 	if err := viper.Unmarshal(&tc); err != nil {
 		return tc, err
 	}
-
-	tc.Address = os.Getenv("TEST_ADDRESS")
-	tc.IMAPHost = os.Getenv("TEST_IMAP_HOST")
-	tc.SMTPHost = os.Getenv("TEST_SMTP_HOST")
-	tc.Password = os.Getenv("TEST_PASSWORD")
-
-	imapPort, err := strconv.Atoi(os.Getenv("TEST_IMAP_PORT"))
-	if err != nil {
-		return tc, err
-	}
-	tc.IMAPPort = imapPort
-
-	smtpPort, err := strconv.Atoi(os.Getenv("TEST_SMTP_PORT"))
-	if err != nil {
-		return tc, err
-	}
-	tc.SMTPPort = smtpPort
 
 	return tc, nil
 }

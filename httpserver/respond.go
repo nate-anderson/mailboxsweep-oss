@@ -45,7 +45,7 @@ func respondError(w http.ResponseWriter, log *logrus.Logger, err error, opts ...
 		Error: err.Error(),
 	}
 	if writeErr := json.NewEncoder(w).Encode(res); writeErr != nil {
-		log.Errorf("error writting error to response: %w", err)
+		log.Errorf("error writting error to response: %s", err)
 		return
 	}
 }
