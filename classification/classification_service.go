@@ -46,7 +46,7 @@ func NewService(
 	}
 }
 
-func (s DefaultService) Classify(ctx context.Context, address string, folders []string, classifiers ...Classifier) error {
+func (s DefaultService) Classify(ctx context.Context, address string, folders []string, classifiers []Classifier) error {
 	provider, err := s.providerService.GetProvider(ctx, address)
 	if err != nil {
 		return err
@@ -80,16 +80,11 @@ type ClassifyQueueItem struct {
 
 var ClassifyQueueDetailType = "mailboxsweep.classify"
 
-func (s DefaultService) EnqueueClassify(ctx context.Context, address string, folders []string, classifiers []Classifier) error {
-	serializableClassifiers := make([]SerializableClassifier, len(classifiers))
-	for i, c := range classifiers {
-		serializableClassifiers[i] = c.Serializeable()
-	}
-
+func (s DefaultService) EnqueueClassify(ctx context.Context, address string, folders []string, classifiers []SerializableClassifier) error {
 	req := ClassifyQueueItem{
 		Address:     address,
 		Folders:     folders,
-		Classifiers: serializableClassifiers,
+		Classifiers: classifiers,
 	}
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
@@ -108,4 +103,12 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, address string, fol
 		},
 	})
 	return err
+}
+
+func (s DefaultService) ClassificationSummary(ctx context.Context, address string) (root *ClassificationDocument, err error) {
+	return s.repo.FetchSummary(ctx, address)
+}
+
+func (s DefaultService) ClassificationLeaf(ctx context.Context, address string, path []string) (leaf *Classification, err error) {
+	return s.repo.FetchLeaf(ctx, address, path)
 }
