@@ -29,6 +29,10 @@ greenmail_gen_client:
 HTTP_SERVER_SPEC_PATH = openapi.yml
 HTTP_SERVER_GEN_PATH = http_codegen.yml
 
+.PHONY: install_openapi_generator
+install_openapi_generator:
+	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest	
+
 .PHONY: http_scaffold
 http_scaffold:
 	oapi-codegen -generate chi-server,types -config $(HTTP_SERVER_GEN_PATH) $(HTTP_SERVER_SPEC_PATH)
