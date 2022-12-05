@@ -5,6 +5,34 @@ info:
 
 components:
   schemas:
+
+    Classification:
+      type: object
+      required:
+        - count
+        - label
+        - dimension
+        - children
+      properties:
+        count:
+          type: integer
+        label:
+          type: string
+        dimension:
+          type: string
+        children:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Classification'
+
+    ClassificationResponse:
+      type: object
+      required:
+        - classification
+      properties:
+        classification:
+          $ref: '#/components/schemas/Classification'
+
     Classifier:
       type: object
       required:
@@ -63,6 +91,26 @@ components:
           items:
             type: string
     
+    MessagePreview:
+      type: object
+      required:
+        - sender
+      properties:
+        sender:
+          $ref: '#/components/schemas/Sender'
+        subject:
+          type: string
+
+    Sender:
+      type: object
+      required:
+        - address
+      properties:
+        name:
+          type: string
+        addres:
+          type: string
+
     StartInboxClassifyRequest:
       type: object
       required:
@@ -156,15 +204,35 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
-
+    
     get:
-      description: Get the tree of inbox classifications
+      description: Get classification leaf by path
+      responses:
+        '200':
+          description: Success, classification leaf
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassificationResponse'
+        '404':
+          description: Inbox or leaf not found
+        '500':
+          description: Internal server error
+
+  /inbox/classification/summary:
+    get:
+      description: Get the summary tree of inbox classifications
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassificationResponse'
         '202':
           description: Classification still pending
         '404':
           description: Not found
         '500':
           description: Internal server error
+  

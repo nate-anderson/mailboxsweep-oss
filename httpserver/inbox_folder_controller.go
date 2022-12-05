@@ -19,6 +19,7 @@ func NewFolderController(folderService inbox.FolderService, log *logrus.Logger) 
 	}
 }
 
+// @TODO: remove this once auth is working, this has no place in an authed system
 var testAddressHeader = "X-Test-Address"
 
 func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Request) {
