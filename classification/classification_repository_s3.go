@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mailboxsweep"
 	"path/filepath"
 	"strings"
 	"time"
@@ -37,9 +38,10 @@ func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox stri
 	})
 	if err != nil {
 		var one *types.NoSuchKey
-		if errors.As(err, &one) {
-			return nil, fmt.Errorf("failed to fetch summary: %w", one)
+		if !errors.As(err, &one) {
+			return nil, fmt.Errorf("failed to fetch summary: %s", err)
 		}
+		return nil, mailboxsweep.ErrNotFound
 	}
 
 	summary := ClassificationDocument{}
@@ -60,9 +62,10 @@ func (r S3ClassificationRepository) FetchLeaf(ctx context.Context, inbox string,
 	})
 	if err != nil {
 		var one *types.NoSuchKey
-		if errors.As(err, &one) {
-			return nil, fmt.Errorf("failed to fetch leaf: %w", one)
+		if !errors.As(err, &one) {
+			return nil, fmt.Errorf("failed to fetch leaf: %w", err)
 		}
+		return nil, mailboxsweep.ErrNotFound
 	}
 
 	cl := Classification{}
