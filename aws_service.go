@@ -21,6 +21,7 @@ func ConnectAWSService[
 ](
 	cfg AWSServiceConfig,
 	constructor serviceConstructor,
+	opts ...func(*optType),
 ) (*clientType, error) {
 	if cfg.ServiceHost == nil {
 		awsCfg, err := config.LoadDefaultConfig(
@@ -54,5 +55,5 @@ func ConnectAWSService[
 		return nil, err
 	}
 
-	return constructor(awsCfg), nil
+	return constructor(awsCfg, opts...), nil
 }

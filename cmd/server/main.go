@@ -82,6 +82,9 @@ func main() {
 			ServiceRegion: cfg.S3Region,
 		},
 		s3.NewFromConfig,
+		func(o *s3.Options) {
+			o.UsePathStyle = true
+		},
 	)
 	if err != nil {
 		log.Fatalf("failed to instantiate S3 client: %s", err)

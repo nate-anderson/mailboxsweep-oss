@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 func randToken(l int) (string, error) {
@@ -34,34 +33,22 @@ func randToken(l int) (string, error) {
 }
 
 func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
-	endpoint := "http://localhost:4566"
-	region := "us-west-2"
 	token, err := randToken(5)
 	if err != nil {
 		log.Fatalf("failed to generate a test bucket name: %s", err)
 	}
 	bucket := strings.ToLower(t.Name() + "-" + token)
 
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			PartitionID:   "aws",
-			URL:           endpoint,
-			SigningRegion: region,
-		}, nil
-	})
-
-	awsCfg, err := config.LoadDefaultConfig(
-		context.Background(),
-		config.WithRegion(region),
-		config.WithEndpointResolver(customResolver),
+	client, err := ConnectAWSService(AWSServiceConfig{
+		ServiceHost:   aws.String("localhost"),
+		ServicePort:   4566,
+		ServiceRegion: "us-west-2",
+	},
+		s3.NewFromConfig,
+		func(ot *s3.Options) {
+			ot.UsePathStyle = true
+		},
 	)
-	if err != nil {
-		log.Fatalf("Cannot load the AWS configs: %s", err)
-	}
-
-	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
-		o.UsePathStyle = true
-	})
 
 	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &bucket,
@@ -167,85 +154,7 @@ func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Cl
 	}
 	table = fmt.Sprintf("%s_%s", t.Name(), tok)
 
-	tableDef := &dynamodb.CreateTableInput{
-		TableName: &table,
-		ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
-			ReadCapacityUnits:  ptr[int64](10),
-			WriteCapacityUnits: ptr[int64](10),
-		},
-		AttributeDefinitions: []dynamoTypes.AttributeDefinition{
-			{
-				AttributeName: &DynamoPK,
-				AttributeType: dynamoTypes.ScalarAttributeTypeS,
-			},
-			{
-				AttributeName: &DynamoSK,
-				AttributeType: dynamoTypes.ScalarAttributeTypeS,
-			},
-			{
-				AttributeName: &DynamoGSI1PK,
-				AttributeType: dynamoTypes.ScalarAttributeTypeS,
-			},
-			{
-				AttributeName: &DynamoGSI1SK,
-				AttributeType: dynamoTypes.ScalarAttributeTypeS,
-			},
-			{
-				AttributeName: &DynamoLSI1SK,
-				AttributeType: dynamoTypes.ScalarAttributeTypeS,
-			},
-		},
-		KeySchema: []dynamoTypes.KeySchemaElement{
-			{
-				AttributeName: &DynamoPK,
-				KeyType:       dynamoTypes.KeyTypeHash,
-			},
-			{
-				AttributeName: &DynamoSK,
-				KeyType:       dynamoTypes.KeyTypeRange,
-			},
-		},
-		GlobalSecondaryIndexes: []dynamoTypes.GlobalSecondaryIndex{
-			{
-				IndexName: &DynamoGSI1,
-				KeySchema: []dynamoTypes.KeySchemaElement{
-					{
-						AttributeName: &DynamoGSI1PK,
-						KeyType:       dynamoTypes.KeyTypeHash,
-					},
-					{
-						AttributeName: &DynamoGSI1SK,
-						KeyType:       dynamoTypes.KeyTypeRange,
-					},
-				},
-				Projection: &dynamoTypes.Projection{
-					ProjectionType: dynamoTypes.ProjectionTypeKeysOnly,
-				},
-				ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
-					ReadCapacityUnits:  ptr[int64](10),
-					WriteCapacityUnits: ptr[int64](10),
-				},
-			},
-		},
-		LocalSecondaryIndexes: []dynamoTypes.LocalSecondaryIndex{
-			{
-				IndexName: &DynamoLSI1,
-				KeySchema: []dynamoTypes.KeySchemaElement{
-					{
-						AttributeName: &DynamoPK,
-						KeyType:       dynamoTypes.KeyTypeHash,
-					},
-					{
-						AttributeName: &DynamoLSI1SK,
-						KeyType:       dynamoTypes.KeyTypeRange,
-					},
-				},
-				Projection: &dynamoTypes.Projection{
-					ProjectionType: dynamoTypes.ProjectionTypeKeysOnly,
-				},
-			},
-		},
-	}
+	tableDef := CreateDynamoDBTableDefinition(table)
 
 	_, err = client.CreateTable(ctx, tableDef)
 	if err != nil {

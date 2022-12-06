@@ -3,7 +3,9 @@ package mailboxsweep
 import (
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 var (
@@ -30,4 +32,87 @@ func MergeAttributeValueMaps(maps ...map[string]types.AttributeValue) map[string
 		}
 	}
 	return res
+}
+
+func CreateDynamoDBTableDefinition(table string) *dynamodb.CreateTableInput {
+	var tableDef = &dynamodb.CreateTableInput{
+		TableName: &table,
+		ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
+			ReadCapacityUnits:  ptr[int64](10),
+			WriteCapacityUnits: ptr[int64](10),
+		},
+		AttributeDefinitions: []dynamoTypes.AttributeDefinition{
+			{
+				AttributeName: &DynamoPK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoSK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoGSI1PK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoGSI1SK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: &DynamoLSI1SK,
+				AttributeType: dynamoTypes.ScalarAttributeTypeS,
+			},
+		},
+		KeySchema: []dynamoTypes.KeySchemaElement{
+			{
+				AttributeName: &DynamoPK,
+				KeyType:       dynamoTypes.KeyTypeHash,
+			},
+			{
+				AttributeName: &DynamoSK,
+				KeyType:       dynamoTypes.KeyTypeRange,
+			},
+		},
+		GlobalSecondaryIndexes: []dynamoTypes.GlobalSecondaryIndex{
+			{
+				IndexName: &DynamoGSI1,
+				KeySchema: []dynamoTypes.KeySchemaElement{
+					{
+						AttributeName: &DynamoGSI1PK,
+						KeyType:       dynamoTypes.KeyTypeHash,
+					},
+					{
+						AttributeName: &DynamoGSI1SK,
+						KeyType:       dynamoTypes.KeyTypeRange,
+					},
+				},
+				Projection: &dynamoTypes.Projection{
+					ProjectionType: dynamoTypes.ProjectionTypeKeysOnly,
+				},
+				ProvisionedThroughput: &dynamoTypes.ProvisionedThroughput{
+					ReadCapacityUnits:  ptr[int64](10),
+					WriteCapacityUnits: ptr[int64](10),
+				},
+			},
+		},
+		LocalSecondaryIndexes: []dynamoTypes.LocalSecondaryIndex{
+			{
+				IndexName: &DynamoLSI1,
+				KeySchema: []dynamoTypes.KeySchemaElement{
+					{
+						AttributeName: &DynamoPK,
+						KeyType:       dynamoTypes.KeyTypeHash,
+					},
+					{
+						AttributeName: &DynamoLSI1SK,
+						KeyType:       dynamoTypes.KeyTypeRange,
+					},
+				},
+				Projection: &dynamoTypes.Projection{
+					ProjectionType: dynamoTypes.ProjectionTypeKeysOnly,
+				},
+			},
+		},
+	}
+	return tableDef
 }
