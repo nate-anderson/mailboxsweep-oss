@@ -18,9 +18,10 @@ func NewController(
 	credentialService inboxcredential.Service,
 	classificationService classification.Service,
 	folderService inbox.FolderService,
+	providerService *inbox.ProviderService,
 	log *logrus.Logger,
 ) *Controller {
-	credentialController := NewCredentialController(credentialService, log)
+	credentialController := NewCredentialController(credentialService, providerService, log)
 	classificationController := NewClassificationController(classificationService, log)
 	folderController := NewFolderController(folderService, log)
 

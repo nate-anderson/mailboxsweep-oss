@@ -48,11 +48,8 @@ components:
     CreateCredentialRequest:
       type: object
       required:
-        - address
         - password
       properties:
-        address:
-          type: string
         password:
           type: string
 

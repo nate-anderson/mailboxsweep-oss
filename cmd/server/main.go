@@ -119,6 +119,7 @@ func main() {
 		credentialService,
 		classificationService,
 		folderService,
+		providerService,
 		log,
 	)
 	root := chi.NewMux()

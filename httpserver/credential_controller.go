@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"net/http"
 	"time"
@@ -10,14 +11,16 @@ import (
 )
 
 type CredentialController struct {
-	service inboxcredential.Service
-	log     *logrus.Logger
+	service         inboxcredential.Service
+	providerService *inbox.ProviderService
+	log             *logrus.Logger
 }
 
-func NewCredentialController(credentialService inboxcredential.Service, log *logrus.Logger) *CredentialController {
+func NewCredentialController(credentialService inboxcredential.Service, providerService *inbox.ProviderService, log *logrus.Logger) *CredentialController {
 	return &CredentialController{
-		service: credentialService,
-		log:     log,
+		service:         credentialService,
+		providerService: providerService,
+		log:             log,
 	}
 }
 
@@ -30,10 +33,26 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	// @TODO: fix this with auth
+	address := req.Header.Get(testAddressHeader)
 	credInput := inboxcredential.CreateCredentialInput{
-		Address:  reqBody.Address,
+		Address:  address,
 		Password: reqBody.Password,
 	}
+
+	// validate - yes, this is sloppy
+	provider, err := c.providerService.GetProvider(ctx, address)
+	if err != nil {
+		respondError(w, c.log, err)
+		return
+	}
+
+	_, err = provider.Login(address, reqBody.Password)
+	if err != nil {
+		respondError(w, c.log, err, withStatusCode(http.StatusBadGateway))
+		return
+	}
+
 	addr, err := c.service.StoreCredential(ctx, credInput)
 	if err != nil {
 		respondError(w, c.log, err)
