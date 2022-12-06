@@ -7,7 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const contentType = "application/json"
+
 func respond(w http.ResponseWriter, status int, body any) {
+	w.Header().Add("Content-Type", contentType)
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		respondError(w, logrus.New(), err)
@@ -32,6 +35,8 @@ func withStatusCode(statusCode int) respondErrorOptFunc {
 }
 
 func respondError(w http.ResponseWriter, log *logrus.Logger, err error, opts ...respondErrorOptFunc) {
+	w.Header().Add("Content-Type", contentType)
+
 	options := respondErrorOptions{
 		code: http.StatusInternalServerError,
 	}
