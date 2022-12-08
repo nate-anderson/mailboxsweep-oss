@@ -59,20 +59,10 @@ func (r DynamoLinkRepository) formatGSI1SK() string {
 }
 
 func (r DynamoLinkRepository) buildFullKey(token, userUUID string) map[string]types.AttributeValue {
-	return map[string]types.AttributeValue{
-		mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
-			Value: r.formatPK(token),
-		},
-		mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
-			Value: r.formatSK(),
-		},
-		mailboxsweep.DynamoGSI1PK: &types.AttributeValueMemberS{
-			Value: r.formatGSI1PK(userUUID),
-		},
-		mailboxsweep.DynamoGSI1SK: &types.AttributeValueMemberS{
-			Value: r.formatGSI1SK(),
-		},
-	}
+	return mailboxsweep.MergeAttributeValueMaps(
+		r.buildPrimaryKey(token),
+		r.buildGSIKey(userUUID),
+	)
 }
 
 func (r DynamoLinkRepository) buildPrimaryKey(token string) map[string]types.AttributeValue {
@@ -82,6 +72,17 @@ func (r DynamoLinkRepository) buildPrimaryKey(token string) map[string]types.Att
 		},
 		mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
 			Value: r.formatSK(),
+		},
+	}
+}
+
+func (r DynamoLinkRepository) buildGSIKey(userUUID string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		mailboxsweep.DynamoGSI1PK: &types.AttributeValueMemberS{
+			Value: r.formatGSI1PK(userUUID),
+		},
+		mailboxsweep.DynamoGSI1SK: &types.AttributeValueMemberS{
+			Value: r.formatGSI1SK(),
 		},
 	}
 }
@@ -140,4 +141,49 @@ func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, er
 	}
 	err = attributevalue.UnmarshalMap(res.Item, &l)
 	return &l, err
+}
+
+func (r DynamoLinkRepository) FindByUserUUID(ctx context.Context, userUUID string) (*Link, error) {
+	keyRes, err := r.db.Query(ctx, &dynamodb.QueryInput{
+		TableName:              &r.tableName,
+		IndexName:              &mailboxsweep.DynamoGSI1,
+		KeyConditionExpression: aws.String("#gsi1pk = :gsi1pk AND #gsi1sk = :gsi1sk"),
+		ExpressionAttributeNames: map[string]string{
+			"#gsi1pk": mailboxsweep.DynamoGSI1PK,
+			"#gsi1sk": mailboxsweep.DynamoGSI1SK,
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":gsi1pk": &types.AttributeValueMemberS{
+				Value: r.formatGSI1PK(userUUID),
+			},
+			":gsi1sk": &types.AttributeValueMemberS{
+				Value: r.formatGSI1SK(),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if keyRes.Count < 1 {
+		return nil, mailboxsweep.ErrNotFound
+	}
+
+	key := keyRes.Items[0]
+	delete(key, mailboxsweep.DynamoGSI1SK)
+	delete(key, mailboxsweep.DynamoGSI1PK)
+
+	itemRes, err := r.db.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: &r.tableName,
+		Key:       key,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	link := Link{}
+	if err := attributevalue.UnmarshalMap(itemRes.Item, &link); err != nil {
+		return nil, err
+	}
+	return &link, nil
 }

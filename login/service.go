@@ -18,8 +18,17 @@ type Service struct {
 	tokenLength  int
 }
 
+func NewService(repo LinkRepository, userService inboxuser.Service, linkLifespan time.Duration, tokenLength int) *Service {
+	return &Service{
+		repo,
+		userService,
+		linkLifespan,
+		tokenLength,
+	}
+}
+
 func (s Service) CreateLoginLink(ctx context.Context, address, initiatedByIP string) error {
-	user, err := s.userService.FindByUUID(ctx, address)
+	user, err := s.userService.FindByAddress(ctx, address)
 	if err != nil {
 		return mailboxsweep.ErrNotFound
 	}
@@ -46,4 +55,19 @@ func (s Service) CreateLoginLink(ctx context.Context, address, initiatedByIP str
 	}
 
 	return s.repo.Store(ctx, link)
+}
+
+func (s Service) ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, error) {
+	link, err := s.repo.Find(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.repo.InvalidateByUserUUID(ctx, link.UserUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.userService.FindByUUID(ctx, link.UserUUID)
+	return user, err
 }
