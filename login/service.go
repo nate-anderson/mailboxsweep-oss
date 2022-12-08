@@ -14,14 +14,16 @@ import (
 type Service struct {
 	repo         LinkRepository
 	userService  inboxuser.Service
+	sender       Sender
 	linkLifespan time.Duration
 	tokenLength  int
 }
 
-func NewService(repo LinkRepository, userService inboxuser.Service, linkLifespan time.Duration, tokenLength int) *Service {
+func NewService(repo LinkRepository, userService inboxuser.Service, sender Sender, linkLifespan time.Duration, tokenLength int) *Service {
 	return &Service{
 		repo,
 		userService,
+		sender,
 		linkLifespan,
 		tokenLength,
 	}
@@ -40,11 +42,12 @@ func (s Service) CreateLoginLink(ctx context.Context, address, initiatedByIP str
 	}
 
 	now := time.Now()
+	expires := now.Add(s.linkLifespan)
 	token := base64.RawURLEncoding.EncodeToString(tokenBytes)
 	link := Link{
 		UserUUID:      user.UUID,
 		Token:         token,
-		Expires:       now.Add(s.linkLifespan).Unix(),
+		Expires:       expires.Unix(),
 		Created:       now,
 		InitiatedByIP: initiatedByIP,
 	}
@@ -54,7 +57,15 @@ func (s Service) CreateLoginLink(ctx context.Context, address, initiatedByIP str
 		return err
 	}
 
-	return s.repo.Store(ctx, link)
+	if err = s.repo.Store(ctx, link); err != nil {
+		return err
+	}
+
+	return s.sender.Send(ctx, SendRequest{
+		Address: user.Address,
+		Expires: expires,
+		Token:   link.Token,
+	})
 }
 
 func (s Service) ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, error) {
