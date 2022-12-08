@@ -50,15 +50,15 @@ func (r DynamoLinkRepository) formatSK() string {
 	return "0"
 }
 
-func (r DynamoLinkRepository) formatGSI1PK(address string) string {
-	return fmt.Sprintf("LOGIN_UUID#%s", address)
+func (r DynamoLinkRepository) formatGSI1PK(uuid string) string {
+	return fmt.Sprintf("LOGIN_UUID#%s", uuid)
 }
 
 func (r DynamoLinkRepository) formatGSI1SK() string {
 	return "0"
 }
 
-func (r DynamoLinkRepository) buildFullKey(token, uuid string) map[string]types.AttributeValue {
+func (r DynamoLinkRepository) buildFullKey(token, userUUID string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
 		mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 			Value: r.formatPK(token),
@@ -67,7 +67,7 @@ func (r DynamoLinkRepository) buildFullKey(token, uuid string) map[string]types.
 			Value: r.formatSK(),
 		},
 		mailboxsweep.DynamoGSI1PK: &types.AttributeValueMemberS{
-			Value: r.formatGSI1PK(uuid),
+			Value: r.formatGSI1PK(userUUID),
 		},
 		mailboxsweep.DynamoGSI1SK: &types.AttributeValueMemberS{
 			Value: r.formatGSI1SK(),
@@ -87,10 +87,10 @@ func (r DynamoLinkRepository) buildPrimaryKey(token string) map[string]types.Att
 }
 
 // delete existing, use after login and when generating new keys
-func (r DynamoLinkRepository) InvalidateByAddress(ctx context.Context, address string) error {
-	findRes, err := r.db.Query(ctx, &dynamodb.QueryInput{
+func (r DynamoLinkRepository) InvalidateByUserUUID(ctx context.Context, userUUID string) error {
+	keyRes, err := r.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:              &r.tableName,
-		IndexName:              aws.String(mailboxsweep.DynamoGSI1),
+		IndexName:              &mailboxsweep.DynamoGSI1,
 		KeyConditionExpression: aws.String("#gsi1pk = :gsi1pk AND #gsi1sk = :gsi1sk"),
 		ExpressionAttributeNames: map[string]string{
 			"#gsi1pk": mailboxsweep.DynamoGSI1PK,
@@ -98,7 +98,7 @@ func (r DynamoLinkRepository) InvalidateByAddress(ctx context.Context, address s
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":gsi1pk": &types.AttributeValueMemberS{
-				Value: r.formatGSI1PK(address),
+				Value: r.formatGSI1PK(userUUID),
 			},
 			":gsi1sk": &types.AttributeValueMemberS{
 				Value: r.formatGSI1SK(),
@@ -109,28 +109,19 @@ func (r DynamoLinkRepository) InvalidateByAddress(ctx context.Context, address s
 		return err
 	}
 
-	// probably need to update this to only include the PK and SK of the GSI
-	keysToDelete := make([]types.WriteRequest, findRes.Count)
-	for i, item := range findRes.Items {
-		keysToDelete[i] = types.WriteRequest{
-			DeleteRequest: &types.DeleteRequest{
-				Key: item,
-			},
-		}
+	if keyRes.Count < 1 {
+		return nil
 	}
 
-	if len(keysToDelete) > 0 {
-		_, err = r.db.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
-			RequestItems: map[string][]types.WriteRequest{
-				r.tableName: keysToDelete,
-			},
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	key := keyRes.Items[0]
+	// delete GSI keys
+	delete(key, mailboxsweep.DynamoGSI1PK)
+	delete(key, mailboxsweep.DynamoGSI1SK)
+	_, err = r.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: &r.tableName,
+		Key:       key,
+	})
+	return err
 }
 
 func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, error) {
@@ -144,6 +135,9 @@ func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, er
 	}
 
 	l := Link{}
+	if len(res.Item) == 0 {
+		return nil, mailboxsweep.ErrNotFound
+	}
 	err = attributevalue.UnmarshalMap(res.Item, &l)
 	return &l, err
 }

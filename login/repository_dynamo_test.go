@@ -42,6 +42,11 @@ func TestDynamoLoginRepository(t *testing.T) {
 	})
 
 	t.Run("invalidate login links by address", func(t *testing.T) {
+		err := repo.InvalidateByUserUUID(ctx, link.UserUUID)
+		assert.ThatError(t, err).IsNil()
 
+		ret, err := repo.Find(ctx, link.Token)
+		assert.That(t, ret).Equals(nil)
+		assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 	})
 }

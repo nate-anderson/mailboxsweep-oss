@@ -41,7 +41,7 @@ func (s Service) CreateLoginLink(ctx context.Context, address, initiatedByIP str
 	}
 
 	// only allow one active login link at a time
-	if err = s.repo.InvalidateByAddress(ctx, address); err != nil {
+	if err = s.repo.InvalidateByUserUUID(ctx, user.UUID); err != nil {
 		return err
 	}
 
