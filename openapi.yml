@@ -88,6 +88,22 @@ components:
           items:
             type: string
     
+    LoginRequest:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+
+    LoginResponse:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+
     MessagePreview:
       type: object
       required:
@@ -169,17 +185,6 @@ paths:
                 $ref: '#/components/schemas/GetCredentialResponse'
         '404':
           description: Not found - probably not created
-    
-  /inbox/folders:
-    get:
-      description: List inbox folders
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetFoldersResponse'
 
   /inbox/classification:
     post:
@@ -232,4 +237,52 @@ paths:
           description: Not found
         '500':
           description: Internal server error
+
+  /inbox/folders:
+    get:
+      description: List inbox folders
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFoldersResponse'
+
+  /login:
+    post:
+      description: Initiate login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          description: Auth failure
   
+  /login/{token}:
+    get:
+      description: Complete login
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Auth failure
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true

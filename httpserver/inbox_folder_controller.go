@@ -10,12 +10,14 @@ import (
 type FolderController struct {
 	folderService inbox.FolderService
 	log           *logrus.Logger
+	baseController
 }
 
 func NewFolderController(folderService inbox.FolderService, log *logrus.Logger) *FolderController {
 	return &FolderController{
 		folderService,
 		log,
+		baseController{log},
 	}
 }
 
@@ -30,7 +32,7 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 
 	folders, err := c.folderService.ListInboxFolders(ctx, addr)
 	if err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadGateway))
+		c.respondError(w, err, withStatusCode(http.StatusBadGateway))
 		return
 	}
 
@@ -38,5 +40,5 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 		Address: addr,
 		Folders: folders,
 	}
-	respond(w, http.StatusOK, resBody)
+	c.respond(w, http.StatusOK, resBody)
 }
