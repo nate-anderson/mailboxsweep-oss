@@ -14,6 +14,7 @@ type CredentialController struct {
 	service         inboxcredential.Service
 	providerService *inbox.ProviderService
 	log             *logrus.Logger
+	baseController
 }
 
 func NewCredentialController(credentialService inboxcredential.Service, providerService *inbox.ProviderService, log *logrus.Logger) *CredentialController {
@@ -21,6 +22,7 @@ func NewCredentialController(credentialService inboxcredential.Service, provider
 		service:         credentialService,
 		providerService: providerService,
 		log:             log,
+		baseController:  baseController{log},
 	}
 }
 
@@ -29,7 +31,7 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 	var reqBody CreateCredentialRequest
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
 	if err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -43,26 +45,26 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 	// validate - yes, this is sloppy
 	provider, err := c.providerService.GetProvider(ctx, address)
 	if err != nil {
-		respondError(w, c.log, err)
+		c.respondError(w, err)
 		return
 	}
 
 	_, err = provider.Login(address, reqBody.Password)
 	if err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadGateway))
+		c.respondError(w, err, withStatusCode(http.StatusBadGateway))
 		return
 	}
 
 	addr, err := c.service.StoreCredential(ctx, credInput)
 	if err != nil {
-		respondError(w, c.log, err)
+		c.respondError(w, err)
 		return
 	}
 
 	res := CreateCredentialResponse{
 		Address: addr,
 	}
-	respond(w, http.StatusOK, res)
+	c.respond(w, http.StatusOK, res)
 }
 
 const testHeaderCredentialAddress = "X-Test-Address"
@@ -74,7 +76,7 @@ func (c CredentialController) GetCredential(w http.ResponseWriter, req *http.Req
 	addr := req.Header.Get(testHeaderCredentialAddress)
 	cred, err := c.service.FindCredential(ctx, addr)
 	if err != nil {
-		respondError(w, c.log, err)
+		c.respondError(w, err)
 		return
 	}
 
@@ -83,5 +85,5 @@ func (c CredentialController) GetCredential(w http.ResponseWriter, req *http.Req
 		Created: cred.Created.Format(time.RFC3339),
 		Expires: time.Unix(cred.Expires, 0).Format(time.RFC3339),
 	}
-	respond(w, http.StatusOK, res)
+	c.respond(w, http.StatusOK, res)
 }

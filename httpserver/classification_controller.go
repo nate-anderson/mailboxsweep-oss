@@ -16,12 +16,14 @@ import (
 type ClassificationController struct {
 	classificationService classification.Service
 	log                   *logrus.Logger
+	baseController
 }
 
 func NewClassificationController(classificationService classification.Service, log *logrus.Logger) *ClassificationController {
 	return &ClassificationController{
 		classificationService: classificationService,
 		log:                   log,
+		baseController:        baseController{log},
 	}
 }
 
@@ -29,7 +31,7 @@ func (c ClassificationController) PostInboxClassification(w http.ResponseWriter,
 	ctx := req.Context()
 	var reqBody StartInboxClassifyRequest
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -52,12 +54,12 @@ func (c ClassificationController) PostInboxClassification(w http.ResponseWriter,
 		serializedClassifiers,
 	)
 	if err != nil {
-		respondError(w, c.log, fmt.Errorf("failed to enqueue inbox classification: %w", err))
+		c.respondError(w, fmt.Errorf("failed to enqueue inbox classification: %w", err))
 		return
 	}
 
 	msg := "Classification job enqueued!"
-	respond(w, http.StatusAccepted, StatusResponse{
+	c.respond(w, http.StatusAccepted, StatusResponse{
 		Status:  "OK",
 		Message: &msg,
 	})
@@ -69,7 +71,7 @@ func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseW
 	address := req.Header.Get(testAddressHeader)
 	root, err := c.classificationService.ClassificationSummary(ctx, address)
 	if err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -77,7 +79,7 @@ func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseW
 		Classification: convertClassification(*root.Classification),
 	}
 
-	respond(w, http.StatusOK, resBody)
+	c.respond(w, http.StatusOK, resBody)
 }
 
 func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, req *http.Request) {
@@ -87,30 +89,30 @@ func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, 
 	pathStr := req.URL.Query().Get("path")
 	decodedPath, err := url.QueryUnescape(pathStr)
 	if err != nil {
-		respondError(w, c.log, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
 	}
 
 	path := strings.Split(decodedPath, "/")
 	if len(path) < 1 {
-		respondError(w, c.log, errors.New("path cannot be empty"), withStatusCode(http.StatusBadRequest))
+		c.respondError(w, errors.New("path cannot be empty"), withStatusCode(http.StatusBadRequest))
 		return
 	}
 
 	cl, err := c.classificationService.ClassificationLeaf(ctx, address, path)
 	if err != nil {
 		if errors.Is(err, mailboxsweep.ErrNotFound) {
-			respondError(w, c.log, err, withStatusCode(http.StatusNotFound))
+			c.respondError(w, err, withStatusCode(http.StatusNotFound))
 			return
 		}
-		respondError(w, c.log, err)
+		c.respondError(w, err)
 		return
 	}
 
 	resBody := ClassificationResponse{
 		Classification: convertClassification(*cl),
 	}
-	respond(w, http.StatusOK, resBody)
+	c.respond(w, http.StatusOK, resBody)
 }
 
 func convertClassification(cl classification.Classification) Classification {
