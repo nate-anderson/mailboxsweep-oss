@@ -12,6 +12,7 @@ type InboxUserRepository interface {
 
 	StorePayment(ctx context.Context, address string, payment Payment) error
 
+	SetName(ctx context.Context, address, nameFirst, nameLast string) error
 	Consent(ctx context.Context, address string, agreement Agreement) error
 
 	TouchLastSeen(ctx context.Context, address string) error
