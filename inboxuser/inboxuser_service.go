@@ -33,7 +33,7 @@ func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, 
 		return nil, err
 	}
 
-	user, err := NewInboxUser(address)
+	user, err := NewInboxUser(strings.TrimSpace(address))
 	if err != nil {
 		return nil, err
 	}

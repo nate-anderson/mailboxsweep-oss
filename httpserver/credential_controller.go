@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/session"
 	"net/http"
 	"time"
 
@@ -35,14 +36,15 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	// @TODO: fix this with auth
-	address := req.Header.Get(testAddressHeader)
-	credInput := inboxcredential.CreateCredentialInput{
-		Address:  address,
-		Password: reqBody.Password,
-	}
-
 	// validate - yes, this is sloppy
+	// hard to do this inside the credential service without an import cycle, @TODO revisit
+	address, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		// this should not happen
+		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
+		c.respondAuthError(w, err)
+		return
+	}
 	provider, err := c.providerService.GetProvider(ctx, address)
 	if err != nil {
 		c.respondError(w, err)
@@ -55,7 +57,9 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	addr, err := c.service.StoreCredential(ctx, credInput)
+	// end validation
+
+	addr, err := c.service.StoreCredential(ctx, reqBody.Password)
 	if err != nil {
 		c.respondError(w, err)
 		return

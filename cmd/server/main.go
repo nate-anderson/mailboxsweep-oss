@@ -52,6 +52,8 @@ type serverConfig struct {
 	SessionDurationMinutes   int    `mapstructure:"SESSION_DURATION_MINUTES"`
 	CookieDomain             string `mapstructure:"COOKIE_DOMAIN"`
 	CookiePath               string `mapstructure:"COOKIE_PATH"`
+
+	DevMode bool `mapstructure:"DEV_MODE"`
 }
 
 func main() {
@@ -168,10 +170,21 @@ func main() {
 		loginService,
 		cfg.CookieDomain,
 		cfg.CookiePath,
+		cfg.DevMode,
 		log,
 	)
+
+	mid := session.AuthMiddleware{
+		Service: sessionService,
+	}
+
 	root := chi.NewMux()
-	srv := httpserver.HandlerFromMux(controller, root)
+	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
+		BaseRouter: root,
+		Middlewares: []httpserver.MiddlewareFunc{
+			mid.Middleware,
+		},
+	})
 
 	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 

@@ -105,7 +105,7 @@ func (r DynamoSessionRepository) Invalidate(ctx context.Context, cookieToken str
 	return err
 }
 
-func (s Session) Cookie(domain, path string) *http.Cookie {
+func (s Session) Cookie(domain, path string, isDev bool) *http.Cookie {
 	return &http.Cookie{
 		Name:     sessionCookie,
 		Value:    s.Token,
@@ -113,7 +113,7 @@ func (s Session) Cookie(domain, path string) *http.Cookie {
 		Domain:   domain,
 		Path:     path,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   !isDev,
 		SameSite: http.SameSiteDefaultMode,
 	}
 }

@@ -109,7 +109,7 @@ func (s DefaultService) ValidateLoginLink(ctx context.Context, token string) (*i
 		return nil, nil, err
 	}
 
-	sess, err := s.sessionService.StartSession(ctx, user.UUID)
+	sess, err := s.sessionService.StartSession(ctx, user.Address)
 	if err != nil {
 		return nil, nil, err
 	}

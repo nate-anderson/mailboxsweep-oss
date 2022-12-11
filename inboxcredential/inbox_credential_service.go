@@ -1,14 +1,12 @@
 package inboxcredential
 
-import "context"
-
-type CreateCredentialInput struct {
-	Address  string
-	Password string
-}
+import (
+	"context"
+	"mailboxsweep/session"
+)
 
 type Service interface {
-	StoreCredential(ctx context.Context, input CreateCredentialInput) (address string, err error)
+	StoreCredential(ctx context.Context, password string) (address string, err error)
 	FindCredential(ctx context.Context, address string) (*InboxCredential, error)
 	DecryptCredential(ctx context.Context, cred *InboxCredential) (password string, err error)
 	DeleteCredential(ctx context.Context, address string) error
@@ -26,8 +24,12 @@ func NewService(repo InboxCredentialRepository, cipherKey []byte) Service {
 	}
 }
 
-func (s DefaultService) StoreCredential(ctx context.Context, input CreateCredentialInput) (address string, err error) {
-	credential, err := NewInboxCredential(input.Address, input.Password, s.cipherKey)
+func (s DefaultService) StoreCredential(ctx context.Context, password string) (address string, err error) {
+	address, err = session.UserAddressFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	credential, err := NewInboxCredential(address, password, s.cipherKey)
 	if err != nil {
 		return "", err
 	}

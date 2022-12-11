@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"encoding/json"
-	"log"
 	"mailboxsweep/login"
 	"net/http"
 	"strings"
@@ -16,15 +15,17 @@ type LoginController struct {
 	service      login.Service
 	cookieDomain string
 	cookiePath   string
+	isDev        bool
 	baseController
 }
 
-func NewLoginController(service login.Service, cookieDomain, cookiePath string, log *logrus.Logger) *LoginController {
+func NewLoginController(service login.Service, cookieDomain, cookiePath string, isDev bool, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,
 		cookieDomain,
 		cookiePath,
+		isDev,
 		baseController{log},
 	}
 }
@@ -74,8 +75,7 @@ func (c LoginController) GetLoginToken(w http.ResponseWriter, req *http.Request,
 		Address: user.Address,
 	}
 
-	cookie := session.Cookie(c.cookieDomain, c.cookiePath)
-	log.Printf("%+v\n", cookie)
+	cookie := session.Cookie(c.cookieDomain, c.cookiePath, c.isDev)
 	http.SetCookie(w, cookie)
 	c.respond(w, http.StatusOK, resBody)
 }

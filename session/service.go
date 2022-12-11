@@ -13,7 +13,7 @@ import (
 
 type Service interface {
 	// create + store session, authorize context, and return cookie value
-	StartSession(ctx context.Context, userUUID string) (*Session, error)
+	StartSession(ctx context.Context, userAddress string) (*Session, error)
 	// lookup session and return authorized context
 	Authorize(ctx context.Context, cookieValue string) (context.Context, error)
 }
