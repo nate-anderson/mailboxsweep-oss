@@ -20,7 +20,7 @@ type Sender interface {
 }
 
 type LogSender struct {
-	log     logrus.Logger
+	log     *logrus.Logger
 	baseURL string
 }
 
@@ -30,7 +30,7 @@ func (l LogSender) Send(ctx context.Context, req SendRequest) error {
 	return nil
 }
 
-func NewLogender(log logrus.Logger, baseURL string) *LogSender {
+func NewLogSender(log *logrus.Logger, baseURL string) *LogSender {
 	return &LogSender{
 		log,
 		baseURL,

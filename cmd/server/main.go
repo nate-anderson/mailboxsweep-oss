@@ -8,7 +8,10 @@ import (
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/login"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
@@ -19,7 +22,9 @@ import (
 )
 
 type serverConfig struct {
-	HTTPPort int `mapstructure:"HTTP_PORT"`
+	HTTPPort int    `mapstructure:"HTTP_PORT"`
+	Env      string `mapstructure:"ENV"`
+	SiteURL  string `mapstructure:"BASE_URL"`
 
 	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
@@ -37,6 +42,9 @@ type serverConfig struct {
 	S3Bucket                  string `mapstructure:"S3_BUCKET"`
 	EventBusName              string `mapstructure:"EVENT_BUS_NAME"`
 	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
+
+	LoginLinkDurationMinutes int `mapstructure:"LOGIN_LINK_DURATION_MINUTES"`
+	LoginTokenLength         int `mapstructure:"LOGIN_TOKEN_LENGTH"`
 }
 
 func main() {
@@ -115,11 +123,31 @@ func main() {
 
 	folderService := inbox.NewFolderService(providerService, credentialService)
 
+	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
+	userService := inboxuser.NewService(userRepo)
+	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
+
+	var loginSender login.Sender
+
+	if cfg.Env == "dev" {
+		loginSender = login.NewLogSender(log, cfg.SiteURL)
+	}
+
+	if cfg.LoginLinkDurationMinutes == 0 {
+		log.Fatal("LOGIN_LINK_DURATION_MINUTES must be set and > 0")
+	}
+	if cfg.LoginTokenLength == 0 {
+		log.Fatal("LOGIN_TOKEN_LENGTH must be set and > 0")
+	}
+	loginLinkDurationMinutes := time.Minute * time.Duration(cfg.LoginLinkDurationMinutes)
+	loginService := login.NewService(loginRepo, userService, loginSender, loginLinkDurationMinutes, cfg.LoginTokenLength)
+
 	controller := httpserver.NewController(
 		credentialService,
 		classificationService,
 		folderService,
 		providerService,
+		loginService,
 		log,
 	)
 	root := chi.NewMux()

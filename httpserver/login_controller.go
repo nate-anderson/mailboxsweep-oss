@@ -12,11 +12,11 @@ import (
 
 type LoginController struct {
 	log     *logrus.Logger
-	service login.Service
+	service *login.Service
 	baseController
 }
 
-func NewLoginController(service login.Service, log *logrus.Logger) *LoginController {
+func NewLoginController(service *login.Service, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,
