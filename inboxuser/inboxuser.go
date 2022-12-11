@@ -1,6 +1,7 @@
 package inboxuser
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -73,4 +74,19 @@ var requiredAgreements = []Agreement{
 	NonCorporateEmail,
 	BackupResponsibility,
 	NecessaryCookies,
+}
+
+func ParseAgreement(str string) (Agreement, error) {
+	switch Agreement(str) {
+	case PrivacyPolicy:
+		return PrivacyPolicy, nil
+	case NonCorporateEmail:
+		return NonCorporateEmail, nil
+	case BackupResponsibility:
+		return BackupResponsibility, nil
+	case NecessaryCookies:
+		return NecessaryCookies, nil
+	default:
+		return "", fmt.Errorf("unknown agreement string '%s'", str)
+	}
 }

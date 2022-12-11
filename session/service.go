@@ -7,14 +7,13 @@ import (
 	"io"
 	"log"
 	"mailboxsweep"
-	"mailboxsweep/inboxuser"
 	"net/http"
 	"time"
 )
 
 type Service interface {
 	// create + store session, authorize context, and return cookie value
-	StartSession(ctx context.Context, user inboxuser.InboxUser) (*Session, error)
+	StartSession(ctx context.Context, userUUID string) (*Session, error)
 	// lookup session and return authorized context
 	Authorize(ctx context.Context, cookieValue string) (context.Context, error)
 }
@@ -46,7 +45,7 @@ func (s DefaultService) makeToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
-func (s DefaultService) StartSession(ctx context.Context, user inboxuser.InboxUser) (*Session, error) {
+func (s DefaultService) StartSession(ctx context.Context, userUUID string) (*Session, error) {
 	token, err := s.makeToken()
 	if err != nil {
 		return nil, err
@@ -56,7 +55,7 @@ func (s DefaultService) StartSession(ctx context.Context, user inboxuser.InboxUs
 
 	sess := Session{
 		Token:    token,
-		UserUUID: user.UUID,
+		UserUUID: userUUID,
 		Expires:  expires.Unix(),
 	}
 
@@ -82,7 +81,7 @@ func (s DefaultService) Authorize(ctx context.Context, cookieValue string) (cont
 }
 
 type AuthMiddleware struct {
-	service Service
+	Service Service
 }
 
 const sessionCookie = "X-MailboxSweep-Session"
@@ -97,7 +96,7 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		authed, err := a.service.Authorize(ctx, cookie.Value)
+		authed, err := a.Service.Authorize(ctx, cookie.Value)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			log.Printf("authorize failed: %s\n", err)

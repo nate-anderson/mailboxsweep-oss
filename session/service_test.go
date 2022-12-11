@@ -1,4 +1,4 @@
-package session
+package session_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/session"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +26,7 @@ func (t testHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	res := testRes{
 		OK: true,
 	}
-	uuid, err := UserUUIDFromContext(ctx)
+	uuid, err := session.UserUUIDFromContext(ctx)
 	if err != nil {
 		res.OK = false
 		w.WriteHeader(http.StatusUnauthorized)
@@ -45,8 +46,8 @@ func TestSessionService(t *testing.T) {
 	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
 	defer teardown()
 
-	repo := NewDynamoSessionRepository(db, table)
-	service := NewService(repo, 20, time.Minute)
+	repo := session.NewDynamoSessionRepository(db, table)
+	service := session.NewService(repo, 20, time.Minute)
 
 	testAddr := "butterbeans@example.com"
 	testUser, err := inboxuser.NewInboxUser(testAddr)
@@ -55,11 +56,11 @@ func TestSessionService(t *testing.T) {
 	_, err = userRepo.Store(ctx, *testUser)
 	assert.ThatError(t, err).IsNil()
 
-	var sess *Session
+	var sess *session.Session
 
 	t.Run("start session", func(t *testing.T) {
 		var err error
-		sess, err = service.StartSession(ctx, *testUser)
+		sess, err = service.StartSession(ctx, testUser.UUID)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, sess).NotEqual(nil)
 	})
@@ -69,20 +70,20 @@ func TestSessionService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("authed context yields UUID", func(t *testing.T) {
-			uuid, err := UserUUIDFromContext(authedCtx)
+			uuid, err := session.UserUUIDFromContext(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, uuid).Equals(testUser.UUID)
 		})
 
 		t.Run("unauthed context yields Unauthenticated error", func(t *testing.T) {
-			uuid, err := UserUUIDFromContext(context.Background())
+			uuid, err := session.UserUUIDFromContext(context.Background())
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, uuid).Equals("")
 		})
 	})
 
 	t.Run("auth middleware", func(t *testing.T) {
-		mid := AuthMiddleware{service}
+		mid := session.AuthMiddleware{service}
 		handler := mid.Middleware(testHandler{})
 
 		t.Run("authed ctx", func(t *testing.T) {

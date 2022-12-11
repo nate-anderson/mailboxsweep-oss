@@ -14,6 +14,7 @@ type Controller struct {
 	*ClassificationController
 	*FolderController
 	*LoginController
+	*UserController
 }
 
 func NewController(

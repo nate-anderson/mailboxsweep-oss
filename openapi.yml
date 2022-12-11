@@ -124,6 +124,37 @@ components:
         addres:
           type: string
 
+    SetUserAgreementsRequest:
+      type: object
+      required:
+        - agreements
+      properties:
+        agreements:
+          type: array
+          items:
+            type: string
+    
+    SetUserAgreementsResponse:
+      type: object
+      required:
+        - agreements
+      properties:
+        agreements:
+          type: array
+          items:
+            type: string
+
+    SetUserNameRequest:
+      type: object
+      required:
+        - nameFirst
+        - nameLast
+      properties:
+        nameFirst:
+          type: string
+        nameLast:
+          type: string
+
     StartInboxClassifyRequest:
       type: object
       required:
@@ -193,6 +224,44 @@ paths:
                 $ref: '#/components/schemas/GetCredentialResponse'
         '404':
           description: Not found - probably not created
+
+  /user/name:
+    patch:
+      description: Set user name for an inbox account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetUserNameRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /user/agreements:
+    patch:
+      description: Set agreed agreements for an inbox accoutn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetUserAgreementsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetUserAgreementsResponse'
+        '400':
+          description: Bad request
+        '500':
+          Description: Internal server error
 
   /inbox/classification:
     post:
