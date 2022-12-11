@@ -2,6 +2,8 @@ package inboxuser
 
 import (
 	"context"
+
+	"github.com/mcnijman/go-emailaddress"
 )
 
 type Service interface {
@@ -21,6 +23,11 @@ type DefaultService struct {
 }
 
 func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, error) {
+	_, err := emailaddress.Parse(address)
+	if err != nil {
+		return nil, err
+	}
+
 	user, err := NewInboxUser(address)
 	if err != nil {
 		return nil, err

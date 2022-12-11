@@ -101,4 +101,11 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 
 		assert.That(t, user.LastSeen.After(created)).Equals(true)
 	})
+
+	t.Run("lookup unknown user", func(t *testing.T) {
+		addr := "bambino@gambino.wampino"
+		user, err := repo.FindByAddress(ctx, addr)
+		assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+		assert.That(t, user).Equals(nil)
+	})
 }
