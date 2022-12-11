@@ -6,8 +6,6 @@ import (
 	"mailboxsweep/assert"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func TestSession(t *testing.T) {
@@ -18,15 +16,14 @@ func TestSession(t *testing.T) {
 
 	repo := NewDynamoSessionRepository(db, table)
 
-	userUUID := uuid.NewString()
 	token, err := DefaultService.makeToken(DefaultService{})
 	assert.ThatError(t, err).IsNil()
 	expires := time.Now().Add(time.Minute)
 
 	sess := Session{
-		UserUUID: userUUID,
-		Token:    token,
-		Expires:  expires.Unix(),
+		UserAddress: "admin130@example.com",
+		Token:       token,
+		Expires:     expires.Unix(),
 	}
 
 	t.Run("store", func(t *testing.T) {
@@ -39,7 +36,7 @@ func TestSession(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, ret.Expires).Equals(sess.Expires)
 		assert.That(t, ret.Token).Equals(sess.Token)
-		assert.That(t, ret.UserUUID).Equals(sess.UserUUID)
+		assert.That(t, ret.UserAddress).Equals(sess.UserAddress)
 	})
 
 	t.Run("invalidate", func(t *testing.T) {

@@ -46,12 +46,12 @@ func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, 
 }
 
 func (s DefaultService) Consent(ctx context.Context, agreements []Agreement) error {
-	userUUID, err := session.UserUUIDFromContext(ctx)
+	userAddress, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	user, err := s.repo.FindByUUID(ctx, userUUID)
+	user, err := s.repo.FindByAddress(ctx, userAddress)
 	if err != nil {
 		return err
 	}
@@ -83,12 +83,12 @@ func (s DefaultService) SetName(ctx context.Context, nameFirst, nameLast string)
 		return errors.New("last name is required")
 	}
 
-	userUUID, err := session.UserUUIDFromContext(ctx)
+	userAddress, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	user, err := s.repo.FindByUUID(ctx, userUUID)
+	user, err := s.repo.FindByAddress(ctx, userAddress)
 	if err != nil {
 		return err
 	}

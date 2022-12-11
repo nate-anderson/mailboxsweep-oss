@@ -45,7 +45,7 @@ func (s DefaultService) makeToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
-func (s DefaultService) StartSession(ctx context.Context, userUUID string) (*Session, error) {
+func (s DefaultService) StartSession(ctx context.Context, userAddress string) (*Session, error) {
 	token, err := s.makeToken()
 	if err != nil {
 		return nil, err
@@ -54,9 +54,9 @@ func (s DefaultService) StartSession(ctx context.Context, userUUID string) (*Ses
 	expires := time.Now().Add(s.sessionDuration)
 
 	sess := Session{
-		Token:    token,
-		UserUUID: userUUID,
-		Expires:  expires.Unix(),
+		Token:       token,
+		UserAddress: userAddress,
+		Expires:     expires.Unix(),
 	}
 
 	if err = s.repo.Store(ctx, sess); err != nil {
@@ -76,7 +76,7 @@ func (s DefaultService) Authorize(ctx context.Context, cookieValue string) (cont
 		return ctx, err
 	}
 
-	authed := context.WithValue(ctx, authKey, sess.UserUUID)
+	authed := context.WithValue(ctx, authKey, sess.UserAddress)
 	return authed, nil
 }
 
@@ -107,9 +107,9 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func UserUUIDFromContext(ctx context.Context) (string, error) {
-	userUUID := ctx.Value(authKey)
-	if str, ok := userUUID.(string); ok {
+func UserAddressFromContext(ctx context.Context) (string, error) {
+	userAddress := ctx.Value(authKey)
+	if str, ok := userAddress.(string); ok {
 		return str, nil
 	}
 	return "", mailboxsweep.ErrUnauthenticated

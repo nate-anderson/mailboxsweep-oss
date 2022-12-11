@@ -17,8 +17,8 @@ import (
 type testHandler struct{}
 
 type testRes struct {
-	UserUUID string `json:"userUUID"`
-	OK       bool   `json:"ok"`
+	UserAddress string `json:"userAddress"`
+	OK          bool   `json:"ok"`
 }
 
 func (t testHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -26,12 +26,12 @@ func (t testHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	res := testRes{
 		OK: true,
 	}
-	uuid, err := session.UserUUIDFromContext(ctx)
+	address, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		res.OK = false
 		w.WriteHeader(http.StatusUnauthorized)
 	} else {
-		res.UserUUID = uuid
+		res.UserAddress = address
 	}
 
 	err = json.NewEncoder(w).Encode(res)
@@ -60,7 +60,7 @@ func TestSessionService(t *testing.T) {
 
 	t.Run("start session", func(t *testing.T) {
 		var err error
-		sess, err = service.StartSession(ctx, testUser.UUID)
+		sess, err = service.StartSession(ctx, testUser.Address)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, sess).NotEqual(nil)
 	})
@@ -69,16 +69,16 @@ func TestSessionService(t *testing.T) {
 		authedCtx, err := service.Authorize(ctx, sess.Token)
 		assert.ThatError(t, err).IsNil()
 
-		t.Run("authed context yields UUID", func(t *testing.T) {
-			uuid, err := session.UserUUIDFromContext(authedCtx)
+		t.Run("authed context yields address", func(t *testing.T) {
+			address, err := session.UserAddressFromContext(authedCtx)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, uuid).Equals(testUser.UUID)
+			assert.That(t, address).Equals(testUser.Address)
 		})
 
 		t.Run("unauthed context yields Unauthenticated error", func(t *testing.T) {
-			uuid, err := session.UserUUIDFromContext(context.Background())
+			address, err := session.UserAddressFromContext(context.Background())
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
-			assert.That(t, uuid).Equals("")
+			assert.That(t, address).Equals("")
 		})
 	})
 
@@ -101,7 +101,7 @@ func TestSessionService(t *testing.T) {
 
 			assert.That(t, w.Result().StatusCode).Equals(http.StatusOK)
 			assert.That(t, res.OK).Equals(true)
-			assert.That(t, res.UserUUID).Equals(testUser.UUID)
+			assert.That(t, res.UserAddress).Equals(testUser.Address)
 		})
 
 		t.Run("unauthed ctx", func(t *testing.T) {

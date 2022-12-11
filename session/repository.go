@@ -20,9 +20,9 @@ type Repository interface {
 }
 
 type Session struct {
-	UserUUID string `dynamodbav:"user_uuid"`
-	Token    string `dynamodbav:"token"`
-	Expires  int64  `dynamodbav:"expires_at"`
+	UserAddress string `dynamodbav:"user_address"`
+	Token       string `dynamodbav:"token"`
+	Expires     int64  `dynamodbav:"expires_at"`
 }
 
 func NewDynamoSessionRepository(db *dynamodb.Client, tableName string) *DynamoSessionRepository {
