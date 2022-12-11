@@ -142,6 +142,14 @@ components:
           items:
             $ref: '#/components/schemas/Classifier'
     
+    StartLoginResponse:
+      type: object
+      required:
+        - redirectToSignup
+      properties:
+        redirectToSignup:
+          type: boolean
+
     StatusResponse:
       type: object
       required:
@@ -264,7 +272,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
+                $ref: '#/components/schemas/StartLoginResponse'
         '401':
           description: Auth failure
   

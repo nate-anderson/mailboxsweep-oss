@@ -33,16 +33,14 @@ func (c LoginController) PostLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
+	existingUser, err := c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
 
-	msg := "OK"
-	resBody := StatusResponse{
-		Message: &msg,
-		Status:  msg,
+	resBody := StartLoginResponse{
+		RedirectToSignup: !existingUser,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }
