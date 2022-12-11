@@ -176,6 +176,31 @@ func (r DynamoInboxUserRepository) Consent(ctx context.Context, address string, 
 	return nil
 }
 
+func (r DynamoInboxUserRepository) SetName(ctx context.Context, address, nameFirst, nameLast string) error {
+	key := r.buildKey(address)
+	_, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		Key:              key,
+		TableName:        &r.tableName,
+		UpdateExpression: aws.String("SET #name_first = :name_first, #name_last = :name_last"),
+		ExpressionAttributeNames: map[string]string{
+			"#name_first": "name_first",
+			"#name_last":  "name_last",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":name_first": &types.AttributeValueMemberS{
+				Value: nameFirst,
+			},
+			":name_last": &types.AttributeValueMemberS{
+				Value: nameLast,
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r DynamoInboxUserRepository) StorePayment(ctx context.Context, address string, payment Payment) error {
 	key := r.buildKey(address)
 	paymentItem, err := attributevalue.Marshal(payment)
