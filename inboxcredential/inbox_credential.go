@@ -20,7 +20,7 @@ type InboxCredential struct {
 	// base64-encoded ciphertext
 	Password string    `dynamodbav:"password"`
 	Created  time.Time `dynamodbav:"created"`
-	Expires  int64     `dynamodbav:"expire_at"`
+	Expires  int64     `dynamodbav:"expires_at"`
 }
 
 func NewInboxCredential(address, password string, cipherKey []byte) (*InboxCredential, error) {
