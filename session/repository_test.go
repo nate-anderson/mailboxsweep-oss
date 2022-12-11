@@ -23,7 +23,7 @@ func TestSession(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 	expires := time.Now().Add(time.Minute)
 
-	sess := session{
+	sess := Session{
 		UserUUID: userUUID,
 		Token:    token,
 		Expires:  expires.Unix(),

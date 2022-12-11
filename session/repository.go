@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"mailboxsweep"
-	"mailboxsweep/inboxuser"
+	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -12,27 +13,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-const sessionCookie = "X-MailboxSweep-Session"
-
 type Repository interface {
-	Store(ctx context.Context, sess session) (err error)
-	Get(ctx context.Context, cookieToken string) (*session, error)
+	Store(ctx context.Context, sess Session) (err error)
+	Get(ctx context.Context, cookieToken string) (*Session, error)
 	Invalidate(ctx context.Context, cookieToken string) error
 }
 
-type authKeyT int
-
-const authKey authKeyT = 1
-
-type session struct {
+type Session struct {
 	UserUUID string `dynamodbav:"user_uuid"`
 	Token    string `dynamodbav:"token"`
 	Expires  int64  `dynamodbav:"expires_at"`
-}
-
-func authorizeContext(ctx context.Context, user inboxuser.InboxUser) context.Context {
-	r := context.WithValue(ctx, authKey, user.Address)
-	return r
 }
 
 func NewDynamoSessionRepository(db *dynamodb.Client, tableName string) *DynamoSessionRepository {
@@ -66,7 +56,7 @@ func (r DynamoSessionRepository) buildPK(token string) map[string]types.Attribut
 	}
 }
 
-func (r DynamoSessionRepository) Store(ctx context.Context, sess session) error {
+func (r DynamoSessionRepository) Store(ctx context.Context, sess Session) error {
 	itemAttrs, err := attributevalue.MarshalMap(sess)
 	if err != nil {
 		return err
@@ -85,7 +75,7 @@ func (r DynamoSessionRepository) Store(ctx context.Context, sess session) error 
 	return err
 }
 
-func (r DynamoSessionRepository) Get(ctx context.Context, cookieToken string) (*session, error) {
+func (r DynamoSessionRepository) Get(ctx context.Context, cookieToken string) (*Session, error) {
 	key := r.buildPK(cookieToken)
 	itemRes, err := r.db.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName:      &r.tableName,
@@ -101,7 +91,7 @@ func (r DynamoSessionRepository) Get(ctx context.Context, cookieToken string) (*
 	}
 
 	item := itemRes.Item
-	sess := session{}
+	sess := Session{}
 	err = attributevalue.UnmarshalMap(item, &sess)
 	return &sess, err
 }
@@ -113,4 +103,17 @@ func (r DynamoSessionRepository) Invalidate(ctx context.Context, cookieToken str
 		Key:       key,
 	})
 	return err
+}
+
+func (s Session) Cookie(domain, path string) *http.Cookie {
+	return &http.Cookie{
+		Name:     sessionCookie,
+		Value:    s.Token,
+		Expires:  time.Unix(s.Expires, 0),
+		Domain:   domain,
+		Path:     path,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteDefaultMode,
+	}
 }
