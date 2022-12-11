@@ -15,6 +15,8 @@ inboxes, if they use the tool on multiple accoutns
 type InboxUser struct {
 	UUID       string                  `dynamodbav:"uuid"`
 	Address    string                  `dynamodbav:"address"`
+	NameFirst  string                  `dynamodbav:"name_first"`
+	NameLast   string                  `dynamodbav:"name_last"`
 	Payments   []Payment               `dynamodbav:"payments"`
 	Created    time.Time               `dynamodbav:"created"`
 	LastSeen   time.Time               `dynamodbav:"last_seen"`
