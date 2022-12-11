@@ -12,11 +12,11 @@ import (
 
 type LoginController struct {
 	log     *logrus.Logger
-	service *login.Service
+	service login.Service
 	baseController
 }
 
-func NewLoginController(service *login.Service, log *logrus.Logger) *LoginController {
+func NewLoginController(service login.Service, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,
@@ -33,7 +33,7 @@ func (c LoginController) PostLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
+	_, err = c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return

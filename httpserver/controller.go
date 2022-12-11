@@ -21,7 +21,7 @@ func NewController(
 	classificationService classification.Service,
 	folderService inbox.FolderService,
 	providerService *inbox.ProviderService,
-	loginService *login.Service,
+	loginService login.Service,
 	log *logrus.Logger,
 ) *Controller {
 	credentialController := NewCredentialController(credentialService, providerService, log)
