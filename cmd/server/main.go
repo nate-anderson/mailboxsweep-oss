@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/httpserver"
@@ -153,7 +154,7 @@ func main() {
 	root := chi.NewMux()
 	srv := httpserver.HandlerFromMux(controller, root)
 
-	addr := ":8080"
+	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 
 	log.Infof("Starting Mailboxsweep HTTP server at %s", addr)
 	log.Fatal(http.ListenAndServe(addr, srv))
