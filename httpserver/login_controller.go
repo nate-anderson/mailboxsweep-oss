@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"log"
 	"mailboxsweep/login"
 	"net/http"
 	"strings"
@@ -11,15 +12,19 @@ import (
 )
 
 type LoginController struct {
-	log     *logrus.Logger
-	service login.Service
+	log          *logrus.Logger
+	service      login.Service
+	cookieDomain string
+	cookiePath   string
 	baseController
 }
 
-func NewLoginController(service login.Service, log *logrus.Logger) *LoginController {
+func NewLoginController(service login.Service, cookieDomain, cookiePath string, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,
+		cookieDomain,
+		cookiePath,
 		baseController{log},
 	}
 }
@@ -32,6 +37,9 @@ func (c LoginController) PostLogin(w http.ResponseWriter, req *http.Request) {
 		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
 	}
+
+	// slow down login spamming
+	time.Sleep(time.Second)
 
 	existingUser, err := c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
@@ -56,7 +64,7 @@ func (c LoginController) GetLoginToken(w http.ResponseWriter, req *http.Request,
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	user, err := c.service.ValidateLoginLink(ctx, token)
+	user, session, err := c.service.ValidateLoginLink(ctx, token)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
@@ -66,5 +74,8 @@ func (c LoginController) GetLoginToken(w http.ResponseWriter, req *http.Request,
 		Address: user.Address,
 	}
 
+	cookie := session.Cookie(c.cookieDomain, c.cookiePath)
+	log.Printf("%+v\n", cookie)
+	http.SetCookie(w, cookie)
 	c.respond(w, http.StatusOK, resBody)
 }

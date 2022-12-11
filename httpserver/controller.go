@@ -23,12 +23,14 @@ func NewController(
 	folderService inbox.FolderService,
 	providerService *inbox.ProviderService,
 	loginService login.Service,
+	cookieDomain string,
+	cookiePath string,
 	log *logrus.Logger,
 ) *Controller {
 	credentialController := NewCredentialController(credentialService, providerService, log)
 	classificationController := NewClassificationController(classificationService, log)
 	folderController := NewFolderController(folderService, log)
-	loginController := NewLoginController(loginService, log)
+	loginController := NewLoginController(loginService, cookieDomain, cookiePath, log)
 
 	return &Controller{
 		CredentialController:     credentialController,

@@ -5,6 +5,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/session"
 	"testing"
 	"time"
 )
@@ -20,8 +21,11 @@ func TestService(t *testing.T) {
 
 	sender := &testSender{}
 
+	sessionRepo := session.NewDynamoSessionRepository(db, table)
+	sessionService := session.NewService(sessionRepo, 10, time.Minute)
+
 	repo := NewDynamoLinkRepository(db, table)
-	service := NewService(repo, userService, sender, time.Minute, 20)
+	service := NewService(repo, userService, sessionService, sender, time.Minute, 20)
 
 	testAddress := "admin3@example.org"
 	testIP := "192.168.0.24"

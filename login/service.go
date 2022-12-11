@@ -3,32 +3,35 @@ package login
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/session"
 	"time"
 )
 
 type Service interface {
 	CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error)
-	ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, error)
+	ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, *session.Session, error)
 }
 
 type DefaultService struct {
-	repo         LinkRepository
-	userService  inboxuser.Service
-	sender       Sender
-	linkLifespan time.Duration
-	tokenLength  int
+	repo           LinkRepository
+	userService    inboxuser.Service
+	sessionService session.Service
+	sender         Sender
+	linkLifespan   time.Duration
+	tokenLength    int
 }
 
-func NewService(repo LinkRepository, userService inboxuser.Service, sender Sender, linkLifespan time.Duration, tokenLength int) *DefaultService {
+func NewService(repo LinkRepository, userService inboxuser.Service, sessionService session.Service, sender Sender, linkLifespan time.Duration, tokenLength int) *DefaultService {
 	return &DefaultService{
 		repo,
 		userService,
+		sessionService,
 		sender,
 		linkLifespan,
 		tokenLength,
@@ -64,7 +67,7 @@ func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedB
 
 	now := time.Now()
 	expires := now.Add(s.linkLifespan)
-	token := base64.RawURLEncoding.EncodeToString(tokenBytes)
+	token := hex.EncodeToString(tokenBytes)
 	link := Link{
 		UserUUID:      user.UUID,
 		Token:         token,
@@ -90,17 +93,25 @@ func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedB
 	return existingUser, s.sender.Send(ctx, sendReq)
 }
 
-func (s DefaultService) ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, error) {
+func (s DefaultService) ValidateLoginLink(ctx context.Context, token string) (*inboxuser.InboxUser, *session.Session, error) {
 	link, err := s.repo.Find(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = s.repo.InvalidateByUserUUID(ctx, link.UserUUID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	user, err := s.userService.FindByUUID(ctx, link.UserUUID)
-	return user, err
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sess, err := s.sessionService.StartSession(ctx, user.UUID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return user, sess, err
 }

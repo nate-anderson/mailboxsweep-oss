@@ -11,7 +11,9 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
+	"mailboxsweep/session"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -44,8 +46,12 @@ type serverConfig struct {
 	EventBusName              string `mapstructure:"EVENT_BUS_NAME"`
 	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
-	LoginLinkDurationMinutes int `mapstructure:"LOGIN_LINK_DURATION_MINUTES"`
-	LoginTokenLength         int `mapstructure:"LOGIN_TOKEN_LENGTH"`
+	LoginLinkDurationMinutes int    `mapstructure:"LOGIN_LINK_DURATION_MINUTES"`
+	LoginTokenLength         int    `mapstructure:"LOGIN_TOKEN_LENGTH"`
+	SessionKeyLength         int    `mapstructure:"SESSION_KEY_LENGTH"`
+	SessionDurationMinutes   int    `mapstructure:"SESSION_DURATION_MINUTES"`
+	CookieDomain             string `mapstructure:"COOKIE_DOMAIN"`
+	CookiePath               string `mapstructure:"COOKIE_PATH"`
 }
 
 func main() {
@@ -128,6 +134,13 @@ func main() {
 	userService := inboxuser.NewService(userRepo)
 	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
 
+	sessionRepo := session.NewDynamoSessionRepository(db, cfg.DynamoDBTable)
+	if cfg.SessionDurationMinutes == 0 {
+		log.Fatal("session duration is required")
+	}
+	sessionDuration := time.Minute * time.Duration(cfg.SessionDurationMinutes)
+	sessionService := session.NewService(sessionRepo, cfg.SessionKeyLength, sessionDuration)
+
 	var loginSender login.Sender
 
 	if cfg.Env == "dev" {
@@ -141,7 +154,11 @@ func main() {
 		log.Fatal("LOGIN_TOKEN_LENGTH must be set and > 0")
 	}
 	loginLinkDurationMinutes := time.Minute * time.Duration(cfg.LoginLinkDurationMinutes)
-	loginService := login.NewService(loginRepo, userService, loginSender, loginLinkDurationMinutes, cfg.LoginTokenLength)
+	loginService := login.NewService(loginRepo, userService, sessionService, loginSender, loginLinkDurationMinutes, cfg.LoginTokenLength)
+
+	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
+		log.Fatal("cookie domain and path are not configured")
+	}
 
 	controller := httpserver.NewController(
 		credentialService,
@@ -149,6 +166,8 @@ func main() {
 		folderService,
 		providerService,
 		loginService,
+		cfg.CookieDomain,
+		cfg.CookiePath,
 		log,
 	)
 	root := chi.NewMux()
