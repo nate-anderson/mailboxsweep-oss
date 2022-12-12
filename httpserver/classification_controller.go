@@ -49,7 +49,6 @@ func (c ClassificationController) PostInboxClassification(w http.ResponseWriter,
 
 	err := c.classificationService.EnqueueClassify(
 		ctx,
-		reqBody.Address,
 		reqBody.Folders,
 		serializedClassifiers,
 	)
@@ -68,8 +67,7 @@ func (c ClassificationController) PostInboxClassification(w http.ResponseWriter,
 
 func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	address := req.Header.Get(testAddressHeader)
-	root, err := c.classificationService.ClassificationSummary(ctx, address)
+	root, err := c.classificationService.ClassificationSummary(ctx)
 	if err != nil {
 		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
 		return
@@ -84,7 +82,6 @@ func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseW
 
 func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	address := req.Header.Get(testAddressHeader)
 
 	pathStr := req.URL.Query().Get("path")
 	decodedPath, err := url.QueryUnescape(pathStr)
@@ -99,7 +96,7 @@ func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, 
 		return
 	}
 
-	cl, err := c.classificationService.ClassificationLeaf(ctx, address, path)
+	cl, err := c.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
 		if errors.Is(err, mailboxsweep.ErrNotFound) {
 			c.respondError(w, err, withStatusCode(http.StatusNotFound))
@@ -115,6 +112,25 @@ func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, 
 	c.respond(w, http.StatusOK, resBody)
 }
 
+func (c ClassificationController) GetClassifiers(w http.ResponseWriter, req *http.Request) {
+	classifiers := c.classificationService.ListClassifiers()
+
+	resBody := ListClassifiersResponse{}
+	cls := make([]ClassifierInfo, len(classifiers))
+	for i, cl := range classifiers {
+		cls[i] = ClassifierInfo{
+			HasInput:         cl.TakesInput,
+			TypeKey:          cl.TypeKey,
+			Name:             cl.Name,
+			Description:      cl.Description,
+			InputDescription: stringOrNil(cl.InputDescription),
+		}
+	}
+	resBody.Classifiers = cls
+
+	c.respond(w, http.StatusOK, resBody)
+}
+
 func convertClassification(cl classification.Classification) Classification {
 	children := map[string]Classification{}
 	for key, child := range cl.Children {
@@ -127,4 +143,11 @@ func convertClassification(cl classification.Classification) Classification {
 		Children:  children,
 	}
 	return res
+}
+
+func stringOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

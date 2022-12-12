@@ -3,10 +3,11 @@ package inbox
 import (
 	"context"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/session"
 )
 
 type FolderService interface {
-	ListInboxFolders(ctx context.Context, address string) ([]string, error)
+	ListInboxFolders(ctx context.Context) ([]string, error)
 }
 
 type DefaultFolderService struct {
@@ -21,7 +22,11 @@ func NewFolderService(providerService *ProviderService, credentialService inboxc
 	}
 }
 
-func (s DefaultFolderService) ListInboxFolders(ctx context.Context, address string) ([]string, error) {
+func (s DefaultFolderService) ListInboxFolders(ctx context.Context) ([]string, error) {
+	address, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	provider, err := s.providerService.GetProvider(ctx, address)
 	if err != nil {
 		return nil, err

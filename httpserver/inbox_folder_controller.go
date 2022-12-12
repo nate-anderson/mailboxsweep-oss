@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"mailboxsweep/inbox"
+	"mailboxsweep/session"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -21,18 +22,19 @@ func NewFolderController(folderService inbox.FolderService, log *logrus.Logger) 
 	}
 }
 
-// @TODO: remove this once auth is working, this has no place in an authed system
-var testAddressHeader = "X-Test-Address"
-
 func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	// @TODO: get this from auth context
-	addr := req.Header.Get(testAddressHeader)
-
-	folders, err := c.folderService.ListInboxFolders(ctx, addr)
+	folders, err := c.folderService.ListInboxFolders(ctx)
 	if err != nil {
 		c.respondError(w, err, withStatusCode(http.StatusBadGateway))
+		return
+	}
+
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
+		c.respondAuthError(w, err)
 		return
 	}
 

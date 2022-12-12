@@ -44,6 +44,30 @@ components:
         initValue:
           type: string
           description: the optional initializer for thie classifier
+    
+    ClassifierInfo:
+      type: object
+      required:
+        - name
+        - description
+        - typeKey
+        - hasInput
+      properties:
+        name:
+          type: string
+          description: display name
+        description:
+          type: string
+          description: detailed description
+        typeKey:
+          type: string
+          description: the type key of the classifier
+        hasInput:
+          type: boolean
+          description: does this classifier take input?
+        inputDescription:
+          type: string
+          description: what is the input of this classifier?
 
     CreateCredentialRequest:
       type: object
@@ -88,6 +112,16 @@ components:
           items:
             type: string
     
+    ListClassifiersResponse:
+      type: object
+      required:
+        - classifiers
+      properties:
+        classifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassifierInfo'
+
     LoginRequest:
       type: object
       required:
@@ -158,12 +192,9 @@ components:
     StartInboxClassifyRequest:
       type: object
       required:
-        - address
         - folders
         - classifiers
       properties:
-        address:
-          type: string
         folders:
           type: array
           items:
@@ -192,6 +223,17 @@ components:
           type: string
 
 paths:
+  /classifiers:
+    get:
+      description: List available classifiers
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClassifiersResponse'
+
   /credential:
     post:
       description: Add credentials to access an inbox

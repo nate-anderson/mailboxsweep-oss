@@ -15,6 +15,17 @@ type Classifier interface {
 	// what is this thing classifying by?
 	Dimension() string
 	Serializeable() SerializableClassifier
+	// Display info about the classifier - should only return static data
+	Info() ClassifierInfo
+}
+
+// used for listing available classifiers to API consumers
+type ClassifierInfo struct {
+	Name             string
+	TypeKey          string
+	Description      string
+	TakesInput       bool
+	InputDescription string
 }
 
 /*
@@ -45,6 +56,15 @@ func (c SenderDomainClassifier) Serializeable() SerializableClassifier {
 	return SerializableClassifier{
 		TypeKey:   typeKeySenderDomain,
 		InitValue: "",
+	}
+}
+
+func (c SenderDomainClassifier) Info() ClassifierInfo {
+	return ClassifierInfo{
+		Name:        "Sender domain",
+		TypeKey:     typeKeySenderDomain,
+		Description: "Classify messages by the website of the sender",
+		TakesInput:  false,
 	}
 }
 
@@ -89,6 +109,15 @@ func (c SenderUsernameClassifier) Serializeable() SerializableClassifier {
 	return SerializableClassifier{
 		TypeKey:   typeKeySenderUsername,
 		InitValue: "",
+	}
+}
+
+func (c SenderUsernameClassifier) Info() ClassifierInfo {
+	return ClassifierInfo{
+		Name:        "Sender email",
+		TypeKey:     typeKeySenderUsername,
+		Description: "Classify messages by the sender",
+		TakesInput:  false,
 	}
 }
 
@@ -137,6 +166,16 @@ func (s SendDateClassifier) Serializeable() SerializableClassifier {
 	}
 }
 
+func (s SendDateClassifier) Info() ClassifierInfo {
+	return ClassifierInfo{
+		Name:             "Send date",
+		TypeKey:          typeKeySendDate,
+		Description:      "Divide messages before and after a given date",
+		TakesInput:       true,
+		InputDescription: "The date to split messages by",
+	}
+}
+
 // Classifier serialization
 
 type SerializableClassifier struct {
@@ -159,4 +198,10 @@ func (s SerializableClassifier) Classifier() (Classifier, error) {
 	default:
 		return nil, fmt.Errorf("unknown type key for serialized classifier '%s'", s.TypeKey)
 	}
+}
+
+var allClassifiers = []Classifier{
+	SenderDomainClassifier{},
+	SenderUsernameClassifier{},
+	SendDateClassifier{},
 }

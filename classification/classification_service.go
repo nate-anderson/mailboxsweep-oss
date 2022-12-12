@@ -6,6 +6,7 @@ import (
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/session"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
@@ -13,10 +14,11 @@ import (
 )
 
 type Service interface {
-	EnqueueClassify(ctx context.Context, address string, folders []string, classifiers []SerializableClassifier) error
-	Classify(ctx context.Context, address string, folders []string, classifiers []Classifier) error
-	ClassificationSummary(ctx context.Context, address string) (root *ClassificationDocument, err error)
-	ClassificationLeaf(ctx context.Context, address string, path []string) (leaf *Classification, err error)
+	EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error
+	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
+	ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error)
+	ClassificationLeaf(ctx context.Context, path []string) (leaf *Classification, err error)
+	ListClassifiers() []ClassifierInfo
 }
 
 type DefaultService struct {
@@ -46,13 +48,17 @@ func NewService(
 	}
 }
 
-func (s DefaultService) Classify(ctx context.Context, address string, folders []string, classifiers []Classifier) error {
-	provider, err := s.providerService.GetProvider(ctx, address)
+func (s DefaultService) Classify(ctx context.Context, folders []string, classifiers []Classifier) error {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	provider, err := s.providerService.GetProvider(ctx, addr)
 	if err != nil {
 		return err
 	}
 
-	cred, err := s.credentialService.FindCredential(ctx, address)
+	cred, err := s.credentialService.FindCredential(ctx, addr)
 	if err != nil {
 		return err
 	}
@@ -62,7 +68,7 @@ func (s DefaultService) Classify(ctx context.Context, address string, folders []
 		return err
 	}
 
-	mailbox, err := provider.Login(address, password)
+	mailbox, err := provider.Login(addr, password)
 	if err != nil {
 		return err
 	}
@@ -80,7 +86,11 @@ type ClassifyQueueItem struct {
 
 var ClassifyQueueDetailType = "mailboxsweep.classify"
 
-func (s DefaultService) EnqueueClassify(ctx context.Context, address string, folders []string, classifiers []SerializableClassifier) error {
+func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error {
+	address, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
 	req := ClassifyQueueItem{
 		Address:     address,
 		Folders:     folders,
@@ -105,10 +115,26 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, address string, fol
 	return err
 }
 
-func (s DefaultService) ClassificationSummary(ctx context.Context, address string) (root *ClassificationDocument, err error) {
+func (s DefaultService) ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error) {
+	address, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return s.repo.FetchSummary(ctx, address)
 }
 
-func (s DefaultService) ClassificationLeaf(ctx context.Context, address string, path []string) (leaf *Classification, err error) {
+func (s DefaultService) ClassificationLeaf(ctx context.Context, path []string) (leaf *Classification, err error) {
+	address, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return s.repo.FetchLeaf(ctx, address, path)
+}
+
+func (s DefaultService) ListClassifiers() []ClassifierInfo {
+	info := make([]ClassifierInfo, len(allClassifiers))
+	for i, cl := range allClassifiers {
+		info[i] = cl.Info()
+	}
+	return info
 }
