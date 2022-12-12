@@ -8,6 +8,7 @@ import (
 	"log"
 	"mailboxsweep"
 	"net/http"
+	"testing"
 	"time"
 )
 
@@ -113,4 +114,12 @@ func UserAddressFromContext(ctx context.Context) (string, error) {
 		return str, nil
 	}
 	return "", mailboxsweep.ErrUnauthenticated
+}
+
+func AuthorizeTestContext(ctx context.Context, addr string, t *testing.T) context.Context {
+	if t.Name() == "" {
+		panic("AuthorizeTestContext called on unnamed test")
+	}
+	authed := context.WithValue(ctx, authKey, addr)
+	return authed
 }

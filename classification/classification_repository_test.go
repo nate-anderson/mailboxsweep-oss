@@ -59,7 +59,6 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		})
 
 		t.Run("fetch summary", func(t *testing.T) {
-			// t.Skip()
 			classification, err := repo.FetchSummary(ctx, address)
 			assert.ThatError(t, err).IsNil()
 			assert.

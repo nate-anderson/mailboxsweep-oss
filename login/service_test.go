@@ -34,7 +34,6 @@ func TestService(t *testing.T) {
 
 	t.Run("create login link", func(t *testing.T) {
 		t.Run("existing user", func(t *testing.T) {
-			t.SkipNow()
 			t.Run("create", func(t *testing.T) {
 				existing, err := service.CreateLoginLink(ctx, testAddress, testIP)
 				assert.ThatError(t, err).IsNil()

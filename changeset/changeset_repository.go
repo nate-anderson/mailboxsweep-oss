@@ -12,5 +12,5 @@ type ChangeSetRepository interface {
 	// should return the number of items added by the operation
 	Append(ctx context.Context, changeSet ChangeSet) (int, error)
 	// should return the number of items removed by the operation
-	Remove(ctx context.Context, inbox, folder string) error
+	Remove(ctx context.Context, changeset ChangeSet) (int, error)
 }
