@@ -76,7 +76,6 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 	}
 	return Message{
 		Subject:   i.Envelope.Subject,
-		ID:        i.Envelope.MessageId,
 		UID:       i.Uid,
 		Folder:    folder,
 		InReplyTo: i.Envelope.InReplyTo,

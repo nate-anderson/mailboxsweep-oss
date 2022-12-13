@@ -3,7 +3,6 @@ package inbox
 import "time"
 
 type Message struct {
-	ID      string `json:"id"`
 	UID     uint32 `json:"uid"`
 	Folder  string `json:"folder"`
 	Subject string `json:"subject"`

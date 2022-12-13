@@ -39,7 +39,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		c1 := NewClassification("none2", "level 2 left")
 		sendDate := time.Now()
 		c1.Messages = append(c1.Messages, inbox.Message{
-			ID:       "message2",
+			UID:      2,
 			Subject:  "left child subject",
 			Sender:   testSender,
 			SendDate: sendDate,
@@ -47,7 +47,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		c1.Count = 1
 
 		c2 := NewClassification("none3", "level 2 right")
-		c2.Messages = append(c2.Messages, inbox.Message{ID: "message3"})
+		c2.Messages = append(c2.Messages, inbox.Message{UID: 3})
 		c2.Count = 1
 
 		c.Children["left"] = c1
@@ -100,9 +100,9 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 
 			msg := classification.Messages[0]
 			assert.
-				That(t, msg.ID).
+				That(t, msg.UID).
 				SoThat(repoType + " message ID is correct").
-				Equals("message2")
+				Equals(3)
 
 			assert.
 				That(t, msg.Subject).

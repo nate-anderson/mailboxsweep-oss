@@ -8,13 +8,13 @@ import (
 
 func TestStripMessages(t *testing.T) {
 	c := NewClassification("none", "level 1")
-	c.Messages = append(c.Messages, inbox.Message{ID: "message1"})
+	c.Messages = append(c.Messages, inbox.Message{UID: 1})
 
 	c1 := NewClassification("none", "level 2 left")
-	c1.Messages = append(c1.Messages, inbox.Message{ID: "message2"})
+	c1.Messages = append(c1.Messages, inbox.Message{UID: 2})
 
 	c2 := NewClassification("none", "level 2 right")
-	c2.Messages = append(c2.Messages, inbox.Message{ID: "message3"})
+	c2.Messages = append(c2.Messages, inbox.Message{UID: 3})
 
 	c.Children["left"] = c1
 	c.Children["right"] = c2
@@ -36,17 +36,17 @@ func TestStripMessages(t *testing.T) {
 
 func TestLeafClassifications(t *testing.T) {
 	c := NewClassification("none", "level 1")
-	c.Messages = append(c.Messages, inbox.Message{ID: "message1"})
+	c.Messages = append(c.Messages, inbox.Message{UID: 1})
 
 	c1 := NewClassification("none", "level 2")
 
 	c2 := NewClassification("none", "level 3")
 
 	c3 := NewClassification("none", "level 4 left")
-	c3.Messages = append(c3.Messages, inbox.Message{ID: "message2"})
+	c3.Messages = append(c3.Messages, inbox.Message{UID: 2})
 
 	c4 := NewClassification("none", "level 4 right")
-	c4.Messages = append(c4.Messages, inbox.Message{ID: "message3"})
+	c4.Messages = append(c4.Messages, inbox.Message{UID: 3})
 
 	c.Children["child"] = c1
 	c1.Children["child"] = c2
@@ -59,12 +59,12 @@ func TestLeafClassifications(t *testing.T) {
 		t.Errorf("should have 2 leaf nodes, got %d", len(leaves))
 	}
 
-	if id := leaves["/child/child/left"].Messages[0].ID; id != "message2" {
-		t.Errorf("expected a message with ID message2: got %s", id)
+	if uid := leaves["/child/child/left"].Messages[0].UID; uid != 2 {
+		t.Errorf("expected a message with ID message2: got %d", uid)
 	}
 
-	if id := leaves["/child/child/right"].Messages[0].ID; id != "message3" {
-		t.Errorf("expected a message with ID message3: got %s", id)
+	if uid := leaves["/child/child/right"].Messages[0].UID; uid != 3 {
+		t.Errorf("expected a message with ID message3: got %d", uid)
 	}
 }
 
