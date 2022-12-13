@@ -10,6 +10,7 @@ import (
 )
 
 type Controller struct {
+	*ChangeSetController
 	*CredentialController
 	*ClassificationController
 	*FolderController

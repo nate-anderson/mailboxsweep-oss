@@ -6,6 +6,22 @@ info:
 components:
   schemas:
 
+    ChangeSetRequest:
+      type: object
+      required:
+        - path
+        - folder
+        - operation
+      properties:
+        path:
+          type: array
+          items:
+            type: string
+        folder:
+          type: string
+        operation:
+          $ref: '#/components/schemas/UpdateOperation'
+
     Classification:
       type: object
       required:
@@ -222,6 +238,12 @@ components:
         message:
           type: string
 
+    UpdateOperation:
+      type: string
+      enum:
+        - delete
+        - mark_read
+
 paths:
   /classifiers:
     get:
@@ -304,6 +326,16 @@ paths:
           description: Bad request
         '500':
           Description: Internal server error
+
+  /inbox/changeset:
+    patch:
+      description: Append leaf for update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeSetRequest'
 
   /inbox/classification:
     post:
