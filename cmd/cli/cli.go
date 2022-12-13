@@ -108,9 +108,7 @@ var listMessagesCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := provider.Connect(); err != nil {
-			log.Fatal(err)
-		}
+
 		log.Println("Connected!")
 
 		mailbox, err := provider.Login(username, password)

@@ -2,8 +2,10 @@ package inbox
 
 import (
 	"fmt"
+	"mailboxsweep"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/emersion/go-imap/client"
 )
@@ -57,6 +59,10 @@ func (p *IMAPProvider) Connect() error {
 func (p *IMAPProvider) Login(username, password string) (Inbox, error) {
 	err := p.client.Login(username, password)
 	if err != nil {
+		msg := strings.ToLower(err.Error())
+		if strings.Contains(msg, "invalid credentials") {
+			return nil, mailboxsweep.ErrBadInboxCredential
+		}
 		return nil, err
 	}
 
