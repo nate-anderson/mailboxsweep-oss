@@ -230,8 +230,8 @@ func TestService(t *testing.T) {
 			changeSetMap, err := service.ListByInboxFolder(authedCtx, folder, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(changeSetMap)).Equals(2)
-			assert.ThatSlice(t, changeSetMap[Delete].UIDs).Equals(deleteIDs)
-			assert.ThatSlice(t, changeSetMap[MarkRead].UIDs).Equals(markReadIDs)
+			assert.ThatSlice(t, changeSetMap[Delete].UIDs).ContainsAll(deleteIDs)
+			assert.ThatSlice(t, changeSetMap[MarkRead].UIDs).ContainsAll(markReadIDs)
 		})
 	})
 }

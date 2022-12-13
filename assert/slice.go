@@ -75,3 +75,14 @@ func (a *sliceAssertion[E]) Equals(expected []E) *sliceAssertion[E] {
 	}
 	return a
 }
+
+func (a *sliceAssertion[E]) ContainsAll(expected []E) *sliceAssertion[E] {
+	if len(a.actual) != len(expected) {
+		a.failf("Actual does not contain all of expected:\nExpected: %+v\nActual: %+v", expected, a.actual)
+		return a
+	}
+	for _, e := range expected {
+		a.Contains(e)
+	}
+	return a
+}

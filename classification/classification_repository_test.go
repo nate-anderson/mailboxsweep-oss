@@ -102,7 +102,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 			assert.
 				That(t, msg.UID).
 				SoThat(repoType + " message ID is correct").
-				Equals(3)
+				Equals(2)
 
 			assert.
 				That(t, msg.Subject).
