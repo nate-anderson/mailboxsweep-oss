@@ -2,14 +2,14 @@ package changeset
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"mailboxsweep"
 	"strconv"
 	"strings"
 	"time"
-
-	"mailboxsweep/pkg/imap"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -20,12 +20,9 @@ import (
 type DynamoChangesetRepository struct {
 	db *dynamodb.Client
 
-	// how many UIDs before we split into a new document?
-	pageSize  int
-	tableName string
-
-	// used for breaking update sets into pages
-	hashFunc imap.UidHashFunc
+	// use modulus of the hash to determine which page to put a path into
+	pageIDHashMod uint64
+	tableName     string
 }
 
 // structure used by dynamo
@@ -50,17 +47,15 @@ type changeSetDocument struct {
 func NewDynamoChangesetRepository(
 	db *dynamodb.Client,
 	tableName string,
-	uidsPerDocument int,
-	hashFunc imap.UidHashFunc,
+	pageIDHashMod uint64,
 ) (*DynamoChangesetRepository, error) {
-	if uidsPerDocument <= 0 {
-		return nil, errors.New("uidsPerDocument must be > 0")
+	if pageIDHashMod == 0 {
+		return nil, errors.New("pageIDHashMod must be > 0")
 	}
 	return &DynamoChangesetRepository{
-		db:        db,
-		tableName: tableName,
-		pageSize:  uidsPerDocument,
-		hashFunc:  hashFunc,
+		db:            db,
+		tableName:     tableName,
+		pageIDHashMod: pageIDHashMod,
 	}, nil
 }
 
@@ -95,7 +90,7 @@ func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string
 		if existing, ok := changeSetMap[c.Folder]; !ok {
 			changeSetMap[c.Folder] = c.ChangeSet
 		} else {
-			existing.UIDs = append(existing.UIDs, c.UIDs...)
+			existing.Paths = append(existing.Paths, c.Paths...)
 			changeSetMap[c.Folder] = existing
 		}
 	}
@@ -118,38 +113,37 @@ func (d DynamoChangesetRepository) formatLSI1(folder string) string {
 	return folder
 }
 
-func (d DynamoChangesetRepository) partitionID(uid string) (uint64, error) {
-	p, err := d.hashFunc(uid)
+func (d DynamoChangesetRepository) partitionID(path string) (uint64, error) {
+	hexVal := md5.Sum([]byte(path))
+	hexStr := hex.EncodeToString(hexVal[:4])
+	dec, err := strconv.ParseUint(hexStr, 16, 64)
 	if err != nil {
 		return 0, err
 	}
-
-	min := p / uint64(d.pageSize)
-	return min, nil
+	return dec % d.pageIDHashMod, nil
 }
 
 func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string]ChangeSet, error) {
 	partitionMap := make(map[uint64][]string)
-	for _, uid := range changeSet.UIDs {
-		partitionID, err := d.partitionID(uid)
+	for _, path := range changeSet.Paths {
+		partitionID, err := d.partitionID(path)
 		if err != nil {
 			return nil, err
 		}
-		partitionMap[partitionID] = append(partitionMap[partitionID], uid)
+		partitionMap[partitionID] = append(partitionMap[partitionID], path)
 	}
 
 	res := make(map[string]ChangeSet)
-	for partitionID, uids := range partitionMap {
+	for partitionID, paths := range partitionMap {
 		sk := d.formatSK(changeSet.Folder, changeSet.Operation, partitionID)
 		c := changeSet
-		c.UIDs = uids
+		c.Paths = paths
 		res[sk] = c
 	}
 	return res, nil
 }
 
-// Append to a changeset, splitting it into pages if it contains more UIDs than the configured
-// uidsPerDocument value
+// Append to a changeset, splitting it into pages using the hash function
 func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
@@ -187,14 +181,14 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				#updated = :updated,
 				#expires = :expires
 				
-				ADD #uids :uids`,
+				ADD #paths :paths`,
 			),
 			ExpressionAttributeNames: map[string]string{
 				"#inbox":     "inbox",
 				"#lsi1":      mailboxsweep.DynamoLSI1SK,
 				"#folder":    "folder",
 				"#operation": "operation",
-				"#uids":      "uids",
+				"#paths":     "paths",
 				"#created":   "created",
 				"#updated":   "updated",
 				"#expires":   mailboxsweep.DynamoExpires,
@@ -206,8 +200,8 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				":folder": &types.AttributeValueMemberS{
 					Value: changeSet.Folder,
 				},
-				":uids": &types.AttributeValueMemberSS{
-					Value: set.UIDs,
+				":paths": &types.AttributeValueMemberSS{
+					Value: set.Paths,
 				},
 				":created": &types.AttributeValueMemberS{
 					Value: now.Format(mailboxsweep.DynamoTimeFormat),
@@ -225,7 +219,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 					Value: string(changeSet.Operation),
 				},
 			},
-			// this function returns the number of UIDs added,
+			// this function returns the number of paths added,
 			// fetching the old ones allows this calculation
 			ReturnValues: types.ReturnValueUpdatedOld,
 		})
@@ -234,7 +228,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 		}
 	}
 
-	return len(changeSet.UIDs), nil
+	return len(changeSet.Paths), nil
 }
 
 func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
@@ -242,7 +236,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
 	// track diff
-	oldUIDs := make([]string, 0, len(changeSet.UIDs))
+	oldPaths := make([]string, 0, len(changeSet.Paths))
 
 	partitionMap, err := d.partitionSet(changeSet)
 	if err != nil {
@@ -273,12 +267,12 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 				#updated = :updated,
 				#expires = :expires
 				
-				DELETE #uids :uids`,
+				DELETE #paths :paths`,
 			),
 			ExpressionAttributeNames: map[string]string{
 				"#pk":      mailboxsweep.DynamoPK,
 				"#sk":      mailboxsweep.DynamoSK,
-				"#uids":    "uids",
+				"#paths":   "paths",
 				"#updated": "updated",
 				"#expires": mailboxsweep.DynamoExpires,
 			},
@@ -289,8 +283,8 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 				":sk": &types.AttributeValueMemberS{
 					Value: sk,
 				},
-				":uids": &types.AttributeValueMemberSS{
-					Value: set.UIDs,
+				":paths": &types.AttributeValueMemberSS{
+					Value: set.Paths,
 				},
 				":updated": &types.AttributeValueMemberS{
 					Value: now.Format(mailboxsweep.DynamoTimeFormat),
@@ -299,7 +293,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 					Value: strconv.FormatInt(expires, 10),
 				},
 			},
-			// this function returns the number of UIDs added,
+			// this function returns the number of paths added,
 			// fetching the old ones allows this calculation
 			ReturnValues: types.ReturnValueUpdatedOld,
 		})
@@ -308,18 +302,18 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 		}
 
 		oldList := []string{}
-		if err = attributevalue.Unmarshal(res.Attributes["uids"], &oldList); err != nil {
+		if err = attributevalue.Unmarshal(res.Attributes["paths"], &oldList); err != nil {
 			return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
 		}
-		oldUIDs = append(oldUIDs, oldList...)
+		oldPaths = append(oldPaths, oldList...)
 	}
 
 	presentInOld := make(map[string]bool)
-	for _, old := range oldUIDs {
+	for _, old := range oldPaths {
 		presentInOld[old] = true
 	}
 	diff := 0
-	for _, removed := range changeSet.UIDs {
+	for _, removed := range changeSet.Paths {
 		if _, ok := presentInOld[removed]; ok {
 			diff++
 		}
@@ -390,7 +384,7 @@ func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox,
 	operationChangeSets := map[UpdateOperation]ChangeSet{}
 	for _, item := range items {
 		if existing, ok := operationChangeSets[item.Operation]; ok {
-			existing.UIDs = append(existing.UIDs, item.ChangeSet.UIDs...)
+			existing.Paths = append(existing.Paths, item.ChangeSet.Paths...)
 			operationChangeSets[item.Operation] = existing
 		} else {
 			operationChangeSets[item.Operation] = item.ChangeSet
