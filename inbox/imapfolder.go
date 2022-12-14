@@ -2,7 +2,6 @@ package inbox
 
 import (
 	"fmt"
-	"mailboxsweep/changeset"
 	"net/mail"
 	"strconv"
 
@@ -108,9 +107,9 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 }
 
 // @TODO: test this
-func (f IMAPFolder) Delete(del changeset.ChangeSet) error {
+func (f IMAPFolder) Delete(uids []string) error {
 	set := imap.SeqSet{}
-	for _, uid := range del.UIDs {
+	for _, uid := range uids {
 		u, err := strconv.ParseUint(uid, 10, 32)
 		if err != nil {
 			return err

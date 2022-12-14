@@ -25,19 +25,18 @@ type ChangeSet struct {
 	Folder string `dynamodbav:"folder"`
 	// is this a "mark-read" selection, or a "delete" selection?
 	Operation UpdateOperation `dynamodbav:"operation"`
-	// DeletionSet must be a set of specific message IDs (UIDs for IMAP). This is the only way to identify
-	// messages across folders and sessions.
-	UIDs []string `dynamodbav:"uids"`
+	// specify a set of paths in a classified inbox
+	Paths []string `dynamodbav:"paths"`
 }
 
-func (d *ChangeSet) AddUID(uid string) {
-	d.UIDs = append(d.UIDs, uid)
+func (d *ChangeSet) AddPath(path string) {
+	d.Paths = append(d.Paths, path)
 }
 
 var (
 	ErrNoOperation       = errors.New("change set requires an operation")
 	ErrInvalidOperation  = errors.New("invalid operation in change set")
-	ErrNoUIDSelection    = errors.New("no UIDs selected for change set")
+	ErrNoPathSelection   = errors.New("no paths selected for change set")
 	ErrNoInboxSelection  = errors.New("no inbox selected for change set")
 	ErrNoFolderSelection = errors.New("no folder selected for change set")
 )
@@ -51,8 +50,8 @@ func (d ChangeSet) Validate() error {
 		return ErrInvalidOperation
 	}
 
-	if len(d.UIDs) == 0 {
-		return ErrNoUIDSelection
+	if len(d.Paths) == 0 {
+		return ErrNoPathSelection
 	}
 
 	if strings.TrimSpace(d.Inbox) == "" {

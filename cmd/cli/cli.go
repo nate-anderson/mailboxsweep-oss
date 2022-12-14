@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
 	"strconv"
@@ -267,16 +266,16 @@ var deleteCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		del := changeset.ChangeSet{}
+		uids := []string{}
 		for _, arg := range args {
 			uid, err := strconv.Atoi(arg)
 			if err != nil {
 				log.Fatal(err)
 			}
-			del.AddUID(strconv.Itoa(uid))
+			uids = append(uids, strconv.Itoa(uid))
 		}
 
-		if err := folder.Delete(del); err != nil {
+		if err := folder.Delete(uids); err != nil {
 			log.Fatal(err)
 		}
 

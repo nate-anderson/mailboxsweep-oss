@@ -6,8 +6,8 @@ import (
 )
 
 type Service interface {
-	MarkForDelete(ctx context.Context, folder string, uids []string) (int, error)
-	MarkForMarkRead(ctx context.Context, folder string, uids []string) (int, error)
+	MarkForDelete(ctx context.Context, folder string, paths []string) (int, error)
+	MarkForMarkRead(ctx context.Context, folder string, paths []string) (int, error)
 	ListByInbox(ctx context.Context, folder string, consistentRead bool) ([]ChangeSet, error)
 	ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error)
 }
@@ -20,7 +20,7 @@ func NewDefaultService(repo ChangeSetRepository) *DefaultService {
 	return &DefaultService{repo}
 }
 
-func (s DefaultService) MarkForDelete(ctx context.Context, folder string, uids []string) (int, error) {
+func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths []string) (int, error) {
 	addr, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
@@ -30,13 +30,13 @@ func (s DefaultService) MarkForDelete(ctx context.Context, folder string, uids [
 		Inbox:     addr,
 		Folder:    folder,
 		Operation: Delete,
-		UIDs:      uids,
+		Paths:     paths,
 	}
 
 	return s.repo.Append(ctx, cs)
 }
 
-func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, uids []string) (int, error) {
+func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, paths []string) (int, error) {
 	addr, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
@@ -46,7 +46,7 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, uids
 		Inbox:     addr,
 		Folder:    folder,
 		Operation: MarkRead,
-		UIDs:      uids,
+		Paths:     paths,
 	}
 
 	return s.repo.Append(ctx, cs)

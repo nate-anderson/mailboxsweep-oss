@@ -10,8 +10,8 @@ import (
 )
 
 type testInternalChangeSet struct {
-	deleteUIDs   set.Set[string]
-	markReadUIDs set.Set[string]
+	deletePaths   set.Set[string]
+	markReadPaths set.Set[string]
 }
 
 type testRepo struct {
@@ -28,22 +28,22 @@ func (r testRepo) Append(ctx context.Context, changeSet ChangeSet) (int, error) 
 		cs = c
 	} else {
 		cs = &testInternalChangeSet{
-			deleteUIDs:   set.NewSet[string](),
-			markReadUIDs: set.NewSet[string](),
+			deletePaths:   set.NewSet[string](),
+			markReadPaths: set.NewSet[string](),
 		}
 		r.folders[changeSet.Folder] = cs
 	}
 
 	diff := 0
 	if changeSet.Operation == Delete {
-		for _, uid := range changeSet.UIDs {
-			if cs.deleteUIDs.Add(uid) {
+		for _, path := range changeSet.Paths {
+			if cs.deletePaths.Add(path) {
 				diff++
 			}
 		}
 	} else if changeSet.Operation == MarkRead {
-		for _, uid := range changeSet.UIDs {
-			if cs.markReadUIDs.Add(uid) {
+		for _, path := range changeSet.Paths {
+			if cs.markReadPaths.Add(path) {
 				diff++
 			}
 		}
@@ -62,14 +62,14 @@ func (r testRepo) Remove(ctx context.Context, changeSet ChangeSet) (int, error) 
 	}
 	diff := 0
 	if changeSet.Operation == Delete {
-		for _, uid := range changeSet.UIDs {
-			if cs.deleteUIDs.Remove(uid) {
+		for _, path := range changeSet.Paths {
+			if cs.deletePaths.Remove(path) {
 				diff++
 			}
 		}
 	} else if changeSet.Operation == MarkRead {
-		for _, uid := range changeSet.UIDs {
-			if cs.markReadUIDs.Remove(uid) {
+		for _, path := range changeSet.Paths {
+			if cs.markReadPaths.Remove(path) {
 				diff++
 			}
 		}
@@ -80,20 +80,20 @@ func (r testRepo) Remove(ctx context.Context, changeSet ChangeSet) (int, error) 
 func (r testRepo) ListByInbox(ctx context.Context, inbox string, consistentRead bool) ([]ChangeSet, error) {
 	changeSets := make([]ChangeSet, 0, len(r.folders))
 	for folder, tcs := range r.folders {
-		if tcs.deleteUIDs.Len() > 0 {
+		if tcs.deletePaths.Len() > 0 {
 			changeSets = append(changeSets, ChangeSet{
 				Inbox:     r.inbox,
 				Folder:    folder,
 				Operation: Delete,
-				UIDs:      tcs.deleteUIDs.Slice(),
+				Paths:     tcs.deletePaths.Slice(),
 			})
 		}
-		if tcs.markReadUIDs.Len() > 0 {
+		if tcs.markReadPaths.Len() > 0 {
 			changeSets = append(changeSets, ChangeSet{
 				Inbox:     r.inbox,
 				Folder:    folder,
 				Operation: MarkRead,
-				UIDs:      tcs.markReadUIDs.Slice(),
+				Paths:     tcs.markReadPaths.Slice(),
 			})
 		}
 	}
@@ -106,13 +106,13 @@ func (r testRepo) FindByInboxFolder(ctx context.Context, inbox, folder string, c
 		Inbox:     inbox,
 		Folder:    folder,
 		Operation: Delete,
-		UIDs:      tcs.deleteUIDs.Slice(),
+		Paths:     tcs.deletePaths.Slice(),
 	}
 	markRedChangeSet := ChangeSet{
 		Inbox:     inbox,
 		Folder:    folder,
 		Operation: MarkRead,
-		UIDs:      tcs.markReadUIDs.Slice(),
+		Paths:     tcs.markReadPaths.Slice(),
 	}
 
 	return map[UpdateOperation]ChangeSet{
@@ -141,53 +141,49 @@ func TestService(t *testing.T) {
 	service := NewDefaultService(&repo)
 
 	t.Run("mark for delete", func(t *testing.T) {
-		deleteUIDs := []string{
-			"10", "4908", "194", "9081", "12984", "78", "1",
-		}
+		deletePaths := []string{"domain=mail.google.com,sender=admin@mail.google.com,before_2020_01_01=true"}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.MarkForDelete(ctx, folder, deleteUIDs)
+			n, err := service.MarkForDelete(ctx, folder, deletePaths)
 			assert.ThatError(t, err).IsNotNil()
 			assert.That(t, n).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.MarkForDelete(authedCtx, folder, deleteUIDs)
+			n, err := service.MarkForDelete(authedCtx, folder, deletePaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(deleteUIDs))
+			assert.That(t, n).Equals(len(deletePaths))
 
-			assert.ThatSlice(t, repo.folders[folder].deleteUIDs.Slice()).HasLength(n)
+			assert.ThatSlice(t, repo.folders[folder].deletePaths.Slice()).HasLength(n)
 		})
 	})
 
 	t.Run("mark for mark read", func(t *testing.T) {
 		repo.Reset()
-		markReadUIDs := []string{
-			"10", "19", "340", "15", "9081",
-		}
+		markReadPaths := []string{"domain=mail.google.com", "sender=welcome@mail.google.com", "before_2019_01_01=false"}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.MarkForMarkRead(ctx, folder, markReadUIDs)
+			n, err := service.MarkForMarkRead(ctx, folder, markReadPaths)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, n).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.MarkForMarkRead(authedCtx, folder, markReadUIDs)
+			n, err := service.MarkForMarkRead(authedCtx, folder, markReadPaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(markReadUIDs))
+			assert.That(t, n).Equals(len(markReadPaths))
 
-			assert.ThatSlice(t, repo.folders[folder].markReadUIDs.Slice()).HasLength(n)
+			assert.ThatSlice(t, repo.folders[folder].markReadPaths.Slice()).HasLength(n)
 		})
 	})
 
 	t.Run("list by inbox", func(t *testing.T) {
 		repo.Reset()
 
-		ids := []string{"1", "15", "315"}
+		path := "domain=yahoo.com,sender=buddy@yahoo.com,sent_before_2020=false"
 		repo.folders[folder] = &testInternalChangeSet{
-			deleteUIDs: set.NewSet(ids...),
+			deletePaths: set.NewSet(path),
 		}
 
 		t.Run("unauthenticated. failure", func(t *testing.T) {
@@ -201,22 +197,22 @@ func TestService(t *testing.T) {
 			changeSets, err := service.ListByInbox(authedCtx, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(changeSets)).Equals(1)
-			assert.That(t, changeSets[0].Operation).Equals(Delete)
-			assert.ThatSlice(t, changeSets[0].UIDs).HasLength(len(ids))
-			for _, uid := range ids {
-				assert.ThatSlice(t, changeSets[0].UIDs).Contains(uid)
-			}
+			cs := changeSets[0]
+			assert.That(t, cs.Operation).Equals(Delete)
+			assert.That(t, len(cs.Paths)).Equals(1)
+			p := cs.Paths[0]
+			assert.That(t, p).Equals(path)
 		})
 	})
 
 	t.Run("list by inbox folder", func(t *testing.T) {
 		repo.Reset()
 
-		deleteIDs := []string{"1", "15", "315"}
+		deletePaths := []string{"12,34", "89041,13413r,"}
 		markReadIDs := []string{"10", "809"}
 		repo.folders[folder] = &testInternalChangeSet{
-			deleteUIDs:   set.NewSet(deleteIDs...),
-			markReadUIDs: set.NewSet(markReadIDs...),
+			deletePaths:   set.NewSet(deletePaths...),
+			markReadPaths: set.NewSet(markReadIDs...),
 		}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
@@ -230,8 +226,8 @@ func TestService(t *testing.T) {
 			changeSetMap, err := service.ListByInboxFolder(authedCtx, folder, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(changeSetMap)).Equals(2)
-			assert.ThatSlice(t, changeSetMap[Delete].UIDs).ContainsAll(deleteIDs)
-			assert.ThatSlice(t, changeSetMap[MarkRead].UIDs).ContainsAll(markReadIDs)
+			assert.ThatSlice(t, changeSetMap[Delete].Paths).ContainsAll(deletePaths)
+			assert.ThatSlice(t, changeSetMap[MarkRead].Paths).ContainsAll(markReadIDs)
 		})
 	})
 }
