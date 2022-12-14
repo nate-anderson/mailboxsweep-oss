@@ -6,6 +6,8 @@ type TestProvider struct {
 	Username string
 	Password string
 
+	Messages map[string][]inbox.Message
+
 	ConnectError error
 	LoginError   error
 }

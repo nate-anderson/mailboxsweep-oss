@@ -32,7 +32,7 @@ func (t *TestFolder) Messages(start, end uint32, m chan<- inbox.Message, e chan<
 		m <- msg
 	}
 
-	close(m)
+	e <- nil
 }
 
 func (t TestFolder) Count() uint32 {

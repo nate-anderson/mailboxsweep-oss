@@ -1,11 +1,16 @@
 package inboxtesting
 
-import "mailboxsweep/inbox"
+import (
+	"fmt"
+	"mailboxsweep"
+	"mailboxsweep/inbox"
+)
 
 type TestInbox struct {
 	name         string
-	folders      []string
 	validityKeys map[string]uint32
+
+	messages map[string][]inbox.Message
 
 	foldersError      error
 	folderError       error
@@ -20,7 +25,11 @@ func (t TestInbox) Folders() ([]string, error) {
 	if t.foldersError != nil {
 		return []string{}, t.foldersError
 	}
-	return t.folders, nil
+	folders := make([]string, 0, len(t.messages))
+	for key := range t.messages {
+		folders = append(folders, key)
+	}
+	return folders, nil
 }
 
 func (t TestInbox) Folder(name string) (inbox.Folder, error) {
@@ -28,8 +37,14 @@ func (t TestInbox) Folder(name string) (inbox.Folder, error) {
 		return nil, t.folderError
 	}
 
+	messages, ok := t.messages[name]
+	if !ok {
+		return nil, fmt.Errorf("folder not found: %w", mailboxsweep.ErrNotFound)
+	}
+
 	return &TestFolder{
-		FolderName: name,
+		FolderName:     name,
+		FolderMessages: messages,
 	}, nil
 }
 
