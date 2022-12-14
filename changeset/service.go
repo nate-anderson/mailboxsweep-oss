@@ -2,12 +2,15 @@ package changeset
 
 import (
 	"context"
+	"mailboxsweep/classification"
 	"mailboxsweep/session"
 )
 
 type Service interface {
-	MarkForDelete(ctx context.Context, folder string, paths []string) (int, error)
-	MarkForMarkRead(ctx context.Context, folder string, paths []string) (int, error)
+	MarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error)
+	MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
+	UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error)
+	UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
 	ListByInbox(ctx context.Context, folder string, consistentRead bool) ([]ChangeSet, error)
 	ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error)
 }
@@ -20,33 +23,43 @@ func NewDefaultService(repo ChangeSetRepository) *DefaultService {
 	return &DefaultService{repo}
 }
 
-func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths []string) (int, error) {
+func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
 	addr, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
+	}
+
+	pathStrings := make([]string, len(paths))
+	for i, p := range paths {
+		pathStrings[i] = p.String()
 	}
 
 	cs := ChangeSet{
 		Inbox:     addr,
 		Folder:    folder,
 		Operation: Delete,
-		Paths:     paths,
+		Paths:     pathStrings,
 	}
 
 	return s.repo.Append(ctx, cs)
 }
 
-func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, paths []string) (int, error) {
+func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
 	addr, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
+	}
+
+	pathStrings := make([]string, len(paths))
+	for i, p := range paths {
+		pathStrings[i] = p.String()
 	}
 
 	cs := ChangeSet{
 		Inbox:     addr,
 		Folder:    folder,
 		Operation: MarkRead,
-		Paths:     paths,
+		Paths:     pathStrings,
 	}
 
 	return s.repo.Append(ctx, cs)
@@ -68,4 +81,46 @@ func (s DefaultService) ListByInboxFolder(ctx context.Context, folder string, co
 	}
 
 	return s.repo.FindByInboxFolder(ctx, addr, folder, consistentRead)
+}
+
+func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	pathStrings := make([]string, len(paths))
+	for i, p := range paths {
+		pathStrings[i] = p.String()
+	}
+
+	cs := ChangeSet{
+		Inbox:     addr,
+		Folder:    folder,
+		Operation: Delete,
+		Paths:     pathStrings,
+	}
+
+	return s.repo.Remove(ctx, cs)
+}
+
+func (s DefaultService) UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	pathStrings := make([]string, len(paths))
+	for i, p := range paths {
+		pathStrings[i] = p.String()
+	}
+
+	cs := ChangeSet{
+		Inbox:     addr,
+		Folder:    folder,
+		Operation: MarkRead,
+		Paths:     pathStrings,
+	}
+
+	return s.repo.Remove(ctx, cs)
 }

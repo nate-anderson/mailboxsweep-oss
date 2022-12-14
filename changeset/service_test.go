@@ -4,6 +4,7 @@ import (
 	"context"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/classification"
 	"mailboxsweep/pkg/set"
 	"mailboxsweep/session"
 	"testing"
@@ -141,7 +142,7 @@ func TestService(t *testing.T) {
 	service := NewDefaultService(&repo)
 
 	t.Run("mark for delete", func(t *testing.T) {
-		deletePaths := []string{"domain=mail.google.com,sender=admin@mail.google.com,before_2020_01_01=true"}
+		deletePaths := []classification.Path{{"domain=mail.google.com", "sender=admin@mail.google.com", "before_2020_01_01=true"}}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
 			n, err := service.MarkForDelete(ctx, folder, deletePaths)
@@ -160,7 +161,7 @@ func TestService(t *testing.T) {
 
 	t.Run("mark for mark read", func(t *testing.T) {
 		repo.Reset()
-		markReadPaths := []string{"domain=mail.google.com", "sender=welcome@mail.google.com", "before_2019_01_01=false"}
+		markReadPaths := []classification.Path{{"domain=mail.google.com", "sender=welcome@mail.google.com", "before_2019_01_01=false"}}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
 			n, err := service.MarkForMarkRead(ctx, folder, markReadPaths)
@@ -208,11 +209,11 @@ func TestService(t *testing.T) {
 	t.Run("list by inbox folder", func(t *testing.T) {
 		repo.Reset()
 
-		deletePaths := []string{"12,34", "89041,13413r,"}
-		markReadIDs := []string{"10", "809"}
+		deletePaths := []string{"12,34", "89041,13413r"}
+		markReadPaths := []string{"10,15", "809,11"}
 		repo.folders[folder] = &testInternalChangeSet{
 			deletePaths:   set.NewSet(deletePaths...),
-			markReadPaths: set.NewSet(markReadIDs...),
+			markReadPaths: set.NewSet(markReadPaths...),
 		}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
@@ -227,7 +228,44 @@ func TestService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(changeSetMap)).Equals(2)
 			assert.ThatSlice(t, changeSetMap[Delete].Paths).ContainsAll(deletePaths)
-			assert.ThatSlice(t, changeSetMap[MarkRead].Paths).ContainsAll(markReadIDs)
+			assert.ThatSlice(t, changeSetMap[MarkRead].Paths).ContainsAll(markReadPaths)
+		})
+	})
+
+	t.Run("unmark for delete", func(t *testing.T) {
+		deletePaths := []classification.Path{{"12", "34"}}
+
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			n, err := service.MarkForDelete(ctx, folder, deletePaths)
+			assert.ThatError(t, err).IsNotNil()
+			assert.That(t, n).Equals(0)
+		})
+
+		t.Run("authenticated, success", func(t *testing.T) {
+			n, err := service.UnmarkForDelete(authedCtx, folder, deletePaths)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, n).Equals(len(deletePaths))
+
+			assert.ThatSlice(t, repo.folders[folder].deletePaths.Slice()).HasLength(1)
+		})
+	})
+
+	t.Run("unmark for mark read", func(t *testing.T) {
+		markReadPaths := []classification.Path{{"809", "11"}}
+
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			n, err := service.UnmarkForMarkRead(ctx, folder, markReadPaths)
+			assert.ThatError(t, err).IsNotNil()
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+			assert.That(t, n).Equals(0)
+		})
+
+		t.Run("authenticated, success", func(t *testing.T) {
+			n, err := service.UnmarkForMarkRead(authedCtx, folder, markReadPaths)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, n).Equals(len(markReadPaths))
+
+			assert.ThatSlice(t, repo.folders[folder].markReadPaths.Slice()).HasLength(1)
 		})
 	})
 }

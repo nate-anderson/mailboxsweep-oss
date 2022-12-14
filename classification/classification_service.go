@@ -17,7 +17,7 @@ type Service interface {
 	EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error
 	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
 	ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error)
-	ClassificationLeaf(ctx context.Context, path []string) (leaf *Classification, err error)
+	ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error)
 	ListClassifiers() []ClassifierInfo
 }
 
@@ -37,7 +37,7 @@ func NewService(
 	providerService *inbox.ProviderService,
 	bridge *eventbridge.Client,
 	eventBusName string,
-) Service {
+) *DefaultService {
 	return &DefaultService{
 		credentialService,
 		imapServerService,
@@ -123,7 +123,7 @@ func (s DefaultService) ClassificationSummary(ctx context.Context) (root *Classi
 	return s.repo.FetchSummary(ctx, address)
 }
 
-func (s DefaultService) ClassificationLeaf(ctx context.Context, path []string) (leaf *Classification, err error) {
+func (s DefaultService) ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error) {
 	address, err := session.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
