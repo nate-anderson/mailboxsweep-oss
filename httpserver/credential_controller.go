@@ -13,12 +13,12 @@ import (
 
 type CredentialController struct {
 	service         inboxcredential.Service
-	providerService *inbox.ProviderService
+	providerService inbox.ProviderService
 	log             *logrus.Logger
 	baseController
 }
 
-func NewCredentialController(credentialService inboxcredential.Service, providerService *inbox.ProviderService, log *logrus.Logger) *CredentialController {
+func NewCredentialController(credentialService inboxcredential.Service, providerService inbox.ProviderService, log *logrus.Logger) *CredentialController {
 	return &CredentialController{
 		service:         credentialService,
 		providerService: providerService,

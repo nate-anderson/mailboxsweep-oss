@@ -22,7 +22,7 @@ func NewController(
 	credentialService inboxcredential.Service,
 	classificationService classification.Service,
 	folderService inbox.FolderService,
-	providerService *inbox.ProviderService,
+	providerService inbox.ProviderService,
 	loginService login.Service,
 	cookieDomain string,
 	cookiePath string,

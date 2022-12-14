@@ -8,17 +8,21 @@ import (
 	"strings"
 )
 
-type ProviderService struct {
+type ProviderService interface {
+	GetProvider(ctx context.Context, address string) (Provider, error)
+}
+
+type DefaultProviderService struct {
 	imapServerService imapserver.Service
 }
 
-func NewProviderService(imapServerService imapserver.Service) *ProviderService {
-	return &ProviderService{
+func NewProviderService(imapServerService imapserver.Service) *DefaultProviderService {
+	return &DefaultProviderService{
 		imapServerService,
 	}
 }
 
-func (s ProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
+func (s DefaultProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
 	_, err := mail.ParseAddress(address)
 	if err != nil {
 		return nil, fmt.Errorf("invalid email: %w", err)

@@ -11,11 +11,11 @@ type FolderService interface {
 }
 
 type DefaultFolderService struct {
-	providerService   *ProviderService
+	providerService   ProviderService
 	credentialService inboxcredential.Service
 }
 
-func NewFolderService(providerService *ProviderService, credentialService inboxcredential.Service) FolderService {
+func NewFolderService(providerService ProviderService, credentialService inboxcredential.Service) FolderService {
 	return &DefaultFolderService{
 		providerService:   providerService,
 		credentialService: credentialService,

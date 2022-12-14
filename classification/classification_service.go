@@ -25,7 +25,7 @@ type DefaultService struct {
 	credentialService inboxcredential.Service
 	imapServerService imapserver.Service
 	repo              ClassificationRepository
-	providerService   *inbox.ProviderService
+	providerService   inbox.ProviderService
 	bridge            *eventbridge.Client
 	eventBusName      string
 }
@@ -34,7 +34,7 @@ func NewService(
 	credentialService inboxcredential.Service,
 	imapServerService imapserver.Service,
 	repo ClassificationRepository,
-	providerService *inbox.ProviderService,
+	providerService inbox.ProviderService,
 	bridge *eventbridge.Client,
 	eventBusName string,
 ) *DefaultService {
