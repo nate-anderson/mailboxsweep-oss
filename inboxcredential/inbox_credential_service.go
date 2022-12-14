@@ -5,11 +5,19 @@ import (
 	"mailboxsweep/session"
 )
 
-type Service interface {
-	StoreCredential(ctx context.Context, password string) (address string, err error)
+type CredentialReadService interface {
 	FindCredential(ctx context.Context, address string) (*InboxCredential, error)
 	DecryptCredential(ctx context.Context, cred *InboxCredential) (password string, err error)
+}
+
+type CredentialWriteService interface {
+	StoreCredential(ctx context.Context, password string) (address string, err error)
 	DeleteCredential(ctx context.Context, address string) error
+}
+
+type Service interface {
+	CredentialReadService
+	CredentialWriteService
 }
 
 type DefaultService struct {
