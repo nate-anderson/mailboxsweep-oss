@@ -25,6 +25,7 @@ func (t *TestProvider) Login(username, password string) (inbox.Inbox, error) {
 	}
 
 	return TestInbox{
-		name: username,
+		name:     username,
+		messages: t.Messages,
 	}, nil
 }
