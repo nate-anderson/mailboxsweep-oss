@@ -39,7 +39,7 @@ func (t TestInbox) Folder(name string) (inbox.Folder, error) {
 
 	messages, ok := t.messages[name]
 	if !ok {
-		return nil, fmt.Errorf("folder not found: %w", mailboxsweep.ErrNotFound)
+		return nil, fmt.Errorf("folder '%s' not found: %w", name, mailboxsweep.ErrNotFound)
 	}
 
 	return &TestFolder{
