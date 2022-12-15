@@ -1,1 +1,1 @@
-go run ./cmd/cli classify -H imap.gmail.com -p vghbzgjlpkutpbbn -u citrusnewsletter@gmail.com
+go run ./cmd/cli classify -H imap.gmail.com -p vghbzgjlpkutpbbn -u citrusnewsletter@gmail.com --folder=INBOX

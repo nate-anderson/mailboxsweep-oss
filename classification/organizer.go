@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
+	"sync"
 )
 
 // A message must have exactly one value for every dimension it is classified by
@@ -47,7 +48,9 @@ func (o Organizer) Organize(ctx context.Context) error {
 
 	m := make(chan inbox.Message)
 	e := make(chan error)
+	wg := sync.WaitGroup{}
 	for _, name := range o.folders {
+		wg.Add(1)
 		f, err := o.inbox.Folder(name)
 		if err != nil {
 			return err
@@ -55,8 +58,20 @@ func (o Organizer) Organize(ctx context.Context) error {
 		selectedFolderValidityKeys[name] = validityKeys[name]
 
 		go func() {
-			for msg := range m {
-				go o.organizeMessage(msg, root)
+			for {
+				select {
+				case msg := <-m:
+					fmt.Println("read msg")
+					go o.organizeMessage(msg, root)
+
+				case err = <-e:
+					fmt.Println("read err")
+					wg.Done()
+					if err != nil {
+						panic(err)
+					}
+					return
+				}
 			}
 		}()
 
@@ -64,11 +79,8 @@ func (o Organizer) Organize(ctx context.Context) error {
 		go f.Messages(1, msgCount, m, e)
 	}
 
-	err = <-e
-	if err != nil {
-		return err
-	}
-
+	fmt.Println("Waiting group...")
+	wg.Wait()
 	rootDTO := root.Classification()
 	err = o.repo.Store(ctx, o.inbox.Name(), &rootDTO, selectedFolderValidityKeys)
 	return err
