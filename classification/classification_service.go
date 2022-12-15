@@ -3,6 +3,7 @@ package classification
 import (
 	"context"
 	"encoding/json"
+	"mailboxsweep"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
@@ -22,20 +23,20 @@ type Service interface {
 }
 
 type DefaultService struct {
-	credentialService inboxcredential.Service
+	credentialService inboxcredential.CredentialReadService
 	imapServerService imapserver.Service
 	repo              ClassificationRepository
 	providerService   inbox.ProviderService
-	bridge            *eventbridge.Client
+	eventPublisher    mailboxsweep.EventPublisher
 	eventBusName      string
 }
 
 func NewService(
-	credentialService inboxcredential.Service,
+	credentialService inboxcredential.CredentialReadService,
 	imapServerService imapserver.Service,
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
-	bridge *eventbridge.Client,
+	bridge mailboxsweep.EventPublisher,
 	eventBusName string,
 ) *DefaultService {
 	return &DefaultService{
@@ -101,7 +102,7 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
-	_, err = s.bridge.PutEvents(ctx, &eventbridge.PutEventsInput{
+	_, err = s.eventPublisher.PutEvents(ctx, &eventbridge.PutEventsInput{
 		Entries: []types.PutEventsRequestEntry{
 			{
 				Detail:       aws.String(string(reqJSON)),
