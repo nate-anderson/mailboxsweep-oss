@@ -25,7 +25,6 @@ func (t *TestFolder) Messages(start, end uint32, m chan<- inbox.Message, e chan<
 
 	if t.MessagesError != nil {
 		e <- t.MessagesError
-		return
 	}
 
 	for _, msg := range t.FolderMessages {

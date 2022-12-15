@@ -38,18 +38,13 @@ func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 				message, err := imapToMessage(*msg, f.mailbox.Name)
 				if err != nil {
 					e <- err
-					goto Break
 				}
 				m <- message
 			}
 		case err := <-done:
 			e <- err
-			goto Break
 		}
 	}
-Break:
-	close(m)
-	close(e)
 }
 
 func imapToMessage(i imap.Message, folder string) (Message, error) {
