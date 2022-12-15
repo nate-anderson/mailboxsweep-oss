@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"sync"
 	"testing"
 )
 
@@ -46,26 +47,27 @@ func TestIMAPFolder(t *testing.T) {
 		errChan := make(chan error)
 
 		msgs := make([]Message, n)
+		wg := sync.WaitGroup{}
 
 		go folder.Messages(1, uint32(n), mChan, errChan)
 
-		for {
-			select {
-			case msg, ok := <-mChan:
-				if !ok {
-					goto Done
-				}
-				msgs = append(msgs, msg)
-			case err, ok := <-errChan:
-				if !ok {
-					goto Done
-				}
-				if err != nil {
-					t.Fatal(err)
+		wg.Add(1)
+		go func() {
+			for {
+				select {
+				case msg := <-mChan:
+					msgs = append(msgs, msg)
+				case err := <-errChan:
+					wg.Done()
+					if err != nil {
+						t.Fatal(err)
+					}
 				}
 			}
-		}
-	Done:
+		}()
+
+		wg.Wait()
+
 		assert.That(t, len(msgs) >= n).Equals(true)
 	})
 

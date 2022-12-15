@@ -61,7 +61,7 @@ func (o Organizer) Organize(ctx context.Context) error {
 			for {
 				select {
 				case msg := <-m:
-					go o.organizeMessage(msg, root)
+					o.organizeMessage(msg, root)
 
 				case err = <-e:
 					wg.Done()

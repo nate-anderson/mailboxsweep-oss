@@ -188,7 +188,11 @@ func TestClassificationService(t *testing.T) {
 
 			cl := summary.Classification
 			assert.That(t, len(cl.Children)).Equals(len(userNames))
-			fmt.Printf("%+v", summary.Classification)
+
+			for _, ch := range cl.Children {
+				assert.That(t, ch.Count).Equals(10)
+				assert.That(t, len(ch.Children)).Equals(0)
+			}
 		})
 
 	})
