@@ -11,6 +11,7 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/session"
+	"strings"
 	"testing"
 	"time"
 )
@@ -195,6 +196,25 @@ func TestClassificationService(t *testing.T) {
 			}
 		})
 
+		leafPaths := []string{
+			"sender=me@gmail.com",
+			"sender=you@gmail.com",
+			"sender=them@gmail.com",
+		}
+
+		for _, path := range leafPaths {
+			leaf, err := repo.FetchLeaf(ctx, testAddress, []string{path})
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, len(leaf.Messages)).Equals(10)
+			assert.That(t, leaf.Count).Equals(10)
+			assert.That(t, len(leaf.Children)).Equals(0)
+
+			addr := strings.TrimPrefix(path, "sender=")
+			for _, m := range leaf.Messages {
+				assert.That(t, m.Sender.Address).Equals(addr)
+				assert.That(t, m.Sender.Domain).Equals("gmail.com")
+			}
+		}
 	})
 
 }
