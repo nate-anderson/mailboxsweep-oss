@@ -61,11 +61,9 @@ func (o Organizer) Organize(ctx context.Context) error {
 			for {
 				select {
 				case msg := <-m:
-					fmt.Println("read msg")
 					go o.organizeMessage(msg, root)
 
 				case err = <-e:
-					fmt.Println("read err")
 					wg.Done()
 					if err != nil {
 						panic(err)
@@ -79,7 +77,6 @@ func (o Organizer) Organize(ctx context.Context) error {
 		go f.Messages(1, msgCount, m, e)
 	}
 
-	fmt.Println("Waiting group...")
 	wg.Wait()
 	rootDTO := root.Classification()
 	err = o.repo.Store(ctx, o.inbox.Name(), &rootDTO, selectedFolderValidityKeys)
