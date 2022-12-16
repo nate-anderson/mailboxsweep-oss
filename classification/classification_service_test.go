@@ -56,6 +56,12 @@ func (t testImapServerService) FindByDomain(ctx context.Context, domain string) 
 	}, nil
 }
 
+/*
+This is a big ugly test,
+but at least it's effectively a true unit test!
+the only unmocked dependency is the classification repo
+*/
+
 func TestClassificationService(t *testing.T) {
 	testAddress := "bigservicetest@service.org"
 	testPass := "123boogie567"
