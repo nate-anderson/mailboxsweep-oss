@@ -33,7 +33,7 @@ func TestClassifyRequestRepository(t *testing.T) {
 
 	t.Run("list", func(t *testing.T) {
 		t.Run("find one", func(t *testing.T) {
-			list, err := repo.List(ctx, testAddress, false)
+			list, err := repo.List(ctx, testAddress, false, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(list) == 1).Equals(true)
 			assert.That(t, list[0].Inbox).Equals(testAddress)
@@ -58,7 +58,7 @@ func TestClassifyRequestRepository(t *testing.T) {
 		}
 
 		t.Run("find many", func(t *testing.T) {
-			list, err := repo.List(ctx, testAddress, false)
+			list, err := repo.List(ctx, testAddress, false, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(list)).Equals(n + 1)
 			incomplete := 0
@@ -94,7 +94,7 @@ func TestClassifyRequestRepository(t *testing.T) {
 			assert.That(t, *updated.Error).Equals(errMsg)
 
 			var retrieved ClassifyRequest
-			list, err := repo.List(ctx, testAddress, false)
+			list, err := repo.List(ctx, testAddress, false, false)
 			assert.ThatError(t, err).IsNil()
 			for _, r := range list {
 				if r.RequestedAt == requestedAt {

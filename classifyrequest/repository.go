@@ -15,7 +15,7 @@ import (
 
 type ClassifyRequestRepository interface {
 	Store(ctx context.Context, req ClassifyRequest) error
-	List(ctx context.Context, inbox string, onlyIncomplete bool) ([]ClassifyRequest, error)
+	List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error)
 	Update(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
 }
 
@@ -69,7 +69,7 @@ func (r DynamoRequestRepository) Store(ctx context.Context, req ClassifyRequest)
 	return err
 }
 
-func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyIncomplete bool) ([]ClassifyRequest, error) {
+func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error) {
 	pk := r.formatPK(inbox)
 	var startKey map[string]types.AttributeValue
 	var requests []ClassifyRequest
@@ -85,9 +85,14 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 			},
 		},
 		ExclusiveStartKey: startKey,
+		ConsistentRead:    &consistentRead,
 	}
 	if onlyIncomplete {
-		input.FilterExpression = aws.String("#completed_at_unix = null OR attribute_not_exists(#completed_at_unix)")
+		input.FilterExpression = aws.String("#completed_at_unix = :null OR attribute_not_exists(#completed_at_unix)")
+		input.ExpressionAttributeNames["#completed_at_unix"] = "completed_at_unix"
+		input.ExpressionAttributeValues[":null"] = &types.AttributeValueMemberNULL{
+			Value: true,
+		}
 	}
 	for {
 		var chunk []ClassifyRequest
