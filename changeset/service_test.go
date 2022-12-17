@@ -127,7 +127,7 @@ func (r *testRepo) Reset() {
 	r.folders = make(map[string]*testInternalChangeSet)
 }
 
-func TestService(t *testing.T) {
+func TestChangeSetService(t *testing.T) {
 	ctx := context.Background()
 	inbox := "me@example.com"
 	folder := "testfolder"

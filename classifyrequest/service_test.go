@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestService(t *testing.T) {
+func TestClassifyRequestService(t *testing.T) {
 	cl := mailboxsweep.SetupTestDynamoClient()
 	ctx := context.Background()
 	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, cl)

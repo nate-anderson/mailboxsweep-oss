@@ -21,20 +21,20 @@ type Service interface {
 }
 
 type DefaultService struct {
-	userRepo                  inboxuser.Service
+	userService               inboxuser.Service
 	requestRepo               ClassifyRequestRepository
 	timeBetweenOpenRequests   time.Duration
 	timeBetweenClosedRequests time.Duration
 }
 
 func NewDefaultService(
-	userRepo inboxuser.Service,
+	userService inboxuser.Service,
 	requestRepo ClassifyRequestRepository,
 	timeBetweenOpenRequests time.Duration,
 	timeBetweenClosedRequests time.Duration,
 ) *DefaultService {
 	return &DefaultService{
-		userRepo:                  userRepo,
+		userService:               userService,
 		requestRepo:               requestRepo,
 		timeBetweenOpenRequests:   timeBetweenOpenRequests,
 		timeBetweenClosedRequests: timeBetweenClosedRequests,
@@ -47,7 +47,7 @@ func (s DefaultService) RecordRequest(ctx context.Context) error {
 		return err
 	}
 
-	user, err := s.userRepo.FindByAddress(ctx, addr)
+	user, err := s.userService.FindByAddress(ctx, addr)
 	if err != nil {
 		return err
 	}

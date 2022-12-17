@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestService(t *testing.T) {
+func TestLoginService(t *testing.T) {
 	ctx := context.Background()
 	db := mailboxsweep.SetupTestDynamoClient()
 	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classification"
+	"mailboxsweep/classifyrequest"
 	"mailboxsweep/httpserver"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
@@ -52,6 +53,12 @@ type serverConfig struct {
 	SessionDurationMinutes   int    `mapstructure:"SESSION_DURATION_MINUTES"`
 	CookieDomain             string `mapstructure:"COOKIE_DOMAIN"`
 	CookiePath               string `mapstructure:"COOKIE_PATH"`
+
+	// How long must a user wait before submitting a new classification request, when the previous one hasn't finished?
+	// 3 hours?
+	MinutesBetweenOpenRequests int `mapstructure:"MINUTES_BETWEEN_OPEN_REQUESTS"`
+	// How long must a user wait after a completed request to submit a new one?
+	HoursBetweenClosedRequests int `mapstructure:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
 
 	DevMode bool `mapstructure:"DEV_MODE"`
 }
@@ -120,20 +127,27 @@ func main() {
 		eventbridge.NewFromConfig,
 	)
 
+	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
+	userService := inboxuser.NewService(userRepo)
+
+	timeBetweenOpenRequests := time.Minute * time.Duration(cfg.MinutesBetweenOpenRequests)
+	timeBetweenClosedRequests := time.Hour * time.Duration(cfg.HoursBetweenClosedRequests)
+	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, cfg.DynamoDBTable)
+	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, timeBetweenOpenRequests, timeBetweenClosedRequests)
+
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket)
 	classificationService := classification.NewService(
 		credentialService,
 		imapServerService,
 		classificationRepo,
 		providerService,
+		classifyRequestService,
 		bridge,
 		cfg.EventBusName,
 	)
 
 	folderService := inbox.NewFolderService(providerService, credentialService)
 
-	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
-	userService := inboxuser.NewService(userRepo)
 	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
 
 	sessionRepo := session.NewDynamoSessionRepository(db, cfg.DynamoDBTable)
