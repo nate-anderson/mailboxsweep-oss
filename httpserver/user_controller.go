@@ -11,7 +11,7 @@ type UserController struct {
 	service inboxuser.Service
 }
 
-func (c UserController) PatchUserAgreements(w http.ResponseWriter, req *http.Request) {
+func (c UserController) SetConsentedAgreements(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqBody := SetUserAgreementsRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
@@ -41,7 +41,7 @@ func (c UserController) PatchUserAgreements(w http.ResponseWriter, req *http.Req
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c UserController) PatchUserName(w http.ResponseWriter, req *http.Request) {
+func (c UserController) UpdateUserName(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqBody := SetUserNameRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {

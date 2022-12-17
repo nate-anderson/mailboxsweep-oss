@@ -246,6 +246,7 @@ components:
 
 paths:
   /classifiers:
+    operationId: getClassifiers
     get:
       description: List available classifiers
       responses:
@@ -258,6 +259,7 @@ paths:
 
   /credential:
     post:
+      operationId: storeInboxCredential
       description: Add credentials to access an inbox
       requestBody:
         required: true
@@ -278,6 +280,7 @@ paths:
           description: Internal server error
 
     get:
+      operationId: getInboxCredential
       description: Get the currently in-use credential
       responses:
         '200':
@@ -291,6 +294,7 @@ paths:
 
   /user/name:
     patch:
+      operationId: updateUserName
       description: Set user name for an inbox account
       requestBody:
         required: true
@@ -308,6 +312,7 @@ paths:
 
   /user/agreements:
     patch:
+      operationId: setConsentedAgreements
       description: Set agreed agreements for an inbox accoutn
       requestBody:
         required: true
@@ -329,6 +334,7 @@ paths:
 
   /inbox/changeset:
     patch:
+      operationId: updateChangeSet
       description: Append leaf for update
       requestBody:
         required: true
@@ -339,6 +345,7 @@ paths:
 
   /inbox/classification:
     post:
+      operationId: startClassify
       description: Begin classifying inbox messages
       requestBody:
         required: true
@@ -359,6 +366,7 @@ paths:
           description: Internal server error
     
     get:
+      operationId: getClassificationLeaf
       description: Get classification leaf by path
       responses:
         '200':
@@ -374,6 +382,7 @@ paths:
 
   /inbox/classification/summary:
     get:
+      operationId: getClassificationSummary
       description: Get the summary tree of inbox classifications
       responses:
         '200':
@@ -390,6 +399,7 @@ paths:
           description: Internal server error
 
   /inbox/folders:
+    operationId: getInboxFolders
     get:
       description: List inbox folders
       responses:
@@ -402,6 +412,7 @@ paths:
 
   /login:
     post:
+      operationId: initiateLogin
       description: Initiate login
       requestBody:
         required: true
@@ -421,6 +432,7 @@ paths:
   
   /login/{token}:
     get:
+      operationId: submitLoginToken
       description: Complete login
       responses:
         '200':

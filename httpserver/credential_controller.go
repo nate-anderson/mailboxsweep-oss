@@ -27,7 +27,7 @@ func NewCredentialController(credentialService inboxcredential.Service, provider
 	}
 }
 
-func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Request) {
+func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var reqBody CreateCredentialRequest
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
@@ -74,7 +74,7 @@ func (c CredentialController) PostCredential(w http.ResponseWriter, req *http.Re
 const testHeaderCredentialAddress = "X-Test-Address"
 
 // /credential
-func (c CredentialController) GetCredential(w http.ResponseWriter, req *http.Request) {
+func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	addr, err := session.UserAddressFromContext(ctx)

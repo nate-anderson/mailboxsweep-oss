@@ -27,7 +27,7 @@ func NewClassificationController(classificationService classification.Service, l
 	}
 }
 
-func (c ClassificationController) PostInboxClassification(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var reqBody StartInboxClassifyRequest
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
@@ -65,7 +65,7 @@ func (c ClassificationController) PostInboxClassification(w http.ResponseWriter,
 	return
 }
 
-func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	root, err := c.classificationService.ClassificationSummary(ctx)
 	if err != nil {
@@ -80,7 +80,7 @@ func (c ClassificationController) GetInboxClassificationSummary(w http.ResponseW
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c ClassificationController) GetInboxClassification(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) GetClassificationLeaf(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	pathStr := req.URL.Query().Get("path")

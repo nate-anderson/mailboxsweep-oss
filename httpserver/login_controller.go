@@ -30,7 +30,7 @@ func NewLoginController(service login.Service, cookieDomain, cookiePath string, 
 	}
 }
 
-func (c LoginController) PostLogin(w http.ResponseWriter, req *http.Request) {
+func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqBody := LoginRequest{}
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
@@ -54,7 +54,7 @@ func (c LoginController) PostLogin(w http.ResponseWriter, req *http.Request) {
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c LoginController) GetLoginToken(w http.ResponseWriter, req *http.Request, token string) {
+func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Request, token string) {
 	ctx := req.Context()
 	token = strings.TrimSpace(
 		strings.ToLower(

@@ -12,7 +12,7 @@ type ChangeSetController struct {
 	baseController
 }
 
-func (c ChangeSetController) PatchInboxChangeset(w http.ResponseWriter, req *http.Request) {
+func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Request) {
 	// ctx := req.Context()
 	reqBody := ChangeSetRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
