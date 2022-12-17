@@ -142,6 +142,7 @@ func main() {
 		classificationRepo,
 		providerService,
 		classifyRequestService,
+		log,
 		bridge,
 		cfg.EventBusName,
 	)
