@@ -3,9 +3,11 @@ package classification
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/classifyrequest"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
@@ -14,14 +16,23 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/sirupsen/logrus"
 )
 
 type testCredentialReadService struct {
 	address  string
 	password string
+
+	findError error
 }
 
 func (t testCredentialReadService) FindCredential(ctx context.Context, address string) (*inboxcredential.InboxCredential, error) {
+	if t.findError != nil {
+		return nil, t.findError
+	}
+
 	if address != t.address {
 		return nil, mailboxsweep.ErrNotFound
 	}
@@ -56,8 +67,14 @@ func (t testImapServerService) FindByDomain(ctx context.Context, domain string) 
 	}, nil
 }
 
+type testRequest struct {
+	started   int64
+	completed *int64
+	err       error
+}
+
 type testRequestRecorder struct {
-	requests map[string]bool
+	requests map[string][]testRequest
 }
 
 func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
@@ -65,8 +82,75 @@ func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	r.requests[addr] = true
+	r.requests[addr] = append(r.requests[addr], testRequest{
+		started: time.Now().Unix(),
+	})
 	return nil
+}
+
+func (r *testRequestRecorder) FindOpenRequests(ctx context.Context) ([]classifyrequest.ClassifyRequest, error) {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return nil, mailboxsweep.ErrNotFound
+	}
+	var reqs []classifyrequest.ClassifyRequest
+	for _, l := range list {
+		if l.completed == nil {
+			reqs = append(reqs, classifyrequest.ClassifyRequest{
+				Inbox:       addr,
+				UserUUID:    "UNIMPLEMENTED_FOR_TEST",
+				RequestedAt: l.started,
+			})
+		}
+	}
+	return reqs, nil
+}
+
+func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return mailboxsweep.ErrNotFound
+	}
+	for i, l := range list {
+		if l.completed == nil {
+			updated := l
+			updated.completed = aws.Int64(time.Now().Unix())
+			list[i] = updated
+			r.requests[addr] = list
+			return nil
+		}
+	}
+	return mailboxsweep.ErrNotFound
+}
+
+func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr error) error {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return mailboxsweep.ErrNotFound
+	}
+	for i, l := range list {
+		if l.completed == nil {
+			updated := l
+			updated.completed = aws.Int64(time.Now().Unix())
+			updated.err = classifyErr
+			list[i] = updated
+			r.requests[addr] = list
+			return nil
+		}
+	}
+	return mailboxsweep.ErrNotFound
 }
 
 /*
@@ -95,15 +179,15 @@ func TestClassificationService(t *testing.T) {
 		port:   testPort,
 	}
 	providerService := inboxtesting.NewTestProviderService()
-	credentialReadService := testCredentialReadService{
+	credentialReadService := &testCredentialReadService{
 		address:  testAddress,
 		password: testPass,
 	}
 	publisher := &mailboxsweep.TestEventPublisher{}
 	eventBusName := "mailboxsweeptestevents"
 
-	requestRecorder := testRequestRecorder{
-		requests: make(map[string]bool),
+	classifyRequestService := testRequestRecorder{
+		requests: make(map[string][]testRequest),
 	}
 
 	service := NewService(
@@ -111,7 +195,8 @@ func TestClassificationService(t *testing.T) {
 		imapServerService,
 		repo,
 		providerService,
-		&requestRecorder,
+		&classifyRequestService,
+		logrus.New(),
 		publisher,
 		eventBusName,
 	)
@@ -160,7 +245,8 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, ok).Equals(true)
 			assert.That(t, senderDomain.Dimension()).Equals("sender_domain")
 
-			assert.That(t, requestRecorder.requests[testAddress]).Equals(true)
+			_, ok = classifyRequestService.requests[testAddress]
+			assert.That(t, ok).Equals(true)
 		})
 	})
 
@@ -201,11 +287,39 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
-		t.Run("authenticated, success", func(t *testing.T) {
-			authedCtx := session.AuthorizeTestContext(ctx, testAddress, t)
-			providerService.Messages["INBOX"] = messages
-			providerService.Messages["trash"] = []inbox.Message{}
+		authedCtx := session.AuthorizeTestContext(ctx, testAddress, t)
+		providerService.Messages["INBOX"] = messages
+		providerService.Messages["trash"] = []inbox.Message{}
+
+		t.Run("upstream error, failure stored in request", func(t *testing.T) {
+			/*
+				Test that, if Classify fails, the classifyRequest record is updated
+				with a completed timestamp and the details of the failure
+
+			*/
+
+			// make a dependency fail
+			credentialReadService.findError = errors.New("intentional failure")
+
 			err := service.Classify(authedCtx, folders, classifiers)
+			assert.ThatError(t, err).IsNotNil()
+			credentialReadService.findError = nil
+
+			reqList, ok := classifyRequestService.requests[testAddress]
+			assert.That(t, ok).Equals(true)
+			assert.That(t, len(reqList)).Equals(1)
+			r := reqList[0]
+			assert.ThatError(t, r.err).IsNotNil()
+			assert.That(t, r.err.Error()).Equals("intentional failure")
+			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
+		})
+
+		t.Run("authenticated, success", func(t *testing.T) {
+			// store new request, last one has been marked a failure
+			err := classifyRequestService.RecordRequest(authedCtx)
+			assert.ThatError(t, err).IsNil()
+
+			err = service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNil()
 
 			summary, err := repo.FetchSummary(ctx, testAddress)
@@ -220,6 +334,22 @@ func TestClassificationService(t *testing.T) {
 				assert.That(t, ch.Count).Equals(10)
 				assert.That(t, len(ch.Children)).Equals(0)
 			}
+
+			// request is marked completed
+			reqs, ok := classifyRequestService.requests[testAddress]
+			assert.That(t, ok).Equals(true)
+			assert.That(t, len(reqs)).Equals(2)
+			var r testRequest
+			numErrs := 0
+			for _, req := range reqs {
+				if req.err == nil {
+					r = req
+					numErrs++
+				}
+			}
+			assert.That(t, numErrs).Equals(1)
+			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
+			assert.ThatError(t, r.err).IsNil()
 		})
 
 		leafPaths := []string{

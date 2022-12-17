@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
+	"github.com/sirupsen/logrus"
 )
 
 type Service interface {
@@ -29,6 +30,7 @@ type DefaultService struct {
 	repo                   ClassificationRepository
 	providerService        inbox.ProviderService
 	classifyRequestService classifyrequest.Service
+	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher
 	eventBusName           string
 }
@@ -39,6 +41,7 @@ func NewService(
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
+	logger *logrus.Logger,
 	bridge mailboxsweep.EventPublisher,
 	eventBusName string,
 ) *DefaultService {
@@ -48,18 +51,44 @@ func NewService(
 		repo,
 		providerService,
 		classifyRequestService,
+		logger,
 		bridge,
 		eventBusName,
 	}
 }
 
 func (s DefaultService) Classify(ctx context.Context, folders []string, classifiers []Classifier) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	var err error
+	var addr string
+	defer func() {
+		var recordErr error
+		if err != nil {
+			recordErr = s.classifyRequestService.CompleteError(ctx, err)
+		} else {
+			recordErr = s.classifyRequestService.CompleteSuccess(ctx)
+		}
+		if recordErr != nil {
+			s.logger.
+				WithError(recordErr).
+				WithField("address", addr).
+				Errorf(
+					"failed to store result of Classify action: record error: '%s' (original error %v)",
+					recordErr,
+					err,
+				)
+		}
+	}()
+
+	addr, err = session.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	// confirm there is an outstanding request from the user
+	// confirm there is an outstanding request from the
+	_, err = s.classifyRequestService.FindOpenRequests(ctx)
+	if err != nil {
+		return err
+	}
 
 	provider, err := s.providerService.GetProvider(ctx, addr)
 	if err != nil {
@@ -84,10 +113,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers)
 
 	err = organizer.Organize(ctx)
-	if err != nil {
-		return s.classifyRequestService.CompleteError(ctx, err)
-	}
-	return s.classifyRequestService.CompleteSuccess(ctx)
+	return err
 }
 
 type ClassifyQueueItem struct {

@@ -92,7 +92,16 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 		return nil, err
 	}
 
-	return s.requestRepo.List(ctx, addr, true, false)
+	list, err := s.requestRepo.List(ctx, addr, true, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(list) == 0 {
+		return nil, ErrNoOpenRequests
+	}
+
+	return list, nil
 }
 
 var ErrNoOpenRequests = errors.New("no open classify requests")
