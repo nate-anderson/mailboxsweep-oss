@@ -28,7 +28,7 @@ type DefaultService struct {
 	imapServerService      imapserver.Service
 	repo                   ClassificationRepository
 	providerService        inbox.ProviderService
-	classifyRequestService classifyrequest.RequestRecorder
+	classifyRequestService classifyrequest.Service
 	eventPublisher         mailboxsweep.EventPublisher
 	eventBusName           string
 }
@@ -38,7 +38,7 @@ func NewService(
 	imapServerService imapserver.Service,
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
-	classifyRequestService classifyrequest.RequestRecorder,
+	classifyRequestService classifyrequest.Service,
 	bridge mailboxsweep.EventPublisher,
 	eventBusName string,
 ) *DefaultService {
@@ -58,6 +58,9 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	if err != nil {
 		return err
 	}
+
+	// confirm there is an outstanding request from the user
+
 	provider, err := s.providerService.GetProvider(ctx, addr)
 	if err != nil {
 		return err
@@ -80,7 +83,11 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 
 	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers)
 
-	return organizer.Organize(ctx)
+	err = organizer.Organize(ctx)
+	if err != nil {
+		return s.classifyRequestService.CompleteError(ctx, err)
+	}
+	return s.classifyRequestService.CompleteSuccess(ctx)
 }
 
 type ClassifyQueueItem struct {

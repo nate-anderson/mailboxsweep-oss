@@ -9,12 +9,8 @@ import (
 	"time"
 )
 
-type RequestRecorder interface {
-	RecordRequest(ctx context.Context) error
-}
-
 type Service interface {
-	RequestRecorder
+	RecordRequest(ctx context.Context) error
 	FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error)
 	CompleteSuccess(ctx context.Context) error
 	CompleteError(ctx context.Context, err error) error
