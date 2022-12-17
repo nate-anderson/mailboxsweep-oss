@@ -56,6 +56,19 @@ func (t testImapServerService) FindByDomain(ctx context.Context, domain string) 
 	}, nil
 }
 
+type testRequestRecorder struct {
+	requests map[string]bool
+}
+
+func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
+	addr, err := session.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	r.requests[addr] = true
+	return nil
+}
+
 /*
 This is a big ugly test,
 but at least it's effectively a true unit test!
@@ -89,11 +102,16 @@ func TestClassificationService(t *testing.T) {
 	publisher := &mailboxsweep.TestEventPublisher{}
 	eventBusName := "mailboxsweeptestevents"
 
+	requestRecorder := testRequestRecorder{
+		requests: make(map[string]bool),
+	}
+
 	service := NewService(
 		credentialReadService,
 		imapServerService,
 		repo,
 		providerService,
+		&requestRecorder,
 		publisher,
 		eventBusName,
 	)
@@ -141,6 +159,8 @@ func TestClassificationService(t *testing.T) {
 			senderDomain, ok := cl.(SenderDomainClassifier)
 			assert.That(t, ok).Equals(true)
 			assert.That(t, senderDomain.Dimension()).Equals("sender_domain")
+
+			assert.That(t, requestRecorder.requests[testAddress]).Equals(true)
 		})
 	})
 

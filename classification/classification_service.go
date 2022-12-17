@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"mailboxsweep"
+	"mailboxsweep/classifyrequest"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
@@ -23,12 +24,13 @@ type Service interface {
 }
 
 type DefaultService struct {
-	credentialService inboxcredential.CredentialReadService
-	imapServerService imapserver.Service
-	repo              ClassificationRepository
-	providerService   inbox.ProviderService
-	eventPublisher    mailboxsweep.EventPublisher
-	eventBusName      string
+	credentialService      inboxcredential.CredentialReadService
+	imapServerService      imapserver.Service
+	repo                   ClassificationRepository
+	providerService        inbox.ProviderService
+	classifyRequestService classifyrequest.RequestRecorder
+	eventPublisher         mailboxsweep.EventPublisher
+	eventBusName           string
 }
 
 func NewService(
@@ -36,6 +38,7 @@ func NewService(
 	imapServerService imapserver.Service,
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
+	classifyRequestService classifyrequest.RequestRecorder,
 	bridge mailboxsweep.EventPublisher,
 	eventBusName string,
 ) *DefaultService {
@@ -44,6 +47,7 @@ func NewService(
 		imapServerService,
 		repo,
 		providerService,
+		classifyRequestService,
 		bridge,
 		eventBusName,
 	}
@@ -98,6 +102,12 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		Classifiers: classifiers,
 	}
 	reqJSON, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	// store classify request
+	err = s.classifyRequestService.RecordRequest(ctx)
 	if err != nil {
 		return err
 	}
