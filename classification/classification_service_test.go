@@ -2,7 +2,6 @@ package classification
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"mailboxsweep"
@@ -183,7 +182,7 @@ func TestClassificationService(t *testing.T) {
 		address:  testAddress,
 		password: testPass,
 	}
-	publisher := &mailboxsweep.TestEventPublisher{}
+	publisher := &mailboxsweep.TestEventPublisher[ClassifyQueueItem]{}
 	eventBusName := "mailboxsweeptestevents"
 
 	classifyRequestService := testRequestRecorder{
@@ -223,19 +222,16 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(publisher.Entries)).Equals(1)
 			e := publisher.Entries[0]
-			item := ClassifyQueueItem{}
-			err = json.Unmarshal([]byte(*e.Detail), &item)
-			assert.ThatError(t, err).IsNil()
 
-			assert.That(t, *e.DetailType).Equals(ClassifyQueueDetailType)
-			assert.That(t, *e.EventBusName).Equals(eventBusName)
-			assert.That(t, *e.Source).Equals("classification_default_service")
+			assert.That(t, e.Body.Address).Equals(testAddress)
+			assert.That(t, len(e.Body.Classifiers)).Equals(1)
+			assert.ThatSlice(t, e.Body.Folders).ContainsAll(folders)
 
-			serializedClassifier := item.Classifiers[0]
-			assert.That(t, item.Address).Equals(testAddress)
-			assert.ThatSlice(t, item.Folders).HasLength(len(folders))
-			assert.ThatSlice(t, item.Folders).ContainsAll(folders)
-			assert.That(t, len(item.Classifiers)).Equals(1)
+			serializedClassifier := e.Body.Classifiers[0]
+			assert.That(t, e.Body.Address).Equals(testAddress)
+			assert.ThatSlice(t, e.Body.Folders).HasLength(len(folders))
+			assert.ThatSlice(t, e.Body.Folders).ContainsAll(folders)
+			assert.That(t, len(e.Body.Classifiers)).Equals(1)
 			assert.That(t, serializedClassifier.TypeKey).Equals(typeKeySenderDomain)
 			assert.That(t, serializedClassifier.InitValue).Equals("")
 
@@ -283,7 +279,7 @@ func TestClassificationService(t *testing.T) {
 		}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			err := service.Classify(ctx, folders, classifiers)
+			err := service.Classify(ctx, testAddress, folders, classifiers)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
@@ -301,7 +297,7 @@ func TestClassificationService(t *testing.T) {
 			// make a dependency fail
 			credentialReadService.findError = errors.New("intentional failure")
 
-			err := service.Classify(authedCtx, folders, classifiers)
+			err := service.Classify(authedCtx, testAddress, folders, classifiers)
 			assert.ThatError(t, err).IsNotNil()
 			credentialReadService.findError = nil
 
@@ -319,7 +315,7 @@ func TestClassificationService(t *testing.T) {
 			err := classifyRequestService.RecordRequest(authedCtx)
 			assert.ThatError(t, err).IsNil()
 
-			err = service.Classify(authedCtx, folders, classifiers)
+			err = service.Classify(authedCtx, testAddress, folders, classifiers)
 			assert.ThatError(t, err).IsNil()
 
 			summary, err := repo.FetchSummary(ctx, testAddress)

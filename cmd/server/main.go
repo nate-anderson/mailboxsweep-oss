@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -38,9 +38,10 @@ type serverConfig struct {
 	S3Port   int     `mapstructure:"S3_PORT"`
 	S3Region string  `mapstructure:"S3_REGION"`
 
-	EventBridgeHost   *string `mapstructure:"EVENTBRIDGE_HOST"`
-	EventBridgePort   int     `mapstructure:"EVENTBRIDGE_PORT"`
-	EventBridgeRegion string  `mapstructure:"EVENTBRIDGE_REGION"`
+	SQSHost     *string `mapstructure:"SQS_HOST"`
+	SQSPort     int     `mapstructure:"SQS_PORT"`
+	SQSRegion   string  `mapstructure:"SQS_REGION"`
+	SQSQueueURL string  `mapstructure:"SQS_QUEUE_URL"`
 
 	DynamoDBTable             string `mapstructure:"DYNAMODB_TABLE"`
 	S3Bucket                  string `mapstructure:"S3_BUCKET"`
@@ -118,14 +119,19 @@ func main() {
 	imapServerService := imapserver.NewService(imapServerRepo)
 	providerService := inbox.NewProviderService(imapServerService)
 
-	bridge, err := mailboxsweep.ConnectAWSService(
+	queue, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
-			ServiceHost:   cfg.EventBridgeHost,
-			ServicePort:   cfg.EventBridgePort,
-			ServiceRegion: cfg.EventBridgeRegion,
+			ServiceHost:   cfg.SQSHost,
+			ServicePort:   cfg.SQSPort,
+			ServiceRegion: cfg.SQSRegion,
 		},
-		eventbridge.NewFromConfig,
+		sqs.NewFromConfig,
 	)
+	if err != nil {
+		log.Fatalf("failed to initialize eventbridge client: %s", err)
+	}
+
+	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	userService := inboxuser.NewService(userRepo)
@@ -143,7 +149,7 @@ func main() {
 		providerService,
 		classifyRequestService,
 		log,
-		bridge,
+		publisher,
 		cfg.EventBusName,
 	)
 

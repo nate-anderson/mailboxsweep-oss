@@ -7,8 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.2
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.6
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.17.7
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.16.21
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.3
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.17
 	github.com/deepmap/oapi-codegen v1.12.2
 	github.com/emersion/go-imap v1.2.1
 	github.com/go-chi/chi/v5 v5.0.7
@@ -36,7 +36,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.19 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.4 // indirect
