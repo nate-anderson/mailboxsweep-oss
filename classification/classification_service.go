@@ -2,7 +2,6 @@ package classification
 
 import (
 	"context"
-	"encoding/json"
 	"mailboxsweep"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/imapserver"
@@ -10,9 +9,6 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/session"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
-	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,7 +27,7 @@ type DefaultService struct {
 	providerService        inbox.ProviderService
 	classifyRequestService classifyrequest.Service
 	logger                 *logrus.Logger
-	eventPublisher         mailboxsweep.EventPublisher
+	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
 	eventBusName           string
 }
 
@@ -42,7 +38,7 @@ func NewService(
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
 	logger *logrus.Logger,
-	bridge mailboxsweep.EventPublisher,
+	bridge mailboxsweep.EventPublisher[ClassifyQueueItem],
 	eventBusName string,
 ) *DefaultService {
 	return &DefaultService{
@@ -134,10 +130,6 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		Folders:     folders,
 		Classifiers: classifiers,
 	}
-	reqJSON, err := json.Marshal(req)
-	if err != nil {
-		return err
-	}
 
 	// store classify request
 	err = s.classifyRequestService.RecordRequest(ctx)
@@ -145,16 +137,9 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
-	_, err = s.eventPublisher.PutEvents(ctx, &eventbridge.PutEventsInput{
-		Entries: []types.PutEventsRequestEntry{
-			{
-				Detail:       aws.String(string(reqJSON)),
-				DetailType:   &ClassifyQueueDetailType,
-				EventBusName: &s.eventBusName,
-				Source:       aws.String("classification_default_service"),
-				TraceHeader:  aws.String("@TODO-request-id"),
-			},
-		},
+	err = s.eventPublisher.PublishEvent(ctx, mailboxsweep.EventBody[ClassifyQueueItem]{
+		RequestID: "@TODO",
+		Body:      req,
 	})
 	return err
 }
