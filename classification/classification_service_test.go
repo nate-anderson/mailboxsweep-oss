@@ -278,7 +278,7 @@ func TestClassificationService(t *testing.T) {
 		}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			err := service.Classify(ctx, testAddress, folders, classifiers)
+			err := service.Classify(ctx, folders, classifiers)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
@@ -296,7 +296,7 @@ func TestClassificationService(t *testing.T) {
 			// make a dependency fail
 			credentialReadService.findError = errors.New("intentional failure")
 
-			err := service.Classify(authedCtx, testAddress, folders, classifiers)
+			err := service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNotNil()
 			credentialReadService.findError = nil
 
@@ -314,7 +314,7 @@ func TestClassificationService(t *testing.T) {
 			err := classifyRequestService.RecordRequest(authedCtx)
 			assert.ThatError(t, err).IsNil()
 
-			err = service.Classify(authedCtx, testAddress, folders, classifiers)
+			err = service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNil()
 
 			summary, err := repo.FetchSummary(ctx, testAddress)

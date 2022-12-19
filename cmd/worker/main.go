@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"encoding/base64"
-	"encoding/json"
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
@@ -11,13 +9,12 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/worker"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -124,7 +121,7 @@ func main() {
 		sqs.NewFromConfig,
 	)
 	if err != nil {
-		log.Fatalf("failed to initialize eventbridge client: %s", err)
+		log.Fatalf("failed to initialize SQS client: %s", err)
 	}
 
 	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
@@ -140,57 +137,7 @@ func main() {
 		cfg.EventBusName,
 	)
 
-	if err != nil {
-		log.Fatalf("failed to initialize SQS client: %s", err)
-	}
+	w := worker.NewWorker(log, queue, cfg.SQSQueueURL, service)
 
-	log.Infof("Listening to queue %s...\n", cfg.SQSQueueURL)
-
-	for {
-
-		ctx := context.Background()
-		retrieveID, err := uuid.NewUUID()
-		if err != nil {
-			log.Errorf("failed to generate UUID to read from queue: %s", err)
-			continue
-		}
-		batch, err := queue.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-			QueueUrl:                &cfg.SQSQueueURL,
-			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
-		})
-		if err != nil {
-			log.
-				WithError(err).
-				Errorf("failed to read message from queue %s", cfg.SQSQueueURL)
-			continue
-		}
-
-		/*
-			@TODO improvement
-			This is a simple loop queue reader
-			This should use a Pool to allow concurrent queue worker
-			goroutines
-		*/
-
-		for _, m := range batch.Messages {
-			queueItem := classification.ClassifyQueueItem{}
-			err := json.Unmarshal([]byte(*m.Body), &queueItem)
-			if err != nil {
-				log.Errorf("failed to unmarshal queue item: %s", err)
-				continue
-			}
-
-			classifiers := make([]classification.Classifier, len(queueItem.Classifiers))
-			for i, srcl := range queueItem.Classifiers {
-				cl, err := srcl.Classifier()
-				if err != nil {
-					log.Errorf("invalid classifier %v: %s", srcl, err)
-					continue
-				}
-				classifiers[i] = cl
-			}
-
-			service.Classify(ctx, queueItem.Address, queueItem.Folders, classifiers)
-		}
-	}
+	log.Fatal(w.Work())
 }

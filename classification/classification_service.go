@@ -13,8 +13,7 @@ import (
 
 type Service interface {
 	EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error
-	// does not extract address from context
-	Classify(ctx context.Context, address string, folders []string, classifiers []Classifier) error
+	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
 	ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error)
 	ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error)
 	ListClassifiers() []ClassifierInfo
@@ -53,11 +52,8 @@ func NewService(
 	}
 }
 
-/*
-Run from the context of a queue worker
-Does not expect HTTP API-authenticated context
-*/
-func (s DefaultService) Classify(ctx context.Context, address string, folders []string, classifiers []Classifier) error {
+// Runs from the context of a job worker
+func (s DefaultService) Classify(ctx context.Context, folders []string, classifiers []Classifier) error {
 	var err error
 	var addr string
 	defer func() {
