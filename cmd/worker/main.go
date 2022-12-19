@@ -144,6 +144,8 @@ func main() {
 		log.Fatalf("failed to initialize SQS client: %s", err)
 	}
 
+	log.Infof("Listening to queue %s...\n", cfg.SQSQueueURL)
+
 	for {
 
 		ctx := context.Background()

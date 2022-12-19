@@ -8,6 +8,7 @@ import (
 	"log"
 	"mailboxsweep"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -87,8 +88,15 @@ type AuthMiddleware struct {
 
 const sessionCookie = "X-MailboxSweep-Session"
 
+var authPathPrefix = "/login"
+
 func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if strings.HasPrefix(req.URL.Path, authPathPrefix) {
+			next.ServeHTTP(w, req)
+			return
+		}
+
 		ctx := req.Context()
 		cookie, err := req.Cookie(sessionCookie)
 		if err != nil {
@@ -113,7 +121,7 @@ func UserAddressFromContext(ctx context.Context) (string, error) {
 	if str, ok := userAddress.(string); ok {
 		return str, nil
 	}
-	return "", mailboxsweep.ErrUnauthenticated
+	return "", mailboxsweep.UnauthenticatedError(nil)
 }
 
 func AuthorizeTestContext(ctx context.Context, addr string, t *testing.T) context.Context {
