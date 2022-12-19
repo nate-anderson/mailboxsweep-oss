@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
@@ -24,6 +25,7 @@ func NewController(
 	folderService inbox.FolderService,
 	providerService inbox.ProviderService,
 	loginService login.Service,
+	changesetService changeset.Service,
 	cookieDomain string,
 	cookiePath string,
 	isDev bool,
@@ -33,11 +35,13 @@ func NewController(
 	classificationController := NewClassificationController(classificationService, log)
 	folderController := NewFolderController(folderService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
+	changeSetController := NewChangeSetController(changesetService, log)
 
 	return &Controller{
 		CredentialController:     credentialController,
 		ClassificationController: classificationController,
 		FolderController:         folderController,
 		LoginController:          loginController,
+		ChangeSetController:      changeSetController,
 	}
 }

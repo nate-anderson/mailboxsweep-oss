@@ -11,7 +11,7 @@ type Service interface {
 	MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
 	UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error)
 	UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
-	ListByInbox(ctx context.Context, folder string, consistentRead bool) ([]ChangeSet, error)
+	ListByInbox(ctx context.Context, consistentRead bool) ([]ChangeSet, error)
 	ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error)
 }
 

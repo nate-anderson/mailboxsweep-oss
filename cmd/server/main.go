@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/httpserver"
@@ -60,6 +61,9 @@ type serverConfig struct {
 	MinutesBetweenOpenRequests int `mapstructure:"MINUTES_BETWEEN_OPEN_REQUESTS"`
 	// How long must a user wait after a completed request to submit a new one?
 	HoursBetweenClosedRequests int `mapstructure:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+
+	// Used to split changesets up among documents
+	ChangeSetPageIDHashMod uint64 `mapstructure:"CHANGESET_PAGE_ID_HASH_MOD"`
 
 	DevMode bool `mapstructure:"DEV_MODE"`
 }
@@ -183,12 +187,19 @@ func main() {
 		log.Fatal("cookie domain and path are not configured")
 	}
 
+	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, cfg.ChangeSetPageIDHashMod)
+	if err != nil {
+		log.Fatal(err)
+	}
+	changesetService := changeset.NewDefaultService(changesetRepo)
+
 	controller := httpserver.NewController(
 		credentialService,
 		classificationService,
 		folderService,
 		providerService,
 		loginService,
+		changesetService,
 		cfg.CookieDomain,
 		cfg.CookiePath,
 		cfg.DevMode,

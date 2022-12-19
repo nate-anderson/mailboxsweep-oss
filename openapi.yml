@@ -10,6 +10,22 @@ components:
       in: cookie
       name: X-MailboxSweep-Session
   schemas:
+    ChangeSet:
+      type: object
+      required:
+        - folder
+        - operation
+        - paths
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+        folder:
+          type: string
+        operation:
+          $ref: '#/components/schemas/UpdateOperation'
+
     ChangeSetRequest:
       type: object
       required:
@@ -25,6 +41,19 @@ components:
           type: string
         operation:
           $ref: '#/components/schemas/UpdateOperation'
+    
+    ChangeSetResponse:
+      type: object
+      required:
+        - changeSets
+        - address
+      properties:
+        changeSets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChangeSet'
+        address:
+          type: string
 
     Classification:
       type: object
@@ -349,6 +378,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeSetRequest'
+    get:
+      operationId: getChangesets
+      description: Get the current paths and operations the user has selected for update
+      parameters:
+        - in: query
+          name: folder
+          schema:
+            type: string
+          required: false
+          description: Pass a folder name to get changesets just for that folder
+      responses:
+        '200':
+          description: Success, list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeSetResponse'
 
   /inbox/classification:
     post:
