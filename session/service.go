@@ -9,7 +9,6 @@ import (
 	"mailboxsweep"
 	"net/http"
 	"strings"
-	"testing"
 	"time"
 )
 
@@ -68,17 +67,13 @@ func (s DefaultService) StartSession(ctx context.Context, userAddress string) (*
 	return &sess, nil
 }
 
-type authKeyT int
-
-const authKey authKeyT = 1
-
 func (s DefaultService) Authorize(ctx context.Context, cookieValue string) (context.Context, error) {
 	sess, err := s.repo.Get(ctx, cookieValue)
 	if err != nil {
 		return ctx, err
 	}
 
-	authed := context.WithValue(ctx, authKey, sess.UserAddress)
+	authed := mailboxsweep.AuthorizeAPIContext(ctx, sess.UserAddress)
 	return authed, nil
 }
 
@@ -114,20 +109,4 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, req.WithContext(authed))
 	})
-}
-
-func UserAddressFromContext(ctx context.Context) (string, error) {
-	userAddress := ctx.Value(authKey)
-	if str, ok := userAddress.(string); ok {
-		return str, nil
-	}
-	return "", mailboxsweep.UnauthenticatedError(nil)
-}
-
-func AuthorizeTestContext(ctx context.Context, addr string, t *testing.T) context.Context {
-	if t.Name() == "" {
-		panic("AuthorizeTestContext called on unnamed test")
-	}
-	authed := context.WithValue(ctx, authKey, addr)
-	return authed
 }

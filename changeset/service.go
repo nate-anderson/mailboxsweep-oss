@@ -2,8 +2,8 @@ package changeset
 
 import (
 	"context"
+	"mailboxsweep"
 	"mailboxsweep/classification"
-	"mailboxsweep/session"
 )
 
 type Service interface {
@@ -24,7 +24,7 @@ func NewDefaultService(repo ChangeSetRepository) *DefaultService {
 }
 
 func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -45,7 +45,7 @@ func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths 
 }
 
 func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -66,7 +66,7 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, path
 }
 
 func (s DefaultService) ListByInbox(ctx context.Context, consistentRead bool) ([]ChangeSet, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (s DefaultService) ListByInbox(ctx context.Context, consistentRead bool) ([
 }
 
 func (s DefaultService) ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (s DefaultService) ListByInboxFolder(ctx context.Context, folder string, co
 }
 
 func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -105,7 +105,7 @@ func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, path
 }
 
 func (s DefaultService) UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}

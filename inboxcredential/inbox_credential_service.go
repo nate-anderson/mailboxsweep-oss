@@ -2,7 +2,7 @@ package inboxcredential
 
 import (
 	"context"
-	"mailboxsweep/session"
+	"mailboxsweep"
 )
 
 type CredentialReadService interface {
@@ -33,7 +33,7 @@ func NewService(repo InboxCredentialRepository, cipherKey []byte) Service {
 }
 
 func (s DefaultService) StoreCredential(ctx context.Context, password string) (address string, err error) {
-	address, err = session.UserAddressFromContext(ctx)
+	address, err = mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return "", err
 	}

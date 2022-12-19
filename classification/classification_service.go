@@ -7,7 +7,6 @@ import (
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
-	"mailboxsweep/session"
 
 	"github.com/sirupsen/logrus"
 )
@@ -80,7 +79,7 @@ func (s DefaultService) Classify(ctx context.Context, address string, folders []
 		}
 	}()
 
-	addr, err = session.UserAddressFromContext(ctx)
+	addr, err = mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -126,7 +125,7 @@ type ClassifyQueueItem struct {
 var ClassifyQueueDetailType = "mailboxsweep.classify"
 
 func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error {
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -150,7 +149,7 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 }
 
 func (s DefaultService) ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error) {
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +157,7 @@ func (s DefaultService) ClassificationSummary(ctx context.Context) (root *Classi
 }
 
 func (s DefaultService) ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error) {
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}

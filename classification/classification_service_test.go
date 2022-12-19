@@ -11,7 +11,6 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxtesting"
-	"mailboxsweep/session"
 	"strings"
 	"testing"
 	"time"
@@ -77,7 +76,7 @@ type testRequestRecorder struct {
 }
 
 func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -88,7 +87,7 @@ func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
 }
 
 func (r *testRequestRecorder) FindOpenRequests(ctx context.Context) ([]classifyrequest.ClassifyRequest, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +109,7 @@ func (r *testRequestRecorder) FindOpenRequests(ctx context.Context) ([]classifyr
 }
 
 func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -131,7 +130,7 @@ func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
 }
 
 func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr error) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -213,7 +212,7 @@ func TestClassificationService(t *testing.T) {
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			authedCtx := session.AuthorizeTestContext(ctx, testAddress, t)
+			authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
 			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
 				{
 					TypeKey: typeKeySenderDomain,
@@ -283,7 +282,7 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
-		authedCtx := session.AuthorizeTestContext(ctx, testAddress, t)
+		authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
 		providerService.Messages["INBOX"] = messages
 		providerService.Messages["trash"] = []inbox.Message{}
 

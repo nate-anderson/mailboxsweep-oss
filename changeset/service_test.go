@@ -6,7 +6,6 @@ import (
 	"mailboxsweep/assert"
 	"mailboxsweep/classification"
 	"mailboxsweep/pkg/set"
-	"mailboxsweep/session"
 	"testing"
 )
 
@@ -132,7 +131,7 @@ func TestChangeSetService(t *testing.T) {
 	inbox := "me@example.com"
 	folder := "testfolder"
 
-	authedCtx := session.AuthorizeTestContext(ctx, inbox, t)
+	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, inbox, t)
 
 	repo := testRepo{
 		inbox:   inbox,

@@ -1,8 +1,8 @@
 package httpserver
 
 import (
+	"mailboxsweep"
 	"mailboxsweep/inbox"
-	"mailboxsweep/session"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -31,7 +31,7 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
 		c.respondAuthError(w, err)

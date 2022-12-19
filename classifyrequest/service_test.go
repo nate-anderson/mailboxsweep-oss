@@ -6,7 +6,6 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxuser"
-	"mailboxsweep/session"
 	"testing"
 	"time"
 )
@@ -30,7 +29,7 @@ func TestClassifyRequestService(t *testing.T) {
 	_, err := userService.Store(ctx, testAddr)
 	assert.ThatError(t, err).IsNil()
 
-	authedCtx := session.AuthorizeTestContext(ctx, testAddr, t)
+	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddr, t)
 
 	t.Run("record request", func(t *testing.T) {
 		t.Run("unauthorized, failure", func(t *testing.T) {
@@ -75,7 +74,7 @@ func TestClassifyRequestService(t *testing.T) {
 		})
 
 		t.Run("authorized, no open requests, falire", func(t *testing.T) {
-			localCtx := session.AuthorizeTestContext(ctx, "me@example.com", t)
+			localCtx := mailboxsweep.AuthorizeTestContext(ctx, "me@example.com", t)
 			err := service.CompleteSuccess(localCtx)
 			assert.ThatError(t, err).Is(ErrNoOpenRequests)
 
@@ -108,7 +107,7 @@ func TestClassifyRequestService(t *testing.T) {
 	testAddr2 := "ham@bone.com"
 	_, err = userService.Store(ctx, testAddr2)
 	assert.ThatError(t, err).IsNil()
-	authedCtx2 := session.AuthorizeTestContext(ctx, testAddr2, t)
+	authedCtx2 := mailboxsweep.AuthorizeTestContext(ctx, testAddr2, t)
 	err = service.RecordRequest(authedCtx2)
 	assert.ThatError(t, err).IsNil()
 

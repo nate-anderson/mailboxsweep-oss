@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mailboxsweep"
 	"mailboxsweep/inboxuser"
-	"mailboxsweep/session"
 	"time"
 )
 
@@ -38,7 +38,7 @@ func NewDefaultService(
 }
 
 func (s DefaultService) RecordRequest(ctx context.Context) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (s DefaultService) RecordRequest(ctx context.Context) error {
 }
 
 func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error) {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 var ErrNoOpenRequests = errors.New("no open classify requests")
 
 func (s DefaultService) CompleteSuccess(ctx context.Context) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (s DefaultService) CompleteSuccess(ctx context.Context) error {
 }
 
 func (s DefaultService) CompleteError(ctx context.Context, classifyErr error) error {
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}

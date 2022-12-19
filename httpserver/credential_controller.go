@@ -2,9 +2,9 @@ package httpserver
 
 import (
 	"encoding/json"
+	"mailboxsweep"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
-	"mailboxsweep/session"
 	"net/http"
 	"time"
 
@@ -38,7 +38,7 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 
 	// validate - yes, this is sloppy
 	// hard to do this inside the credential service without an import cycle, @TODO revisit
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		// this should not happen
 		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
@@ -77,7 +77,7 @@ const testHeaderCredentialAddress = "X-Test-Address"
 func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	addr, err := session.UserAddressFromContext(ctx)
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
 		c.respondAuthError(w, err)

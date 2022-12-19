@@ -2,8 +2,8 @@ package inbox
 
 import (
 	"context"
+	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
-	"mailboxsweep/session"
 )
 
 type FolderService interface {
@@ -23,7 +23,7 @@ func NewFolderService(providerService ProviderService, credentialService inboxcr
 }
 
 func (s DefaultFolderService) ListInboxFolders(ctx context.Context) ([]string, error) {
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}

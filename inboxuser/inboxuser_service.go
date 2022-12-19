@@ -3,7 +3,7 @@ package inboxuser
 import (
 	"context"
 	"errors"
-	"mailboxsweep/session"
+	"mailboxsweep"
 	"strings"
 
 	"github.com/mcnijman/go-emailaddress"
@@ -46,7 +46,7 @@ func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, 
 }
 
 func (s DefaultService) Consent(ctx context.Context, agreements []Agreement) error {
-	userAddress, err := session.UserAddressFromContext(ctx)
+	userAddress, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (s DefaultService) SetName(ctx context.Context, nameFirst, nameLast string)
 		return errors.New("last name is required")
 	}
 
-	userAddress, err := session.UserAddressFromContext(ctx)
+	userAddress, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}

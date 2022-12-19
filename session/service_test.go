@@ -26,7 +26,7 @@ func (t testHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	res := testRes{
 		OK: true,
 	}
-	address, err := session.UserAddressFromContext(ctx)
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		res.OK = false
 		w.WriteHeader(http.StatusUnauthorized)
@@ -70,13 +70,13 @@ func TestSessionService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("authed context yields address", func(t *testing.T) {
-			address, err := session.UserAddressFromContext(authedCtx)
+			address, err := mailboxsweep.UserAddressFromContext(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, address).Equals(testUser.Address)
 		})
 
 		t.Run("unauthed context yields Unauthenticated error", func(t *testing.T) {
-			address, err := session.UserAddressFromContext(context.Background())
+			address, err := mailboxsweep.UserAddressFromContext(context.Background())
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, address).Equals("")
 		})
