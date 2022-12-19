@@ -87,7 +87,7 @@ func (r DynamoSessionRepository) Get(ctx context.Context, cookieToken string) (*
 	}
 
 	if len(itemRes.Item) == 0 {
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(nil)
 	}
 
 	item := itemRes.Item

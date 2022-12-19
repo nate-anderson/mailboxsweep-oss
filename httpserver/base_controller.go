@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
+	"mailboxsweep"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -49,6 +51,11 @@ func (r baseController) respondError(w http.ResponseWriter, err error, opts ...r
 
 	options := respondErrorOptions{
 		code: http.StatusInternalServerError,
+	}
+
+	var statusError mailboxsweep.StatusError
+	if errors.As(err, &statusError) {
+		options.code = statusError.StatusCode()
 	}
 
 	for _, opt := range opts {

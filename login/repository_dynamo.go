@@ -137,7 +137,7 @@ func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, er
 
 	l := Link{}
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(nil)
 	}
 	err = attributevalue.UnmarshalMap(res.Item, &l)
 	return &l, err
@@ -166,7 +166,7 @@ func (r DynamoLinkRepository) FindByUserUUID(ctx context.Context, userUUID strin
 	}
 
 	if keyRes.Count < 1 {
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(nil)
 	}
 
 	key := keyRes.Items[0]

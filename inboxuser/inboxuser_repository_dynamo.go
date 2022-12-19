@@ -95,7 +95,7 @@ func (r DynamoInboxUserRepository) FindByAddress(ctx context.Context, address st
 	}
 
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(nil)
 	}
 
 	iu := InboxUser{}

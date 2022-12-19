@@ -44,7 +44,7 @@ func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedB
 	if err != nil {
 		// if this is an error other than "not found", fail
 		if !errors.Is(err, mailboxsweep.ErrNotFound) {
-			return false, mailboxsweep.ErrNotFound
+			return false, err
 		}
 
 		// store the new user

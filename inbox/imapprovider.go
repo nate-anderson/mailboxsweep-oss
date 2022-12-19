@@ -61,7 +61,7 @@ func (p *IMAPProvider) Login(username, password string) (Inbox, error) {
 	if err != nil {
 		msg := strings.ToLower(err.Error())
 		if strings.Contains(msg, "invalid credentials") {
-			return nil, mailboxsweep.ErrBadInboxCredential
+			return nil, mailboxsweep.BadInboxCredentialError(err)
 		}
 		return nil, err
 	}

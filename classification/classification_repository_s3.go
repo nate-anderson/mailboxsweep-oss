@@ -41,7 +41,7 @@ func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox stri
 		if !errors.As(err, &one) {
 			return nil, fmt.Errorf("failed to fetch summary: %s", err)
 		}
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(err)
 	}
 
 	summary := ClassificationDocument{}
@@ -65,7 +65,7 @@ func (r S3ClassificationRepository) FetchLeaf(ctx context.Context, inbox string,
 		if !errors.As(err, &one) {
 			return nil, fmt.Errorf("failed to fetch leaf: %w", err)
 		}
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(err)
 	}
 
 	cl := Classification{}
