@@ -35,7 +35,7 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	reqBody := LoginRequest{}
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 

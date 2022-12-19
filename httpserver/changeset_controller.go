@@ -16,7 +16,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	// ctx := req.Context()
 	reqBody := ChangeSetRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -31,7 +31,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 
 	default:
 		err := fmt.Errorf("unknown update operation '%s'", reqBody.Operation)
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 

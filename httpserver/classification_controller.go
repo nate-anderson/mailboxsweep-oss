@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"mailboxsweep"
 	"mailboxsweep/classification"
 	"net/http"
 	"net/url"
@@ -31,7 +30,7 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 	ctx := req.Context()
 	var reqBody StartInboxClassifyRequest
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -69,7 +68,7 @@ func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter
 	ctx := req.Context()
 	root, err := c.classificationService.ClassificationSummary(ctx)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -86,22 +85,18 @@ func (c ClassificationController) GetClassificationLeaf(w http.ResponseWriter, r
 	pathStr := req.URL.Query().Get("path")
 	decodedPath, err := url.QueryUnescape(pathStr)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
 	path := strings.Split(decodedPath, "/")
 	if len(path) < 1 {
-		c.respondError(w, errors.New("path cannot be empty"), withStatusCode(http.StatusBadRequest))
+		c.respondError(w, errors.New("path cannot be empty"), withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
 	cl, err := c.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
-		if errors.Is(err, mailboxsweep.ErrNotFound) {
-			c.respondError(w, err, withStatusCode(http.StatusNotFound))
-			return
-		}
 		c.respondError(w, err)
 		return
 	}

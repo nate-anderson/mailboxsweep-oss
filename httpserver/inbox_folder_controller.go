@@ -27,7 +27,7 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 
 	folders, err := c.folderService.ListInboxFolders(ctx)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadGateway))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
 	}
 

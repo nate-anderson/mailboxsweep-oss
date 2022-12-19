@@ -32,7 +32,7 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 	var reqBody CreateCredentialRequest
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -53,7 +53,7 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 
 	_, err = provider.Login(address, reqBody.Password)
 	if err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadGateway))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
 	}
 

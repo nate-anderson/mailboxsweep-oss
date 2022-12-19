@@ -40,7 +40,7 @@ type respondErrorOptions struct {
 
 type respondErrorOptFunc func(o *respondErrorOptions)
 
-func withStatusCode(statusCode int) respondErrorOptFunc {
+func withOverrideStatusCode(statusCode int) respondErrorOptFunc {
 	return func(o *respondErrorOptions) {
 		o.code = statusCode
 	}

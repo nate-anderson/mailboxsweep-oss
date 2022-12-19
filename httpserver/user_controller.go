@@ -15,7 +15,7 @@ func (c UserController) SetConsentedAgreements(w http.ResponseWriter, req *http.
 	ctx := req.Context()
 	reqBody := SetUserAgreementsRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
@@ -23,7 +23,7 @@ func (c UserController) SetConsentedAgreements(w http.ResponseWriter, req *http.
 	for i, agrStr := range reqBody.Agreements {
 		agr, err := inboxuser.ParseAgreement(agrStr)
 		if err != nil {
-			c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+			c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 			return
 		}
 		agreements[i] = agr
@@ -45,7 +45,7 @@ func (c UserController) UpdateUserName(w http.ResponseWriter, req *http.Request)
 	ctx := req.Context()
 	reqBody := SetUserNameRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		c.respondError(w, err, withStatusCode(http.StatusBadRequest))
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
