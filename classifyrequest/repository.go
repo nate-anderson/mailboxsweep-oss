@@ -124,12 +124,14 @@ func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, start
 		errDetailsSafe = *errDetails
 	}
 	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-		Key:              key,
-		TableName:        &r.tableName,
-		UpdateExpression: aws.String("SET #completed = :completed, #error = :err_details"),
+		Key:                 key,
+		TableName:           &r.tableName,
+		UpdateExpression:    aws.String("SET #completed = :completed, #error = :err_details"),
+		ConditionExpression: aws.String("#sk = :sk"),
 		ExpressionAttributeNames: map[string]string{
 			"#completed": "completed_at_unix",
 			"#error":     "error",
+			"#sk":        mailboxsweep.DynamoSK,
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":completed": &types.AttributeValueMemberN{
@@ -137,6 +139,9 @@ func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, start
 			},
 			":err_details": &types.AttributeValueMemberS{
 				Value: errDetailsSafe,
+			},
+			":sk": &types.AttributeValueMemberS{
+				Value: r.formatSK(startedAt),
 			},
 		},
 		ReturnValues: types.ReturnValueAllNew,

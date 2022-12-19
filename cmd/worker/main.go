@@ -32,10 +32,11 @@ type workerConfig struct {
 	SQSPort   int     `mapstructure:"SQS_PORT"`
 	SQSRegion string  `mapstructure:"SQS_REGION"`
 
-	S3Bucket      string `mapstructure:"S3_BUCKET"`
-	EventBusName  string `mapstructure:"EVENT_BUS_NAME"`
-	DynamoDBTable string `mapstructure:"DYNAMODB_TABLE"`
-	SQSQueueURL   string `mapstructure:"SQS_QUEUE_URL"`
+	S3Bucket              string `mapstructure:"S3_BUCKET"`
+	EventBusName          string `mapstructure:"EVENT_BUS_NAME"`
+	DynamoDBTable         string `mapstructure:"DYNAMODB_TABLE"`
+	SQSQueueURL           string `mapstructure:"SQS_QUEUE_URL"`
+	SQSDeadLetterQueueURL string `mapstructure:"SQS_DLQ_URL"`
 
 	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
@@ -137,7 +138,16 @@ func main() {
 		cfg.EventBusName,
 	)
 
-	w := worker.NewWorker(log, queue, cfg.SQSQueueURL, service)
+	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)
+
+	w := worker.NewWorker(
+		log,
+		queue,
+		cfg.SQSQueueURL,
+		dlqPub,
+		cfg.SQSDeadLetterQueueURL,
+		service,
+	)
 
 	log.Fatal(w.Work())
 }

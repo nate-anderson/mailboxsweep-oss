@@ -121,13 +121,14 @@ func (s DefaultService) CompleteSuccess(ctx context.Context) error {
 	for _, req := range openRequests {
 		if req.CompletedAtUnix == nil {
 			selected = req
+			break
 		}
 	}
 	if selected.Inbox == "" {
 		return ErrNoOpenRequests
 	}
 
-	_, err = s.requestRepo.Update(ctx, addr, time.Now().Unix(), nil)
+	_, err = s.requestRepo.Update(ctx, addr, selected.RequestedAt, nil)
 	return err
 }
 
@@ -146,6 +147,7 @@ func (s DefaultService) CompleteError(ctx context.Context, classifyErr error) er
 	for _, req := range openRequests {
 		if req.CompletedAtUnix == nil {
 			selected = req
+			break
 		}
 	}
 	if selected.Inbox == "" {
@@ -153,6 +155,6 @@ func (s DefaultService) CompleteError(ctx context.Context, classifyErr error) er
 	}
 
 	msg := classifyErr.Error()
-	_, err = s.requestRepo.Update(ctx, addr, time.Now().Unix(), &msg)
+	_, err = s.requestRepo.Update(ctx, addr, selected.RequestedAt, &msg)
 	return err
 }

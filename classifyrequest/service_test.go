@@ -116,12 +116,19 @@ func TestClassifyRequestService(t *testing.T) {
 		t.Run("unauthorized, failure", func(t *testing.T) {
 			err := service.CompleteError(ctx, testErr)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+
+			list, err := service.FindOpenRequests(authedCtx2)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, len(list)).Equals(1)
 		})
 
 		t.Run("authorized, success", func(t *testing.T) {
 			err := service.CompleteError(authedCtx2, testErr)
 			assert.ThatError(t, err).IsNil()
 
+			list, err := service.FindOpenRequests(authedCtx2)
+			assert.ThatError(t, err).Is(ErrNoOpenRequests)
+			assert.That(t, len(list)).Equals(0)
 		})
 	})
 }

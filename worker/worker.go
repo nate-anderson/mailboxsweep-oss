@@ -19,6 +19,8 @@ type Worker struct {
 	queue    *sqs.Client
 	queueURL string
 
+	dlqPub  mailboxsweep.EventPublisher[classification.ClassifyQueueItem]
+	dlqURL  string
 	service classification.Service
 }
 
@@ -26,12 +28,16 @@ func NewWorker(
 	log *logrus.Logger,
 	queue *sqs.Client,
 	queueURL string,
+	dlqPub mailboxsweep.EventPublisher[classification.ClassifyQueueItem],
+	dlqURL string,
 	service classification.Service,
 ) *Worker {
 	return &Worker{
 		log,
 		queue,
 		queueURL,
+		dlqPub,
+		dlqURL,
 		service,
 	}
 }
@@ -66,7 +72,7 @@ func (w Worker) Work() error {
 			goroutines
 		*/
 
-		w.log.Info("read %d messages from the queue", len(batch.Messages))
+		w.log.Infof("read %d messages from the queue", len(batch.Messages))
 
 		for _, m := range batch.Messages {
 			queueItem := mailboxsweep.EventBody[classification.ClassifyQueueItem]{}
@@ -97,8 +103,30 @@ func (w Worker) Work() error {
 				w.log.
 					WithError(err).
 					Error("classify failed")
+				// push to DLQ
+				err = w.dlqPub.PublishEvent(ctx, queueItem)
+				if err != nil {
+					w.log.
+						WithError(err).
+						Error("failed to push to DLQ after failure")
+				} else {
+					_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+						QueueUrl:      &w.queueURL,
+						ReceiptHandle: m.ReceiptHandle,
+					})
+					if err != nil {
+						w.log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
+					}
+				}
 			} else {
 				w.log.Info("classify complete")
+				_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+					QueueUrl:      &w.queueURL,
+					ReceiptHandle: m.ReceiptHandle,
+				})
+				if err != nil {
+					w.log.Errorf("failed to delete message after classify: %s", err.Error())
+				}
 			}
 		}
 	}
