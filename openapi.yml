@@ -4,8 +4,12 @@ info:
   title: Mailboxsweep Public API
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: X-MailboxSweep-Session
   schemas:
-
     ChangeSetRequest:
       type: object
       required:
@@ -244,6 +248,9 @@ components:
         - delete
         - mark_read
 
+security:
+  - cookieAuth: []
+
 paths:
   /classifiers:
     operationId: getClassifiers
@@ -410,10 +417,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetFoldersResponse'
 
+  # Note:
+  # Paths prefixed with /login do not require authentication!
+  # /login paths are public
+
   /login:
     post:
       operationId: initiateLogin
       description: Initiate login
+      security: []
       requestBody:
         required: true
         content:
@@ -434,6 +446,7 @@ paths:
     get:
       operationId: submitLoginToken
       description: Complete login
+      security: []
       responses:
         '200':
           description: Success
@@ -441,6 +454,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
         '401':
           description: Auth failure
       parameters:
