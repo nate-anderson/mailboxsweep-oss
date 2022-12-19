@@ -1,4 +1,9 @@
 go run ./cmd/cli classify -H imap.gmail.com -p vghbzgjlpkutpbbn -u citrusnewsletter@gmail.com --folder=INBOX
 
+# Create SQS queue
+aws sqs --endpoint=http://localhost:4566 create-queue --queue-name=mailboxsweep.fifo --attributes=FifoQueue=true
+aws sqs --endpoint=http://localhost:4566 create-queue --queue-name=mailboxsweep_dlq.fifo --attributes=FifoQueue=true
+
+
 # Clear SQS queue
 aws sqs --endpoint=http://localhost:4566 purge-queue --queue-url=http://localhost:4566/000000000000/mailboxsweep
