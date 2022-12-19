@@ -10,8 +10,8 @@ import (
 )
 
 type EventBody[t any] struct {
-	RequestID string `json:"-"`
-	Body      t      `json:"body"`
+	RequestID *string `json:"-"`
+	Body      t       `json:"body"`
 }
 type EventPublisher[t any] interface {
 	PublishEvent(ctx context.Context, body EventBody[t]) error
@@ -49,15 +49,17 @@ func (p SQSEventPublisher[t]) PublishEvent(ctx context.Context, body EventBody[t
 	if err != nil {
 		return err
 	}
-	_, err = p.client.SendMessage(ctx, &sqs.SendMessageInput{
-		MessageBody: aws.String(string(bodyBytes)),
-		MessageAttributes: map[string]types.MessageAttributeValue{
-			"request_id": {
-				DataType:    aws.String("String"),
-				StringValue: &body.RequestID,
-			},
-		},
-		QueueUrl: &p.queueURL,
-	})
+	input := &sqs.SendMessageInput{
+		MessageBody:       aws.String(string(bodyBytes)),
+		MessageAttributes: map[string]types.MessageAttributeValue{},
+		QueueUrl:          &p.queueURL,
+	}
+	if body.RequestID != nil {
+		input.MessageAttributes["request_id"] = types.MessageAttributeValue{
+			DataType:    aws.String("String"),
+			StringValue: body.RequestID,
+		}
+	}
+	_, err = p.client.SendMessage(ctx, input)
 	return err
 }

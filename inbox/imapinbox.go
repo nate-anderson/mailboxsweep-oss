@@ -75,10 +75,6 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 	keys := make(map[string]uint32)
 
 	selected := i.client.Mailbox()
-	var (
-		prevName     = selected.Name
-		prevReadOnly = selected.ReadOnly
-	)
 
 	for _, f := range folders {
 		stat, err := i.client.Select(f, true)
@@ -89,7 +85,9 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 		keys[f] = stat.UidValidity
 	}
 
-	i.client.Select(prevName, prevReadOnly)
+	if selected != nil {
+		i.client.Select(selected.Name, selected.ReadOnly)
+	}
 	return keys, nil
 }
 

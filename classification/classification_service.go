@@ -8,6 +8,7 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 )
 
@@ -138,7 +139,7 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	}
 
 	err = s.eventPublisher.PublishEvent(ctx, mailboxsweep.EventBody[ClassifyQueueItem]{
-		RequestID: "@TODO",
+		RequestID: aws.String("@TODO"),
 		Body:      req,
 	})
 	return err
