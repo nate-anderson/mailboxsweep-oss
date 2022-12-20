@@ -64,14 +64,21 @@ type Agreement string
 
 var (
 	PrivacyPolicy        Agreement = "PRIVACY_POLICY"
-	NonCorporateEmail    Agreement = "NON_CORPORATE_EMAIL"
+	PersonalInbox        Agreement = "PERSONAL_INBOX"
 	BackupResponsibility Agreement = "BACKUP_RESPONSIBILITY"
 	NecessaryCookies     Agreement = "COOKIES_NECESSARY"
 )
 
 var requiredAgreements = []Agreement{
 	PrivacyPolicy,
-	NonCorporateEmail,
+	PersonalInbox,
+	BackupResponsibility,
+	NecessaryCookies,
+}
+
+var allAgreements = []Agreement{
+	PrivacyPolicy,
+	PersonalInbox,
 	BackupResponsibility,
 	NecessaryCookies,
 }
@@ -80,8 +87,8 @@ func ParseAgreement(str string) (Agreement, error) {
 	switch Agreement(str) {
 	case PrivacyPolicy:
 		return PrivacyPolicy, nil
-	case NonCorporateEmail:
-		return NonCorporateEmail, nil
+	case PersonalInbox:
+		return PersonalInbox, nil
 	case BackupResponsibility:
 		return BackupResponsibility, nil
 	case NecessaryCookies:
@@ -89,4 +96,13 @@ func ParseAgreement(str string) (Agreement, error) {
 	default:
 		return "", fmt.Errorf("unknown agreement string '%s'", str)
 	}
+}
+
+func contains[t comparable](slice []t, value t) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

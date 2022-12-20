@@ -3,8 +3,10 @@ package inboxuser
 import (
 	"context"
 	"errors"
+	"fmt"
 	"mailboxsweep"
 	"strings"
+	"time"
 
 	"github.com/mcnijman/go-emailaddress"
 )
@@ -15,16 +17,23 @@ type Service interface {
 	FindByUUID(ctx context.Context, uuid string) (*InboxUser, error)
 	SetName(ctx context.Context, nameFirst, nameLast string) error
 	Consent(ctx context.Context, agreements []Agreement) error
+	ListUserAgreements(ctx context.Context) ([]UserAgreement, error)
 }
 
-func NewService(repo InboxUserRepository) DefaultService {
-	return DefaultService{
-		repo: repo,
+func NewService(repo InboxUserRepository) (DefaultService, error) {
+	agreements, err := readAgreements()
+	if err != nil {
+		return DefaultService{}, err
 	}
+	return DefaultService{
+		repo:       repo,
+		agreements: agreements,
+	}, nil
 }
 
 type DefaultService struct {
-	repo InboxUserRepository
+	repo       InboxUserRepository
+	agreements map[Agreement]AgreementDocument
 }
 
 func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, error) {
@@ -94,4 +103,43 @@ func (s DefaultService) SetName(ctx context.Context, nameFirst, nameLast string)
 	}
 
 	return s.repo.SetName(ctx, user.Address, nameFirst, nameLast)
+}
+
+type UserAgreement struct {
+	Agreement   Agreement
+	Description string
+	Agreed      bool
+	AgreedAt    time.Time
+	Required    bool
+}
+
+func (s DefaultService) ListUserAgreements(ctx context.Context) ([]UserAgreement, error) {
+	userAddress, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.repo.FindByAddress(ctx, userAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	userAgreements := make([]UserAgreement, 0, len(user.Agreements))
+
+	for _, agr := range allAgreements {
+		doc, ok := s.agreements[agr]
+		if !ok {
+			return nil, fmt.Errorf("no document loaded for agreement %s", agr)
+		}
+
+		agreed, ok := user.Agreements[agr]
+		userAgreements = append(userAgreements, UserAgreement{
+			Agreement:   agr,
+			Agreed:      ok,
+			AgreedAt:    agreed,
+			Description: doc.Name,
+			Required:    contains(requiredAgreements, agr),
+		})
+	}
+	return userAgreements, nil
 }
