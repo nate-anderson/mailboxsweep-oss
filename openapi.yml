@@ -171,6 +171,16 @@ components:
           items:
             $ref: '#/components/schemas/ClassifierInfo'
 
+    ListUserAgreementsResponse:
+      type: object
+      required:
+        - agreements
+      properties:
+        agreements:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserAgreement'
+
     LoginRequest:
       type: object
       required:
@@ -276,6 +286,26 @@ components:
       enum:
         - delete
         - mark_read
+    
+    UserAgreement:
+      type: object
+      required:
+        - key
+        - name
+        - required
+        - agreedAt
+      properties:
+        key:
+          type: string
+        agreedAt:
+          nullable: true
+          type: string # RFC-3339 datetime string
+        name:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
 
 security:
   - cookieAuth: []
@@ -347,6 +377,16 @@ paths:
                 $ref: '#/components/schemas/StatusResponse'
 
   /user/agreements:
+    get:
+      operationId: listUserAgreements
+      description: See agreed and outstanding agreements
+      responses:
+        '200':
+          description: Success, agreement list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserAgreementsResponse'
     patch:
       operationId: setConsentedAgreements
       description: Set agreed agreements for an inbox accoutn

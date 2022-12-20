@@ -5,6 +5,7 @@ import (
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
 
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,7 @@ type Controller struct {
 }
 
 func NewController(
+	inboxUserService inboxuser.Service,
 	credentialService inboxcredential.Service,
 	classificationService classification.Service,
 	folderService inbox.FolderService,
@@ -36,6 +38,7 @@ func NewController(
 	folderController := NewFolderController(folderService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
 	changeSetController := NewChangeSetController(changesetService, log)
+	userController := NewUserController(inboxUserService, log)
 
 	return &Controller{
 		CredentialController:     credentialController,
@@ -43,5 +46,6 @@ func NewController(
 		FolderController:         folderController,
 		LoginController:          loginController,
 		ChangeSetController:      changeSetController,
+		UserController:           userController,
 	}
 }

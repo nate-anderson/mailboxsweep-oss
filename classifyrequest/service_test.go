@@ -18,7 +18,8 @@ func TestClassifyRequestService(t *testing.T) {
 
 	repo := NewDynamoRequestRepository(cl, table)
 	userRepo := inboxuser.NewDynamoInboxUserRepository(cl, table)
-	userService := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo)
+	assert.ThatError(t, err).IsNil()
 
 	timeBetweenOpenRequests := time.Minute * 60
 	timeBetweenClosedRequests := time.Minute * 60
@@ -26,7 +27,7 @@ func TestClassifyRequestService(t *testing.T) {
 	service := NewDefaultService(userService, repo, timeBetweenOpenRequests, timeBetweenClosedRequests)
 
 	testAddr := "blamo@whamo.namo"
-	_, err := userService.Store(ctx, testAddr)
+	_, err = userService.Store(ctx, testAddr)
 	assert.ThatError(t, err).IsNil()
 
 	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddr, t)

@@ -138,7 +138,10 @@ func main() {
 	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
-	userService := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo)
+	if err != nil {
+		log.Fatalf("failed to initialize inboxuser service: %s", err)
+	}
 
 	timeBetweenOpenRequests := time.Minute * time.Duration(cfg.MinutesBetweenOpenRequests)
 	timeBetweenClosedRequests := time.Hour * time.Duration(cfg.HoursBetweenClosedRequests)
@@ -194,6 +197,7 @@ func main() {
 	changesetService := changeset.NewDefaultService(changesetRepo)
 
 	controller := httpserver.NewController(
+		userService,
 		credentialService,
 		classificationService,
 		folderService,

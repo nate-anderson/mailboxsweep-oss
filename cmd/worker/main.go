@@ -89,7 +89,10 @@ func main() {
 	providerService := inbox.NewProviderService(imapServerService)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
-	userService := inboxuser.NewService(userRepo)
+	if err != nil {
+		log.Fatalf("failed to initialize user repo: %s", err)
+	}
+	userService, err := inboxuser.NewService(userRepo)
 
 	timeBetweenOpenRequests := time.Minute * time.Duration(cfg.MinutesBetweenOpenRequests)
 	timeBetweenClosedRequests := time.Hour * time.Duration(cfg.HoursBetweenClosedRequests)

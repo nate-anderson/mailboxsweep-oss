@@ -17,7 +17,8 @@ func TestLoginService(t *testing.T) {
 	defer teardown()
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo)
+	assert.ThatError(t, err).IsNil()
 
 	sender := &testSender{}
 
