@@ -2,10 +2,11 @@ package inboxuser
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed agreements/*
@@ -13,13 +14,14 @@ var agreementsFS embed.FS
 
 // embedded documents from /agreements
 type AgreementDocument struct {
-	Code    Agreement `json:"-"`
-	Name    string    `json:"name"`
-	Updated string    `json:"updated"`
-	Body    string    `json:"body"`
+	Code    Agreement `yaml:"-"`
+	Name    string    `yaml:"name"`
+	Updated string    `yaml:"updated"`
+	Body    string    `yaml:"body"`
 }
 
 const dir = "agreements"
+const ext = ".yml"
 
 func readAgreements() (map[Agreement]AgreementDocument, error) {
 	dirEntries, err := agreementsFS.ReadDir("agreements")
@@ -36,11 +38,11 @@ func readAgreements() (map[Agreement]AgreementDocument, error) {
 		}
 
 		doc := AgreementDocument{}
-		if err = json.NewDecoder(file).Decode(&doc); err != nil {
+		if err = yaml.NewDecoder(file).Decode(&doc); err != nil {
 			return nil, err
 		}
 
-		key := strings.TrimSuffix(entry.Name(), ".json")
+		key := strings.TrimSuffix(entry.Name(), ext)
 		agr, err := ParseAgreement(key)
 		if err != nil {
 			return nil, fmt.Errorf("agreements directory contained file with unknown agreement code: %w", err)
