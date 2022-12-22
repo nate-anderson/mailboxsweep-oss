@@ -88,3 +88,7 @@ func (r baseController) respondAuthError(w http.ResponseWriter, internalError er
 		return
 	}
 }
+
+func ptr[t any](v t) *t {
+	return &v
+}

@@ -5,6 +5,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
+	"time"
 )
 
 func TestInboxUserService(t *testing.T) {
@@ -61,5 +62,27 @@ func TestInboxUserService(t *testing.T) {
 				}
 			}
 		})
+	})
+
+	t.Run("store payment", func(t *testing.T) {
+		testPayment := Payment{
+			Plan:          Basic,
+			AmountInCents: 1000,
+			Method:        Stripe,
+			ExternalID:    "12345",
+			Timestamp:     time.Now(),
+		}
+		err := service.StorePayment(authedCtx, testPayment)
+		assert.ThatError(t, err).IsNil()
+
+		user, err := service.FindByAddress(authedCtx, testAddr)
+		assert.ThatError(t, err).IsNil()
+		assert.That(t, len(user.Payments)).Equals(1)
+		p := user.Payments[0]
+		assert.That(t, p.AmountInCents).Equals(testPayment.AmountInCents)
+		assert.That(t, p.Plan).Equals(testPayment.Plan)
+		assert.That(t, p.Method).Equals(testPayment.Method)
+		assert.That(t, p.ExternalID).Equals(testPayment.ExternalID)
+		assert.That(t, p.Timestamp.IsZero()).Equals(false)
 	})
 }

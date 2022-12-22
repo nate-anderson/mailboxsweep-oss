@@ -160,6 +160,23 @@ components:
           type: array
           items:
             type: string
+
+    InitiatePaymentRequest:
+      type: object
+      required:
+        - plan
+      properties:
+        plan:
+          type: string
+    
+    InitiatePaymentResponse:
+      type: object
+      required:
+        - checkoutUrl
+      properties:
+        checkoutUrl:
+          type: string
+          nullable: true
     
     ListClassifiersResponse:
       type: object
@@ -306,6 +323,19 @@ components:
           type: string
         required:
           type: boolean
+
+    UserPaymentStatus:
+      type: object
+      required:
+        - plan
+        - validUntil
+      properties:
+        plan:
+          type: string
+          nullable: true
+        validUntil:
+          type: string
+          nullable: true
 
 security:
   - cookieAuth: []
@@ -502,6 +532,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFoldersResponse'
+
+  /payment:
+    get:
+      description: Get payment details
+      operationId: getPaymentStatus
+      responses:
+        '200':
+          description: Success - payment details enclosed. Status code does not reflect payment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPaymentStatus'
+        '500':
+          description: Internal server error
+
+    post:
+      description: Initiate payment
+      operationId: initiatePayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiatePaymentRequest'
+      responses:
+        '200':
+          description: Payment initiated, follow redirect link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiatePaymentResponse'
+        '500':
+          description: Internal server error
+
+  /payment/success:
+    get:
+      description: Submit payment success details
+      operationId: completePayment
+      parameters:
+        - in: query
+          name: checkoutSessionId
+          required: true
+          schema:
+            type: string
+          description: Stripe checkout session ID 
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '500':
+          description: Internal server error
 
   # Note:
   # Paths prefixed with /login do not require authentication!

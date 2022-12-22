@@ -1,0 +1,91 @@
+package httpserver
+
+import (
+	"encoding/json"
+	"errors"
+	"mailboxsweep"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/payment"
+	"net/http"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
+
+type PaymentController struct {
+	baseController
+	service payment.Service
+	log     *logrus.Logger
+}
+
+func NewPaymentController(service payment.Service, log *logrus.Logger) *PaymentController {
+	return &PaymentController{
+		baseController: baseController{log},
+		log:            log,
+		service:        service,
+	}
+}
+
+func (c PaymentController) GetPaymentStatus(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	status, err := c.service.VerifyPayment(ctx)
+	if err != nil {
+		if errors.Is(err, mailboxsweep.ErrNeedsPayment) {
+			c.respond(w, http.StatusOK, UserPaymentStatus{})
+			return
+		}
+		c.respondError(w, err)
+		return
+	}
+
+	resBody := UserPaymentStatus{
+		Plan:       (*string)(&status.Plan),
+		ValidUntil: ptr(status.ValidUntil.Format(time.RFC3339)),
+	}
+
+	c.respond(w, http.StatusOK, resBody)
+}
+
+func (c PaymentController) InitiatePayment(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	reqBody := InitiatePaymentRequest{}
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	plan, err := inboxuser.ParsePlan(reqBody.Plan)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	checkoutURL, err := c.service.InitiatePayment(ctx, plan)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	resBody := InitiatePaymentResponse{
+		CheckoutUrl: &checkoutURL,
+	}
+
+	c.respond(w, http.StatusOK, resBody)
+}
+
+func (c PaymentController) CompletePayment(w http.ResponseWriter, req *http.Request, params CompletePaymentParams) {
+	ctx := req.Context()
+	err := c.service.CompletePayment(ctx, params.CheckoutSessionId)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	msg := "Payment received!"
+	resBody := StatusResponse{
+		Status:  "OK",
+		Message: &msg,
+	}
+	c.respond(w, http.StatusOK, resBody)
+}

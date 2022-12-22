@@ -18,6 +18,8 @@ type Service interface {
 	SetName(ctx context.Context, nameFirst, nameLast string) error
 	Consent(ctx context.Context, agreements []Agreement) error
 	ListUserAgreements(ctx context.Context) ([]UserAgreement, error)
+
+	StorePayment(ctx context.Context, payment Payment) error
 }
 
 func NewService(repo InboxUserRepository) (DefaultService, error) {
@@ -142,4 +144,13 @@ func (s DefaultService) ListUserAgreements(ctx context.Context) ([]UserAgreement
 		})
 	}
 	return userAgreements, nil
+}
+
+func (s DefaultService) StorePayment(ctx context.Context, payment Payment) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.StorePayment(ctx, addr, payment)
 }

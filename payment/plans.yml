@@ -1,4 +1,4 @@
-- key: BASIC
+BASIC:
   display_name: MailboxSweep
   description: 'Get an organized view of your inbox, delete and mark read as many emails as you need.'
   price_in_cents: 1000
@@ -9,10 +9,11 @@
     - Mark unlimited messages as read
   enabled: true
 
-- key: DELUXE
+DELUXE:
   display_name: MalboxSweep Deluxe
   description: 'More advanced tools to help you sort your inbox by the details.'
   price_in_cents: 2000
+  features:
     - Up to 10 inbox scans
     - Group by website, sender, send date, key words in the subject, key words in the email body, and presence of attachments.
     - Delete unlimited messages.

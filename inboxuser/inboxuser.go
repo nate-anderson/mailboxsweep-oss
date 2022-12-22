@@ -2,6 +2,7 @@ package inboxuser
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,6 +48,21 @@ var (
 	Deluxe Plan = "DELUXE"
 )
 
+func ParsePlan(str string) (Plan, error) {
+	clean := strings.ToUpper(
+		strings.TrimSpace(str),
+	)
+
+	switch Plan(clean) {
+	case Basic:
+		return Basic, nil
+	case Deluxe:
+		return Deluxe, nil
+	default:
+		return "", fmt.Errorf("unknown plan code '%s'", str)
+	}
+}
+
 type PaymentMethod string
 
 var (
@@ -57,6 +73,7 @@ type Payment struct {
 	Plan          Plan          `dynamodbav:"plan"`
 	AmountInCents int           `dynamodbav:"amount_in_cents"`
 	Method        PaymentMethod `dynamodbav:"payment_method"`
+	ExternalID    string        `dynamodbav:"external_id"`
 	Timestamp     time.Time     `dynamodbav:"timestamp"`
 }
 

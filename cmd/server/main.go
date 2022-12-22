@@ -13,6 +13,7 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
+	"mailboxsweep/payment"
 	"mailboxsweep/session"
 	"net/http"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	stripeClient "github.com/stripe/stripe-go/v74/client"
 )
 
 type serverConfig struct {
@@ -66,6 +68,13 @@ type serverConfig struct {
 	ChangeSetPageIDHashMod uint64 `mapstructure:"CHANGESET_PAGE_ID_HASH_MOD"`
 
 	DevMode bool `mapstructure:"DEV_MODE"`
+
+	// How long is a payment good for access to the servuce?
+	PaymentDurationDays int `mapstructure:"PAYMENT_ACCESS_DURATION_DAYS"`
+
+	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
+	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
+	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 }
 
 func main() {
@@ -194,7 +203,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	changesetService := changeset.NewDefaultService(changesetRepo)
+	if cfg.StripeAPIKey == "" {
+		log.Fatalf("stripe API key must be set")
+	}
+
+	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
+	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
+	stripeProcessor, err := payment.NewStripeProcessor(stripeClient, cfg.StripePaymentConfirmationURL, checkoutSessionDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+	day := time.Hour * 24
+	paymentAccessDuration := time.Duration(cfg.PaymentDurationDays) * day
+	cartRepo := payment.NewCartRepository(db, cfg.DynamoDBTable)
+	paymentService, err := payment.NewService(userService, stripeProcessor, cartRepo, paymentAccessDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	controller := httpserver.NewController(
 		userService,
@@ -204,6 +231,7 @@ func main() {
 		providerService,
 		loginService,
 		changesetService,
+		paymentService,
 		cfg.CookieDomain,
 		cfg.CookiePath,
 		cfg.DevMode,

@@ -7,6 +7,7 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
+	"mailboxsweep/payment"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,6 +19,7 @@ type Controller struct {
 	*FolderController
 	*LoginController
 	*UserController
+	*PaymentController
 }
 
 func NewController(
@@ -28,6 +30,7 @@ func NewController(
 	providerService inbox.ProviderService,
 	loginService login.Service,
 	changesetService changeset.Service,
+	paymentService payment.Service,
 	cookieDomain string,
 	cookiePath string,
 	isDev bool,
@@ -39,6 +42,7 @@ func NewController(
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
 	changeSetController := NewChangeSetController(changesetService, log)
 	userController := NewUserController(inboxUserService, log)
+	paymentController := NewPaymentController(paymentService, log)
 
 	return &Controller{
 		CredentialController:     credentialController,
@@ -47,5 +51,6 @@ func NewController(
 		LoginController:          loginController,
 		ChangeSetController:      changeSetController,
 		UserController:           userController,
+		PaymentController:        paymentController,
 	}
 }
