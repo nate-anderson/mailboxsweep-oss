@@ -101,6 +101,11 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 		return "", err
 	}
 
+	_, err = s.VerifyPayment(ctx)
+	if !errors.Is(err, mailboxsweep.ErrNeedsPayment) {
+		return "", mailboxsweep.ErrAlreadyPaid
+	}
+
 	planDetails, ok := s.plans[plan]
 	if !ok {
 		err := fmt.Errorf("plan %s not recognized", plan)
