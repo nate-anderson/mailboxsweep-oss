@@ -6,6 +6,13 @@ import (
 	"mailboxsweep/classification"
 )
 
+type Service interface {
+	AddLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error)
+	AddLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error)
+	RemoveLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error)
+	RemoveLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error)
+}
+
 type DefaultService struct {
 	changeSetService      changeset.Service
 	classificationService classification.Service

@@ -14,6 +14,8 @@ var (
 	ErrUnauthenticated    = errors.New("context not authenticated")
 	ErrNoStoredCredential = errors.New("no credential stored for inbox")
 	ErrBadInboxCredential = errors.New("could not login to inbox with stored credential")
+	ErrNeedsPayment       = errors.New("payment required")
+	ErrAlreadyPaid        = errors.New("account is already paid")
 )
 
 type StatusError interface {
@@ -65,6 +67,12 @@ func BadInboxCredentialError(parent error) error {
 	}
 }
 
+func NeedsPaymentError(parent error) error {
+	return paymentError{
+		parent: join(parent, ErrNeedsPayment),
+	}
+}
+
 // Something wasn't found
 type notFoundError struct {
 	parent error
@@ -112,4 +120,20 @@ func (c credentialError) StatusCode() int {
 
 func (c credentialError) Unwrap() error {
 	return c.parent
+}
+
+type paymentError struct {
+	parent error
+}
+
+func (p paymentError) Error() string {
+	return ErrNeedsPayment.Error()
+}
+
+func (p paymentError) StatusCode() int {
+	return http.StatusPaymentRequired
+}
+
+func (p paymentError) Unwrap() error {
+	return p.parent
 }
