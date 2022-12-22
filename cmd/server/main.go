@@ -157,6 +157,20 @@ func main() {
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, cfg.DynamoDBTable)
 	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, timeBetweenOpenRequests, timeBetweenClosedRequests)
 
+	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
+	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
+	stripeProcessor, err := payment.NewStripeProcessor(stripeClient, cfg.StripePaymentConfirmationURL, checkoutSessionDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+	day := time.Hour * 24
+	paymentAccessDuration := time.Duration(cfg.PaymentDurationDays) * day
+	cartRepo := payment.NewCartRepository(db, cfg.DynamoDBTable)
+	paymentService, err := payment.NewService(userService, stripeProcessor, cartRepo, paymentAccessDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket)
 	classificationService := classification.NewService(
 		credentialService,
@@ -164,6 +178,7 @@ func main() {
 		classificationRepo,
 		providerService,
 		classifyRequestService,
+		paymentService,
 		log,
 		publisher,
 		cfg.EventBusName,
@@ -207,20 +222,6 @@ func main() {
 	changesetService := changeset.NewDefaultService(changesetRepo)
 	if cfg.StripeAPIKey == "" {
 		log.Fatalf("stripe API key must be set")
-	}
-
-	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
-	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
-	stripeProcessor, err := payment.NewStripeProcessor(stripeClient, cfg.StripePaymentConfirmationURL, checkoutSessionDuration)
-	if err != nil {
-		log.Fatal(err)
-	}
-	day := time.Hour * 24
-	paymentAccessDuration := time.Duration(cfg.PaymentDurationDays) * day
-	cartRepo := payment.NewCartRepository(db, cfg.DynamoDBTable)
-	paymentService, err := payment.NewService(userService, stripeProcessor, cartRepo, paymentAccessDuration)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	controller := httpserver.NewController(

@@ -9,6 +9,7 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/payment"
 	"mailboxsweep/worker"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	stripeClient "github.com/stripe/stripe-go/v74/client"
 )
 
 type workerConfig struct {
@@ -45,6 +47,13 @@ type workerConfig struct {
 	MinutesBetweenOpenRequests int `mapstructure:"MINUTES_BETWEEN_OPEN_REQUESTS"`
 	// How long must a user wait after a completed request to submit a new one?
 	HoursBetweenClosedRequests int `mapstructure:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+
+	// How long is a payment good for access to the servuce?
+	PaymentDurationDays int `mapstructure:"PAYMENT_ACCESS_DURATION_DAYS"`
+
+	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
+	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
+	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 }
 
 func main() {
@@ -130,12 +139,27 @@ func main() {
 
 	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
 
+	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
+	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
+	stripeProcessor, err := payment.NewStripeProcessor(stripeClient, cfg.StripePaymentConfirmationURL, checkoutSessionDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+	day := time.Hour * 24
+	paymentAccessDuration := time.Duration(cfg.PaymentDurationDays) * day
+	cartRepo := payment.NewCartRepository(db, cfg.DynamoDBTable)
+	paymentService, err := payment.NewService(userService, stripeProcessor, cartRepo, paymentAccessDuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	service := classification.NewService(
 		credentialService,
 		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,
+		paymentService,
 		log,
 		pub,
 		cfg.EventBusName,
