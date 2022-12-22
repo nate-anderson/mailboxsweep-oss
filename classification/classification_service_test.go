@@ -11,11 +11,14 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxtesting"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/payment"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -151,6 +154,27 @@ func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr err
 	return mailboxsweep.ErrNotFound
 }
 
+type testProcessor struct {
+	sessions map[string]payment.CompletePayment
+}
+
+func (p testProcessor) FindCheckoutSession(sessionID string) (*payment.CompletePayment, error) {
+	pmt, ok := p.sessions[sessionID]
+	if !ok {
+		return nil, mailboxsweep.ErrNotFound
+	}
+	return &pmt, nil
+}
+
+func (p *testProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
+	id := uuid.NewString()
+	p.sessions[id] = payment.CompletePayment{
+		SessionID:    id,
+		TotalInCents: int(amount),
+	}
+	return "localhost:8080/checkout", id, nil
+}
+
 /*
 This is a big ugly test,
 but at least it's effectively a true unit test!
@@ -168,6 +192,10 @@ func TestClassificationService(t *testing.T) {
 
 	s3Client, bucket, teardown := mailboxsweep.SetupTestBucket(ctx, t)
 	defer teardown()
+
+	db := mailboxsweep.SetupTestDynamoClient()
+	table, dynamoTeardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
+	defer dynamoTeardown()
 
 	repo := NewS3ClassificationRepository(s3Client, bucket)
 
@@ -187,6 +215,22 @@ func TestClassificationService(t *testing.T) {
 	classifyRequestService := testRequestRecorder{
 		requests: make(map[string][]testRequest),
 	}
+	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
+	userService, err := inboxuser.NewService(userRepo)
+	assert.ThatError(t, err).IsNil()
+
+	_, err = userService.Store(ctx, testAddress)
+	assert.ThatError(t, err).IsNil()
+
+	cartRepo := payment.NewCartRepository(db, table)
+	proc := testProcessor{}
+	paymentService, err := payment.NewService(
+		userService,
+		&proc,
+		cartRepo,
+		time.Hour,
+	)
+	assert.ThatError(t, err).IsNil()
 
 	service := NewService(
 		credentialReadService,
@@ -194,6 +238,7 @@ func TestClassificationService(t *testing.T) {
 		repo,
 		providerService,
 		&classifyRequestService,
+		paymentService,
 		logrus.New(),
 		publisher,
 		eventBusName,
@@ -211,9 +256,27 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, len(publisher.Entries)).Equals(0)
 		})
 
-		t.Run("authenticated, success", func(t *testing.T) {
-			authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
+		authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
+
+		t.Run("authenticated, not paid, failure", func(t *testing.T) {
 			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
+				{
+					TypeKey: typeKeySenderDomain,
+				},
+			})
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
+		})
+
+		t.Run("authenticated, paid, success", func(t *testing.T) {
+			err = userService.StorePayment(authedCtx, inboxuser.Payment{
+				Plan:          inboxuser.Basic,
+				AmountInCents: 1000,
+				Method:        inboxuser.Stripe,
+				ExternalID:    "12345",
+				Timestamp:     time.Now(),
+			})
+			assert.ThatError(t, err).IsNil()
+			err = service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
 				{
 					TypeKey: typeKeySenderDomain,
 				},
@@ -285,6 +348,17 @@ func TestClassificationService(t *testing.T) {
 		authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
 		providerService.Messages["INBOX"] = messages
 		providerService.Messages["trash"] = []inbox.Message{}
+
+		t.Run("not paid, failure", func(t *testing.T) {
+			unpaidAddr := "me@me.com"
+			_, err := userService.Store(ctx, unpaidAddr)
+			assert.ThatError(t, err).IsNil()
+			unpaidCtx := mailboxsweep.AuthorizeJobContext(ctx, unpaidAddr)
+			err = service.Classify(unpaidCtx, folders, classifiers)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
+		})
+
+		userService.StorePayment(ctx, inboxuser.Payment{})
 
 		t.Run("upstream error, failure stored in request", func(t *testing.T) {
 			/*

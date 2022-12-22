@@ -7,6 +7,7 @@ import (
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/payment"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
@@ -26,6 +27,7 @@ type DefaultService struct {
 	repo                   ClassificationRepository
 	providerService        inbox.ProviderService
 	classifyRequestService classifyrequest.Service
+	paymentService         payment.Service
 	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
 	eventBusName           string
@@ -37,6 +39,7 @@ func NewService(
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
+	paymentService payment.Service,
 	logger *logrus.Logger,
 	bridge mailboxsweep.EventPublisher[ClassifyQueueItem],
 	eventBusName string,
@@ -47,6 +50,7 @@ func NewService(
 		repo,
 		providerService,
 		classifyRequestService,
+		paymentService,
 		logger,
 		bridge,
 		eventBusName,
@@ -77,6 +81,11 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	}()
 
 	addr, err = mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.paymentService.VerifyPayment(ctx)
 	if err != nil {
 		return err
 	}
@@ -126,6 +135,12 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	if err != nil {
 		return err
 	}
+
+	_, err = s.paymentService.VerifyPayment(ctx)
+	if err != nil {
+		return err
+	}
+
 	req := ClassifyQueueItem{
 		Address:     address,
 		Folders:     folders,
