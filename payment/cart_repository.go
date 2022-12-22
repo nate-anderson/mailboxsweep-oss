@@ -8,6 +8,7 @@ import (
 	"mailboxsweep/inboxuser"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -20,6 +21,7 @@ type cart struct {
 	UserAddress string                  `dynamodbav:"user_address"`
 	Plan        inboxuser.Plan          `dynamodbav:"plan"`
 	CreatedAt   time.Time               `dynamodbav:"created_at"`
+	Status      cartStatus              `dynamodbav:"status"`
 	Expires     int64                   `dynamodbav:"expires_at"`
 }
 
@@ -27,6 +29,14 @@ type CartRepository struct {
 	db    *dynamodb.Client
 	table string
 }
+
+type cartStatus string
+
+var (
+	complete cartStatus = "COMPLETE"
+	open     cartStatus = "OPEN"
+	errored  cartStatus = "ERRORED"
+)
 
 func NewCartRepository(db *dynamodb.Client, table string) *CartRepository {
 	return &CartRepository{
@@ -98,4 +108,27 @@ func (r CartRepository) find(
 	var c cart
 	err = attributevalue.UnmarshalMap(res.Item, &c)
 	return &c, err
+}
+
+func (r CartRepository) updateStatus(
+	ctx context.Context,
+	method inboxuser.PaymentMethod,
+	externalID string,
+	status cartStatus,
+) error {
+	key := r.buildKey(method, externalID)
+	_, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:        &r.table,
+		Key:              key,
+		UpdateExpression: aws.String("SET #status = :status"),
+		ExpressionAttributeNames: map[string]string{
+			"#status": "status",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status": &types.AttributeValueMemberS{
+				Value: string(status),
+			},
+		},
+	})
+	return err
 }

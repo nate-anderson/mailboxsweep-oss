@@ -25,6 +25,7 @@ func TestCartRepository(t *testing.T) {
 		UserAddress: testAddr,
 		Plan:        inboxuser.Basic,
 		CreatedAt:   time.Now(),
+		Status:      open,
 		Expires:     time.Now().Add(time.Minute).Unix(),
 	}
 
@@ -44,5 +45,21 @@ func TestCartRepository(t *testing.T) {
 		assert.That(t, c.Method).Equals(method)
 		assert.That(t, c.Plan).Equals(testCart.Plan)
 		assert.That(t, c.CreatedAt.IsZero()).Equals(false)
+		assert.That(t, c.Status).Equals(open)
+	})
+
+	t.Run("update cart status", func(t *testing.T) {
+		err := repo.updateStatus(ctx, method, testCart.ExternalID, complete)
+		assert.ThatError(t, err).IsNil()
+
+		retrieved, err := repo.find(ctx, method, testCart.ExternalID)
+		assert.ThatError(t, err).IsNil()
+		assert.That(t, retrieved.ExternalID).Equals(testCart.ExternalID)
+		assert.That(t, retrieved.Expires).Equals(testCart.Expires)
+		assert.That(t, retrieved.UserAddress).Equals(testCart.UserAddress)
+		assert.That(t, retrieved.Method).Equals(method)
+		assert.That(t, retrieved.Plan).Equals(testCart.Plan)
+		assert.That(t, retrieved.CreatedAt.IsZero()).Equals(false)
+		assert.That(t, retrieved.Status).Equals(complete)
 	})
 }

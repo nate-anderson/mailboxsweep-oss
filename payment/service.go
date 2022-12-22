@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
 	"time"
@@ -140,7 +139,7 @@ func (s DefaultService) CompletePayment(ctx context.Context, token string) error
 		return err
 	}
 
-	complete, err := s.processor.FindCheckoutSession(token)
+	session, err := s.processor.FindCheckoutSession(token)
 	if err != nil {
 		return err
 	}
@@ -151,18 +150,27 @@ func (s DefaultService) CompletePayment(ctx context.Context, token string) error
 	}
 
 	if cart.UserAddress != addr {
-		log.Printf("want %s, got %s", cart.UserAddress, addr)
 		return errors.New("cart address mismatch")
+	}
+
+	if cart.Status != open {
+		return fmt.Errorf("cart not open: status %s", cart.Status)
 	}
 
 	pmt := inboxuser.Payment{
 		Plan:          cart.Plan,
-		AmountInCents: complete.TotalInCents,
+		AmountInCents: session.TotalInCents,
 		Method:        inboxuser.Stripe,
-		ExternalID:    complete.SessionID,
+		ExternalID:    session.SessionID,
 		Timestamp:     time.Now(),
 	}
-	err = s.userService.StorePayment(ctx, pmt)
-	log.Println("payment stored")
+	if err = s.userService.StorePayment(ctx, pmt); err != nil {
+		return err
+	}
+
+	if err = s.cartRepo.updateStatus(ctx, cart.Method, cart.ExternalID, complete); err != nil {
+		return err
+	}
+
 	return err
 }
