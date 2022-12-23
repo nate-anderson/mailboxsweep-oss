@@ -40,7 +40,7 @@ func join(parent error, sentinel error) error {
 	if parent == nil {
 		return sentinel
 	}
-	return fmt.Errorf("%s: %w", parent.Error(), sentinel)
+	return fmt.Errorf("%w: %s", sentinel, parent.Error())
 }
 
 func NotFoundError(parent error) error {
@@ -79,7 +79,7 @@ type notFoundError struct {
 }
 
 func (n notFoundError) Error() string {
-	return fmt.Sprintf("not found: %s", n.parent)
+	return n.parent.Error()
 }
 
 func (n notFoundError) StatusCode() int {
@@ -111,7 +111,7 @@ type credentialError struct {
 }
 
 func (c credentialError) Error() string {
-	return fmt.Sprintf("credential error: %s", c.parent.Error())
+	return c.parent.Error()
 }
 
 func (c credentialError) StatusCode() int {
