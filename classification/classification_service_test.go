@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -154,27 +153,6 @@ func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr err
 	return mailboxsweep.ErrNotFound
 }
 
-type testProcessor struct {
-	sessions map[string]payment.CompletePayment
-}
-
-func (p testProcessor) FindCheckoutSession(sessionID string) (*payment.CompletePayment, error) {
-	pmt, ok := p.sessions[sessionID]
-	if !ok {
-		return nil, mailboxsweep.ErrNotFound
-	}
-	return &pmt, nil
-}
-
-func (p *testProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
-	id := uuid.NewString()
-	p.sessions[id] = payment.CompletePayment{
-		SessionID:    id,
-		TotalInCents: int(amount),
-	}
-	return "localhost:8080/checkout", id, nil
-}
-
 /*
 This is a big ugly test,
 but at least it's effectively a true unit test!
@@ -223,10 +201,10 @@ func TestClassificationService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	cartRepo := payment.NewCartRepository(db, table)
-	proc := testProcessor{}
+	proc := payment.NewTestProcessor()
 	paymentService, err := payment.NewService(
 		userService,
-		&proc,
+		proc,
 		cartRepo,
 		time.Hour,
 	)

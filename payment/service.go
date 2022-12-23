@@ -88,6 +88,8 @@ func (c DefaultService) method() (inboxuser.PaymentMethod, error) {
 	switch c.processor.(type) {
 	case StripeProcessor, *StripeProcessor:
 		return inboxuser.Stripe, nil
+	case *TestProcessor:
+		return inboxuser.PaymentMethod("Test"), nil
 	default:
 		return "", fmt.Errorf("internal: the configured processor is of an unknown type")
 	}
@@ -151,7 +153,7 @@ func (s DefaultService) CompletePayment(ctx context.Context, token string) error
 
 	cart, err := s.cartRepo.find(ctx, inboxuser.Stripe, token)
 	if err != nil {
-		return mailboxsweep.NotFoundError(err)
+		return err
 	}
 
 	if cart.UserAddress != addr {
