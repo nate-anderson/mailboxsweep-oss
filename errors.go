@@ -16,6 +16,7 @@ var (
 	ErrBadInboxCredential = errors.New("could not login to inbox with stored credential")
 	ErrNeedsPayment       = errors.New("payment required")
 	ErrAlreadyPaid        = errors.New("account is already paid")
+	ErrPlanLimitMet       = errors.New("plan limits met")
 )
 
 type StatusError interface {
@@ -70,6 +71,12 @@ func BadInboxCredentialError(parent error) error {
 func NeedsPaymentError(parent error) error {
 	return paymentError{
 		parent: join(parent, ErrNeedsPayment),
+	}
+}
+
+func PlanLimitMetError(parent error) error {
+	return planLimitMetError{
+		parent: join(parent, ErrPlanLimitMet),
 	}
 }
 
@@ -135,5 +142,21 @@ func (p paymentError) StatusCode() int {
 }
 
 func (p paymentError) Unwrap() error {
+	return p.parent
+}
+
+type planLimitMetError struct {
+	parent error
+}
+
+func (p planLimitMetError) Error() string {
+	return ErrPlanLimitMet.Error()
+}
+
+func (p planLimitMetError) StatusCode() int {
+	return http.StatusForbidden
+}
+
+func (p planLimitMetError) Unwrap() error {
 	return p.parent
 }

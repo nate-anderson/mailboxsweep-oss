@@ -2,6 +2,7 @@ package classification
 
 import (
 	"context"
+	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/imapserver"
@@ -136,9 +137,38 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
-	_, err = s.paymentService.VerifyPayment(ctx)
+	// make sure user has paid
+	pmt, err := s.paymentService.VerifyPayment(ctx)
 	if err != nil {
 		return err
+	}
+
+	// make sure user has not already met their inbox scan quota
+	// only consider successful scans since last payment was received
+	plan, err := s.paymentService.PlanDetails(pmt.Plan)
+	if err != nil {
+		return err
+	}
+	completedScans, err := s.classifyRequestService.FindCompletedRequests(ctx)
+	if err != nil {
+		return err
+	}
+
+	planStartedTimestamp := pmt.StartedAt.Unix()
+	successfulScans := 0
+
+	for _, scan := range completedScans {
+		if scan.CompletedAtUnix == nil {
+			continue
+		}
+		if scan.Error == nil && *scan.CompletedAtUnix > planStartedTimestamp {
+			successfulScans++
+		}
+	}
+
+	if successfulScans >= plan.AllowedScans {
+		err = fmt.Errorf("plan limit of %d scans has been met", plan.AllowedScans)
+		return mailboxsweep.PlanLimitMetError(err)
 	}
 
 	req := ClassifyQueueItem{

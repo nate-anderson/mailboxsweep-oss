@@ -110,6 +110,29 @@ func (r *testRequestRecorder) FindOpenRequests(ctx context.Context) ([]classifyr
 	return reqs, nil
 }
 
+func (r *testRequestRecorder) FindCompletedRequests(ctx context.Context) ([]classifyrequest.ClassifyRequest, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return []classifyrequest.ClassifyRequest{}, nil
+	}
+	var reqs []classifyrequest.ClassifyRequest
+	for _, l := range list {
+		if l.completed != nil {
+			reqs = append(reqs, classifyrequest.ClassifyRequest{
+				Inbox:           addr,
+				UserUUID:        "UNIMPLEMENTED_FOR_TEST",
+				RequestedAt:     l.started,
+				CompletedAtUnix: l.completed,
+			})
+		}
+	}
+	return reqs, nil
+}
+
 func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
@@ -206,7 +229,7 @@ func TestClassificationService(t *testing.T) {
 		userService,
 		proc,
 		cartRepo,
-		time.Hour,
+		time.Hour*30*24,
 	)
 	assert.ThatError(t, err).IsNil()
 
@@ -247,7 +270,8 @@ func TestClassificationService(t *testing.T) {
 
 		t.Run("authenticated, paid, success", func(t *testing.T) {
 			err = userService.StorePayment(authedCtx, inboxuser.Payment{
-				Plan:          inboxuser.Basic,
+				Plan: inboxuser.Basic,
+
 				AmountInCents: 1000,
 				Method:        inboxuser.Stripe,
 				ExternalID:    "12345",
@@ -283,6 +307,43 @@ func TestClassificationService(t *testing.T) {
 
 			_, ok = classifyRequestService.requests[testAddress]
 			assert.That(t, ok).Equals(true)
+		})
+
+		t.Run("authenticated, paid, limits met", func(t *testing.T) {
+			tooManyAddr := "bumg@tots.biz"
+			_, err := userService.Store(ctx, tooManyAddr)
+			assert.ThatError(t, err).IsNil()
+			exceededCtx := mailboxsweep.AuthorizeTestContext(ctx, tooManyAddr, t)
+
+			// store successful payment
+			err = userService.StorePayment(exceededCtx, inboxuser.Payment{
+				Plan: inboxuser.Basic,
+
+				AmountInCents: 1000,
+				Method:        inboxuser.Stripe,
+				ExternalID:    "12345",
+				Timestamp:     time.Now().Add(time.Hour * -24),
+			})
+
+			// store some extra completed requests
+			plan, err := paymentService.PlanDetails(inboxuser.Basic)
+			assert.ThatError(t, err).IsNil()
+			for i := 0; i <= plan.AllowedScans; i++ {
+				completed := time.Now().Add(time.Hour*-1).Unix() + int64(i)
+				r := testRequest{
+					started:   time.Now().Add(time.Minute * -1 * time.Duration(i)).Unix(),
+					completed: &completed,
+					err:       nil,
+				}
+				classifyRequestService.requests[tooManyAddr] = append(classifyRequestService.requests[tooManyAddr], r)
+			}
+
+			err = service.EnqueueClassify(exceededCtx, folders, []SerializableClassifier{
+				{
+					TypeKey: typeKeySenderDomain,
+				},
+			})
+			assert.ThatError(t, err).Is(mailboxsweep.ErrPlanLimitMet)
 		})
 	})
 

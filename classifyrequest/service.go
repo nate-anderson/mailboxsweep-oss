@@ -12,6 +12,7 @@ import (
 type Service interface {
 	RecordRequest(ctx context.Context) error
 	FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error)
+	FindCompletedRequests(ctx context.Context) ([]ClassifyRequest, error)
 	CompleteSuccess(ctx context.Context) error
 	CompleteError(ctx context.Context, err error) error
 }
@@ -102,6 +103,30 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 	}
 
 	return list, nil
+}
+
+// incurs an expensive consistent read
+// this method is used to ensure plan limits are respected
+func (s DefaultService) FindCompletedRequests(ctx context.Context) ([]ClassifyRequest, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := s.requestRepo.List(ctx, addr, false, true)
+	if err != nil {
+		return nil, err
+	}
+
+	completed := []ClassifyRequest{}
+	for _, req := range list {
+		if req.CompletedAtUnix == nil {
+			continue
+		}
+		completed = append(completed, req)
+	}
+
+	return completed, nil
 }
 
 var ErrNoOpenRequests = errors.New("no open classify requests")
