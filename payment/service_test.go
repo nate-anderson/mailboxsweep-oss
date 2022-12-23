@@ -100,6 +100,10 @@ func TestPaymentService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, pmt.Plan).Equals(inboxuser.Deluxe)
 		assert.That(t, pmt.ValidUntil.IsZero()).Equals(false)
+		assert.That(t, pmt.StartedAt.Day()).Equals(time.Now().Day())
+		assert.That(t, pmt.StartedAt.Month()).Equals(time.Now().Month())
+		assert.That(t, pmt.StartedAt.Year()).Equals(time.Now().Year())
+		assert.That(t, pmt.StartedAt.Hour()).Equals(time.Now().Hour())
 	})
 
 	t.Run("initiate payment, cannot pay when a payment is active, failure", func(t *testing.T) {

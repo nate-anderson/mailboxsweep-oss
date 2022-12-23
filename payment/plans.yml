@@ -8,6 +8,8 @@ BASIC:
     - Delete unlimited messages
     - Mark unlimited messages as read
   enabled: true
+  allowed_scans: 3
+  duration_days: 30
 
 DELUXE:
   display_name: MalboxSweep Deluxe
@@ -19,3 +21,5 @@ DELUXE:
     - Delete unlimited messages.
     - Mark unlimited messages as read
   enabled: true
+  allowed_scans: 10
+  duration_days: 30

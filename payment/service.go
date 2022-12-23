@@ -11,6 +11,7 @@ import (
 
 type PaymentInfo struct {
 	Plan       inboxuser.Plan
+	StartedAt  time.Time
 	ValidUntil time.Time
 }
 
@@ -20,8 +21,8 @@ type Service interface {
 	// returns the checkout redirect URL
 	// returns ErrAlreadyPaid if a payment is current
 	InitiatePayment(ctx context.Context, plan inboxuser.Plan) (checkoutURL string, err error)
-
 	CompletePayment(ctx context.Context, token string) error
+	PlanDetails(code inboxuser.Plan) (*PlanDetails, error)
 }
 
 type DefaultService struct {
@@ -80,6 +81,7 @@ func (s DefaultService) VerifyPayment(ctx context.Context) (*PaymentInfo, error)
 
 	return &PaymentInfo{
 		Plan:       currentPayment.Plan,
+		StartedAt:  currentPayment.Timestamp,
 		ValidUntil: currentPayment.Timestamp.Add(s.paymentValidity),
 	}, nil
 }
@@ -180,4 +182,13 @@ func (s DefaultService) CompletePayment(ctx context.Context, token string) error
 	}
 
 	return err
+}
+
+func (s DefaultService) PlanDetails(code inboxuser.Plan) (*PlanDetails, error) {
+	plan, ok := s.plans[code]
+	if !ok {
+		err := fmt.Errorf("plan '%s' not found", code)
+		return nil, mailboxsweep.NotFoundError(err)
+	}
+	return &plan, nil
 }
