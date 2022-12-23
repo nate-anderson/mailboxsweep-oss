@@ -49,7 +49,7 @@ func TestPaymentService(t *testing.T) {
 	t.Run("initiate payment, success", func(t *testing.T) {
 		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Deluxe)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, checkoutURL).Equals(checkoutURL)
+		assert.That(t, checkoutURL).Equals(TestCheckoutURL)
 
 		inProgress, err := cartRepo.find(ctx, inboxuser.PaymentMethod("Test"), processor.sessionID)
 		assert.ThatError(t, err).IsNil()
@@ -100,6 +100,12 @@ func TestPaymentService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, pmt.Plan).Equals(inboxuser.Deluxe)
 		assert.That(t, pmt.ValidUntil.IsZero()).Equals(false)
+	})
+
+	t.Run("initiate payment, cannot pay when a payment is active, failure", func(t *testing.T) {
+		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Deluxe)
+		assert.ThatError(t, err).Is(mailboxsweep.ErrAlreadyPaid)
+		assert.That(t, checkoutURL).Equals("")
 	})
 
 }

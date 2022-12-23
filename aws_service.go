@@ -14,6 +14,8 @@ type AWSServiceConfig struct {
 	ServiceRegion string
 }
 
+// Generic function for instantiating AWS clients
+// the SDK is remarkably consistent
 func ConnectAWSService[
 	optType,
 	clientType any,
