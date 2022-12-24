@@ -12,6 +12,8 @@ type SendRequest struct {
 	Expires time.Time
 	Token   string
 	Address string
+	// we may not have this, so it's optional
+	Name *string
 }
 
 // Sender sends a login link to a user
