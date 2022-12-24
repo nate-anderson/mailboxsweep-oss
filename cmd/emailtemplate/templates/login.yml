@@ -1,0 +1,4 @@
+name: mailboxsweep_login_link
+subject: Log in to Mailboxsweep
+html: <h1>Hello! {{signin_link}}</h1>
+plaintext: Hello! {{signin_link}}

@@ -24,7 +24,7 @@ const dir = "agreements"
 const ext = ".yml"
 
 func readAgreements() (map[Agreement]AgreementDocument, error) {
-	dirEntries, err := agreementsFS.ReadDir("agreements")
+	dirEntries, err := agreementsFS.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
