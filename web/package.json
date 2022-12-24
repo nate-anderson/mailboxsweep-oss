@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen"
   },
   "dependencies": {
     "@next/font": "13.1.0",
