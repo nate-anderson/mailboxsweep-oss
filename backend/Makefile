@@ -26,7 +26,7 @@ greenmail_gen_client:
 	oapi-codegen -config $(GREENMAIL_OAPI_CODEGEN_CONFIG_PATH) $(GREENMAIL_SPEC_LOCAL_PATH)
 
 # HTTP API server codegen stuff
-HTTP_SERVER_SPEC_PATH = openapi.yml
+HTTP_SERVER_SPEC_PATH = ../openapi.yml
 HTTP_SERVER_GEN_PATH = http_codegen.yml
 
 .PHONY: install_openapi_generator
