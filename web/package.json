@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen"
+    "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/icons-material": "^5.11.0",
+    "@mui/material": "^5.11.1",
     "@next/font": "13.1.0",
     "@types/node": "18.11.17",
     "@types/react": "18.0.26",
