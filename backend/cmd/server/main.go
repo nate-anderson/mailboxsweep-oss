@@ -75,6 +75,8 @@ type serverConfig struct {
 	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
 	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
 	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+
+	CORSAllowedOrigin string `mapstructure:"CORS_ALLOWED_ORIGIN"`
 }
 
 func main() {
@@ -239,15 +241,29 @@ func main() {
 		log,
 	)
 
-	mid := session.AuthMiddleware{
+	auth := session.AuthMiddleware{
 		Service: sessionService,
 	}
+	if cfg.CORSAllowedOrigin == "" {
+		log.Fatal("CORS_ALLOWED_ORIGIN is not configured")
+	}
+	cors := httpserver.NewCORSHandler(cfg.CORSAllowedOrigin)
 
 	root := chi.NewMux()
+	root.Options("/*",
+		cors.Middleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				return
+			}),
+		).ServeHTTP,
+	)
+
 	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
 		BaseRouter: root,
 		Middlewares: []httpserver.MiddlewareFunc{
-			mid.Middleware,
+			cors.Middleware,
+			auth.Middleware,
 		},
 	})
 
