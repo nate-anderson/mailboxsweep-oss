@@ -2,6 +2,9 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { API } from "../client";
 import Container from '@mui/material/Container';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 
 export default function Login() {
@@ -26,6 +29,25 @@ export default function Login() {
     return (
         <main>
             <Container component="main">
+            <Box sx={{
+                    marginTop: 30,
+                    display: 'flex',
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}>
+                    <Typography sx={{
+                        marginY: 3,
+                        fontFamily: "Lobster",
+                        fontSize: "3em",
+                        color: "var(--color-primary)"
+                    }}>MailboxSweep</Typography>
+                     <Typography sx={{
+                        marginY: 2
+                    }}>
+                        Signing you in...
+                    </Typography>
+                    <CircularProgress />
+            </Box>
                 
             </Container>
         </main>
