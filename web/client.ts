@@ -1,5 +1,5 @@
-import {Mailboxsweep as MSClient} from "./client-gen"
+import {Mailboxsweep} from "./client-gen"
 
-export const Mailboxsweep = new MSClient({
+export const API = new Mailboxsweep({
     BASE: "http://localhost:8080"
-});
+}).default;
