@@ -6,9 +6,10 @@ import (
 
 const corsAllowOriginHeader = "Access-Control-Allow-Origin"
 const corsAllowHeadersHeader = "Access-Control-Allow-Headers"
-const corsAllowedHeaders = "Content-Type"
+const corsAllowedHeaders = "Content-Type,Set-Cookie"
 const corsAllowMethodsHeader = "Access-Control-Allow-Methods"
 const corsAllowMethods = "*"
+const corsAllowCredentialsHeader = "Access-Control-Allow-Credentials"
 
 // CORS middleware
 type corsHandler struct {
@@ -23,9 +24,10 @@ func NewCORSHandler(allowOrigin string) *corsHandler {
 
 func (m corsHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Add(corsAllowMethods, corsAllowMethods)
+		w.Header().Add(corsAllowMethodsHeader, corsAllowMethods)
 		w.Header().Add(corsAllowOriginHeader, m.allowOrigin)
 		w.Header().Add(corsAllowHeadersHeader, corsAllowedHeaders)
+		w.Header().Add(corsAllowCredentialsHeader, "true")
 
 		// handle preflight
 		if req.Method == http.MethodOptions {

@@ -114,6 +114,6 @@ func (s Session) Cookie(domain, path string, isDev bool) *http.Cookie {
 		Path:     path,
 		HttpOnly: true,
 		Secure:   !isDev,
-		SameSite: http.SameSiteDefaultMode,
+		SameSite: http.SameSiteNoneMode,
 	}
 }
