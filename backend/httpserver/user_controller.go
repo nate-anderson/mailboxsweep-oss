@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"mailboxsweep"
 	"mailboxsweep/inboxuser"
 	"net/http"
 	"time"
@@ -94,6 +95,34 @@ func (c UserController) ListUserAgreements(w http.ResponseWriter, req *http.Requ
 			ua.AgreedAt = &agreedAtStr
 		}
 		res.Agreements = append(res.Agreements, ua)
+	}
+
+	c.respond(w, http.StatusOK, res)
+}
+
+func (c UserController) GetUserData(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	user, err := c.service.FindByAddress(ctx, addr)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	res := UserData{
+		Address: user.Address,
+	}
+	if user.NameFirst != "" {
+		res.NameFirst = &user.NameFirst
+	}
+	if user.NameLast != "" {
+		res.NameLast = &user.NameLast
 	}
 
 	c.respond(w, http.StatusOK, res)

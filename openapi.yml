@@ -324,6 +324,18 @@ components:
         required:
           type: boolean
 
+    UserData:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+        nameFirst:
+          type: string
+        nameLast:
+          type: string
+
     UserPaymentStatus:
       type: object
       required:
@@ -387,6 +399,20 @@ paths:
                 $ref: '#/components/schemas/GetCredentialResponse'
         '404':
           description: Not found - probably not created
+
+  /user:
+    get:
+      operationId: getUserData
+      description: Get user basic data
+      responses:
+        '200':
+          description: Success, user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserData'
+        '401':
+          description: Unauthorized
 
   /user/name:
     patch:
