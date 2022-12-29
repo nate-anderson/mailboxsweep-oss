@@ -1,5 +1,6 @@
 import {Mailboxsweep} from "./client-gen"
 
 export const API = new Mailboxsweep({
-    BASE: "http://localhost:8080"
+    BASE: "https://localhost:8081",
+    WITH_CREDENTIALS: true,
 }).default;

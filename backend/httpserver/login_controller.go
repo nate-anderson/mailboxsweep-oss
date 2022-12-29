@@ -75,7 +75,7 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 		Address: user.Address,
 	}
 
-	cookie := session.Cookie(c.cookieDomain, c.cookiePath, c.isDev)
+	cookie := session.Cookie(c.isDev)
 	http.SetCookie(w, cookie)
 	c.respond(w, http.StatusOK, resBody)
 }
