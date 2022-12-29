@@ -127,3 +127,25 @@ func (c UserController) GetUserData(w http.ResponseWriter, req *http.Request) {
 
 	c.respond(w, http.StatusOK, res)
 }
+
+func (c UserController) GetUserAgreementsAgreementSlug(w http.ResponseWriter, req *http.Request, agreementSlug string) {
+	ctx := req.Context()
+
+	ua, err := c.service.GetAgreement(ctx, inboxuser.Agreement(agreementSlug))
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	res := UserAgreement{
+		Key:      string(ua.Agreement),
+		Required: ua.Required,
+		Name:     ua.Description,
+	}
+	agreedAtStr := ua.AgreedAt.Format(time.RFC3339)
+	if ua.Agreed {
+		res.AgreedAt = &agreedAtStr
+	}
+
+	c.respond(w, http.StatusOK, res)
+}
