@@ -1,0 +1,119 @@
+import { API } from "../client";
+import { useEffect, useState } from "react";
+import { CssBaseline } from "@mui/material";
+import Container from '@mui/material/Container';
+import Box from "@mui/material/Box";
+import Navbar from "../components/navbar";
+import Typography from "@mui/material/Typography";
+import Avatar from "@mui/material/Avatar";
+import IconAccountCircle from "@mui/icons-material/AccountCircle";
+import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
+import Button from '../components/button';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+
+export default function CompleteProfile() {
+    const [ nameFirst, changeNameFirst ] = useState("");
+    const [ nameLast, changeNameLast ] = useState("");
+    const [ address, changeAddress ] = useState("");
+
+    const [ showSuccess, setShowSuccess ] = useState(false);
+    const [ failureMessage, setFailureMessage ] = useState<string | null>(null);
+
+    useEffect(() => {
+        API.getUserData()
+            .then(res => {
+                changeAddress(res.address);
+                if (res.nameFirst) {
+                    changeNameFirst(res.nameFirst);
+                }
+                if (res.nameLast) {
+                    changeNameLast(res.nameLast);
+                }
+            })
+            .catch(console.error);
+    });
+
+    const submitProfileData = (nameFirst: string, nameLast: string) => {
+        API.updateUserName({
+            nameFirst,
+            nameLast,
+        }).then(() => {
+            setShowSuccess(true);
+        }).catch((error) => {
+            console.log(typeof(error));
+            setFailureMessage("Something went wrong. Please try again later.");
+        });
+    };
+
+    return (
+        <>
+            <Navbar />
+            {/* Success snackbar */}
+            <Snackbar
+                open={showSuccess}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                autoHideDuration={5000}
+                onClose={() => setShowSuccess(false)}
+            >
+                <Alert variant="filled" severity="success">
+                Profile data updated!
+                </Alert>
+            </Snackbar>
+
+            {/* Failure snackbar */}
+            <Snackbar
+                open={failureMessage !== null}
+            >
+                <Alert severity="error">{failureMessage}</Alert>
+            </Snackbar>
+            <Container component="main">
+                <CssBaseline />
+                <Box  sx={{
+                    marginTop: 6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}>
+                    <Avatar sx={{ m: 1, bgcolor: 'var(--color-accent)' }}>
+                        <IconAccountCircle />
+                    </Avatar>
+                    <Typography sx={{
+                        color: "var(--color-black)",
+                        fontSize: "2em",
+                        fontWeight: 100,
+                    }}>
+                        Complete your profile
+                    </Typography>
+                    <Box component="form" sx={{
+                        mt: 3,
+                        mx: 3
+                    }}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} sm={12}>
+                                {/* Read-only */}
+                                <TextField label="Email" fullWidth disabled value={address}></TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="First Name" fullWidth value={nameFirst} onChange={e => changeNameFirst(e.target.value)}></TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Last Name" fullWidth value={nameLast} onChange={e => changeNameLast(e.target.value)}></TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={12} sx={{
+                                display: "flex",
+                                justifyContent: "right",
+                            }}>
+                                <Button onClick={() => submitProfileData(nameFirst, nameLast)}>
+                                    Save
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </Box>
+            </Container>
+        </>
+    )
+    
+}
