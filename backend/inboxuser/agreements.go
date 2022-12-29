@@ -47,6 +47,7 @@ func readAgreements() (map[Agreement]AgreementDocument, error) {
 		if err != nil {
 			return nil, fmt.Errorf("agreements directory contained file with unknown agreement code: %w", err)
 		}
+		doc.Code = agr
 
 		docs[agr] = doc
 	}

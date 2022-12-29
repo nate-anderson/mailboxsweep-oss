@@ -62,6 +62,30 @@ func TestInboxUserService(t *testing.T) {
 				}
 			}
 		})
+
+		t.Run("get agreement", func(t *testing.T) {
+			t.Run("unauthorized, error", func(t *testing.T) {
+				ua, err := service.GetAgreement(ctx, PersonalInbox)
+				assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+				assert.That(t, ua).Equals(nil)
+			})
+
+			t.Run("authorized, agreeement not found", func(t *testing.T) {
+				ua, err := service.GetAgreement(authedCtx, Agreement("BS"))
+				assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+				assert.That(t, ua).Equals(nil)
+			})
+
+			t.Run("authorized, success, agreed", func(t *testing.T) {
+				ua, err := service.GetAgreement(authedCtx, PersonalInbox)
+				assert.ThatError(t, err).IsNil()
+				assert.That(t, ua.Agreed).Equals(true)
+				assert.That(t, ua.AgreedAt.IsZero()).Equals(false)
+				assert.That(t, ua.Agreement).Equals(PersonalInbox)
+				assert.That(t, ua.Description).Equals(service.agreements[PersonalInbox].Body)
+				assert.That(t, ua.Required).Equals(true)
+			})
+		})
 	})
 
 	t.Run("store payment", func(t *testing.T) {

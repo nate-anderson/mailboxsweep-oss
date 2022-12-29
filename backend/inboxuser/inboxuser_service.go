@@ -18,6 +18,7 @@ type Service interface {
 	SetName(ctx context.Context, nameFirst, nameLast string) error
 	Consent(ctx context.Context, agreements []Agreement) error
 	ListUserAgreements(ctx context.Context) ([]UserAgreement, error)
+	GetAgreement(ctx context.Context, code Agreement) (*UserAgreement, error)
 
 	StorePayment(ctx context.Context, payment Payment) error
 }
@@ -153,4 +154,36 @@ func (s DefaultService) StorePayment(ctx context.Context, payment Payment) error
 	}
 
 	return s.repo.StorePayment(ctx, addr, payment)
+}
+
+func (s DefaultService) GetAgreement(ctx context.Context, code Agreement) (*UserAgreement, error) {
+	userAddress, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.repo.FindByAddress(ctx, userAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	agr, ok := s.agreements[code]
+	if !ok {
+		err = fmt.Errorf("agreement %s not recognized", code)
+		return nil, mailboxsweep.NotFoundError(err)
+	}
+
+	res := &UserAgreement{
+		Agreement:   agr.Code,
+		Description: agr.Body,
+		Required:    contains(requiredAgreements, agr.Code),
+	}
+
+	userAgr, ok := user.Agreements[code]
+	if ok {
+		res.Agreed = true
+		res.AgreedAt = userAgr
+	}
+
+	return res, nil
 }
