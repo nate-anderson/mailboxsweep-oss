@@ -1,6 +1,6 @@
 import { API } from "../client";
 import { useEffect, useState } from "react";
-import { CssBaseline } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
 import Container from '@mui/material/Container';
 import Box from "@mui/material/Box";
 import Navbar from "../components/navbar";
@@ -21,6 +21,8 @@ export default function CompleteProfile() {
     const [ showSuccess, setShowSuccess ] = useState(false);
     const [ failureMessage, setFailureMessage ] = useState<string | null>(null);
 
+    const [ saveButtonEnabled, setSaveButtonEnabled ] = useState(false);
+
     useEffect(() => {
         API.getUserData()
             .then(res => {
@@ -33,7 +35,7 @@ export default function CompleteProfile() {
                 }
             })
             .catch(console.error);
-    });
+    }, []);
 
     const submitProfileData = (nameFirst: string, nameLast: string) => {
         API.updateUserName({
@@ -41,6 +43,7 @@ export default function CompleteProfile() {
             nameLast,
         }).then(() => {
             setShowSuccess(true);
+            setSaveButtonEnabled(false);
         }).catch((error) => {
             console.log(typeof(error));
             setFailureMessage("Something went wrong. Please try again later.");
@@ -65,12 +68,15 @@ export default function CompleteProfile() {
             {/* Failure snackbar */}
             <Snackbar
                 open={failureMessage !== null}
+                autoHideDuration={10000}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                onClose={() => setFailureMessage(null)}
             >
                 <Alert severity="error">{failureMessage}</Alert>
             </Snackbar>
             <Container component="main">
                 <CssBaseline />
-                <Box  sx={{
+                <Box sx={{
                     marginTop: 6,
                     display: 'flex',
                     flexDirection: 'column',
@@ -93,19 +99,44 @@ export default function CompleteProfile() {
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={12}>
                                 {/* Read-only */}
-                                <TextField label="Email" fullWidth disabled value={address}></TextField>
+                                <TextField
+                                    label="Email"
+                                    fullWidth
+                                    disabled
+                                    value={address}
+                                ></TextField>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField label="First Name" fullWidth value={nameFirst} onChange={e => changeNameFirst(e.target.value)}></TextField>
+                                <TextField
+                                    autoFocus={nameFirst === ""}
+                                    label="First Name"
+                                    fullWidth
+                                    value={nameFirst}
+                                    onChange={e => {
+                                        changeNameFirst(e.target.value);
+                                        setSaveButtonEnabled(e.target.value !== "");
+                                    }}
+                                ></TextField>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField label="Last Name" fullWidth value={nameLast} onChange={e => changeNameLast(e.target.value)}></TextField>
+                                <TextField
+                                    label="Last Name"
+                                    fullWidth
+                                    value={nameLast}
+                                    onChange={e => {
+                                        changeNameLast(e.target.value);
+                                        setSaveButtonEnabled(e.target.value !== "");
+                                    }}
+                                ></TextField>
                             </Grid>
                             <Grid item xs={12} sm={12} sx={{
                                 display: "flex",
                                 justifyContent: "right",
                             }}>
-                                <Button onClick={() => submitProfileData(nameFirst, nameLast)}>
+                                <Button
+                                    disabled={!saveButtonEnabled}
+                                    onClick={() => submitProfileData(nameFirst, nameLast)}
+                                >
                                     Save
                                 </Button>
                             </Grid>

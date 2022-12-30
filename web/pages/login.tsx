@@ -53,9 +53,12 @@ export default function Login() {
                 alignItems: "center",
             }}>
                 <LargeLogo />
-                <Typography sx={{
-                    marginY: 2
-                }}>
+                <Typography
+                    align="center"
+                    sx={{
+                        marginY: 2
+                    }}
+                >
                     Log in or sign up
                 </Typography>
                 <TextField
