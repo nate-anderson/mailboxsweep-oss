@@ -18,8 +18,8 @@ import IconClose from "@mui/icons-material/Close";
 import Link from "next/link";
 
 const renderDrawerItem = (props: { text: string, icon: any, path: string }) =>
-    <Link href={props.path} passHref style={{textDecoration: 'none', color: "black"}}>
-        <ListItem key={props.text} sx={{
+    <Link key={props.text} href={props.path} passHref style={{textDecoration: 'none', color: "black"}}>
+        <ListItem sx={{
             marginTop: 0,
             marginRight: 5,
             color: "inherit"
@@ -34,8 +34,8 @@ const renderDrawerItem = (props: { text: string, icon: any, path: string }) =>
     </Link>;
 
 const drawerItems = [
-    { text: "My Profile", icon: <IconAccountCircle />, path: "#" },
-    { text: "Email Account", icon: <IconEnvelope />, path: "#"},
+    { text: "My Profile", icon: <IconAccountCircle />, path: "/complete-profile" },
+    { text: "Email Account", icon: <IconEnvelope />, path: "/email-account/login"},
     { text: "Payment & Plan", icon: <IconCreditCard />, path: "#" },
 ];
 

@@ -4,7 +4,7 @@ import MUIButton from '@mui/material/Button';
 interface ButtonProps {
     children?: string;
     sx?: SxProps<Theme> | undefined;
-    disabled: boolean;
+    disabled?: boolean;
     onClick: () => any
 }
 
