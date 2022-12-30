@@ -58,7 +58,16 @@ export default function Login() {
                 }}>
                     Log in or sign up
                 </Typography>
-                <TextField label="Email" value={email} onChange={(e) => changeEmail(e.target.value)}></TextField>
+                <TextField
+                    label="Email"
+                    value={email}
+                    onChange={(e) => changeEmail(e.target.value)}
+                    sx={{
+                        marginX: 20,
+                        maxWidth: 300,
+                        width: "100%"
+                    }}
+                ></TextField>
                 <Button onClick={() => submitLogin(email, () => setModalOpen(true))} sx={{
                     marginY: 3,
                 }}>
