@@ -14,10 +14,11 @@ var agreementsFS embed.FS
 
 // embedded documents from /agreements
 type AgreementDocument struct {
-	Code    Agreement `yaml:"-"`
-	Name    string    `yaml:"name"`
-	Updated string    `yaml:"updated"`
-	Body    string    `yaml:"body"`
+	Code        Agreement `yaml:"-"`
+	Name        string    `yaml:"name"`
+	Description string    `yaml:"description"`
+	Updated     string    `yaml:"updated"`
+	Body        string    `yaml:"body"`
 }
 
 const dir = "agreements"

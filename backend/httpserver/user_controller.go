@@ -88,7 +88,8 @@ func (c UserController) ListUserAgreements(w http.ResponseWriter, req *http.Requ
 		ua := UserAgreement{
 			Key:      string(agr.Agreement),
 			Required: agr.Required,
-			Name:     agr.Description,
+			Name:     agr.Name,
+			Body:     &agr.Body,
 		}
 		agreedAtStr := agr.AgreedAt.Format(time.RFC3339)
 		if agr.Agreed {
@@ -138,9 +139,12 @@ func (c UserController) GetUserAgreementsAgreementSlug(w http.ResponseWriter, re
 	}
 
 	res := UserAgreement{
-		Key:      string(ua.Agreement),
-		Required: ua.Required,
-		Name:     ua.Description,
+		Key:                string(ua.Agreement),
+		Required:           ua.Required,
+		Name:               ua.Name,
+		Body:               &ua.Body,
+		Description:        &ua.Description,
+		AgreementUpdatedAt: &ua.AgreementUpdated,
 	}
 	agreedAtStr := ua.AgreedAt.Format(time.RFC3339)
 	if ua.Agreed {

@@ -109,7 +109,7 @@ export default function Login() {
             </Snackbar>
             <Container component="main">
                 <CssBaseline />
-                <Box  sx={{
+                <Box sx={{
                     marginTop: 6,
                     marginX: 1,
                     display: 'flex',

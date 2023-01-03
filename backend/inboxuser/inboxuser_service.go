@@ -109,11 +109,14 @@ func (s DefaultService) SetName(ctx context.Context, nameFirst, nameLast string)
 }
 
 type UserAgreement struct {
-	Agreement   Agreement
-	Description string
-	Agreed      bool
-	AgreedAt    time.Time
-	Required    bool
+	Agreement        Agreement
+	AgreementUpdated string
+	Name             string
+	Description      string
+	Body             string
+	Agreed           bool
+	AgreedAt         time.Time
+	Required         bool
 }
 
 func (s DefaultService) ListUserAgreements(ctx context.Context) ([]UserAgreement, error) {
@@ -137,11 +140,13 @@ func (s DefaultService) ListUserAgreements(ctx context.Context) ([]UserAgreement
 
 		agreed, ok := user.Agreements[agr]
 		userAgreements = append(userAgreements, UserAgreement{
-			Agreement:   agr,
-			Agreed:      ok,
-			AgreedAt:    agreed,
-			Description: doc.Name,
-			Required:    contains(requiredAgreements, agr),
+			Agreement:        agr,
+			Agreed:           ok,
+			AgreedAt:         agreed,
+			Body:             doc.Name,
+			Required:         contains(requiredAgreements, agr),
+			Name:             doc.Name,
+			AgreementUpdated: doc.Updated,
 		})
 	}
 	return userAgreements, nil
@@ -174,9 +179,12 @@ func (s DefaultService) GetAgreement(ctx context.Context, code Agreement) (*User
 	}
 
 	res := &UserAgreement{
-		Agreement:   agr.Code,
-		Description: agr.Body,
-		Required:    contains(requiredAgreements, agr.Code),
+		Agreement:        agr.Code,
+		Body:             agr.Body,
+		Name:             agr.Name,
+		Required:         contains(requiredAgreements, agr.Code),
+		Description:      agr.Description,
+		AgreementUpdated: agr.Updated,
 	}
 
 	userAgr, ok := user.Agreements[code]

@@ -82,7 +82,7 @@ func TestInboxUserService(t *testing.T) {
 				assert.That(t, ua.Agreed).Equals(true)
 				assert.That(t, ua.AgreedAt.IsZero()).Equals(false)
 				assert.That(t, ua.Agreement).Equals(PersonalInbox)
-				assert.That(t, ua.Description).Equals(service.agreements[PersonalInbox].Body)
+				assert.That(t, ua.Body).Equals(service.agreements[PersonalInbox].Body)
 				assert.That(t, ua.Required).Equals(true)
 			})
 		})
