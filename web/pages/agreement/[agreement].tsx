@@ -11,16 +11,31 @@ import Typography from "@mui/material/Typography";
 import IconGrading from "@mui/icons-material/Grading";
 import Paper from "@mui/material/Paper";
 import Button from "../../components/button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import { parseISO, format, formatISO } from "date-fns";
+import { displayFormat } from "../../dates";
 
 const renderAgreedAt = (agr?: UserAgreement) => {
+    if (!agr?.agreedAt) {
+        console.log("error: not agreed");
+        return;
+    }
+
+    const agreedAt = parseISO(agr!.agreedAt!);
+    const displayDate = format(agreedAt, displayFormat)
     return <Box>
-        <Typography>
-            You consented to this agreement on {agr?.agreedAt}
+        <Typography
+            sx={{
+                marginY: 2,
+            }}
+        >
+            You consented to this agreement on {displayDate}
         </Typography>
     </Box>
 }
 
-const renderAgreementForm = (agr?: UserAgreement) => {
+const renderAgreementForm = (submit: (agreementCode: string) => Promise<void>, agr?: UserAgreement) => {
     return (
         <Box
             component="form"
@@ -40,17 +55,7 @@ const renderAgreementForm = (agr?: UserAgreement) => {
                 }}
                 onClick={() => {
                     if (agr?.key) {
-                        API.setConsentedAgreements({
-                            agreements: [
-                                agr?.key
-                            ]
-                        })
-                        .then(() => {
-                            // show success
-                        })
-                        .catch(() => {
-                            // show failure
-                        })
+                        submit(agr.key)
                     }
                 }}
             >Agree</Button>
@@ -79,9 +84,58 @@ export default function Agreement() {
             })
     }, [router.isReady, router.query]);
 
+    const [ showSuccess, setShowSuccess ] = useState(false);
+    const [ failureMessage, setFailureMessage ] = useState<string | undefined>(undefined);
+
+    const submitAgreement = async (key: string): Promise<void> => {
+        try {
+            const res = await API.setConsentedAgreements({
+                agreements: [key]
+            })
+            const agreedDate = formatISO(new Date());
+            setShowSuccess(true);
+            setUserAgreement((agr) => {
+                if (!agr) {
+                    console.log("failed to set user agreement: existing undefined");
+                    return undefined;
+                }
+                return {
+                    ...agr,
+                    agreedAt: agreedDate,
+                }
+            });
+            
+        } catch (err) {
+            console.log(err);
+            setFailureMessage("Failure submitting agreement. Please try again later.");
+        }
+    }
+
     return (
         <>
             <Navbar />
+
+            {/* Success snackbar */}
+            <Snackbar
+                open={showSuccess}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                autoHideDuration={5000}
+                onClose={() => setShowSuccess(false)}
+            >
+                <Alert variant="filled" severity="success">
+                Profile data updated!
+                </Alert>
+            </Snackbar>
+
+            {/* Failure snackbar */}
+            <Snackbar
+                open={Boolean(failureMessage)}
+                autoHideDuration={10000}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                onClose={() => setFailureMessage(undefined)}
+            >
+                <Alert severity="error">{failureMessage}</Alert>
+            </Snackbar>
 
             <Container component="main">
                 <CssBaseline />
@@ -139,7 +193,7 @@ export default function Agreement() {
                     {
                         agreement?.agreedAt
                             ? renderAgreedAt(agreement)
-                            : renderAgreementForm(agreement)
+                            : renderAgreementForm(submitAgreement, agreement)
                     }
                 </Box>
             </Container>

@@ -14,8 +14,7 @@ import { ApiError } from "../../client-gen";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import { parseISO, format } from "date-fns";
-
-const displayFormat = "MMM do, yyyy";
+import { displayFormat } from "../../dates";
 
 export default function Login() {
     const [ address, changeAddress ] = useState("");
