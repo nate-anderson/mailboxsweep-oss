@@ -323,6 +323,10 @@ components:
           type: string
         required:
           type: boolean
+        body:
+          type: string
+        agreementUpdatedAt:
+          type: string
 
     UserData:
       type: object
@@ -463,6 +467,27 @@ paths:
           description: Bad request
         '500':
           Description: Internal server error
+
+  /user/agreements/{agreementSlug}:
+    operationId: getUserAgreement
+    get:
+      description: Get agreement
+      parameters:
+        - in: path
+          name: agreementSlug
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/UserAgreement'
+        '404':
+          description: Not found
 
   /inbox/changeset:
     patch:
