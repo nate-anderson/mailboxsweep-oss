@@ -182,7 +182,7 @@ export default function Agreement() {
                             sx={{
                                 margin: 1,
                                 padding: 1,
-                                fontFamily: "mono",
+                                fontFamily: "monospace",
                                 fontSize: "12px",
                                 lineHeight: "1.75em",
                             }}    
