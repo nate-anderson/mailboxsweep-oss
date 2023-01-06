@@ -18,14 +18,14 @@ import IconClose from "@mui/icons-material/Close";
 import IconHome from "@mui/icons-material/Home";
 import Link from "next/link";
 
-const renderDrawerItem = (props: { text: string, icon: any, path: string }) =>
+const renderDrawerItem = (props: { text: string, icon: any, path: string, selected: boolean }) =>
     <Link key={props.text} href={props.path} passHref style={{textDecoration: 'none', color: "black"}}>
         <ListItem sx={{
             marginTop: 0,
             marginRight: 5,
             color: "inherit"
         }}>
-            <ListItemButton>
+            <ListItemButton selected={props.selected}>
                 <ListItemIcon sx={{ marginLeft: 0 }}>
                     {props.icon}
                 </ListItemIcon>
@@ -41,7 +41,11 @@ const drawerItems = [
     { text: "Payment & Plan", icon: <IconCreditCard />, path: "#" },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+    page?: string;
+}
+
+export default function Navbar(props: NavbarProps) {
     const [ drawerOpen, setDrawerOpen ] = useState(false);
 
     return (
@@ -93,7 +97,12 @@ export default function Navbar() {
                             <IconClose />
                         </IconButton>
                     </Box>
-                    {drawerItems.map(renderDrawerItem)}
+                    {drawerItems.map(item => renderDrawerItem(
+                        {
+                            ...item,
+                            selected: props.page === item.text,
+                        }
+                    ))}
                 </Drawer>
             </AppBar>
         </Box>

@@ -87,7 +87,7 @@ export default function Login() {
 
     return (
         <>
-            <Navbar />
+            <Navbar page="Email Account"/>
             <Snackbar
                 open={showSuccess}
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}

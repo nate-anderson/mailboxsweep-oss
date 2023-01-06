@@ -52,7 +52,7 @@ export default function CompleteProfile() {
 
     return (
         <>
-            <Navbar />
+            <Navbar page="My Profile" />
             {/* Success snackbar */}
             <Snackbar
                 open={showSuccess}

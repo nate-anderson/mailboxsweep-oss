@@ -14,7 +14,7 @@ export default function Home() {
 
     return (
         <>
-            <Navbar />
+            <Navbar page="Home" />
             <Container component="main">
                 <CssBaseline />
                 <Box sx={{
