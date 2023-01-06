@@ -47,7 +47,7 @@ export default function Login() {
         </Modal>
             <CssBaseline />
             <Box sx={{
-                marginTop: 30,
+                marginTop: "30vh",
                 display: 'flex',
                 flexDirection: "column",
                 alignItems: "center",
