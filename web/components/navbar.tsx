@@ -15,6 +15,7 @@ import IconAccountCircle from "@mui/icons-material/AccountCircle";
 import IconEnvelope from "@mui/icons-material/Email";
 import IconCreditCard from "@mui/icons-material/CreditCard";
 import IconClose from "@mui/icons-material/Close";
+import IconHome from "@mui/icons-material/Home";
 import Link from "next/link";
 
 const renderDrawerItem = (props: { text: string, icon: any, path: string }) =>
@@ -34,6 +35,7 @@ const renderDrawerItem = (props: { text: string, icon: any, path: string }) =>
     </Link>;
 
 const drawerItems = [
+    { text: "Home", icon: <IconHome />, path: "/home" },
     { text: "My Profile", icon: <IconAccountCircle />, path: "/complete-profile" },
     { text: "Email Account", icon: <IconEnvelope />, path: "/email-account/login"},
     { text: "Payment & Plan", icon: <IconCreditCard />, path: "#" },
