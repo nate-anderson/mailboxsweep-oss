@@ -89,3 +89,30 @@ func (c PaymentController) CompletePayment(w http.ResponseWriter, req *http.Requ
 	}
 	c.respond(w, http.StatusOK, resBody)
 }
+
+func (c PaymentController) ListPlans(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	planMap, err := c.service.Plans(ctx)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	resPlans := make([]Plan, 0, len(planMap))
+	for key, plan := range planMap {
+		resPlans = append(resPlans, Plan{
+			AllowedScans: plan.AllowedScans,
+			Description:  plan.Description,
+			DisplayName:  plan.DisplayName,
+			DurationDays: plan.DurationDays,
+			Features:     plan.Features,
+			Key:          string(key),
+		})
+	}
+
+	resBody := ListPlansResponse{
+		Plans: resPlans,
+	}
+
+	c.respond(w, http.StatusOK, resBody)
+}

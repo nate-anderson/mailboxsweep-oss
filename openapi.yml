@@ -188,6 +188,16 @@ components:
           items:
             $ref: '#/components/schemas/ClassifierInfo'
 
+    ListPlansResponse:
+      type: object
+      required:
+        - plans
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plan'
+
     ListUserAgreementsResponse:
       type: object
       required:
@@ -223,6 +233,31 @@ components:
           $ref: '#/components/schemas/Sender'
         subject:
           type: string
+
+    Plan:
+      type: object
+      required:
+        - key
+        - displayName
+        - description
+        - features
+        - allowedScans
+        - durationDays
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+        allowedScans:
+          type: integer
+        durationDays:
+          type: integer
 
     Sender:
       type: object
@@ -583,6 +618,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFoldersResponse'
+
+  /plans:
+    get:
+      description: Get available plans
+      operationId: listPlans
+      responses:
+        '200':
+          description: Success, list of plans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlansResponse'
+        '500':
+          description: Internal server errror
 
   /payment:
     get:

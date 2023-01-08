@@ -23,6 +23,7 @@ type Service interface {
 	InitiatePayment(ctx context.Context, plan inboxuser.Plan) (checkoutURL string, err error)
 	CompletePayment(ctx context.Context, token string) error
 	PlanDetails(code inboxuser.Plan) (*PlanDetails, error)
+	Plans(ctx context.Context) (map[inboxuser.Plan]PlanDetails, error)
 }
 
 type DefaultService struct {
@@ -191,4 +192,12 @@ func (s DefaultService) PlanDetails(code inboxuser.Plan) (*PlanDetails, error) {
 		return nil, mailboxsweep.NotFoundError(err)
 	}
 	return &plan, nil
+}
+
+func (s DefaultService) Plans(ctx context.Context) (map[inboxuser.Plan]PlanDetails, error) {
+	_, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.plans, nil
 }
