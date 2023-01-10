@@ -78,6 +78,9 @@ export default function CompleteProfile() {
                 <CssBaseline />
                 <Box sx={{
                     marginTop: 6,
+                    maxWidth: 600,
+                    width: "auto",
+                    marginX: "auto",
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center'

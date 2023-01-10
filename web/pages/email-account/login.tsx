@@ -110,7 +110,6 @@ export default function Login() {
                 <CssBaseline />
                 <Box sx={{
                     marginTop: 6,
-                    marginX: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center'
@@ -132,7 +131,8 @@ export default function Login() {
                         align="center"
                         sx={{
                             marginY: 2,
-                            color: "var(--color-gray)"
+                            color: "var(--color-gray)",
+                            maxWidth: 600,
                         }}
                     >
                     Your credentials are stored with enterprise-grade AES-256 encryption and deleted after 30 days.       
@@ -171,7 +171,9 @@ export default function Login() {
                     
                     <Box component="form" sx={{
                         mt: 3,
-                        mx: 3,
+                        maxWidth: 600,
+                        width: "auto",
+                        marginX: "auto",
                     }}>
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={12}>
