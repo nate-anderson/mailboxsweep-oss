@@ -38,9 +38,24 @@ func (c PaymentController) GetPaymentStatus(w http.ResponseWriter, req *http.Req
 		return
 	}
 
+	plan, err := c.service.PlanDetails(status.Plan)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
 	resBody := UserPaymentStatus{
-		Plan:       (*string)(&status.Plan),
-		ValidUntil: ptr(status.ValidUntil.Format(time.RFC3339)),
+		Plan: Plan{
+			AllowedScans: plan.AllowedScans,
+			Description:  plan.Description,
+			DisplayName:  plan.DisplayName,
+			DurationDays: plan.DurationDays,
+			Features:     plan.Features,
+			Key:          string(status.Plan),
+			PriceInCents: plan.PriceInCents,
+		},
+		ValidUntil:   ptr(status.ValidUntil.Format(time.RFC3339)),
+		SubscribedAt: ptr(status.ValidUntil.Format(time.RFC3339)),
 	}
 
 	c.respond(w, http.StatusOK, resBody)

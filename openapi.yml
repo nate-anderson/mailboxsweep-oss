@@ -385,9 +385,12 @@ components:
         - validUntil
       properties:
         plan:
-          type: string
+          $ref: '#/components/schemas/Plan'
           nullable: true
         validUntil:
+          type: string
+          nullable: true
+        subscribedAt:
           type: string
           nullable: true
 
