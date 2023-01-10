@@ -107,6 +107,7 @@ func (c PaymentController) ListPlans(w http.ResponseWriter, req *http.Request) {
 			DurationDays: plan.DurationDays,
 			Features:     plan.Features,
 			Key:          string(key),
+			PriceInCents: plan.PriceInCents,
 		})
 	}
 

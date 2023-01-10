@@ -1,5 +1,5 @@
 import { API } from "../../client";
-import Navbar from "../../components/navbar"
+import Navbar from "../../components/navbar";
 import Container from '@mui/material/Container';
 import Box from "@mui/material/Box";
 import Button from "../../components/button";

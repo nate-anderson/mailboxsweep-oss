@@ -1,4 +1,4 @@
-import { CssBaseline } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
 import Container from "@mui/material/Container";
 import Navbar from "../components/navbar";
 import Alert from "@mui/material/Alert"
@@ -7,8 +7,6 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import CardActions from "@mui/material/CardActions";
-import MUIButton from "@mui/material/Button";
 
 export default function Home() {
 

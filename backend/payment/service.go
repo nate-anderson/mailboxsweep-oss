@@ -134,6 +134,7 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 		Plan:        plan,
 		CreatedAt:   time.Now(),
 		Expires:     time.Now().Add(storeInProgressCartsHours * time.Hour).Unix(),
+		Status:      open,
 	}
 	err = s.cartRepo.store(ctx, c)
 	if err != nil {

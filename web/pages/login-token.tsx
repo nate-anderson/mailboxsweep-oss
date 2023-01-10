@@ -27,29 +27,27 @@ export default function Login() {
     }, [router.isReady, router.query]);
 
     return (
-        <main>
-            <Container component="main">
-            <Box sx={{
-                    marginTop: 30,
-                    display: 'flex',
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}>
+        <Container component="main">
+        <Box sx={{
+                marginTop: 30,
+                display: 'flex',
+                flexDirection: "column",
+                alignItems: "center",
+            }}>
+                <Typography sx={{
+                    marginY: 3,
+                    fontFamily: "Lobster",
+                    fontSize: "3em",
+                    color: "var(--color-primary)"
+                }}>MailboxSweep</Typography>
                     <Typography sx={{
-                        marginY: 3,
-                        fontFamily: "Lobster",
-                        fontSize: "3em",
-                        color: "var(--color-primary)"
-                    }}>MailboxSweep</Typography>
-                     <Typography sx={{
-                        marginY: 2
-                    }}>
-                        Signing you in...
-                    </Typography>
-                    <CircularProgress />
-            </Box>
-                
-            </Container>
-        </main>
+                    marginY: 2
+                }}>
+                    Signing you in...
+                </Typography>
+                <CircularProgress />
+        </Box>
+            
+        </Container>
     );
 }
