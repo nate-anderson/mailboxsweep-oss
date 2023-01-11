@@ -38,7 +38,7 @@ const drawerItems = [
     { text: "Home", icon: <IconHome />, path: "/home" },
     { text: "My Profile", icon: <IconAccountCircle />, path: "/complete-profile" },
     { text: "Email Account", icon: <IconEnvelope />, path: "/email-account/login"},
-    { text: "Payment & Plan", icon: <IconCreditCard />, path: "#" },
+    { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
 ];
 
 interface NavbarProps {

@@ -55,7 +55,7 @@ func (c PaymentController) GetPaymentStatus(w http.ResponseWriter, req *http.Req
 			PriceInCents: plan.PriceInCents,
 		},
 		ValidUntil:   ptr(status.ValidUntil.Format(time.RFC3339)),
-		SubscribedAt: ptr(status.ValidUntil.Format(time.RFC3339)),
+		SubscribedAt: ptr(status.StartedAt.Format(time.RFC3339)),
 	}
 
 	c.respond(w, http.StatusOK, resBody)
