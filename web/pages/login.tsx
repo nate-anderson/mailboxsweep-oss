@@ -3,12 +3,13 @@ import Box from "@mui/material/Box";
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField'
 import Button from '../components/button';
-import { useState } from "react";
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from 'next/router';
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import LargeLogo from "../components/large-logo";
+import { Alert, Snackbar } from "@mui/material";
 
 const submitLogin = async (address: string, setModalOpen: (open: boolean) => void) => {
     try {
@@ -26,11 +27,32 @@ const submitLogin = async (address: string, setModalOpen: (open: boolean) => voi
 export default function Login() {
     const router = useRouter();
     const [ email, changeEmail ] = useState("");
-
     const [modalOpen, setModalOpen] = useState(false);
+
+    const [ showPrompt, setShowPrompt ] = useState(false);
+
+    useEffect(() => {
+        if(!router.isReady) return;
+        const query = router.query;
+
+        if (Boolean(query['prompt'])) {
+            setShowPrompt(true);
+        }
+        
+    }, [router.isReady, router.query])
 
     return (
         <Container component="main">
+        <Snackbar
+            open={showPrompt}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            autoHideDuration={5000}
+            onClose={() => setShowPrompt(false)}
+        >
+            <Alert variant="filled" severity="success">
+            Please log in to continue.
+            </Alert>
+        </Snackbar>
         <Modal
             open={modalOpen}
             aria-labelledby="login-email-modal-title"
