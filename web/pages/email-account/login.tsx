@@ -142,7 +142,9 @@ export default function Login() {
                     {credentialSet ?
                     <Box
                         sx={{
-                            marginX: 3
+                            maxWidth: 600,
+                            width: "auto",
+                            marginX: "auto",
                         }}    
                     >
                             <Typography
