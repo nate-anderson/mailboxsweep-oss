@@ -105,9 +105,9 @@ func (r DynamoSessionRepository) Invalidate(ctx context.Context, cookieToken str
 	return err
 }
 
-func (s Session) Cookie(isDev bool) *http.Cookie {
+func (s Session) AuthCookie(isDev bool) *http.Cookie {
 	cookie := &http.Cookie{
-		Name:     sessionCookie,
+		Name:     sessionAuthCookie,
 		Value:    s.Token,
 		Expires:  time.Unix(s.Expires, 0),
 		Path:     "/",
@@ -115,4 +115,18 @@ func (s Session) Cookie(isDev bool) *http.Cookie {
 		Secure:   !isDev,
 	}
 	return cookie
+}
+
+const isLoggedInCookie = "X-MailboxSweep-LoggedIn"
+
+func (s Session) IsLoggedInCookie() *http.Cookie {
+	return &http.Cookie{
+		Name:    isLoggedInCookie,
+		Value:   "true",
+		Expires: time.Unix(s.Expires, 0),
+		Path:    "/",
+		// allow the client to see this cookie so it knows its authenticated
+		HttpOnly: false,
+		Secure:   true,
+	}
 }

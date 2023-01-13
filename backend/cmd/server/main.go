@@ -262,8 +262,8 @@ func main() {
 	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
 		BaseRouter: root,
 		Middlewares: []httpserver.MiddlewareFunc{
-			cors.Middleware,
 			auth.Middleware,
+			cors.Middleware,
 		},
 	})
 

@@ -81,7 +81,7 @@ type AuthMiddleware struct {
 	Service Service
 }
 
-const sessionCookie = "X-MailboxSweep-Session"
+const sessionAuthCookie = "X-MailboxSweep-Session"
 
 var authPathPrefix = "/login"
 
@@ -93,7 +93,7 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		}
 
 		ctx := req.Context()
-		cookie, err := req.Cookie(sessionCookie)
+		cookie, err := req.Cookie(sessionAuthCookie)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			log.Printf("missing session cookie: %s\n", err)

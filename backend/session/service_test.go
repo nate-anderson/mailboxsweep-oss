@@ -90,7 +90,7 @@ func TestSessionService(t *testing.T) {
 			w := httptest.NewRecorder()
 			req, err := http.NewRequest(http.MethodPost, "localhost", nil)
 			assert.ThatError(t, err).IsNil()
-			c := sess.Cookie(false)
+			c := sess.AuthCookie(false)
 			req.AddCookie(c)
 
 			handler.ServeHTTP(w, req)
