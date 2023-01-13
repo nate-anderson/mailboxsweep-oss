@@ -10,6 +10,7 @@ import (
 	"mailboxsweep/httpserver"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
+	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
@@ -226,6 +227,8 @@ func main() {
 		log.Fatalf("stripe API key must be set")
 	}
 
+	inboxChangesetService := inboxchangeset.NewService(changesetService, classificationService)
+
 	controller := httpserver.NewController(
 		userService,
 		credentialService,
@@ -234,6 +237,7 @@ func main() {
 		providerService,
 		loginService,
 		changesetService,
+		inboxChangesetService,
 		paymentService,
 		cfg.CookieDomain,
 		cfg.CookiePath,
