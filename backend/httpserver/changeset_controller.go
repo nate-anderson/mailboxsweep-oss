@@ -5,41 +5,56 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
+	"mailboxsweep/classification"
+	"mailboxsweep/inboxchangeset"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ChangeSetController struct {
-	service changeset.Service
-	log     *logrus.Logger
+	changeSetService      changeset.Service
+	inboxChangeSetService inboxchangeset.Service
+	log                   *logrus.Logger
 	baseController
 }
 
-func NewChangeSetController(service changeset.Service, log *logrus.Logger) *ChangeSetController {
+func NewChangeSetController(service changeset.Service, inboxChangeSetService inboxchangeset.Service, log *logrus.Logger) *ChangeSetController {
 	return &ChangeSetController{
-		service:        service,
-		log:            log,
-		baseController: baseController{log},
+		changeSetService:      service,
+		log:                   log,
+		inboxChangeSetService: inboxChangeSetService,
+		baseController:        baseController{log},
 	}
 }
 
 func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Request) {
-	// ctx := req.Context()
+	ctx := req.Context()
 	reqBody := ChangeSetRequest{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
 
+	resBody := UpdateChangeSetResponse{
+		Folder: reqBody.Folder,
+	}
+
+	path := classification.Path(reqBody.Path)
+	var err error
 	switch reqBody.Operation {
 	case Delete:
-		// @TODO: need to look up folder leaf from repo and add stored UIDs to the deletion set
-		// this should be done in the service layer, but there is no service to currently handle this
-		// what should it be called? Should the changesetservice definition be updated to accept
-		// a leaf path instead of a set of UUIDs?
-		// c.service.MarkForDelete(ctx, reqBody.Folder)
+		resBody.MessageCount, err = c.inboxChangeSetService.AddLeafForDelete(ctx, reqBody.Folder, path)
+		if err != nil {
+			c.respondError(w, err)
+			return
+		}
 	case MarkRead:
+		resBody.MessageCount, err = c.inboxChangeSetService.AddLeafForMarkRead(ctx, reqBody.Folder, path)
+		if err != nil {
+			c.respondError(w, err)
+			return
+		}
 
 	default:
 		err := fmt.Errorf("unknown update operation '%s'", reqBody.Operation)
@@ -47,6 +62,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	c.respond(w, http.StatusOK, resBody)
 }
 
 func (c ChangeSetController) GetChangesets(w http.ResponseWriter, req *http.Request, params GetChangesetsParams) {
@@ -59,7 +75,7 @@ func (c ChangeSetController) GetChangesets(w http.ResponseWriter, req *http.Requ
 		return
 	}
 	if params.Folder != nil {
-		changeSetMap, err := c.service.ListByInboxFolder(ctx, *params.Folder, false)
+		changeSetMap, err := c.changeSetService.ListByInboxFolder(ctx, *params.Folder, false)
 		if err != nil {
 			c.respondError(w, err)
 			return
@@ -70,7 +86,7 @@ func (c ChangeSetController) GetChangesets(w http.ResponseWriter, req *http.Requ
 
 	} else {
 		var err error
-		changeSets, err = c.service.ListByInbox(ctx, false)
+		changeSets, err = c.changeSetService.ListByInbox(ctx, false)
 		if err != nil {
 			c.respondError(w, err)
 			return

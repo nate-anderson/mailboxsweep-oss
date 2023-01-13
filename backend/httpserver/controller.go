@@ -4,6 +4,7 @@ import (
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
+	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
@@ -30,6 +31,7 @@ func NewController(
 	providerService inbox.ProviderService,
 	loginService login.Service,
 	changesetService changeset.Service,
+	inboxChangesetService inboxchangeset.Service,
 	paymentService payment.Service,
 	cookieDomain string,
 	cookiePath string,
@@ -40,7 +42,7 @@ func NewController(
 	classificationController := NewClassificationController(classificationService, log)
 	folderController := NewFolderController(folderService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
-	changeSetController := NewChangeSetController(changesetService, log)
+	changeSetController := NewChangeSetController(changesetService, inboxChangesetService, log)
 	userController := NewUserController(inboxUserService, log)
 	paymentController := NewPaymentController(paymentService, log)
 

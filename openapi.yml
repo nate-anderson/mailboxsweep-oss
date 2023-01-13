@@ -336,6 +336,17 @@ components:
         message:
           type: string
 
+    UpdateChangeSetResponse:
+      type: object
+      required:
+        - folder
+        - messageCount # number of messages added or removed
+      properties:
+        folder:
+          type: string
+        messageCount:
+          type: integer
+
     UpdateOperation:
       type: string
       enum:
@@ -540,6 +551,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChangeSetRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateChangeSetResponse'
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error
+
     get:
       operationId: getChangesets
       description: Get the current paths and operations the user has selected for update

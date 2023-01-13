@@ -18,6 +18,13 @@ type DefaultService struct {
 	classificationService classification.Service
 }
 
+func NewService(changeSetService changeset.Service, classificationService classification.Service) *DefaultService {
+	return &DefaultService{
+		changeSetService:      changeSetService,
+		classificationService: classificationService,
+	}
+}
+
 func (s DefaultService) AddLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error) {
 	_, err := s.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
