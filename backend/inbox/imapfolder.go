@@ -127,3 +127,23 @@ func (f IMAPFolder) Delete(uids []string) error {
 func (f IMAPFolder) Name() string {
 	return f.name
 }
+
+func (f IMAPFolder) MarkRead(uids []string) error {
+	set := imap.SeqSet{}
+	for _, uid := range uids {
+		u, err := strconv.ParseUint(uid, 10, 32)
+		if err != nil {
+			return err
+		}
+		set.AddNum(uint32(u))
+	}
+
+	item := imap.FormatFlagsOp(imap.AddFlags, true)
+	flags := []any{imap.SeenFlag}
+	err := f.client.UidStore(&set, item, flags, nil)
+	if err != nil {
+		return fmt.Errorf("delete (UidStore) failed: %w", err)
+	}
+
+	return f.client.Close()
+}
