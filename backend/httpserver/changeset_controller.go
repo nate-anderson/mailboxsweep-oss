@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
@@ -113,6 +114,32 @@ func (c ChangeSetController) GetChangesets(w http.ResponseWriter, req *http.Requ
 		ChangeSets: resultChangeSets,
 	}
 	c.respond(w, http.StatusOK, res)
+}
+
+func (c ChangeSetController) CommitChangesets(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	reqBody := CommitRequest{}
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	if !reqBody.Confirm {
+		c.respondError(w, errors.New("request must set confirm=true"), withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	if err = c.inboxChangeSetService.CommitChanges(ctx); err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	resBody := StatusResponse{}
+	resBody.Message = ptr("OK!")
+	resBody.Status = "SUCCESS"
+
+	c.respond(w, http.StatusOK, resBody)
 }
 
 func operationToAPI(operation changeset.UpdateOperation) (UpdateOperation, error) {

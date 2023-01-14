@@ -94,6 +94,14 @@ components:
           type: string
           description: the optional initializer for thie classifier
     
+    CommitRequest:
+      type: object
+      required:
+        - confirm
+      properties:
+        confirm:
+          type: boolean
+
     ClassifierInfo:
       type: object
       required:
@@ -580,6 +588,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChangeSetResponse'
+
+  /inbox/changeset/commit:
+    post:
+      operationId: commitChangesets
+      description: Commit pending deletes/mark reads selected for this inbox's folders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitRequest'
+      responses:
+        '200':
+          description: Success, committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: Bad or unconfirmed request
+        '500':
+          description: Internal server error
 
   /inbox/classification:
     post:

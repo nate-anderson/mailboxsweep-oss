@@ -8,11 +8,13 @@ type TestFolder struct {
 
 	MessagesError error
 	DeleteError   error
+	MarkReadError error
 
 	MessagesStart uint32
 	MessagesEnd   uint32
 
-	Deletes []string
+	Deletes   []string
+	MarkReads []string
 }
 
 func (t TestFolder) Name() string {
@@ -44,5 +46,14 @@ func (t *TestFolder) Delete(uids []string) error {
 	}
 
 	t.Deletes = append(t.Deletes, uids...)
+	return nil
+}
+
+func (t *TestFolder) MarkRead(uids []string) error {
+	if t.MarkReadError != nil {
+		return t.MarkReadError
+	}
+
+	t.MarkReads = append(t.MarkReads, uids...)
 	return nil
 }
