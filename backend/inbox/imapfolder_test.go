@@ -63,7 +63,7 @@ func TestIMAPFolder(t *testing.T) {
 				case err := <-errChan:
 					wg.Done()
 					if err != nil {
-						t.Fatal(err)
+						panic(err)
 					}
 				}
 			}
@@ -101,7 +101,7 @@ func TestIMAPFolder(t *testing.T) {
 				case err := <-errChan:
 					wg.Done()
 					if err != nil {
-						t.Fatal(err)
+						panic(err)
 					}
 				}
 			}
@@ -135,7 +135,7 @@ func TestIMAPFolder(t *testing.T) {
 				case err := <-errChan:
 					wg.Done()
 					if err != nil {
-						t.Fatal(err)
+						panic(err)
 					}
 				}
 			}
