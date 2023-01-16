@@ -10,6 +10,8 @@ type Message struct {
 	// message ID being replied to
 	InReplyTo string    `json:"inReplyTo,omitempty"`
 	SendDate  time.Time `json:"sendDate"`
+	// has this message been read?
+	Read bool `json:"read"`
 }
 
 type Sender struct {
