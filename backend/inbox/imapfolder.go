@@ -28,7 +28,11 @@ func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 	done := make(chan error)
 	go func() {
 		// set the components fetched here
-		done <- f.client.Fetch(&seq, []imap.FetchItem{imap.FetchEnvelope, imap.FetchUid, imap.FetchFlags}, messageChan)
+		done <- f.client.Fetch(&seq, []imap.FetchItem{
+			imap.FetchEnvelope,
+			imap.FetchUid,
+			imap.FetchFlags,
+		}, messageChan)
 	}()
 
 	for {
@@ -87,7 +91,17 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 			Username: username,
 		},
 		SendDate: i.Envelope.Date,
+		Read:     contains(i.Flags, imap.SeenFlag),
 	}, nil
+}
+
+func contains[t comparable](slice []t, val t) bool {
+	for _, v := range slice {
+		if val == v {
+			return true
+		}
+	}
+	return false
 }
 
 // returns the first value in list not equal to not
@@ -129,6 +143,7 @@ func (f IMAPFolder) Name() string {
 }
 
 func (f IMAPFolder) MarkRead(uids []string) error {
+	readOnly := f.mailbox.ReadOnly
 	set := imap.SeqSet{}
 	for _, uid := range uids {
 		u, err := strconv.ParseUint(uid, 10, 32)
@@ -145,5 +160,13 @@ func (f IMAPFolder) MarkRead(uids []string) error {
 		return fmt.Errorf("delete (UidStore) failed: %w", err)
 	}
 
-	return f.client.Close()
+	// Close propagates changes and deselects the client mailbox
+	err = f.client.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close and push changes to IMAP mailbox: %w", err)
+	}
+
+	// reselect for continued use
+	f.mailbox, err = f.client.Select(f.name, readOnly)
+	return err
 }
