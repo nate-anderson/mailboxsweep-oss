@@ -10,6 +10,7 @@ import Card from "@mui/material/Card";
 import Avatar from "@mui/material/Avatar";
 import IconGrading from "@mui/icons-material/Grading";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -28,14 +29,16 @@ const renderAgreementListItem = (agr: UserAgreement) =>
                 : "Agreement pending"
         }
     >
-        <ListItemButton sx={{
-            marginY: 1,
-        }} key={agr.key}>
-            <ListItemIcon>
-                {Boolean(agr.agreedAt) ? <IconCheckBox /> : <IconCheckBoxOutlineBlank />}
-            </ListItemIcon>
-            <ListItemText primary={agr.name}></ListItemText>
-        </ListItemButton>
+        <ListItem disablePadding>
+            <ListItemButton sx={{
+                marginY: 1,
+            }} key={agr.key}>
+                <ListItemIcon>
+                    {Boolean(agr.agreedAt) ? <IconCheckBox /> : <IconCheckBoxOutlineBlank />}
+                </ListItemIcon>
+                <ListItemText primary={agr.name}></ListItemText>
+            </ListItemButton>
+        </ListItem>
     </Link>
 
 export default function Agreements() {

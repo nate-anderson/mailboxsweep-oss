@@ -77,7 +77,6 @@ export default function Agreement() {
         API.getUserAgreements(agreementCode as string)
             .then((res) => {
                 setUserAgreement(res);
-                console.log({ res });
             })
             .catch((error) => {
                 console.log({ getUserAgreementsError: error });
@@ -123,7 +122,7 @@ export default function Agreement() {
                 onClose={() => setShowSuccess(false)}
             >
                 <Alert variant="filled" severity="success">
-                Profile data updated!
+                Agreement submitted!
                 </Alert>
             </Snackbar>
 
