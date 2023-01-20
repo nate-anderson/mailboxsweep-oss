@@ -19,13 +19,21 @@ type Classifier interface {
 	Info() ClassifierInfo
 }
 
+type InputFormat string
+
+const (
+	InputDate   InputFormat = "DATE"
+	InputString InputFormat = "STRING"
+)
+
 // used for listing available classifiers to API consumers
 type ClassifierInfo struct {
-	Name             string
-	TypeKey          string
-	Description      string
-	TakesInput       bool
-	InputDescription string
+	Name        string
+	TypeKey     string
+	Description string
+	TakesInput  bool
+	InputLabel  *string
+	InputFormat *InputFormat
 }
 
 /*
@@ -168,11 +176,11 @@ func (s SendDateClassifier) Serializeable() SerializableClassifier {
 
 func (s SendDateClassifier) Info() ClassifierInfo {
 	return ClassifierInfo{
-		Name:             "Send date",
-		TypeKey:          typeKeySendDate,
-		Description:      "Divide messages before and after a given date",
-		TakesInput:       true,
-		InputDescription: "The date to split messages by",
+		Name:        "Send date",
+		TypeKey:     typeKeySendDate,
+		Description: "Divide messages before and after a given date",
+		TakesInput:  true,
+		InputLabel:  ptr("Filter date"),
 	}
 }
 
@@ -204,4 +212,8 @@ var allClassifiers = []Classifier{
 	SenderDomainClassifier{},
 	SenderUsernameClassifier{},
 	SendDateClassifier{},
+}
+
+func ptr[t any](v t) *t {
+	return &v
 }

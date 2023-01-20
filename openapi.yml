@@ -122,9 +122,11 @@ components:
         hasInput:
           type: boolean
           description: does this classifier take input?
-        inputDescription:
+        inputLabel:
           type: string
-          description: what is the input of this classifier?
+          description: display label for the input 
+        inputFormat:
+          $ref: '#/components/schemas/InputFormat'
 
     CreateCredentialRequest:
       type: object
@@ -186,6 +188,12 @@ components:
           type: string
           nullable: true
     
+    InputFormat:
+      type: string
+      enum:
+        - date
+        - string
+
     ListClassifiersResponse:
       type: object
       required:

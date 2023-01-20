@@ -114,11 +114,12 @@ func (c ClassificationController) GetClassifiers(w http.ResponseWriter, req *htt
 	cls := make([]ClassifierInfo, len(classifiers))
 	for i, cl := range classifiers {
 		cls[i] = ClassifierInfo{
-			HasInput:         cl.TakesInput,
-			TypeKey:          cl.TypeKey,
-			Name:             cl.Name,
-			Description:      cl.Description,
-			InputDescription: stringOrNil(cl.InputDescription),
+			HasInput:    cl.TakesInput,
+			TypeKey:     cl.TypeKey,
+			Name:        cl.Name,
+			Description: cl.Description,
+			InputLabel:  cl.InputLabel,
+			InputFormat: convertInputFormat(cl.InputFormat),
 		}
 	}
 	resBody.Classifiers = cls
@@ -140,9 +141,17 @@ func convertClassification(cl classification.Classification) Classification {
 	return res
 }
 
-func stringOrNil(s string) *string {
-	if s == "" {
+func convertInputFormat(format *classification.InputFormat) *InputFormat {
+	if format == nil {
 		return nil
 	}
-	return &s
+
+	switch *format {
+	case classification.InputDate:
+		return ptr(Date)
+	case classification.InputString:
+		return ptr(String)
+	default:
+		return ptr(String)
+	}
 }
