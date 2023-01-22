@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from 'next/router';
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
-import Modal from "@mui/material/Modal";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
 import LargeLogo from "../components/large-logo";
 import { Alert, Snackbar } from "@mui/material";
 
@@ -41,6 +43,8 @@ export default function Login() {
         
     }, [router.isReady, router.query])
 
+    const closeModal = () => setModalOpen(false)
+
     return (
         <Container component="main">
         <Snackbar
@@ -53,23 +57,20 @@ export default function Login() {
             Please log in to continue.
             </Alert>
         </Snackbar>
-        <Modal
+        <Dialog
             open={modalOpen}
             aria-labelledby="login-email-modal-title"
             aria-describedby="login-email-modal-text"
-        >
-            <Box>
-                <Typography id="login-email-modal-title" variant="h6" component="h2">
-                Check your email!
-                </Typography>
-                <Typography id="login-email-modal-text" sx={{ mt: 2 }}>
-                We've sent you a link to log into Mailboxsweep. This is for your convenience and security. Please check your inbox to continue!
-                </Typography>
-            </Box>
-        </Modal>
+        >   
+            <DialogTitle>Check your email!</DialogTitle>
+            <DialogContent>
+            We've sent you a link to log into Mailboxsweep. This is for your convenience and security. Please check your inbox to continue!
+            </DialogContent>
+            
+        </Dialog>
             <CssBaseline />
             <Box sx={{
-                marginTop: "30vh",
+                marginTop: "20vh",
                 display: 'flex',
                 flexDirection: "column",
                 alignItems: "center",
