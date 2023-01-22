@@ -1,12 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
 import { SelectedClassifier, dateFormat } from "../classifier";
 import ClassifierCard from "./card";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
-import { getYear, parse } from "date-fns";
+import { parse } from "date-fns";
 import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
-import { InputFormat } from "../../../client-gen";
 import TextField from "@mui/material/TextField";
 
 interface Props {
