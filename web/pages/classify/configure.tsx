@@ -1,82 +1,61 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { API } from "../../client";
-import { ClassifierInfo } from "../../client-gen";
+import { Classifier, InputFormat } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from '@mui/material/Container';
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Checkbox from "@mui/material/Checkbox";
-import ListItemText from "@mui/material/ListItemText";
-import IconButton from "@mui/material/IconButton";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import Collapse from "@mui/material/Collapse";
-import DragHandle from "@mui/icons-material/DragHandle";
+import { getYear, format } from "date-fns";
+import { SelectedClassifier } from "./classifier";
 
-const renderClassifierListItem = (classifier: ClassifierInfo, expanded: boolean, onClick: (typeKey: string) => void) => {
-    
-    return <>
-        <ListItem
-            draggable
-            disablePadding
-            key={classifier.typeKey}
-            secondaryAction={
-                <IconButton onClick={() => onClick(classifier.typeKey)}>
-                    {expanded ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-            }
-        >
-            <ListItemButton>
-                
-                <DragHandle sx={{
-                    color: "#a3a3a3"
-                }}/>
-                
-                <ListItemIcon>
-                    <Checkbox />
-                </ListItemIcon>
-                <ListItemText>{classifier.name}</ListItemText>
-            </ListItemButton>
-        </ListItem>
-        
-        <Collapse in={expanded}>
-            <Typography
-                sx={{
-                    padding: 3,
-                    backgroundColor: "#ededf0"
-                }}
-            >
-                {classifier.description}
-            </Typography>
-        </Collapse>
-    </>
-};
+import type {} from '@mui/x-date-pickers/themeAugmentation';
+import SelectedClassifierList from "./list";
+
+const year = getYear(new Date());
+
+const defaultClassifiers: Classifier[] = [
+    { typeKey: "SENDER_DOMAIN" },
+    { typeKey: "SENDER_USERNAME" },
+    // default to the first day of three years ago
+    { typeKey: "SEND_DATE", initValue: `01/01/${year - 3}`}
+];
 
 export default function Configure() {
-    const [ classifiers, setClassifiers ] = useState<ClassifierInfo[] | undefined>();
-    const [ expandedItem, setExpandedItem ] = useState<string | undefined>();
+    const [ expandedIndex, setExpandedIndex ] = useState<number | undefined>();
     const [ error, setError ] = useState<string | undefined>();
-
+    const [ selectedClassifiers, setSelectedClassifiers ] = useState<SelectedClassifier[]>([]);
+    
     useEffect(() => {
         API.getClassifiers()
             .then((res) => {
-                setClassifiers(res.classifiers);
-                console.log(res.classifiers);
+                let hydratedClassifiers: SelectedClassifier[];
+
+                try {
+                    hydratedClassifiers = defaultClassifiers.map(cl => {
+                        const classifier = res.classifiers.find(c => c.typeKey === cl.typeKey);
+                        if (!classifier) {
+                            throw new Error(`classifier with typeKey ${cl.typeKey} was not found in API response`)
+                        }
+    
+                        return {
+                            ...cl,
+                            name: classifier.name,
+                            description: classifier.description,
+                            hasInput: classifier.hasInput,
+                            enabled: true,
+                            inputFormat: classifier.inputFormat,
+                        }
+                    });
+                    setSelectedClassifiers(hydratedClassifiers);
+                } catch (error) {
+                    setError(error as string);
+                }
             })
             .catch((err) => {
                 setError(err);
             })
     }, []);
-
-    const toggleExpanded = (typeKey: string) => {
-        setExpandedItem(typeKey === expandedItem ? undefined : typeKey);
-    }
 
     return (
         <>
@@ -89,11 +68,14 @@ export default function Configure() {
                     flexDirection: 'column',
                     alignItems: 'center'
                 }}>
-                    <Typography sx={{
-                        color: "var(--color-accent)",
-                        fontSize: "2em",
-                        fontWeight: 100,
-                    }}>
+                    <Typography
+                        align="center"
+                        sx={{
+                            color: "var(--color-accent)",
+                            fontSize: "2em",
+                            fontWeight: 100,
+                        }}
+                    >
                         Let's organize your inbox.
                     </Typography>
                     <Typography
@@ -108,18 +90,21 @@ export default function Configure() {
                         We'll put all your messages into groups based on who sent them, when they were sent, and what's inside. The recommended settings are below, but we'll organize your inbox however you like.
                     </Typography>
                 </Box>
-                <Card
+                <Box
                     sx={{
                         maxWidth: 600,
                         width: "auto",
                         marginTop: 3,
                         marginX: "auto",
                     }}
-                >
-                    <List>
-                    {classifiers?.map(cl => renderClassifierListItem(cl, cl.typeKey === expandedItem, toggleExpanded))}
-                    </List>
-                </Card>
+                >    
+                    <SelectedClassifierList
+                        setSelectedClassifiers={setSelectedClassifiers}
+                        classifiers={selectedClassifiers}
+                        expandedIndex={expandedIndex}
+                        setExpandedIndex={setExpandedIndex}
+                    />
+                </Box>
             </Container>
         </>
     )
