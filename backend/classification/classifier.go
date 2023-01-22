@@ -181,6 +181,7 @@ func (s SendDateClassifier) Info() ClassifierInfo {
 		Description: "Divide messages before and after a given date",
 		TakesInput:  true,
 		InputLabel:  ptr("Filter date"),
+		InputFormat: ptr(InputDate),
 	}
 }
 
