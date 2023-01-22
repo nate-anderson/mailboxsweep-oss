@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
+import { DraggableProvidedDraggableProps, DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface Props {
     classifier: SelectedClassifier;
@@ -17,6 +18,9 @@ interface Props {
     toggleExpanded: () => void;
     children?: ReactNode;
     toggleEnabled: () => void;
+    draggableRef: (element: HTMLElement | null) => void;
+    draggableProps: DraggableProvidedDraggableProps;
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
 }
 
 export default function ClassifierCard(
@@ -26,11 +30,14 @@ export default function ClassifierCard(
             sx={{
                 marginBottom: 1,
             }}
+            ref={props.draggableRef}
+            {...props.draggableProps}
         >
             <ListItemButton
                 sx={{
                     paddingY: 2,
                 }}
+                {...props.dragHandleProps}
             >
                 <DragHandle sx={{
                     color: "#a3a3a3"

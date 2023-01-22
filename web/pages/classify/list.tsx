@@ -5,10 +5,14 @@ import StringClassifierCard from "./inputs/string";
 import {
     DragDropContext,
     Droppable,
-    OnDragEndResponder,
+    Draggable,
+    DropResult,
+    ResponderProvided,
+    DraggableProvidedDragHandleProps,
+    DraggableProvidedDraggableProps,
   } from 'react-beautiful-dnd';
 import { Dispatch, SetStateAction } from "react";
-import { dateFormat, SelectedClassifier } from "./classifier";
+import { dateFormat, reorder, SelectedClassifier } from "./classifier";
 import { format } from "date-fns";
 import { InputFormat } from "../../client-gen";
 
@@ -21,45 +25,72 @@ interface Props {
 
 export default function SelectedClassifierList (props: Props) {
 
-    return <List>
-        {props.classifiers.map(
-            (cl, i) => {
-                const toggleExpanded = () => props.setExpandedIndex(props.expandedIndex === i ? undefined : i);
+    const onDragEnd = (result: DropResult, provided: ResponderProvided) => {
+        if (result.reason === 'CANCEL') {
+            return;
+        }
 
-                const toggleEnabled = () => {
-                    props.setSelectedClassifiers(
-                        cls => cls.map(
-                            (ecl, j) => j === i
-                                ? { ...ecl, enabled: !ecl.enabled }
-                                : ecl
-                        )
-                    );
-                };
+        const i = Number(result.source.index);
+        const j = Number(result.destination?.index);
+        const updated = reorder(props.classifiers, i, j);
+        props.setSelectedClassifiers(updated);
+    }
 
-                const setDateInput = (date: Date | null) => {
-                    if (!date) {
-                        return;
-                    }
-                    props.setSelectedClassifiers(
-                        cls => cls.map(
-                            (ecl, j) => j === i
-                                ? { ...ecl, initValue: format(date, dateFormat) ?? "" }
-                                : ecl
-                        )
-                    );
-                }
+    return <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="classifier-droppable-list">
+            {(provided) => (
+                <List ref={provided.innerRef} {...provided.droppableProps}>
+                    {props.classifiers.map(
+                        (cl, i) => {
+                            const toggleExpanded = () => props.setExpandedIndex(props.expandedIndex === i ? undefined : i);
 
-                return renderClassifierListItem(
-                    cl,
-                    i,
-                    toggleEnabled,
-                    props.expandedIndex,
-                    toggleExpanded,
-                    setDateInput,
-                );
-            }
-        )}
-    </List>;
+                            const toggleEnabled = () => {
+                                props.setSelectedClassifiers(
+                                    cls => cls.map(
+                                        (ecl, j) => j === i
+                                            ? { ...ecl, enabled: !ecl.enabled }
+                                            : ecl
+                                    )
+                                );
+                            };
+
+                            const setDateInput = (date: Date | null) => {
+                                if (!date) {
+                                    return;
+                                }
+                                props.setSelectedClassifiers(
+                                    cls => cls.map(
+                                        (ecl, j) => j === i
+                                            ? { ...ecl, initValue: format(date, dateFormat) ?? "" }
+                                            : ecl
+                                    )
+                                );
+                            }
+
+                            return <Draggable
+                                key={i}
+                                draggableId={i.toString()}
+                                index={i}
+                            >{(provided, snapshot) => (
+                                renderClassifierListItem(
+                                    cl,
+                                    i,
+                                    toggleEnabled,
+                                    props.expandedIndex,
+                                    toggleExpanded,
+                                    provided.innerRef,
+                                    provided.draggableProps,
+                                    provided.dragHandleProps,
+                                    setDateInput,
+                                )
+                            )}
+                            </Draggable>
+                        }
+                    )}
+                </List>
+            )}
+        </Droppable>
+    </DragDropContext>;
 }
 
 const renderClassifierListItem = (
@@ -68,6 +99,9 @@ const renderClassifierListItem = (
     toggleEnabled: () => void,
     expandedIndex: number | undefined,
     toggleExpanded: () => void,
+    draggableRef: (element: HTMLElement | null) => void,
+    draggableProps: DraggableProvidedDraggableProps,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
     setDateInput?: (date: Date | null) => void,
     setTextInput?: (text: string | null) => void,
 ) => {
@@ -76,6 +110,9 @@ const renderClassifierListItem = (
             return <CheckboxClassifierCard
                 classifier={classifier}
                 index={index}
+                draggableRef={draggableRef}
+                draggableProps={draggableProps}
+                dragHandleProps={dragHandleProps}
                 toggleEnabled={toggleEnabled}
                 toggleExpanded={toggleExpanded}
                 expanded={index === expandedIndex}
@@ -87,6 +124,9 @@ const renderClassifierListItem = (
             return <DateClassifierCard
                 classifier={classifier}
                 index={index}
+                draggableRef={draggableRef}
+                draggableProps={draggableProps}
+                dragHandleProps={dragHandleProps}
                 toggleEnabled={toggleEnabled}
                 toggleExpanded={toggleExpanded}
                 expanded={index === expandedIndex}
@@ -99,6 +139,9 @@ const renderClassifierListItem = (
             return <StringClassifierCard
                 classifier={classifier}
                 index={index}
+                draggableRef={draggableRef}
+                draggableProps={draggableProps}
+                dragHandleProps={dragHandleProps}
                 toggleEnabled={toggleEnabled}
                 toggleExpanded={toggleExpanded}
                 expanded={index === expandedIndex}
