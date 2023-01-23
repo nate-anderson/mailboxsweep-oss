@@ -78,7 +78,7 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 
 	m = &Metadata{
 		Inbox:   addr,
-		Folders: make(map[string]uint32),
+		Folders: make(map[string]MessageCount),
 		Expires: time.Now().Add(s.recordTTL).Unix(),
 	}
 	for _, name := range folders {
@@ -86,7 +86,10 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.Folders[name] = folder.Count()
+		m.Folders[name] = MessageCount{
+			All:    folder.Count(),
+			Unread: folder.UnreadCount(),
+		}
 	}
 
 	// write to cache

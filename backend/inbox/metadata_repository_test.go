@@ -18,9 +18,15 @@ func TestMetadataRepository(t *testing.T) {
 
 	m := Metadata{
 		Inbox: "fromage@reuters.beans",
-		Folders: map[string]uint32{
-			"INBOX": 498014,
-			"Trash": 6000,
+		Folders: map[string]MessageCount{
+			"INBOX": {
+				All:    498014,
+				Unread: 400,
+			},
+			"Trash": {
+				All:    6000,
+				Unread: 600,
+			},
 		},
 		Expires: time.Now().Unix() + 30,
 	}

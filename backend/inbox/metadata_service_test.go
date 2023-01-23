@@ -71,8 +71,8 @@ func TestMetadataService(t *testing.T) {
 			assert.That(t, m.Expires).NotEqual(0)
 			assert.That(t, m.Inbox).Equals(testAddress)
 			assert.That(t, len(m.Folders)).Equals(2)
-			assert.That(t, m.Folders["INBOX"]).Equals(uint32(n))
-			assert.That(t, m.Folders["trash"]).Equals(0)
+			assert.That(t, m.Folders["INBOX"].All).Equals(uint32(n))
+			assert.That(t, m.Folders["trash"].All).Equals(0)
 
 			// check that cache is populated
 			mr, err := repo.Get(ctx, testAddress)
@@ -80,8 +80,8 @@ func TestMetadataService(t *testing.T) {
 			assert.That(t, mr.Expires).NotEqual(0)
 			assert.That(t, mr.Inbox).Equals(testAddress)
 			assert.That(t, len(mr.Folders)).Equals(2)
-			assert.That(t, mr.Folders["INBOX"]).Equals(uint32(n))
-			assert.That(t, mr.Folders["trash"]).Equals(0)
+			assert.That(t, mr.Folders["INBOX"].All).Equals(uint32(n))
+			assert.That(t, mr.Folders["trash"].All).Equals(0)
 		})
 
 		t.Run("cache hit", func(t *testing.T) {
@@ -90,15 +90,18 @@ func TestMetadataService(t *testing.T) {
 			assert.That(t, m.Expires).NotEqual(0)
 			assert.That(t, m.Inbox).Equals(testAddress)
 			assert.That(t, len(m.Folders)).Equals(2)
-			assert.That(t, m.Folders["INBOX"]).Equals(uint32(n))
-			assert.That(t, m.Folders["trash"]).Equals(0)
+			assert.That(t, m.Folders["INBOX"].All).Equals(uint32(n))
+			assert.That(t, m.Folders["trash"].All).Equals(0)
 		})
 	})
 
 	t.Run("Set", func(t *testing.T) {
 		m := inbox.Metadata{
-			Inbox:   testAddress,
-			Folders: map[string]uint32{"INBOX2": 20},
+			Inbox: testAddress,
+			Folders: map[string]inbox.MessageCount{"INBOX2": {
+				All:    20,
+				Unread: 10,
+			}},
 			Expires: time.Now().Add(time.Minute).Unix(),
 		}
 		t.Run("unauthenticated, failure", func(t *testing.T) {
@@ -115,7 +118,10 @@ func TestMetadataService(t *testing.T) {
 			assert.That(t, r.Expires).Equals(m.Expires)
 			assert.That(t, r.Inbox).Equals(testAddress)
 			assert.ThatMap(t, r.Folders).HasLength(1)
-			assert.ThatMap(t, r.Folders).HasValueAt("INBOX2", 20)
+			assert.ThatMap(t, r.Folders).HasValueAt("INBOX2", inbox.MessageCount{
+				All:    20,
+				Unread: 10,
+			})
 		})
 	})
 }

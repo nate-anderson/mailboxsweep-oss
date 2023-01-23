@@ -20,6 +20,10 @@ func (f IMAPFolder) Count() uint32 {
 	return f.mailbox.Messages
 }
 
+func (f IMAPFolder) UnreadCount() uint32 {
+	return f.mailbox.Unseen
+}
+
 func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)

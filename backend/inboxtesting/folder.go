@@ -40,6 +40,16 @@ func (t TestFolder) Count() uint32 {
 	return uint32(len(t.FolderMessages))
 }
 
+func (t TestFolder) UnreadCount() uint32 {
+	var count uint32
+	for _, m := range t.FolderMessages {
+		if !m.Read {
+			count++
+		}
+	}
+	return count
+}
+
 func (t *TestFolder) Delete(uids []string) error {
 	if t.DeleteError != nil {
 		return t.DeleteError

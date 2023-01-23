@@ -6,6 +6,7 @@ type Folder interface {
 	Name() string
 	Messages(start, end uint32, m chan<- Message, e chan<- error)
 	Count() uint32
+	UnreadCount() uint32
 	Delete(uids []string) error
 	MarkRead(uids []string) error
 }

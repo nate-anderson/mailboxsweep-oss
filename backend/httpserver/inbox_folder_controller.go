@@ -39,10 +39,11 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 	}
 
 	folders := make([]FolderMessageCount, len(meta.Folders))
-	for folder, count := range meta.Folders {
+	for folder, counts := range meta.Folders {
 		folders = append(folders, FolderMessageCount{
-			Folder: folder,
-			Count:  int(count),
+			Folder:         folder,
+			AllMessages:    int(counts.All),
+			UnreadMessages: int(counts.Unread),
 		})
 	}
 

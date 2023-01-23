@@ -148,11 +148,14 @@ components:
       type: object
       required:
         - folder
-        - count
+        - allMessages
+        - unreadMessages
       properties:
         folder:
           type: string
-        count:
+        allMessages:
+          type: integer
+        unreadMessages:
           type: integer
 
     GetCredentialResponse:
