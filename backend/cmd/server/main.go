@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
@@ -69,6 +70,9 @@ type serverConfig struct {
 	ChangeSetPageIDHashMod uint64 `mapstructure:"CHANGESET_PAGE_ID_HASH_MOD"`
 
 	DevMode bool `mapstructure:"DEV_MODE"`
+
+	// how long should inbox metadata (folders and message counts) be cached?
+	InboxMetadataTTLMinutes int `mapstructure:"INBOX_METADATA_TTL_MINUTES"`
 
 	// How long is a payment good for access to the servuce?
 	PaymentDurationDays int `mapstructure:"PAYMENT_ACCESS_DURATION_DAYS"`
@@ -187,7 +191,12 @@ func main() {
 		cfg.EventBusName,
 	)
 
-	folderService := inbox.NewFolderService(providerService, credentialService)
+	metadataRepo := inbox.NewMetadataRepository(db, cfg.DynamoDBTable)
+	if cfg.InboxMetadataTTLMinutes <= 0 {
+		err = errors.New("InboxMetadataTTLMinutes must be greater than zero")
+		log.Fatal(err)
+	}
+	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
 
 	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
 
@@ -233,7 +242,7 @@ func main() {
 		userService,
 		credentialService,
 		classificationService,
-		folderService,
+		metadataService,
 		providerService,
 		loginService,
 		changesetService,

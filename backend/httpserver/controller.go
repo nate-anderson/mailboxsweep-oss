@@ -27,7 +27,7 @@ func NewController(
 	inboxUserService inboxuser.Service,
 	credentialService inboxcredential.Service,
 	classificationService classification.Service,
-	folderService inbox.FolderService,
+	metadataService inbox.MetadataService,
 	providerService inbox.ProviderService,
 	loginService login.Service,
 	changesetService changeset.Service,
@@ -40,7 +40,7 @@ func NewController(
 ) *Controller {
 	credentialController := NewCredentialController(credentialService, providerService, log)
 	classificationController := NewClassificationController(classificationService, log)
-	folderController := NewFolderController(folderService, log)
+	folderController := NewFolderController(metadataService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
 	changeSetController := NewChangeSetController(changesetService, inboxChangesetService, log)
 	userController := NewUserController(inboxUserService, log)

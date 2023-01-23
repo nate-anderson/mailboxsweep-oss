@@ -9,14 +9,14 @@ import (
 )
 
 type FolderController struct {
-	folderService inbox.FolderService
-	log           *logrus.Logger
+	metadataService inbox.MetadataService
+	log             *logrus.Logger
 	baseController
 }
 
-func NewFolderController(folderService inbox.FolderService, log *logrus.Logger) *FolderController {
+func NewFolderController(metadataService inbox.MetadataService, log *logrus.Logger) *FolderController {
 	return &FolderController{
-		folderService,
+		metadataService,
 		log,
 		baseController{log},
 	}
@@ -25,7 +25,7 @@ func NewFolderController(folderService inbox.FolderService, log *logrus.Logger) 
 func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	folders, err := c.folderService.ListInboxFolders(ctx)
+	meta, err := c.metadataService.Get(ctx)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
@@ -36,6 +36,11 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
 		c.respondAuthError(w, err)
 		return
+	}
+
+	folders := make([]string, len(meta.Folders))
+	for folder := range meta.Folders {
+		folders = append(folders, folder)
 	}
 
 	resBody := GetFoldersResponse{
