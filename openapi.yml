@@ -144,6 +144,17 @@ components:
         address:
           type: string
     
+    FolderMessageCount:
+      type: object
+      required:
+        - folder
+        - count
+      properties:
+        folder:
+          type: string
+        count:
+          type: integer
+
     GetCredentialResponse:
       type: object
       required:
@@ -169,7 +180,7 @@ components:
         folders:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/FolderMessageCount'
 
     InitiatePaymentRequest:
       type: object
