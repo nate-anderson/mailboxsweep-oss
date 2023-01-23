@@ -9,7 +9,6 @@ import (
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
-	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/payment"
@@ -20,34 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 )
-
-type testCredentialReadService struct {
-	address  string
-	password string
-
-	findError error
-}
-
-func (t testCredentialReadService) FindCredential(ctx context.Context, address string) (*inboxcredential.InboxCredential, error) {
-	if t.findError != nil {
-		return nil, t.findError
-	}
-
-	if address != t.address {
-		return nil, mailboxsweep.ErrNotFound
-	}
-
-	return &inboxcredential.InboxCredential{
-		Address:  address,
-		Password: t.password,
-		Created:  time.Now(),
-		Expires:  time.Now().Add(time.Hour).Unix(),
-	}, nil
-}
-
-func (t testCredentialReadService) DecryptCredential(ctx context.Context, cred *inboxcredential.InboxCredential) (password string, err error) {
-	return cred.Password, nil
-}
 
 type testImapServerService struct {
 	domain string
@@ -206,9 +177,9 @@ func TestClassificationService(t *testing.T) {
 		port:   testPort,
 	}
 	providerService := inboxtesting.NewTestProviderService()
-	credentialReadService := &testCredentialReadService{
-		address:  testAddress,
-		password: testPass,
+	credentialReadService := &inboxtesting.TestCredentialReadService{
+		Address:  testAddress,
+		Password: testPass,
 	}
 	publisher := &mailboxsweep.TestEventPublisher[ClassifyQueueItem]{}
 	eventBusName := "mailboxsweeptestevents"
@@ -407,11 +378,11 @@ func TestClassificationService(t *testing.T) {
 			*/
 
 			// make a dependency fail
-			credentialReadService.findError = errors.New("intentional failure")
+			credentialReadService.FindError = errors.New("intentional failure")
 
 			err := service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNotNil()
-			credentialReadService.findError = nil
+			credentialReadService.FindError = nil
 
 			reqList, ok := classifyRequestService.requests[testAddress]
 			assert.That(t, ok).Equals(true)
