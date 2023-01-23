@@ -82,6 +82,10 @@ func (r DefaultMetadataRepository) Get(ctx context.Context, address string) (*Me
 		return nil, err
 	}
 
+	if len(res.Item) == 0 {
+		return nil, mailboxsweep.NotFoundError(nil)
+	}
+
 	m := Metadata{}
 	err = attributevalue.UnmarshalMap(res.Item, &m)
 	return &m, err
