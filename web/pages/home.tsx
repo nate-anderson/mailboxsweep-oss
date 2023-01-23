@@ -7,8 +7,30 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
+import { Classifier, FolderMessageCount } from "../client-gen";
+import { API } from "../client";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+    const [ inboxFolders, setInboxFolders ] = useState<FolderMessageCount[]>([]);
+    const [ address, setAddress ] = useState("");
+    const [ errorMessage, setErrorMessage ] = useState<string | undefined>();
+    const [ messageCount, setMessageCount ] = useState<number>(0);
+
+    useEffect(() => {
+        API.getInboxFolders()
+            .then((res) => {
+                setInboxFolders(res.folders);
+                setAddress(res.address);
+                const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.count, 0);
+                setMessageCount(totalMessageCount);
+            })
+            .catch((err) => {
+                setErrorMessage(err as string);
+            })
+    }, [
+        
+    ]);
 
     return (
         <>
@@ -47,18 +69,18 @@ export default function Home() {
                         <Typography sx={{
                             fontSize: "1.6em",
                         }}>
-                            nathanid95@gmail.com
+                            {address}
                         </Typography>
                         <Typography sx={{
                             marginTop: 1,
                             color: "var(--color-gray)"
                         }}>
-                            136,043 Messages
+                            {messageCount.toLocaleString()} Messages
                         </Typography>
                         <Typography sx={{
                             color: "var(--color-accent)"
                         }}>
-                            39,780 Unread
+                            39,780 Unread @TODO UNIMPLEMENTED
                         </Typography>
                     </CardContent>
                     
