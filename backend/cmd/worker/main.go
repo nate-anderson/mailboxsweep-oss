@@ -93,7 +93,7 @@ func main() {
 
 	credentialService := inboxcredential.NewService(credentialRepo, cipherKey)
 
-	imapServerRepo := imapserver.NewConstantIMAPServerRepository()
+	imapServerRepo := imapserver.NewIMAPServerRepository(db, cfg.DynamoDBTable)
 	imapServerService := imapserver.NewService(imapServerRepo)
 	providerService := inbox.NewProviderService(imapServerService)
 
