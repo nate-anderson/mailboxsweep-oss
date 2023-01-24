@@ -34,6 +34,26 @@ func TestIMAPServerService(t *testing.T) {
 			assert.That(t, found).Equals(nil)
 		})
 
+		t.Run("invalid domain, failure", func(t *testing.T) {
+			badServer := Server{
+				Domain: "yagoo",
+				Host:   "yagoo.com",
+				Port:   993,
+			}
+			err := service.Store(authedCtx, badServer)
+			assert.ThatError(t, err).Is(ErrInvalidDomain)
+		})
+
+		t.Run("invalid host, failure", func(t *testing.T) {
+			badServer := Server{
+				Domain: "yagoo.com",
+				Host:   "yagoo",
+				Port:   993,
+			}
+			err := service.Store(authedCtx, badServer)
+			assert.ThatError(t, err).Is(ErrInvalidHost)
+		})
+
 		t.Run("success", func(t *testing.T) {
 			err := service.Store(authedCtx, server)
 			assert.ThatError(t, err).IsNil()
