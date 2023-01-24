@@ -38,6 +38,10 @@ func (t testImapServerService) FindByDomain(ctx context.Context, domain string) 
 	}, nil
 }
 
+func (t testImapServerService) Store(ctx context.Context, server imapserver.Server) error {
+	return errors.New("don't call this method")
+}
+
 type testRequest struct {
 	started   int64
 	completed *int64
