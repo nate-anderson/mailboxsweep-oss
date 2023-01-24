@@ -56,6 +56,17 @@ func (r CartRepository) buildKey(method inboxuser.PaymentMethod, externalID stri
 	}
 }
 
+func (r CartRepository) buildSecondaryKey(userAddress string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		mailboxsweep.DynamoGSI1PK: &types.AttributeValueMemberS{
+			Value: userAddress,
+		},
+		mailboxsweep.DynamoGSI1SK: &types.AttributeValueMemberS{
+			Value: "0",
+		},
+	}
+}
+
 func (r CartRepository) formatPK(method inboxuser.PaymentMethod, externalID string) string {
 	return fmt.Sprintf("PAYMENT#%s#%s", method, externalID)
 }
@@ -69,6 +80,7 @@ func (r CartRepository) store(
 	c cart,
 ) error {
 	key := r.buildKey(c.Method, c.ExternalID)
+	gsiKey := r.buildSecondaryKey(c.UserAddress)
 
 	attrs, err := attributevalue.MarshalMap(c)
 	if err != nil {
@@ -77,6 +89,7 @@ func (r CartRepository) store(
 	item := mailboxsweep.MergeAttributeValueMaps(
 		attrs,
 		key,
+		gsiKey,
 	)
 
 	_, err = r.db.PutItem(ctx, &dynamodb.PutItemInput{
