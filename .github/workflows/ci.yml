@@ -19,13 +19,13 @@ jobs:
           go-version: 1.19
 
       - name: Install server generator
-        run: make install_openapi_generator
+        run: cd backend && make install_openapi_generator
 
       - name: Generate server code
-        run: make http_scaffold
+        run: cd backend && make http_scaffold
 
       - name: Build
-        run: go build .
+        run: cd backend && go build .
       
       - name: Test
-        run: go test ./...
+        run: cd backend && go test ./...
