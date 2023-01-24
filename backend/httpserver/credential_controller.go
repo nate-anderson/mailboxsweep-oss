@@ -2,19 +2,24 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"net/http"
 	"time"
 
+	"github.com/mcnijman/go-emailaddress"
 	"github.com/sirupsen/logrus"
 )
 
 type CredentialController struct {
-	service         inboxcredential.Service
-	providerService inbox.ProviderService
-	log             *logrus.Logger
+	service           inboxcredential.Service
+	imapServerService imapserver.Service
+	providerService   inbox.ProviderService
+	log               *logrus.Logger
 	baseController
 }
 
@@ -45,8 +50,11 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 		c.respondAuthError(w, err)
 		return
 	}
+
 	provider, err := c.providerService.GetProvider(ctx, address)
 	if err != nil {
+		// this will be a 404 if this provider isn't known, and the frontend should present a form
+		// to collect the server connection info
 		c.respondError(w, err)
 		return
 	}
@@ -73,7 +81,6 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 
 const testHeaderCredentialAddress = "X-Test-Address"
 
-// /credential
 func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
@@ -95,4 +102,55 @@ func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *htt
 		Expires: time.Unix(cred.Expires, 0).Format(time.RFC3339),
 	}
 	c.respond(w, http.StatusOK, res)
+}
+
+func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	reqBody := StoreImapServerAndCredentialsRequest{}
+	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	parsedEmail, err := emailaddress.Parse(addr)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	// revisit - for now, don't allow users to overwrite
+	_, err = c.imapServerService.FindByDomain(ctx, parsedEmail.Domain)
+	if !errors.Is(err, mailboxsweep.ErrNotFound) {
+		resErr := fmt.Errorf("cannot update - a server record exists for domain %s", parsedEmail.Domain)
+		c.respondError(w, resErr, withOverrideStatusCode(http.StatusUnprocessableEntity))
+		return
+	} else if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	server := imapserver.Server{
+		Domain: parsedEmail.Domain,
+		Host:   reqBody.ImapHost,
+		Port:   reqBody.ImapPort,
+	}
+	err = c.imapServerService.Store(ctx, server)
+	if err != nil {
+		if errors.Is(err, imapserver.ErrInvalidDomain) || errors.Is(err, imapserver.ErrInvalidHost) || errors.Is(err, imapserver.ErrInvalidPort) {
+			c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+			return
+		}
+	}
+
+	resBody := CreateCredentialResponse{
+		Address: addr,
+	}
+	c.respond(w, http.StatusOK, resBody)
 }

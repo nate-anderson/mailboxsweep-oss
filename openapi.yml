@@ -366,6 +366,20 @@ components:
         message:
           type: string
 
+    StoreImapServerAndCredentialsRequest:
+      type: object
+      required:
+        - password
+        - imapHost
+        - imapPort
+      properties:
+        password:
+          type: string
+        imapHost:
+          type: string
+        imapPort:
+          type: integer
+
     UpdateChangeSetResponse:
       type: object
       required:
@@ -485,6 +499,28 @@ paths:
                 $ref: '#/components/schemas/GetCredentialResponse'
         '404':
           description: Not found - probably not created
+
+  /imap/server:
+    post:
+      operationId: storeImapServerAndCredentials
+      description: Store connection details and credentials for a new IMAP server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreImapServerAndCredentialsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCredentialResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
 
   /user:
     get:
