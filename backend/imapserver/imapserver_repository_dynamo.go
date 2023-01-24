@@ -52,7 +52,7 @@ func (r DefaultRepository) FindByDomain(ctx context.Context, domain string) (*Se
 	}
 
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.ErrNotFound
+		return nil, mailboxsweep.NotFoundError(fmt.Errorf("domain %s not known", domain))
 	}
 
 	var s Server
