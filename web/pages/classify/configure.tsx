@@ -7,10 +7,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { getYear } from "date-fns";
-import { SelectedClassifier } from "./classifier";
+import { SelectedClassifier } from "../../lib/classifier";
 
 import type {} from '@mui/x-date-pickers/themeAugmentation';
-import SelectedClassifierList from "./list";
+import SelectedClassifierList from "../../components/classifier-inputs/list";
 
 const year = getYear(new Date());
 

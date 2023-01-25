@@ -144,7 +144,7 @@ export default function Login() {
                 }
                 console.log({ getInboxCredentialError: error });
             })
-    }, []);
+    }, [changeError]);
 
     const submitCredential = () => {
         changeSubmitButtonEnabled(false);

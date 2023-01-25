@@ -24,7 +24,7 @@ export default function Login() {
             })
             .catch(console.error);
 
-    }, [router.isReady, router.query]);
+    }, [router.isReady, router.query, router]);
 
     return (
         <Container component="main">

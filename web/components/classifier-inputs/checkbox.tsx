@@ -1,9 +1,6 @@
-import { SelectedClassifier, dateFormat } from "../classifier";
 import ClassifierCard from "./card";
 import ListItemText from "@mui/material/ListItemText";
-import { parse } from "date-fns";
-import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
-import TextField from "@mui/material/TextField";
+import { SelectedClassifier } from "../../lib/classifier";
 import { DraggableProvidedDraggableProps, DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface Props {
@@ -11,19 +8,13 @@ interface Props {
     index: number;
     toggleEnabled: () => void;
     expanded: boolean;
-    toggleExpanded: () => void,
-    setInput: (value: Date | null) => void;
+    toggleExpanded: () => void;
     draggableRef: (element: HTMLElement | null) => void;
     draggableProps: DraggableProvidedDraggableProps;
     dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
-};
+}
 
-export default function DateClassifierCard(props: Props) {
-    let value = new Date();
-    if (props.classifier.initValue) {
-        value = parse(props.classifier.initValue!.toString(), dateFormat, new Date())
-    }
-
+export default function CheckboxClassifierCard(props: Props) {
     return <ClassifierCard
         key={props.index}
         expanded={props.expanded}
@@ -39,11 +30,5 @@ export default function DateClassifierCard(props: Props) {
                 paddingY: 2,
             }}
         >{props.classifier.name}</ListItemText>
-        <MobileDatePicker
-            value={value}
-            onChange={props.setInput}
-            label={props.classifier.inputLabel}
-            renderInput={params => <TextField sx={{ maxWidth: "140px", marginRight: 1 }} {...params} />}
-        />
     </ClassifierCard>
 }

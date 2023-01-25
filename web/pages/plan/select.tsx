@@ -100,8 +100,8 @@ const renderPlanCard = (plan: Plan, submit: () => void) => {
                 maxWidth: "400px",
                 color: "var(--color-gray)"
             }}>
-                {plan.features.map(feature => {
-                    return <li>{feature}</li>
+                {plan.features.map((feature, i) => {
+                    return <li key={i}>{feature}</li>
                 })}
             </ul>
             <Button

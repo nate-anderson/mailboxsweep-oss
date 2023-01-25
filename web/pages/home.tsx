@@ -79,7 +79,7 @@ export default function Home() {
                     setClassificationStatus(res.status.status);
                 }
             })
-    }, []);
+    }, [setErrorMessage]);
 
     return (
         <>

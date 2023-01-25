@@ -1,4 +1,4 @@
-import { Classifier, InputFormat } from "../../client-gen";
+import { Classifier, InputFormat } from "../client-gen";
 
 export const dateFormat = "MM/dd/yyyy";
 

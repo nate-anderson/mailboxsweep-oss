@@ -40,7 +40,7 @@ export default function Login() {
             showRedirectSnackbar(true);
         }
         
-    }, [router.isReady, router.query])
+    }, [router.isReady, router.query, router, showRedirectSnackbar])
 
     return (
         <Container component="main">

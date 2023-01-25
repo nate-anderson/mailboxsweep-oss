@@ -1,7 +1,7 @@
 import List from "@mui/material/List";
-import CheckboxClassifierCard from "./inputs/checkbox";
-import DateClassifierCard from "./inputs/date";
-import StringClassifierCard from "./inputs/string";
+import CheckboxClassifierCard from "./checkbox";
+import DateClassifierCard from "./date";
+import StringClassifierCard from "./string";
 import {
     DragDropContext,
     Droppable,
@@ -12,7 +12,7 @@ import {
     DraggableProvidedDraggableProps,
   } from 'react-beautiful-dnd';
 import { Dispatch, SetStateAction } from "react";
-import { dateFormat, reorder, SelectedClassifier } from "./classifier";
+import { dateFormat, reorder, SelectedClassifier } from "../../lib/classifier";
 import { format } from "date-fns";
 import { InputFormat } from "../../client-gen";
 

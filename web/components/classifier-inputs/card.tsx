@@ -1,4 +1,4 @@
-import { SelectedClassifier } from "../classifier";
+import { SelectedClassifier } from "../../lib/classifier";
 import Card from "@mui/material/Card";
 import ListItemButton from "@mui/material/ListItemButton";
 import IconButton from "@mui/material/IconButton";
