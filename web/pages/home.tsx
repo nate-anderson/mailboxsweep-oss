@@ -7,16 +7,58 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { FolderMessageCount } from "../client-gen";
+import { ClassificationStatus, FolderMessageCount } from "../client-gen";
 import { API } from "../client";
 import { useEffect, useState } from "react";
+import { useSnackbar } from "../components/snackbar";
+
+const renderClassificationStatus = (status: ClassificationStatus.status | undefined) => {
+    const boxify = (children: React.ReactNode) => (<Box sx={{
+        marginTop: 3,
+        display: 'flex',
+        flexDirection: "column",
+        alignItems: "center",
+    }}>
+        {children}
+    </Box>);
+
+    switch (status) {
+        case ClassificationStatus.status.IN_PROGRESS:
+            return boxify(<Alert severity="info" variant="filled" sx={{
+                    maxWidth: 600,
+                    backgroundColor: "var(--color-accent)"
+                }}>
+                <AlertTitle>Inbox Scan In Progress</AlertTitle>
+                We're categorizing your inbox messages now. This requires going through a lot of emails and can take some time. We'll send you a message when we're ready to start cleaning up!
+            </Alert>);
+
+        case ClassificationStatus.status.COMPLETE:
+            return boxify(<Alert severity="success" variant="filled" sx={{
+                maxWidth: 600,
+            }}>
+                    <AlertTitle>Inbox Scan Complete!</AlertTitle>
+                    Your inbox scan is complete! Let's start cleaning up.
+                </Alert>); 
+        case ClassificationStatus.status.ERRORED:
+            return boxify(<Alert severity="error" variant="filled" sx={{
+                    maxWidth: 600,
+                }}>
+                    <AlertTitle>Inbox Scan In Progress</AlertTitle>
+                    Something went wrong while classifying your inbox messages. Please try again, or contact support for help.
+                </Alert>);
+        case undefined:
+            // display nothing, the stepper should still be visible at this point
+            return <></>;
+    }
+}
 
 export default function Home() {
     const [ inboxFolders, setInboxFolders ] = useState<FolderMessageCount[]>([]);
     const [ address, setAddress ] = useState("");
-    const [ errorMessage, setErrorMessage ] = useState<string | undefined>();
+    const [ errorSnackbar, setErrorMessage ] = useSnackbar("error");
     const [ allMessagesCount, setAllMessagesCount ] = useState<number>(0);
     const [ unreadMessagesCount, setUnreadMessagesCount ] = useState<number>(0);
+    const [ classificationStatus, setClassificationStatus ] = useState<ClassificationStatus.status | undefined>();
 
     useEffect(() => {
         API.getInboxFolders()
@@ -32,27 +74,23 @@ export default function Home() {
             .catch((err) => {
                 setErrorMessage(err as string);
             })
+
+        API.getClassificationStatus()
+            .then((res) => {
+                if (res.status) {
+                    setClassificationStatus(res.status.status);
+                }
+            })
     }, []);
 
     return (
         <>
             <Navbar page="Home" />
             <Container component="main">
+                {errorSnackbar}
                 <CssBaseline />
-                <Box sx={{
-                    marginTop: 3,
-                    display: 'flex',
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}>
-                    <Alert severity="info" variant="filled" sx={{
-                        maxWidth: 600,
-                        backgroundColor: "var(--color-accent)"
-                    }}>
-                        <AlertTitle>Inbox Scan In Progress</AlertTitle>
-                        We're categorizing your inbox messages now. This requires going through a lot of emails and can take some time. We'll send you a message when we're ready to start cleaning up!
-                    </Alert>
-                </Box>
+                
+                {renderClassificationStatus(classificationStatus)}
                 
                 <Card
                     sx={{
