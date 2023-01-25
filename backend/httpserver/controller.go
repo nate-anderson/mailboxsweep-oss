@@ -3,6 +3,7 @@ package httpserver
 import (
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
+	"mailboxsweep/classifyrequest"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
@@ -26,6 +27,7 @@ type Controller struct {
 func NewController(
 	inboxUserService inboxuser.Service,
 	credentialService inboxcredential.Service,
+	classifyRequestService classifyrequest.Service,
 	classificationService classification.Service,
 	metadataService inbox.MetadataService,
 	providerService inbox.ProviderService,
@@ -39,7 +41,7 @@ func NewController(
 	log *logrus.Logger,
 ) *Controller {
 	credentialController := NewCredentialController(credentialService, providerService, log)
-	classificationController := NewClassificationController(classificationService, log)
+	classificationController := NewClassificationController(classificationService, classifyRequestService, log)
 	folderController := NewFolderController(metadataService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
 	changeSetController := NewChangeSetController(changesetService, inboxChangesetService, log)

@@ -82,6 +82,31 @@ components:
         classification:
           $ref: '#/components/schemas/Classification'
 
+    ClassificationStatus:
+      type: object
+      required:
+        - startedAt
+        - status
+      properties:
+        startedAt:
+          type: string
+        status:
+          type: string
+          enum:
+            - in_progress
+            - complete
+            - errored
+
+    ClassificationStatusResponse:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+        status:
+          $ref: '#/components/schemas/ClassificationStatus'
+
     Classifier:
       type: object
       required:
@@ -721,6 +746,20 @@ paths:
           description: Classification still pending
         '404':
           description: Not found
+        '500':
+          description: Internal server error
+  
+  /inbox/classification/status:
+    get:
+      operationId: getClassificationStatus
+      description: Get the status of the current classification request for this account (if any)
+      responses:
+        '200':
+          description: Classification status response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassificationStatusResponse'
         '500':
           description: Internal server error
 

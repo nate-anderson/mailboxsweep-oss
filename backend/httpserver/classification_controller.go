@@ -4,25 +4,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mailboxsweep"
 	"mailboxsweep/classification"
+	"mailboxsweep/classifyrequest"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ClassificationController struct {
-	classificationService classification.Service
-	log                   *logrus.Logger
+	classificationService  classification.Service
+	classifyRequestService classifyrequest.Service
+	log                    *logrus.Logger
 	baseController
 }
 
-func NewClassificationController(classificationService classification.Service, log *logrus.Logger) *ClassificationController {
+func NewClassificationController(classificationService classification.Service, classifyRequestService classifyrequest.Service, log *logrus.Logger) *ClassificationController {
 	return &ClassificationController{
-		classificationService: classificationService,
-		log:                   log,
-		baseController:        baseController{log},
+		classificationService:  classificationService,
+		classifyRequestService: classifyRequestService,
+		log:                    log,
+		baseController:         baseController{log},
 	}
 }
 
@@ -125,6 +130,57 @@ func (c ClassificationController) GetClassifiers(w http.ResponseWriter, req *htt
 	resBody.Classifiers = cls
 
 	c.respond(w, http.StatusOK, resBody)
+}
+
+func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	resBody := ClassificationStatusResponse{
+		Address: addr,
+	}
+
+	openRequests, err := c.classifyRequestService.FindOpenRequests(ctx)
+	if errors.Is(err, classifyrequest.ErrNoOpenRequests) || len(openRequests) == 0 {
+		c.respond(w, http.StatusOK, resBody)
+		return
+	} else if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	var open classifyrequest.ClassifyRequest
+	if len(openRequests) == 1 {
+		open = openRequests[0]
+	} else {
+		for _, r := range openRequests {
+			if r.RequestedAt > open.RequestedAt {
+				open = r
+			}
+		}
+	}
+
+	var status ClassificationStatusStatus
+	startedAt := time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
+
+	if open.Error != nil {
+		status = Errored
+	} else if open.CompletedAtUnix != nil {
+		status = Complete
+	} else {
+		status = InProgress
+	}
+	resBody.Status = &ClassificationStatus{
+		StartedAt: startedAt,
+		Status:    status,
+	}
+
+	c.respond(w, http.StatusOK, open)
 }
 
 func convertClassification(cl classification.Classification) Classification {

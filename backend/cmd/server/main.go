@@ -241,6 +241,7 @@ func main() {
 	controller := httpserver.NewController(
 		userService,
 		credentialService,
+		classifyRequestService,
 		classificationService,
 		metadataService,
 		providerService,
