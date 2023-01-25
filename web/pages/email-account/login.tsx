@@ -11,10 +11,85 @@ import Grid from '@mui/material/Grid';
 import IconEnvelope from "@mui/icons-material/Email";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../client-gen";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import { parseISO, format } from "date-fns";
 import { displayFormat } from "../../dates";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import MUIButton from "@mui/material/Button";
+import IconHelp from "@mui/icons-material/HelpOutline";
+import Link from "next/link";
+import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
+
+const renderPasswordOnly = (password: string, setPassword: (value: string) => void) => {
+    return <Grid item xs={12} sm={12}>
+        <TextField
+            label="Password"
+            type="password"
+            autoComplete="none"
+            required
+            fullWidth
+            value={password}
+            onChange={(e) => {
+                setPassword(e.target.value);
+            }}
+        ></TextField>
+    </Grid>
+};
+
+const renderPasswordAndIMAP = (
+    password: string,
+    setPassword: (value: string) => void,
+    host: string,
+    setHost: (value: string) => void,
+    port: number | undefined,
+    setPort: (port: number) => void) => {
+        return (
+            <>
+                <Grid item xs={12} sm={12}>
+                    <TextField
+                        label="Password"
+                        type="password"
+                        autoComplete="none"
+                        required
+                        fullWidth
+                        value={password}
+                        onChange={(e) => {
+                            setPassword(e.target.value);
+                        }}
+                    ></TextField>
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                    <TextField
+                        autoFocus
+                        label="IMAP Host"
+                        type="text"
+                        autoComplete="none"
+                        required
+                        fullWidth
+                        value={host}
+                        onChange={(e) => {
+                            setHost(e.target.value);
+                        }}
+                    ></TextField>
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                    <TextField
+                        label="IMAP Port"
+                        type="text"
+                        autoComplete="none"
+                        required
+                        fullWidth
+                        value={port}
+                        onChange={(e) => {
+                            setPort(Number(e.target.value));
+                        }}
+                    ></TextField>
+                </Grid>
+            </>
+        );
+    }
 
 export default function Login() {
     const [ address, changeAddress ] = useState("");
@@ -23,8 +98,13 @@ export default function Login() {
     const [ created, changeCreated ] = useState<Date>();
     const [ expires, changeExpires ] = useState<Date>();
     const [ credentialSet, changeCredentialSet ] = useState(false);
-    const [ error, changeError ] = useState<string | undefined>(undefined); 
-    const [ showSuccess, changeShowSuccess ] = useState(false);
+    const [ errorSnackbar, changeError ] = useSnackbar("error"); 
+    
+    const [ showUnknownServerDialog, setShowUnknownServerDialog ] = useState(false);
+    const [ showImapServerForm, setShowImapServerForm ] = useState(false);
+
+    const [ imapHost, setImapHost ] = useState("");
+    const [ imapPort, setImapPort ] = useState<number | undefined>();
 
     const resetFilledInput = () => changePassword("********");
 
@@ -72,41 +152,58 @@ export default function Login() {
             password,
         })
         .then(() => {
-            changeShowSuccess(true);
+            showSuccess(true);
             resetFilledInput();
         })
         .catch((err) => {
             if (err instanceof ApiError) {
                 const e = err as ApiError;
-                if (e.status === 502) {
-                    changeError("We couldn't log into your email provider with this password. Please try again.");
+                switch (e.status) {
+                    case 502:
+                        changeError("We couldn't log into your email provider with this password. Please try again.");
+                        break;
+                    case 404:
+                        setShowUnknownServerDialog(true);
+                        setShowImapServerForm(true);
+                        break;
+                    default:
+                        changeError("Something went wrong: " + e.body);
                 }
             }
         })
-    } 
+    }
+
+    const updatePassword = (password: string) => {
+        changePassword(password);
+        changeSubmitButtonEnabled(password !== "")
+    }
+
+    const [ successSnackbar, showSuccess ] = useConstantSnackbar("Inbox credential updated!", "success");
 
     return (
         <>
             <Navbar page="Email Account"/>
-            <Snackbar
-                open={showSuccess}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                autoHideDuration={5000}
-                onClose={() => changeShowSuccess(false)}
-            >
-                <Alert variant="filled" severity="success">
-                Inbox credential updated!
-                </Alert>
-            </Snackbar>
-            <Snackbar
-                open={error !== undefined}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                onClose={() => changeError(undefined)}
-                autoHideDuration={10000}
-            >
-                <Alert severity="error">{error}</Alert>
-            </Snackbar>
+            {successSnackbar}
+            {errorSnackbar}
             <Container component="main">
+                <Dialog
+                    open={showUnknownServerDialog}
+                    aria-labelledby="login-email-modal-title"
+                    aria-describedby="login-email-modal-text"
+                    onClose={() => setShowUnknownServerDialog(false)}
+                >   
+                    <DialogTitle>We need a bit more info.</DialogTitle>
+                    <DialogContent>
+                    We don't recognize your email provider - but that's okay! As long as your email provider supports IMAP (and most do!) we can continue.
+                    If you need help locating your email provider's IMAP settings, <a>click here. @TODO</a>
+                    </DialogContent>
+                    <DialogActions>
+                        <MUIButton onClick={() => setShowUnknownServerDialog(false)}>
+                            Continue
+                        </MUIButton>
+                    </DialogActions>
+                    
+                </Dialog>
                 <CssBaseline />
                 <Box sx={{
                     marginTop: 6,
@@ -187,24 +284,24 @@ export default function Login() {
                                     value={address}
                                 ></TextField>
                             </Grid>
-                            <Grid item xs={12} sm={12}>
-                                <TextField
-                                    label="Password"
-                                    type="password"
-                                    autoComplete="none"
-                                    fullWidth
-                                    value={password}
-                                    onChange={(e) => {
-                                        changePassword(e.target.value);
-                                        changeSubmitButtonEnabled(e.target.value !== "");
-                                    }}
-                                ></TextField>
-                            </Grid>
+                            {showImapServerForm
+                            ? renderPasswordAndIMAP(password, updatePassword, imapHost, setImapHost, imapPort, setImapPort)
+                            : renderPasswordOnly(password, updatePassword) }
+                            
                 
                             <Grid item xs={12} sm={12} sx={{
                                 display: "flex",
-                                justifyContent: "right",
+                                justifyContent: showImapServerForm ? "space-between" : "right",
                             }}>
+                                {showImapServerForm
+                                    ? <Link href="#">
+                                        <MUIButton endIcon={<IconHelp />}>
+                                            Help
+                                        </MUIButton>
+                                    </Link>
+                                    : <></>
+                                }
+                                
                                 <Button
                                     disabled={!submitButtonEnabled}
                                     onClick={submitCredential}
