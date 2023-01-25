@@ -11,7 +11,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import LargeLogo from "../components/large-logo";
-import { Alert, Snackbar } from "@mui/material";
+import { useConstantSnackbar } from "../components/snackbar";
 
 const submitLogin = async (address: string, setModalOpen: (open: boolean) => void) => {
     try {
@@ -30,33 +30,21 @@ export default function Login() {
     const router = useRouter();
     const [ email, changeEmail ] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
-
-    const [ showPrompt, setShowPrompt ] = useState(false);
+    const [ redirectPromptSnackbar, showRedirectSnackbar ] = useConstantSnackbar("Please log in to continue.", "success");
 
     useEffect(() => {
         if(!router.isReady) return;
         const query = router.query;
 
         if (Boolean(query['prompt'])) {
-            setShowPrompt(true);
+            showRedirectSnackbar(true);
         }
         
     }, [router.isReady, router.query])
 
-    const closeModal = () => setModalOpen(false)
-
     return (
         <Container component="main">
-        <Snackbar
-            open={showPrompt}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            autoHideDuration={5000}
-            onClose={() => setShowPrompt(false)}
-        >
-            <Alert variant="filled" severity="success">
-            Please log in to continue.
-            </Alert>
-        </Snackbar>
+        {redirectPromptSnackbar}
         <Dialog
             open={modalOpen}
             aria-labelledby="login-email-modal-title"

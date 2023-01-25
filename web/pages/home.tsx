@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { Classifier, FolderMessageCount } from "../client-gen";
+import { FolderMessageCount } from "../client-gen";
 import { API } from "../client";
 import { useEffect, useState } from "react";
 
@@ -15,22 +15,24 @@ export default function Home() {
     const [ inboxFolders, setInboxFolders ] = useState<FolderMessageCount[]>([]);
     const [ address, setAddress ] = useState("");
     const [ errorMessage, setErrorMessage ] = useState<string | undefined>();
-    const [ messageCount, setMessageCount ] = useState<number>(0);
+    const [ allMessagesCount, setAllMessagesCount ] = useState<number>(0);
+    const [ unreadMessagesCount, setUnreadMessagesCount ] = useState<number>(0);
 
     useEffect(() => {
         API.getInboxFolders()
             .then((res) => {
                 setInboxFolders(res.folders);
                 setAddress(res.address);
-                const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.count, 0);
-                setMessageCount(totalMessageCount);
+                const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.allMessages, 0);
+                const unreadMessageCount = res.folders.reduce((sum, folder) => sum + folder.unreadMessages, 0);
+
+                setAllMessagesCount(totalMessageCount);
+                setUnreadMessagesCount(unreadMessageCount);
             })
             .catch((err) => {
                 setErrorMessage(err as string);
             })
-    }, [
-        
-    ]);
+    }, []);
 
     return (
         <>
@@ -75,12 +77,12 @@ export default function Home() {
                             marginTop: 1,
                             color: "var(--color-gray)"
                         }}>
-                            {messageCount.toLocaleString()} Messages
+                            {allMessagesCount.toLocaleString()} Messages
                         </Typography>
                         <Typography sx={{
                             color: "var(--color-accent)"
                         }}>
-                            39,780 Unread @TODO UNIMPLEMENTED
+                            {unreadMessagesCount.toLocaleString()} Unread
                         </Typography>
                     </CardContent>
                     

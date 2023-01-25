@@ -1,12 +1,12 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API } from "../../client";
-import { Classifier, InputFormat } from "../../client-gen";
+import { Classifier, FolderMessageCount } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from '@mui/material/Container';
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { getYear, format } from "date-fns";
+import { getYear } from "date-fns";
 import { SelectedClassifier } from "./classifier";
 
 import type {} from '@mui/x-date-pickers/themeAugmentation';
@@ -25,7 +25,8 @@ export default function Configure() {
     const [ expandedIndex, setExpandedIndex ] = useState<number | undefined>();
     const [ error, setError ] = useState<string | undefined>();
     const [ selectedClassifiers, setSelectedClassifiers ] = useState<SelectedClassifier[]>([]);
-    
+    const [ folders, setFolders ] = useState<FolderMessageCount[]>([]);
+
     useEffect(() => {
         API.getClassifiers()
             .then((res) => {
@@ -51,6 +52,14 @@ export default function Configure() {
                 } catch (error) {
                     setError(error as string);
                 }
+            })
+            .catch((err) => {
+                setError(err);
+            });
+
+        API.getInboxFolders()
+            .then((res) => {
+                setFolders(res.folders);
             })
             .catch((err) => {
                 setError(err);

@@ -11,10 +11,9 @@ import Typography from "@mui/material/Typography";
 import IconGrading from "@mui/icons-material/Grading";
 import Paper from "@mui/material/Paper";
 import Button from "../../components/button";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import { parseISO, format, formatISO } from "date-fns";
 import { displayFormat } from "../../dates";
+import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 
 const renderAgreedAt = (agr?: UserAgreement) => {
     if (!agr?.agreedAt) {
@@ -83,8 +82,8 @@ export default function Agreement() {
             })
     }, [router.isReady, router.query]);
 
-    const [ showSuccess, setShowSuccess ] = useState(false);
-    const [ failureMessage, setFailureMessage ] = useState<string | undefined>(undefined);
+    const [ successSnackbar, setShowSuccess ] = useConstantSnackbar("Agreement submitted!", "success");
+    const [ errorSnackbar, setError ] = useSnackbar("error");
 
     const submitAgreement = async (key: string): Promise<void> => {
         try {
@@ -106,7 +105,7 @@ export default function Agreement() {
             
         } catch (err) {
             console.log(err);
-            setFailureMessage("Failure submitting agreement. Please try again later.");
+            setError("Failure submitting agreement. Please try again later.");
         }
     }
 
@@ -114,27 +113,9 @@ export default function Agreement() {
         <>
             <Navbar />
 
-            {/* Success snackbar */}
-            <Snackbar
-                open={showSuccess}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                autoHideDuration={5000}
-                onClose={() => setShowSuccess(false)}
-            >
-                <Alert variant="filled" severity="success">
-                Agreement submitted!
-                </Alert>
-            </Snackbar>
+            {successSnackbar}
 
-            {/* Failure snackbar */}
-            <Snackbar
-                open={Boolean(failureMessage)}
-                autoHideDuration={10000}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                onClose={() => setFailureMessage(undefined)}
-            >
-                <Alert severity="error">{failureMessage}</Alert>
-            </Snackbar>
+            {errorSnackbar}
 
             <Container component="main">
                 <CssBaseline />

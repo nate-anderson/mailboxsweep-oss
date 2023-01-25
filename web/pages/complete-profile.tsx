@@ -12,16 +12,17 @@ import Grid from '@mui/material/Grid';
 import Button from '../components/button';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { useSnackbar, useConstantSnackbar } from "../components/snackbar";
 
 export default function CompleteProfile() {
     const [ nameFirst, changeNameFirst ] = useState("");
     const [ nameLast, changeNameLast ] = useState("");
     const [ address, changeAddress ] = useState("");
 
-    const [ showSuccess, setShowSuccess ] = useState(false);
-    const [ failureMessage, setFailureMessage ] = useState<string | null>(null);
-
     const [ saveButtonEnabled, setSaveButtonEnabled ] = useState(false);
+
+    const [ successSnackbar, setShowSuccess ] = useConstantSnackbar("Profile data updated!", "success");
+    const [ errorSnackbar, setError ] = useSnackbar("error");
 
     useEffect(() => {
         API.getUserData()
@@ -46,34 +47,15 @@ export default function CompleteProfile() {
             setSaveButtonEnabled(false);
         }).catch((error) => {
             console.log(typeof(error));
-            setFailureMessage("Something went wrong. Please try again later.");
+            setError("Something went wrong. Please try again later.");
         });
     };
 
     return (
         <>
             <Navbar page="My Profile" />
-            {/* Success snackbar */}
-            <Snackbar
-                open={showSuccess}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                autoHideDuration={5000}
-                onClose={() => setShowSuccess(false)}
-            >
-                <Alert variant="filled" severity="success">
-                Profile data updated!
-                </Alert>
-            </Snackbar>
-
-            {/* Failure snackbar */}
-            <Snackbar
-                open={failureMessage !== null}
-                autoHideDuration={10000}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                onClose={() => setFailureMessage(null)}
-            >
-                <Alert severity="error">{failureMessage}</Alert>
-            </Snackbar>
+            {successSnackbar}
+            {errorSnackbar}
             <Container component="main">
                 <CssBaseline />
                 <Box sx={{
@@ -113,6 +95,7 @@ export default function CompleteProfile() {
                                 <TextField
                                     autoFocus={nameFirst === ""}
                                     label="First Name"
+                                    required
                                     fullWidth
                                     value={nameFirst}
                                     onChange={e => {
@@ -124,6 +107,7 @@ export default function CompleteProfile() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="Last Name"
+                                    required
                                     fullWidth
                                     value={nameLast}
                                     onChange={e => {
