@@ -53,7 +53,6 @@ const renderClassificationStatus = (status: ClassificationStatus.status | undefi
 }
 
 export default function Home() {
-    const [ inboxFolders, setInboxFolders ] = useState<FolderMessageCount[]>([]);
     const [ address, setAddress ] = useState("");
     const [ errorSnackbar, setErrorMessage ] = useSnackbar("error");
     const [ allMessagesCount, setAllMessagesCount ] = useState<number>(0);
@@ -63,7 +62,6 @@ export default function Home() {
     useEffect(() => {
         API.getInboxFolders()
             .then((res) => {
-                setInboxFolders(res.folders);
                 setAddress(res.address);
                 const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.allMessages, 0);
                 const unreadMessageCount = res.folders.reduce((sum, folder) => sum + folder.unreadMessages, 0);
