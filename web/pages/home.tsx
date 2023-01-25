@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ClassificationStatus, FolderMessageCount } from "../client-gen";
+import { ClassificationStatus } from "../client-gen";
 import { API } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";

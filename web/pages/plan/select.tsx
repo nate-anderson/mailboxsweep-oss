@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import IconArrowForward from "@mui/icons-material/ArrowForward";
 import currency from "currency.js";
-import styled from "@emotion/styled";
 
 const renderPrice = (price: currency) => {
     const cents = String(price.cents()).padStart(2, '0');

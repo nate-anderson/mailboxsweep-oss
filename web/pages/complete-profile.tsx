@@ -10,8 +10,6 @@ import IconAccountCircle from "@mui/icons-material/AccountCircle";
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Button from '../components/button';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import { useSnackbar, useConstantSnackbar } from "../components/snackbar";
 
 export default function CompleteProfile() {
