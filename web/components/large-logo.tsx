@@ -1,10 +1,14 @@
 import Typography from "@mui/material/Typography";
 
-export default function LargeLogo() {
+interface Props {
+    fontSize?: string;
+}
+
+export default function LargeLogo(props: Props) {
     return (<Typography sx={{
         marginY: 3,
         fontFamily: "Lobster",
-        fontSize: "3em",
+        fontSize: props.fontSize ?? "3.5em",
         color: "var(--color-primary)"
     }}>MailboxSweep</Typography>);
 }

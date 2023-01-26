@@ -12,6 +12,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import LargeLogo from "../components/large-logo";
 import { useConstantSnackbar } from "../components/snackbar";
+import ImageLogo from "../components/image-logo";
 
 const submitLogin = async (address: string, setModalOpen: (open: boolean) => void) => {
     try {
@@ -58,12 +59,12 @@ export default function Login() {
         </Dialog>
             <CssBaseline />
             <Box sx={{
-                marginTop: "20vh",
+                marginTop: "25vh",
                 display: 'flex',
                 flexDirection: "column",
                 alignItems: "center",
             }}>
-                <LargeLogo />
+                <ImageLogo />
                 <Typography
                     align="center"
                     sx={{
