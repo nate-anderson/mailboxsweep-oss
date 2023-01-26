@@ -18,6 +18,7 @@ import (
 	"mailboxsweep/payment"
 	"mailboxsweep/session"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -82,6 +83,8 @@ type serverConfig struct {
 	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 
 	CORSAllowedOrigin string `mapstructure:"CORS_ALLOWED_ORIGIN"`
+
+	SigningKeyFilePath string `mapstructure:"SIGNING_KEY_FILE_PATH"`
 }
 
 func main() {
@@ -220,7 +223,17 @@ func main() {
 		log.Fatal("LOGIN_TOKEN_LENGTH must be set and > 0")
 	}
 	loginLinkDurationMinutes := time.Minute * time.Duration(cfg.LoginLinkDurationMinutes)
-	loginService := login.NewService(loginRepo, userService, sessionService, loginSender, loginLinkDurationMinutes, cfg.LoginTokenLength)
+
+	signingKeyFile, err := os.Open(cfg.SigningKeyFilePath)
+	if err != nil {
+		log.Fatalf("failed to open signing key file %s: %s", cfg.SigningKeyFilePath, err)
+	}
+	cert, err := login.ReadCert(signingKeyFile)
+	if err != nil {
+		log.Fatalf("failed to read signing cert: %s", err)
+	}
+
+	loginService := login.NewService(loginRepo, userService, sessionService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
 		log.Fatal("cookie domain and path are not configured")
@@ -233,7 +246,7 @@ func main() {
 
 	changesetService := changeset.NewDefaultService(changesetRepo)
 	if cfg.StripeAPIKey == "" {
-		log.Fatalf("stripe API key must be set")
+		log.Fatal("stripe API key must be set")
 	}
 
 	inboxChangesetService := inboxchangeset.NewService(changesetService, classificationService, providerService, credentialService)

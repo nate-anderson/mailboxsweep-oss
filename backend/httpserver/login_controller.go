@@ -54,18 +54,23 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Request, token string) {
+func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Request, token, signature string) {
 	ctx := req.Context()
 	token = strings.TrimSpace(
 		strings.ToLower(
 			token,
 		),
 	)
+	signature = strings.TrimSpace(
+		strings.ToLower(
+			signature,
+		),
+	)
 
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	user, session, err := c.service.ValidateLoginLink(ctx, token)
+	user, session, err := c.service.ValidateLoginLink(ctx, token, signature)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return

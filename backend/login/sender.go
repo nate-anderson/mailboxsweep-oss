@@ -9,11 +9,14 @@ import (
 )
 
 type SendRequest struct {
-	Expires time.Time
-	Token   string
-	Address string
+	Expires   time.Time
+	Token     string
+	Signature string
+	Address   string
 	// we may not have this, so it's optional
 	Name *string
+	// @TODO unimplemented
+	IsFirstLogin bool
 }
 
 // Sender sends a login link to a user

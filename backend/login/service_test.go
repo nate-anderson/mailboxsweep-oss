@@ -25,8 +25,11 @@ func TestLoginService(t *testing.T) {
 	sessionRepo := session.NewDynamoSessionRepository(db, table)
 	sessionService := session.NewService(sessionRepo, 10, time.Minute)
 
+	cert, err := ReadTestCert(t)
+	assert.ThatError(t, err).IsNil()
+
 	repo := NewDynamoLinkRepository(db, table)
-	service := NewService(repo, userService, sessionService, sender, time.Minute, 20)
+	service := NewService(repo, userService, sessionService, sender, cert, time.Minute, 20)
 
 	testAddress := "admin3@example.org"
 	testIP := "192.168.0.24"
