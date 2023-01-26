@@ -32,9 +32,9 @@ import (
 )
 
 type serverConfig struct {
-	HTTPPort int    `mapstructure:"HTTP_PORT"`
-	Env      string `mapstructure:"ENV"`
-	SiteURL  string `mapstructure:"BASE_URL"`
+	HTTPPort     int    `mapstructure:"HTTP_PORT"`
+	Env          string `mapstructure:"ENV"`
+	LoginBaseURL string `mapstructure:"BASE_URL"`
 
 	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
@@ -213,7 +213,7 @@ func main() {
 	var loginSender login.Sender
 
 	if cfg.Env == "dev" {
-		loginSender = login.NewLogSender(log, cfg.SiteURL)
+		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
 	}
 
 	if cfg.LoginLinkDurationMinutes == 0 {

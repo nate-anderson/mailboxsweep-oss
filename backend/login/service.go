@@ -126,9 +126,10 @@ func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedB
 	}
 
 	sendReq := SendRequest{
-		Address: sendAddress,
-		Expires: expires,
-		Token:   link.Token,
+		Address:   sendAddress,
+		Expires:   expires,
+		Token:     link.Token,
+		Signature: link.Signature,
 	}
 	return existingUser, s.sender.Send(ctx, sendReq)
 }

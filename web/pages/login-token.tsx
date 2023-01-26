@@ -15,9 +15,9 @@ export default function Login() {
         const query = router.query;
 
         const loginToken = query["token"] as string;
-        const signature = query["sig"];
+        const signature = query["sig"] as string;
 
-        API.submitLoginToken(loginToken)
+        API.submitLoginToken(loginToken, signature)
             .then((res) => {
                 console.log({ loginSuccess: res });
                 router.push("/home");

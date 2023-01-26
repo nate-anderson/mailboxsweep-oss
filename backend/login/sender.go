@@ -2,7 +2,7 @@ package login
 
 import (
 	"context"
-	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -30,8 +30,15 @@ type LogSender struct {
 }
 
 func (l LogSender) Send(ctx context.Context, req SendRequest) error {
-	url := fmt.Sprintf("%s/%s", l.baseURL, req.Token)
-	l.log.Infof("LOGIN LINK for %s: %s (expires %s)", req.Address, url, req.Expires.Format(time.Kitchen))
+	query := url.Values{}
+	query.Set("token", req.Token)
+	query.Set("sig", req.Signature)
+	u, err := url.Parse(l.baseURL)
+	if err != nil {
+		return err
+	}
+	u.RawQuery = query.Encode()
+	l.log.Infof("LOGIN LINK for %s: %s (expires %s)", req.Address, u.String(), req.Expires.Format(time.Kitchen))
 	return nil
 }
 
