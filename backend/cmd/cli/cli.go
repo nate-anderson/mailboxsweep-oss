@@ -58,7 +58,7 @@ var listMailboxesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port)
+		provider, err := inbox.NewIMAPProvider(host, port, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -103,7 +103,7 @@ var listMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port)
+		provider, err := inbox.NewIMAPProvider(host, port, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -163,7 +163,7 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port)
+		provider, err := inbox.NewIMAPProvider(host, port, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -245,7 +245,7 @@ var deleteCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port)
+		provider, err := inbox.NewIMAPProvider(host, port, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

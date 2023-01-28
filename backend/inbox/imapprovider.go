@@ -3,6 +3,7 @@ package inbox
 import (
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/metering"
 	"net"
 	"strconv"
 	"strings"
@@ -14,20 +15,28 @@ type IMAPProvider struct {
 	IMAPHost string
 	IMAPPort int
 
-	client *client.Client
+	client       *client.Client
+	UsageUpdates chan metering.Update
 }
 
-func NewIMAPProvider(host string, port int) (*IMAPProvider, error) {
+func NewIMAPProvider(host string, port int, quotaBytes *int, usageUpdates chan metering.Update) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
-	cl, err := client.DialTLS(addr, nil)
+
+	opts := []metering.DialerOpt{}
+	if quotaBytes != nil {
+		opts = append(opts, metering.WithQuota(*quotaBytes))
+	}
+	dialer := metering.NewDialer(usageUpdates)
+	cl, err := client.DialWithDialerTLS(dialer, addr, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &IMAPProvider{
-		IMAPHost: host,
-		IMAPPort: port,
-		client:   cl,
+		IMAPHost:     host,
+		IMAPPort:     port,
+		client:       cl,
+		UsageUpdates: usageUpdates,
 	}, nil
 }
 

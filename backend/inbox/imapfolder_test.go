@@ -30,6 +30,8 @@ func TestIMAPFolder(t *testing.T) {
 	provider, err := NewIMAPProvider(
 		testConf.IMAPHost,
 		testConf.IMAPPort,
+		nil,
+		nil,
 	)
 	assert.ThatError(t, err).IsNil()
 

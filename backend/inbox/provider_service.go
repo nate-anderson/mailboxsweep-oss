@@ -42,7 +42,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 			return nil, err
 		}
 
-		provider, err = NewIMAPProvider(server.Host, server.Port)
+		provider, err = NewIMAPProvider(server.Host, server.Port, nil, nil)
 		if err != nil {
 			return nil, err
 		}
