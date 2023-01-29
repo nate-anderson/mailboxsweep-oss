@@ -15,6 +15,7 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
+	"mailboxsweep/metering"
 	"mailboxsweep/payment"
 	"mailboxsweep/session"
 	"net/http"
@@ -140,7 +141,10 @@ func main() {
 
 	imapServerRepo := imapserver.NewIMAPServerRepository(db, cfg.DynamoDBTable)
 	imapServerService := imapserver.NewService(imapServerRepo)
-	providerService := inbox.NewProviderService(imapServerService)
+
+	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
+
+	providerService := inbox.NewProviderService(imapServerService, usageRepo)
 
 	queue, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{

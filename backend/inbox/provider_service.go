@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mailboxsweep/imapserver"
+	"mailboxsweep/metering"
 	"net/mail"
 	"strings"
 )
@@ -14,13 +15,18 @@ type ProviderService interface {
 
 type DefaultProviderService struct {
 	imapServerService imapserver.Service
+	usageRepository   metering.UsageRepository
 }
 
-func NewProviderService(imapServerService imapserver.Service) *DefaultProviderService {
+func NewProviderService(imapServerService imapserver.Service, usageRepository metering.UsageRepository) *DefaultProviderService {
 	return &DefaultProviderService{
 		imapServerService,
+		usageRepository,
 	}
 }
+
+// Gmail quota is 2500mb/day, allow IMAP clients other than us to keep working
+var defaultQuota int = metering.Megabyte * 1800
 
 func (s DefaultProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
 	_, err := mail.ParseAddress(address)
@@ -42,7 +48,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 			return nil, err
 		}
 
-		provider, err = NewIMAPProvider(server.Host, server.Port, nil)
+		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota)
 		if err != nil {
 			return nil, err
 		}

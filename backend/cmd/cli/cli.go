@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
+	"mailboxsweep/metering"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
 )
 
@@ -58,7 +62,9 @@ var listMailboxesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port, nil)
+		ctx := context.Background()
+
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -103,7 +109,27 @@ var listMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port, nil)
+		ctx := context.Background()
+
+		awsCfg := mailboxsweep.AWSServiceConfig{
+			ServiceHost:   aws.String("localhost"),
+			ServicePort:   4566,
+			ServiceRegion: "us-west-2",
+		}
+
+		cl, err := mailboxsweep.ConnectAWSService(
+			awsCfg,
+			dynamodb.NewFromConfig,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		usageRepo := metering.NewUsageRepository(cl, "mailboxsweep")
+
+		quotaBytes := metering.Megabyte * 1800
+
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, usageRepo, &quotaBytes)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -163,7 +189,9 @@ var classifyMessagesCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port, nil)
+		ctx := context.Background()
+
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -245,7 +273,9 @@ var deleteCmd = &cobra.Command{
 			log.Fatal("password is required")
 		}
 
-		provider, err := inbox.NewIMAPProvider(host, port, nil)
+		ctx := context.Background()
+
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

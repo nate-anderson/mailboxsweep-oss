@@ -9,6 +9,7 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/metering"
 	"mailboxsweep/payment"
 	"mailboxsweep/worker"
 	"time"
@@ -95,7 +96,10 @@ func main() {
 
 	imapServerRepo := imapserver.NewIMAPServerRepository(db, cfg.DynamoDBTable)
 	imapServerService := imapserver.NewService(imapServerRepo)
-	providerService := inbox.NewProviderService(imapServerService)
+
+	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
+
+	providerService := inbox.NewProviderService(imapServerService, usageRepo)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {

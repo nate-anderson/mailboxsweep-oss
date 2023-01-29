@@ -1,15 +1,22 @@
 package inbox
 
 import (
+	"context"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/metering"
 	"strconv"
 	"sync"
 	"testing"
 )
 
 func TestIMAPFolder(t *testing.T) {
+	ctx := context.Background()
+	db := mailboxsweep.SetupTestDynamoClient()
+	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
+	defer teardown()
+
 	testConf, err := mailboxsweep.GetTestConfig()
 	if err != nil {
 		panic(err)
@@ -27,9 +34,14 @@ func TestIMAPFolder(t *testing.T) {
 		}
 	}
 
+	usageRepo := metering.NewUsageRepository(db, table)
+
 	provider, err := NewIMAPProvider(
+		ctx,
 		testConf.IMAPHost,
 		testConf.IMAPPort,
+		testConf.Address,
+		usageRepo,
 		nil,
 	)
 	assert.ThatError(t, err).IsNil()

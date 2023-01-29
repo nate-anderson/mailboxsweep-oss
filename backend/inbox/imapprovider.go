@@ -1,6 +1,7 @@
 package inbox
 
 import (
+	"context"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/metering"
@@ -18,14 +19,21 @@ type IMAPProvider struct {
 	client *client.Client
 }
 
-func NewIMAPProvider(host string, port int, quotaBytes *int) (*IMAPProvider, error) {
+func NewIMAPProvider(
+	ctx context.Context,
+	host string,
+	port int,
+	address string,
+	usageRepo metering.UsageRepository,
+	quotaBytes *int,
+) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 
 	opts := []metering.DialerOpt{}
 	if quotaBytes != nil {
 		opts = append(opts, metering.WithQuota(*quotaBytes))
 	}
-	dialer := metering.NewDialer()
+	dialer := metering.NewDialer(ctx, address, usageRepo, opts...)
 	cl, err := client.DialWithDialerTLS(dialer, addr, nil)
 	if err != nil {
 		return nil, err
