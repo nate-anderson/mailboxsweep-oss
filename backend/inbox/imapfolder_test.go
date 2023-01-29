@@ -31,7 +31,6 @@ func TestIMAPFolder(t *testing.T) {
 		testConf.IMAPHost,
 		testConf.IMAPPort,
 		nil,
-		nil,
 	)
 	assert.ThatError(t, err).IsNil()
 

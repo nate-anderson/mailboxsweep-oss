@@ -15,28 +15,26 @@ type IMAPProvider struct {
 	IMAPHost string
 	IMAPPort int
 
-	client       *client.Client
-	UsageUpdates chan metering.Update
+	client *client.Client
 }
 
-func NewIMAPProvider(host string, port int, quotaBytes *int, usageUpdates chan metering.Update) (*IMAPProvider, error) {
+func NewIMAPProvider(host string, port int, quotaBytes *int) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 
 	opts := []metering.DialerOpt{}
 	if quotaBytes != nil {
 		opts = append(opts, metering.WithQuota(*quotaBytes))
 	}
-	dialer := metering.NewDialer(usageUpdates)
+	dialer := metering.NewDialer()
 	cl, err := client.DialWithDialerTLS(dialer, addr, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &IMAPProvider{
-		IMAPHost:     host,
-		IMAPPort:     port,
-		client:       cl,
-		UsageUpdates: usageUpdates,
+		IMAPHost: host,
+		IMAPPort: port,
+		client:   cl,
 	}, nil
 }
 
