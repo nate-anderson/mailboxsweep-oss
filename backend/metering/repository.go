@@ -27,6 +27,8 @@ type Record struct {
 	BytesUsed int    `dynamodbav:"bytes_used"`
 }
 
+var ttl = time.Hour * 24 * 30
+
 type DefaultUsageRepository struct {
 	db        *dynamodb.Client
 	tableName string
@@ -65,10 +67,11 @@ func (r DefaultUsageRepository) Update(ctx context.Context, address string, used
 	_, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName:        &r.tableName,
 		Key:              key,
-		UpdateExpression: aws.String("SET #bytes_used = :bytes_used, #address = if_not_exists(#address, :address)"),
+		UpdateExpression: aws.String("SET #bytes_used = :bytes_used, #address = if_not_exists(#address, :address), #expires = if_not_exists(#expires, :expires)"),
 		ExpressionAttributeNames: map[string]string{
 			"#bytes_used": "bytes_used",
 			"#address":    "address",
+			"#expires":    "expires_at",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":bytes_used": &types.AttributeValueMemberN{
@@ -76,6 +79,12 @@ func (r DefaultUsageRepository) Update(ctx context.Context, address string, used
 			},
 			":address": &types.AttributeValueMemberS{
 				Value: address,
+			},
+			":expires": &types.AttributeValueMemberN{
+				Value: strconv.FormatInt(
+					time.Now().Add(ttl).Unix(),
+					10,
+				),
 			},
 		},
 	})
