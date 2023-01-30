@@ -40,6 +40,21 @@ func main() {
 			Host:   "imap.gmail.com",
 			Port:   993,
 		},
+		{
+			Domain: "yahoo.com",
+			Host:   "export.imap.mail.yahoo.com",
+			Port:   993,
+		},
+		{
+			Domain: "ymail.com",
+			Host:   "export.imap.mail.yahoo.com",
+			Port:   993,
+		},
+		{
+			Domain: "aol.com",
+			Host:   "export.imap.aol.com",
+			Port:   993,
+		},
 	}
 
 	db, err := mailboxsweep.ConnectAWSService(
