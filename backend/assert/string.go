@@ -44,6 +44,13 @@ func (a *stringAssertion) Contains(substring string) *stringAssertion {
 	return a
 }
 
+func (a *stringAssertion) NotContains(substring string) *stringAssertion {
+	if strings.Contains(a.actual, substring) {
+		a.failf("Expected string not to contain %s, but it did not (string %s)", substring, a.actual)
+	}
+	return a
+}
+
 func (a *stringAssertion) StartsWith(prefix string) *stringAssertion {
 	if !strings.HasPrefix(a.actual, prefix) {
 		a.failf("Expected string to start with %s, but it did not string %s)", prefix, a.actual)
