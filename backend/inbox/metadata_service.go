@@ -50,7 +50,7 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 		return nil, err
 	}
 
-	credential, err := s.credentialService.FindCredential(ctx, addr)
+	credential, err := s.credentialService.FindCredential(ctx)
 	if err != nil {
 		return nil, err
 	}

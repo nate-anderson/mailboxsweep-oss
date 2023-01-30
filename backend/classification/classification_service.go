@@ -102,7 +102,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	cred, err := s.credentialService.FindCredential(ctx, addr)
+	cred, err := s.credentialService.FindCredential(ctx)
 	if err != nil {
 		return err
 	}

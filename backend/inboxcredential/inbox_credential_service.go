@@ -7,13 +7,13 @@ import (
 )
 
 type CredentialReadService interface {
-	FindCredential(ctx context.Context, address string) (*InboxCredential, error)
+	FindCredential(ctx context.Context) (*InboxCredential, error)
 	DecryptCredential(ctx context.Context, cred *InboxCredential) (password string, err error)
 }
 
 type CredentialWriteService interface {
 	StoreCredential(ctx context.Context, password string) (address string, err error)
-	DeleteCredential(ctx context.Context, address string) error
+	DeleteCredential(ctx context.Context) error
 }
 
 type Service interface {
@@ -51,7 +51,11 @@ func (s DefaultService) StoreCredential(ctx context.Context, password string) (a
 	return credential.Address, nil
 }
 
-func (s DefaultService) FindCredential(ctx context.Context, address string) (*InboxCredential, error) {
+func (s DefaultService) FindCredential(ctx context.Context) (*InboxCredential, error) {
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	cred, err := s.repo.FindByAddress(ctx, address)
 	if err != nil {
 		if errors.Is(err, mailboxsweep.ErrNotFound) {
@@ -62,7 +66,11 @@ func (s DefaultService) FindCredential(ctx context.Context, address string) (*In
 	return cred, nil
 }
 
-func (s DefaultService) DeleteCredential(ctx context.Context, address string) error {
+func (s DefaultService) DeleteCredential(ctx context.Context) error {
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
 	return s.repo.DeleteByAddress(ctx, address)
 }
 

@@ -14,7 +14,12 @@ type TestCredentialReadService struct {
 	FindError error
 }
 
-func (t TestCredentialReadService) FindCredential(ctx context.Context, address string) (*inboxcredential.InboxCredential, error) {
+func (t TestCredentialReadService) FindCredential(ctx context.Context) (*inboxcredential.InboxCredential, error) {
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if t.FindError != nil {
 		return nil, t.FindError
 	}

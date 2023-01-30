@@ -84,13 +84,7 @@ const testHeaderCredentialAddress = "X-Test-Address"
 func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
-		c.respondAuthError(w, err)
-		return
-	}
-	cred, err := c.service.FindCredential(ctx, addr)
+	cred, err := c.service.FindCredential(ctx)
 	if err != nil {
 		c.respondError(w, err)
 		return

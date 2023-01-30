@@ -94,7 +94,7 @@ func (s DefaultService) CommitChanges(ctx context.Context) error {
 		return err
 	}
 
-	cred, err := s.credentialService.FindCredential(ctx, address)
+	cred, err := s.credentialService.FindCredential(ctx)
 	if err != nil {
 		return err
 	}
