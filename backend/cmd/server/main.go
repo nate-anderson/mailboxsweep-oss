@@ -265,6 +265,7 @@ func main() {
 		loginService,
 		changesetService,
 		inboxChangesetService,
+		imapServerService,
 		paymentService,
 		cfg.CookieDomain,
 		cfg.CookiePath,

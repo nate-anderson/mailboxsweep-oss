@@ -23,12 +23,13 @@ type CredentialController struct {
 	baseController
 }
 
-func NewCredentialController(credentialService inboxcredential.Service, providerService inbox.ProviderService, log *logrus.Logger) *CredentialController {
+func NewCredentialController(credentialService inboxcredential.Service, providerService inbox.ProviderService, imapServerService imapserver.Service, log *logrus.Logger) *CredentialController {
 	return &CredentialController{
-		service:         credentialService,
-		providerService: providerService,
-		log:             log,
-		baseController:  baseController{log},
+		service:           credentialService,
+		providerService:   providerService,
+		imapServerService: imapServerService,
+		log:               log,
+		baseController:    baseController{log},
 	}
 }
 

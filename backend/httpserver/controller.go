@@ -4,6 +4,7 @@ import (
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
+	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
@@ -34,13 +35,14 @@ func NewController(
 	loginService login.Service,
 	changesetService changeset.Service,
 	inboxChangesetService inboxchangeset.Service,
+	imapServerService imapserver.Service,
 	paymentService payment.Service,
 	cookieDomain string,
 	cookiePath string,
 	isDev bool,
 	log *logrus.Logger,
 ) *Controller {
-	credentialController := NewCredentialController(credentialService, providerService, log)
+	credentialController := NewCredentialController(credentialService, providerService, imapServerService, log)
 	classificationController := NewClassificationController(classificationService, classifyRequestService, log)
 	folderController := NewFolderController(metadataService, log)
 	loginController := NewLoginController(loginService, cookieDomain, cookiePath, isDev, log)
