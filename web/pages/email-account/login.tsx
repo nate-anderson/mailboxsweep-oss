@@ -99,12 +99,13 @@ export default function Login() {
     const [ expires, changeExpires ] = useState<Date>();
     const [ credentialSet, changeCredentialSet ] = useState(false);
     const [ errorSnackbar, changeError ] = useSnackbar("error"); 
+    const [ successSnackbar, showSuccess ] = useConstantSnackbar("Inbox credential updated!", "success");
     
     const [ showUnknownServerDialog, setShowUnknownServerDialog ] = useState(false);
     const [ showImapServerForm, setShowImapServerForm ] = useState(false);
 
     const [ imapHost, setImapHost ] = useState("");
-    const [ imapPort, setImapPort ] = useState<number | undefined>();
+    const [ imapPort, setImapPort ] = useState<number>(993);
 
     const resetFilledInput = () => changePassword("********");
 
@@ -148,6 +149,23 @@ export default function Login() {
 
     const submitCredential = () => {
         changeSubmitButtonEnabled(false);
+        if (showImapServerForm) {
+            API.storeImapServerAndCredentials({
+                password,
+                imapHost,
+                imapPort,
+            })
+            .then((res) => {
+                showSuccess(true);
+            }) 
+            .catch((err) => {
+                if (err instanceof ApiError) {
+                    const e = err as ApiError;
+                    changeError(e.message);
+                }
+            });
+            return;
+        }
         API.storeInboxCredential({
             password,
         })
@@ -170,7 +188,7 @@ export default function Login() {
                         changeError("Something went wrong: " + e.body);
                 }
             }
-        })
+        });
     }
 
     const updatePassword = (password: string) => {
@@ -178,7 +196,15 @@ export default function Login() {
         changeSubmitButtonEnabled(password !== "")
     }
 
-    const [ successSnackbar, showSuccess ] = useConstantSnackbar("Inbox credential updated!", "success");
+    const updateHost = (host: string) => {
+        changeSubmitButtonEnabled(host !== "");
+        setImapHost(host);
+    }
+
+    const updatePort = (port: number) => {
+        changeSubmitButtonEnabled(port !== 0);
+        setImapPort(port);
+    }
 
     return (
         <>
@@ -285,7 +311,7 @@ export default function Login() {
                                 ></TextField>
                             </Grid>
                             {showImapServerForm
-                            ? renderPasswordAndIMAP(password, updatePassword, imapHost, setImapHost, imapPort, setImapPort)
+                            ? renderPasswordAndIMAP(password, updatePassword, imapHost, updateHost, imapPort, updatePort)
                             : renderPasswordOnly(password, updatePassword) }
                             
                 

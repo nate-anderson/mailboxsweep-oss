@@ -87,6 +87,7 @@ func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *htt
 
 	cred, err := c.service.FindCredential(ctx)
 	if err != nil {
+		fmt.Printf("ERROR: %+v\n", err)
 		c.respondError(w, err)
 		return
 	}
@@ -122,11 +123,11 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 
 	// revisit - for now, don't allow users to overwrite
 	_, err = c.imapServerService.FindByDomain(ctx, parsedEmail.Domain)
-	if !errors.Is(err, mailboxsweep.ErrNotFound) {
+	if err == nil {
 		resErr := fmt.Errorf("cannot update - a server record exists for domain %s", parsedEmail.Domain)
 		c.respondError(w, resErr, withOverrideStatusCode(http.StatusUnprocessableEntity))
 		return
-	} else if err != nil {
+	} else if !errors.Is(err, mailboxsweep.ErrNotFound) {
 		c.respondError(w, err)
 		return
 	}

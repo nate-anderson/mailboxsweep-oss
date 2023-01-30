@@ -9,6 +9,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
     <Head>
       <meta name="viewport" content="initial-scale=1, width=device-width" /> 
+      <title>Mailboxsweep</title>
     </Head>
     <Component {...pageProps} />
     </LocalizationProvider>

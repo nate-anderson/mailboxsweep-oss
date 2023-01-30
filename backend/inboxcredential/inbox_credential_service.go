@@ -59,7 +59,7 @@ func (s DefaultService) FindCredential(ctx context.Context) (*InboxCredential, e
 	cred, err := s.repo.FindByAddress(ctx, address)
 	if err != nil {
 		if errors.Is(err, mailboxsweep.ErrNotFound) {
-			return nil, mailboxsweep.ErrNoStoredCredential
+			return nil, mailboxsweep.NoStoredCredentialError(err)
 		}
 		return nil, err
 	}
