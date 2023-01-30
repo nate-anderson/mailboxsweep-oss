@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mailboxsweep"
 	"math"
 	"net"
 	"time"
@@ -143,7 +144,18 @@ func (d *Dialer) Dial(network, addr string) (net.Conn, error) {
 		return nil, err
 	}
 
-	return newConn(d.ctx, conn, d.address, d.repo, d.quota), nil
+	wrapped := newConn(d.ctx, conn, d.address, d.repo, d.quota)
+
+	existingBytes, err := d.repo.CheckUsage(d.ctx, d.address)
+	if err == nil {
+		wrapped.bytesTransfered = existingBytes.BytesUsed
+	} else if errors.Is(err, mailboxsweep.ErrNotFound) {
+		return wrapped, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return wrapped, nil
 }
 
 // retry with linear backoff

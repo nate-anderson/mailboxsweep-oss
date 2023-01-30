@@ -102,6 +102,11 @@ func (r DefaultUsageRepository) CheckUsage(ctx context.Context, address string) 
 	if err != nil {
 		return nil, err
 	}
+
+	if len(res.Item) == 0 {
+		return nil, mailboxsweep.ErrNotFound
+	}
+
 	rec := Record{}
 	err = attributevalue.UnmarshalMap(res.Item, &rec)
 	return &rec, err
