@@ -36,6 +36,11 @@ func TestLoginService(t *testing.T) {
 	user, err := userService.Store(ctx, testAddress)
 	assert.ThatError(t, err).IsNil()
 
+	var (
+		token     string
+		signature string
+	)
+
 	t.Run("create login link", func(t *testing.T) {
 		t.Run("existing user", func(t *testing.T) {
 			t.Run("create", func(t *testing.T) {
@@ -53,6 +58,8 @@ func TestLoginService(t *testing.T) {
 				assert.That(t, link.Created.IsZero()).Equals(false)
 				assert.That(t, link.InitiatedByIP).Equals(testIP)
 				assert.That(t, sender.req.Token).Equals(link.Token)
+				token = link.Token
+				signature = sender.req.Signature
 			})
 		})
 
@@ -79,6 +86,30 @@ func TestLoginService(t *testing.T) {
 				assert.That(t, link.InitiatedByIP).Equals(testNewIP)
 				assert.That(t, sender.req.Token).Equals(link.Token)
 			})
+		})
+	})
+
+	t.Run("validate login link", func(t *testing.T) {
+		t.Run("invalid signature", func(t *testing.T) {
+			sigCopy := signature + "1"
+			user, session, err := service.ValidateLoginLink(ctx, token, sigCopy)
+			assert.ThatError(t, err).IsNotNil()
+			assert.That(t, user).Equals(nil)
+			assert.That(t, session).Equals(nil)
+		})
+
+		t.Run("invalid token", func(t *testing.T) {
+			user, sess, err := service.ValidateLoginLink(ctx, token+"1", signature)
+			assert.ThatError(t, err).IsNotNil()
+			assert.That(t, user).Equals(nil)
+			assert.That(t, sess).Equals(nil)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			user, session, err := service.ValidateLoginLink(ctx, token, signature)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, user.Address).Equals(testAddress)
+			assert.That(t, session).NotEqual(nil)
 		})
 	})
 }
