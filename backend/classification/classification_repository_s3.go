@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -79,66 +78,6 @@ func (r S3ClassificationRepository) FetchLeaf(ctx context.Context, inbox string,
 type pathLeafTuple struct {
 	path string
 	leaf Classification
-}
-
-func (r S3ClassificationRepository) fetchLeaves(ctx context.Context, inbox string) (map[string]Classification, error) {
-	prefix := r.leavesPrefix(inbox)
-	list, err := r.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: &r.bucketName,
-		Prefix: &prefix,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list bucket contents with prefix '%s': %w", prefix, err)
-	}
-
-	group, groupCtx := errgroup.WithContext(ctx)
-
-	resultChan := make(chan pathLeafTuple)
-	results := make(map[string]Classification)
-
-	go func() {
-		for tuple := range resultChan {
-			results[tuple.path] = tuple.leaf
-		}
-	}()
-
-	// exclude summary, len - 1
-	for _, obj := range list.Contents {
-		if strings.HasSuffix(*obj.Key, "summary") {
-			continue
-		}
-		o := obj
-		group.Go(func() error {
-			doc, err := r.client.GetObject(groupCtx, &s3.GetObjectInput{
-				Bucket: &r.bucketName,
-				Key:    o.Key,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to fetch leaf document '%s': %w", *o.Key, err)
-			}
-
-			cl := Classification{}
-			err = json.NewDecoder(doc.Body).Decode(&cl)
-			if err != nil {
-				return fmt.Errorf("failed to decode leaf document '%s': %w", *o.Key, err)
-			}
-
-			resultChan <- pathLeafTuple{
-				leaf: cl,
-				path: strings.TrimPrefix(*o.Key, inbox+"/"),
-			}
-
-			return nil
-		})
-	}
-
-	err = group.Wait()
-	close(resultChan)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
 }
 
 func (r S3ClassificationRepository) summaryPath(inbox string) string {
