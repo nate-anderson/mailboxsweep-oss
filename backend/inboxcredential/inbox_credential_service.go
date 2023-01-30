@@ -2,6 +2,7 @@ package inboxcredential
 
 import (
 	"context"
+	"errors"
 	"mailboxsweep"
 )
 
@@ -51,7 +52,14 @@ func (s DefaultService) StoreCredential(ctx context.Context, password string) (a
 }
 
 func (s DefaultService) FindCredential(ctx context.Context, address string) (*InboxCredential, error) {
-	return s.repo.FindByAddress(ctx, address)
+	cred, err := s.repo.FindByAddress(ctx, address)
+	if err != nil {
+		if errors.Is(err, mailboxsweep.ErrNotFound) {
+			return nil, mailboxsweep.ErrNoStoredCredential
+		}
+		return nil, err
+	}
+	return cred, nil
 }
 
 func (s DefaultService) DeleteCredential(ctx context.Context, address string) error {

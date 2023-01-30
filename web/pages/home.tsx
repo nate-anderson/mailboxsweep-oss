@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ClassificationStatus } from "../client-gen";
+import { ApiError, ClassificationStatus } from "../client-gen";
 import { API } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
@@ -62,7 +62,6 @@ export default function Home() {
     useEffect(() => {
         API.getInboxFolders()
             .then((res) => {
-                setAddress(res.address);
                 const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.allMessages, 0);
                 const unreadMessageCount = res.folders.reduce((sum, folder) => sum + folder.unreadMessages, 0);
 
@@ -70,16 +69,31 @@ export default function Home() {
                 setUnreadMessagesCount(unreadMessageCount);
             })
             .catch((err) => {
-                setErrorMessage(err as string);
+                if (err instanceof ApiError) {
+                    const e = err as ApiError;
+                    switch (e.status) {
+                        case 404:
+                            return;
+                    }
+                }
+                console.log(err.toString());
+                setErrorMessage("Something went wrong");
             })
 
         API.getClassificationStatus()
             .then((res) => {
+                setAddress(res.address);
                 if (res.status) {
                     setClassificationStatus(res.status.status);
                 }
             })
-    }, [setErrorMessage]);
+            .catch((err) => {
+                if (err instanceof ApiError) {
+                    const e = err as ApiError;
+                    setErrorMessage(e.message);
+                }
+            })
+    }, []);
 
     return (
         <>

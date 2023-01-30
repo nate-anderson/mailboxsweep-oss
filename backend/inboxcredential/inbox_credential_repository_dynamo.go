@@ -71,7 +71,7 @@ func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, addr
 	}
 
 	if res.Item == nil {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.ErrNotFound
 	}
 
 	ic := InboxCredential{}

@@ -50,13 +50,13 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 		return nil, err
 	}
 
-	// cache miss
-	provider, err := s.providerService.GetProvider(ctx, addr)
+	credential, err := s.credentialService.FindCredential(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	credential, err := s.credentialService.FindCredential(ctx, addr)
+	// cache miss
+	provider, err := s.providerService.GetProvider(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
