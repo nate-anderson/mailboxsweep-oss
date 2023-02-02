@@ -113,7 +113,7 @@ func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, cla
 
 func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox string, classification *Classification) error {
 	leaves := classification.Leaves()
-	maxGoroutines := 30
+	maxGoroutines := 300
 	guard := make(chan struct{}, maxGoroutines)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -139,7 +139,6 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 				Key:    &p,
 				Body:   bytes.NewReader(leafDoc.Bytes()),
 			})
-			fmt.Println("PUTTED")
 			if err != nil {
 				return fmt.Errorf("failed to store leaf: %w", err)
 			}
