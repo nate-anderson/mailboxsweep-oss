@@ -57,16 +57,17 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 	t.Run("consent to agreement", func(t *testing.T) {
 		err := repo.Consent(ctx, testUser.Address, PersonalInbox)
 		assert.ThatError(t, err).IsNil()
+		agreedAt := time.Now()
 
 		user, err := repo.FindByAddress(ctx, testUser.Address)
 		assert.ThatError(t, err).IsNil()
 		assert.ThatMap(t, user.Agreements).ContainsKey(PersonalInbox)
-		assert.That(t, user.Agreements[PersonalInbox].Year()).Equals(time.Now().Year())
-		assert.That(t, user.Agreements[PersonalInbox].Month()).Equals(time.Now().Month())
-		assert.That(t, user.Agreements[PersonalInbox].Day()).Equals(time.Now().Day())
-		assert.That(t, user.Agreements[PersonalInbox].Hour()).Equals(time.Now().Hour())
-		assert.That(t, user.Agreements[PersonalInbox].Minute()).Equals(time.Now().Minute())
-		assert.That(t, user.Agreements[PersonalInbox].Second()).Equals(time.Now().Second())
+		assert.That(t, user.Agreements[PersonalInbox].Year()).Equals(agreedAt.Year())
+		assert.That(t, user.Agreements[PersonalInbox].Month()).Equals(agreedAt.Month())
+		assert.That(t, user.Agreements[PersonalInbox].Day()).Equals(agreedAt.Day())
+		assert.That(t, user.Agreements[PersonalInbox].Hour()).Equals(agreedAt.Hour())
+		assert.That(t, user.Agreements[PersonalInbox].Minute()).Equals(agreedAt.Minute())
+		assert.That(t, user.Agreements[PersonalInbox].Second()).Equals(agreedAt.Second())
 	})
 
 	t.Run("store payment", func(t *testing.T) {
