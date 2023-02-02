@@ -52,7 +52,6 @@ type serverConfig struct {
 
 	DynamoDBTable             string `mapstructure:"DYNAMODB_TABLE"`
 	S3Bucket                  string `mapstructure:"S3_BUCKET"`
-	EventBusName              string `mapstructure:"EVENT_BUS_NAME"`
 	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
 	LoginLinkDurationMinutes int    `mapstructure:"LOGIN_LINK_DURATION_MINUTES"`
@@ -195,7 +194,6 @@ func main() {
 		paymentService,
 		log,
 		publisher,
-		cfg.EventBusName,
 	)
 
 	metadataRepo := inbox.NewMetadataRepository(db, cfg.DynamoDBTable)

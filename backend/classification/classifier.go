@@ -58,11 +58,11 @@ func (c SenderDomainClassifier) Dimension() string {
 	return "sender_domain"
 }
 
-const typeKeySenderDomain = "SENDER_DOMAIN"
+const TypeKeySenderDomain = "SENDER_DOMAIN"
 
 func (c SenderDomainClassifier) Serializeable() SerializableClassifier {
 	return SerializableClassifier{
-		TypeKey:   typeKeySenderDomain,
+		TypeKey:   TypeKeySenderDomain,
 		InitValue: "",
 	}
 }
@@ -70,7 +70,7 @@ func (c SenderDomainClassifier) Serializeable() SerializableClassifier {
 func (c SenderDomainClassifier) Info() ClassifierInfo {
 	return ClassifierInfo{
 		Name:        "Sender domain",
-		TypeKey:     typeKeySenderDomain,
+		TypeKey:     TypeKeySenderDomain,
 		Description: "Classify messages by the website of the sender",
 		TakesInput:  false,
 	}
@@ -111,11 +111,11 @@ func (c SenderUsernameClassifier) Dimension() string {
 	return "sender"
 }
 
-const typeKeySenderUsername = "SENDER_USERNAME"
+const TypeKeySenderUsername = "SENDER_USERNAME"
 
 func (c SenderUsernameClassifier) Serializeable() SerializableClassifier {
 	return SerializableClassifier{
-		TypeKey:   typeKeySenderUsername,
+		TypeKey:   TypeKeySenderUsername,
 		InitValue: "",
 	}
 }
@@ -123,7 +123,7 @@ func (c SenderUsernameClassifier) Serializeable() SerializableClassifier {
 func (c SenderUsernameClassifier) Info() ClassifierInfo {
 	return ClassifierInfo{
 		Name:        "Sender email",
-		TypeKey:     typeKeySenderUsername,
+		TypeKey:     TypeKeySenderUsername,
 		Description: "Classify messages by the sender",
 		TakesInput:  false,
 	}
@@ -165,11 +165,11 @@ func (s SendDateClassifier) Dimension() string {
 	return fmt.Sprintf("send_date_before_or_after_%s", s.formattedCutoff)
 }
 
-const typeKeySendDate = "SEND_DATE"
+const TypeKeySendDate = "SEND_DATE"
 
 func (s SendDateClassifier) Serializeable() SerializableClassifier {
 	return SerializableClassifier{
-		TypeKey:   typeKeySendDate,
+		TypeKey:   TypeKeySendDate,
 		InitValue: s.formattedCutoff,
 	}
 }
@@ -177,7 +177,7 @@ func (s SendDateClassifier) Serializeable() SerializableClassifier {
 func (s SendDateClassifier) Info() ClassifierInfo {
 	return ClassifierInfo{
 		Name:        "Send date",
-		TypeKey:     typeKeySendDate,
+		TypeKey:     TypeKeySendDate,
 		Description: "Divide messages before and after a given date",
 		TakesInput:  true,
 		InputLabel:  ptr("Filter date"),
@@ -194,11 +194,11 @@ type SerializableClassifier struct {
 
 func (s SerializableClassifier) Classifier() (Classifier, error) {
 	switch s.TypeKey {
-	case typeKeySenderDomain:
+	case TypeKeySenderDomain:
 		return NewSenderDomainClassifier(), nil
-	case typeKeySenderUsername:
+	case TypeKeySenderUsername:
 		return NewSenderUsernameClassifier(), nil
-	case typeKeySendDate:
+	case TypeKeySendDate:
 		cutoff, err := time.Parse(cutoffDateFormat, s.InitValue)
 		if err != nil {
 			return nil, fmt.Errorf("invalid cutoff date to initialize send date classifier '%s'", s.InitValue)

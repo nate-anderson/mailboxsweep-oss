@@ -8,7 +8,7 @@ import (
 
 type TestProcessor struct {
 	sessions  map[string]CompletePayment
-	sessionID string
+	SessionID string
 }
 
 func NewTestProcessor() *TestProcessor {
@@ -29,12 +29,12 @@ var TestCheckoutURL = "localhost:8080/checkout"
 
 func (p *TestProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
 	id := uuid.NewString()
-	if p.sessionID == "" {
-		p.sessionID = id
+	if p.SessionID == "" {
+		p.SessionID = id
 	}
-	p.sessions[p.sessionID] = CompletePayment{
-		SessionID:    p.sessionID,
+	p.sessions[p.SessionID] = CompletePayment{
+		SessionID:    p.SessionID,
 		TotalInCents: int(amount),
 	}
-	return TestCheckoutURL, p.sessionID, nil
+	return TestCheckoutURL, p.SessionID, nil
 }

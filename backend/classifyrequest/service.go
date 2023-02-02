@@ -46,7 +46,7 @@ func (s DefaultService) RecordRequest(ctx context.Context) error {
 
 	user, err := s.userService.FindByAddress(ctx, addr)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed retrieving user: %w", err)
 	}
 
 	requests, err := s.requestRepo.List(ctx, addr, false, true)

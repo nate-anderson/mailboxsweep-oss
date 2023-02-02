@@ -43,7 +43,7 @@ func TestMetadataService(t *testing.T) {
 	providerService.Messages["INBOX"] = messages
 	providerService.Messages["trash"] = []inbox.Message{}
 
-	credentialService := inboxtesting.TestCredentialReadService{
+	credentialService := &inboxtesting.TestCredentialReadService{
 		Address:  testAddress,
 		Password: "password",
 	}

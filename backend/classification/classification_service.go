@@ -31,7 +31,6 @@ type DefaultService struct {
 	paymentService         payment.Service
 	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
-	eventBusName           string
 }
 
 func NewService(
@@ -42,8 +41,7 @@ func NewService(
 	classifyRequestService classifyrequest.Service,
 	paymentService payment.Service,
 	logger *logrus.Logger,
-	bridge mailboxsweep.EventPublisher[ClassifyQueueItem],
-	eventBusName string,
+	pub mailboxsweep.EventPublisher[ClassifyQueueItem],
 ) *DefaultService {
 	return &DefaultService{
 		credentialService,
@@ -53,8 +51,7 @@ func NewService(
 		classifyRequestService,
 		paymentService,
 		logger,
-		bridge,
-		eventBusName,
+		pub,
 	}
 }
 

@@ -30,7 +30,6 @@ func TestCartRepository(t *testing.T) {
 	}
 
 	t.Run("store cart", func(t *testing.T) {
-
 		err := repo.store(ctx, testCart)
 		assert.ThatError(t, err).IsNil()
 	})

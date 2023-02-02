@@ -186,7 +186,6 @@ func TestClassificationService(t *testing.T) {
 		Password: testPass,
 	}
 	publisher := &mailboxsweep.TestEventPublisher[ClassifyQueueItem]{}
-	eventBusName := "mailboxsweeptestevents"
 
 	classifyRequestService := testRequestRecorder{
 		requests: make(map[string][]testRequest),
@@ -217,7 +216,6 @@ func TestClassificationService(t *testing.T) {
 		paymentService,
 		logrus.New(),
 		publisher,
-		eventBusName,
 	)
 
 	t.Run("enqueue classification", func(t *testing.T) {
@@ -225,7 +223,7 @@ func TestClassificationService(t *testing.T) {
 		t.Run("unauthenticated, failure", func(t *testing.T) {
 			err := service.EnqueueClassify(ctx, folders, []SerializableClassifier{
 				{
-					TypeKey: typeKeySenderDomain,
+					TypeKey: TypeKeySenderDomain,
 				},
 			})
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
@@ -237,7 +235,7 @@ func TestClassificationService(t *testing.T) {
 		t.Run("authenticated, not paid, failure", func(t *testing.T) {
 			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
 				{
-					TypeKey: typeKeySenderDomain,
+					TypeKey: TypeKeySenderDomain,
 				},
 			})
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
@@ -255,7 +253,7 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			err = service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
 				{
-					TypeKey: typeKeySenderDomain,
+					TypeKey: TypeKeySenderDomain,
 				},
 			})
 			assert.ThatError(t, err).IsNil()
@@ -271,7 +269,7 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatSlice(t, e.Body.Folders).HasLength(len(folders))
 			assert.ThatSlice(t, e.Body.Folders).ContainsAll(folders)
 			assert.That(t, len(e.Body.Classifiers)).Equals(1)
-			assert.That(t, serializedClassifier.TypeKey).Equals(typeKeySenderDomain)
+			assert.That(t, serializedClassifier.TypeKey).Equals(TypeKeySenderDomain)
 			assert.That(t, serializedClassifier.InitValue).Equals("")
 
 			cl, err := serializedClassifier.Classifier()
@@ -315,7 +313,7 @@ func TestClassificationService(t *testing.T) {
 
 			err = service.EnqueueClassify(exceededCtx, folders, []SerializableClassifier{
 				{
-					TypeKey: typeKeySenderDomain,
+					TypeKey: TypeKeySenderDomain,
 				},
 			})
 			assert.ThatError(t, err).Is(mailboxsweep.ErrPlanLimitMet)

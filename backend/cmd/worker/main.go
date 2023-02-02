@@ -36,7 +36,6 @@ type workerConfig struct {
 	SQSRegion string  `mapstructure:"SQS_REGION"`
 
 	S3Bucket              string `mapstructure:"S3_BUCKET"`
-	EventBusName          string `mapstructure:"EVENT_BUS_NAME"`
 	DynamoDBTable         string `mapstructure:"DYNAMODB_TABLE"`
 	SQSQueueURL           string `mapstructure:"SQS_QUEUE_URL"`
 	SQSDeadLetterQueueURL string `mapstructure:"SQS_DLQ_URL"`
@@ -166,7 +165,6 @@ func main() {
 		paymentService,
 		log,
 		pub,
-		cfg.EventBusName,
 	)
 
 	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)

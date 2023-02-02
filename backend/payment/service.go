@@ -21,7 +21,7 @@ type Service interface {
 	// returns the checkout redirect URL
 	// returns ErrAlreadyPaid if a payment is current
 	InitiatePayment(ctx context.Context, plan inboxuser.Plan) (checkoutURL string, err error)
-	CompletePayment(ctx context.Context, token string) error
+	CompletePayment(ctx context.Context, method inboxuser.PaymentMethod, token string) error
 	PlanDetails(code inboxuser.Plan) (*PlanDetails, error)
 	Plans(ctx context.Context) (map[inboxuser.Plan]PlanDetails, error)
 }
@@ -144,7 +144,7 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 	return checkoutURL, nil
 }
 
-func (s DefaultService) CompletePayment(ctx context.Context, token string) error {
+func (s DefaultService) CompletePayment(ctx context.Context, method inboxuser.PaymentMethod, token string) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (s DefaultService) CompletePayment(ctx context.Context, token string) error
 		return err
 	}
 
-	cart, err := s.cartRepo.find(ctx, inboxuser.Stripe, token)
+	cart, err := s.cartRepo.find(ctx, method, token)
 	if err != nil {
 		return err
 	}

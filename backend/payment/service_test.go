@@ -23,7 +23,7 @@ func TestPaymentService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	processor := NewTestProcessor()
-	processor.sessionID = uuid.NewString()
+	processor.SessionID = uuid.NewString()
 
 	service, err := NewService(userService, processor, cartRepo, time.Hour)
 	assert.ThatError(t, err).IsNil()
@@ -51,7 +51,7 @@ func TestPaymentService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, checkoutURL).Equals(TestCheckoutURL)
 
-		inProgress, err := cartRepo.find(ctx, inboxuser.PaymentMethod("Test"), processor.sessionID)
+		inProgress, err := cartRepo.find(ctx, inboxuser.PaymentMethod("Test"), processor.SessionID)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, inProgress.UserAddress).Equals(testAddr)
 		assert.That(t, inProgress.Plan).Equals(inboxuser.Deluxe)
@@ -67,7 +67,7 @@ func TestPaymentService(t *testing.T) {
 	})
 
 	t.Run("complete payment, unauthenticated", func(t *testing.T) {
-		err := service.CompletePayment(ctx, "12345")
+		err := service.CompletePayment(ctx, inboxuser.PaymentMethod("Test"), "12345")
 		assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 	})
 
@@ -76,13 +76,13 @@ func TestPaymentService(t *testing.T) {
 		_, err := userService.Store(ctx, newAddr)
 		assert.ThatError(t, err).IsNil()
 		noStoredCtx := mailboxsweep.AuthorizeTestContext(ctx, newAddr, t)
-		err = service.CompletePayment(noStoredCtx, "12345")
+		err = service.CompletePayment(noStoredCtx, inboxuser.PaymentMethod("Test"), "12345")
 		assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 	})
 
 	t.Run("complete payment, success", func(t *testing.T) {
 		err := cartRepo.store(authedCtx, cart{
-			ExternalID:  processor.sessionID,
+			ExternalID:  processor.SessionID,
 			Method:      inboxuser.Stripe,
 			UserAddress: testAddr,
 			Plan:        inboxuser.Deluxe,
@@ -91,7 +91,7 @@ func TestPaymentService(t *testing.T) {
 			Expires:     time.Now().Add(time.Minute).Unix(),
 		})
 		assert.ThatError(t, err).IsNil()
-		err = service.CompletePayment(authedCtx, processor.sessionID)
+		err = service.CompletePayment(authedCtx, inboxuser.PaymentMethod("Test"), processor.SessionID)
 		assert.ThatError(t, err).IsNil()
 	})
 

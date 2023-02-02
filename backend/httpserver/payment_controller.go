@@ -91,7 +91,8 @@ func (c PaymentController) InitiatePayment(w http.ResponseWriter, req *http.Requ
 
 func (c PaymentController) CompletePayment(w http.ResponseWriter, req *http.Request, params CompletePaymentParams) {
 	ctx := req.Context()
-	err := c.service.CompletePayment(ctx, params.CheckoutSessionId)
+	// @TODO: stripe is hard coded, this needs to be changed if other processors are added
+	err := c.service.CompletePayment(ctx, inboxuser.Stripe, params.CheckoutSessionId)
 	if err != nil {
 		c.respondError(w, err)
 		return
