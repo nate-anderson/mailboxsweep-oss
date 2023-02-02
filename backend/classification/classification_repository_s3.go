@@ -16,6 +16,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const perSecondPrefixRateLimit = float32(3600)
+
 type S3ClassificationRepository struct {
 	client     *s3.Client
 	bucketName string
@@ -99,7 +101,7 @@ summary, then store all leaf nodes in full using their classification path
 
 func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error {
 	if err := r.storeLeaves(ctx, inbox, classification); err != nil {
-		return fmt.Errorf("failed to store leaves")
+		return fmt.Errorf("failed to store leaves: %w", err)
 	}
 
 	if err := r.storeSummaryDocument(ctx, inbox, classification, validityKeys); err != nil {
@@ -111,13 +113,22 @@ func (r S3ClassificationRepository) Store(ctx context.Context, inbox string, cla
 
 func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox string, classification *Classification) error {
 	leaves := classification.Leaves()
+	maxGoroutines := 30
+	guard := make(chan struct{}, maxGoroutines)
+
 	group, groupCtx := errgroup.WithContext(ctx)
 	for classPath, clPtr := range leaves {
 		cl := clPtr
 		path := classPath
+		guard <- struct{}{}
 		group.Go(func() error {
 			leafDoc := bytes.Buffer{}
 			err := json.NewEncoder(&leafDoc).Encode(cl)
+
+			defer func() {
+				<-guard
+			}()
+
 			if err != nil {
 				return err
 			}
@@ -128,6 +139,7 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 				Key:    &p,
 				Body:   bytes.NewReader(leafDoc.Bytes()),
 			})
+			fmt.Println("PUTTED")
 			if err != nil {
 				return fmt.Errorf("failed to store leaf: %w", err)
 			}

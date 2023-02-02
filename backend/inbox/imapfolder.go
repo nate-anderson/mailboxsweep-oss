@@ -3,7 +3,9 @@ package inbox
 import (
 	"fmt"
 	"net/mail"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
@@ -55,6 +57,24 @@ func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error
 	}
 }
 
+var (
+	openingAngleBracket = regexp.MustCompile(`^\s*\<`)
+	closingAngleBracket = regexp.MustCompile(`\>\s*$`)
+)
+
+func sanitize(address string) string {
+	clean := strings.TrimSpace(address)
+	if !strings.HasPrefix(clean, "<") {
+		return clean
+	}
+	clean = openingAngleBracket.ReplaceAllLiteralString(address, "")
+	clean = closingAngleBracket.ReplaceAllLiteralString(clean, "")
+	return clean
+}
+
+// @TODO: urgent
+// this function is not parsing addresses with < > correctly
+// domain classifier is failing
 func imapToMessage(i imap.Message, folder string) (Message, error) {
 	var sender *imap.Address
 	if len(i.Envelope.Sender) >= 1 {
@@ -64,14 +84,15 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 	} else {
 		return Message{}, fmt.Errorf("message %s doesn't have a SENDER or FROM address", i.Envelope.MessageId)
 	}
+	senderAddress := sanitize(sender.Address())
+
 	var imapSenderName string
-	senderEmail := sender.Address()
-	parsed, err := mail.ParseAddress(senderEmail)
+	parsed, err := mail.ParseAddress(senderAddress)
 	if err == nil && parsed != nil {
 		imapSenderName = parsed.Name
 	}
 	var username, domain string
-	mailAddr, err := emailaddress.Parse(senderEmail)
+	mailAddr, err := emailaddress.Parse(senderAddress)
 	if err == nil && mailAddr != nil {
 		username = mailAddr.LocalPart
 		domain = mailAddr.Domain
@@ -88,9 +109,9 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 				sender.MailboxName,
 				imapSenderName,
 				username,
-				sender.Address(),
+				senderAddress,
 			),
-			Address:  sender.Address(),
+			Address:  senderAddress,
 			Domain:   domain,
 			Username: username,
 		},

@@ -49,6 +49,9 @@ func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 			ot.UsePathStyle = true
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &bucket,

@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/emersion/go-imap"
 )
 
 func TestIMAPFolder(t *testing.T) {
@@ -159,4 +162,30 @@ func TestIMAPFolder(t *testing.T) {
 		assert.ThatSlice(t, deletedMsgs).HasLength(0)
 	})
 
+}
+
+func TestIMAPParse(t *testing.T) {
+	m := imap.Message{
+		SeqNum: 417,
+		Uid:    1625,
+		Flags:  []string{"\\Seen"},
+		Envelope: &imap.Envelope{
+			Date:    time.Now(),
+			Subject: "Your 1st Survey from NPDOR: Music",
+			Sender: []*imap.Address{
+				{
+					PersonalName: "",
+					AtDomainList: "",
+					MailboxName:  "<Survey",
+					HostName:     "npdor.com>",
+				},
+			},
+			InReplyTo: "<AcnEix7kPhoeqt4QRtKQTxvefbq+6A==>",
+			MessageId: "<49f12f28.1467f10a.1351.ffffbcfcSMTPIN_ADDED@mx.google.com>",
+		},
+	}
+
+	parsed, err := imapToMessage(m, "INBOX")
+	assert.ThatError(t, err).IsNil()
+	assert.That(t, parsed.Sender.Address).Equals("Survey@npdor.com")
 }
