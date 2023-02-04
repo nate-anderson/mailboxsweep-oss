@@ -51,7 +51,6 @@ func (s testImapServerService) Store(ctx context.Context, server imapserver.Serv
 }
 
 func TestWorker(t *testing.T) {
-	t.Skip()
 	ctx := context.Background()
 	log := logrus.New()
 
@@ -76,7 +75,10 @@ func TestWorker(t *testing.T) {
 	queueURL := createRes.QueueUrl
 
 	createDQLRes, err := client.CreateQueue(ctx, &sqs.CreateQueueInput{
-		QueueName: aws.String("worker_test_dlq"),
+		QueueName: aws.String("worker_test_dlq.fifo"),
+		Attributes: map[string]string{
+			"FifoQueue": "true",
+		},
 	})
 	assert.ThatError(t, err).IsNil()
 
