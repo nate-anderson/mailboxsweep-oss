@@ -10,9 +10,11 @@
     "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep"
   },
   "dependencies": {
+    "@date-io/date-fns": "^2.16.0",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
+    "@mui/lab": "^5.0.0-alpha.118",
     "@mui/material": "^5.11.1",
     "@mui/x-date-pickers": "^5.0.15",
     "@next/font": "13.1.0",
@@ -24,8 +26,7 @@
     "react": "18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "18.2.0",
-    "typescript": "4.9.4",
-    "@date-io/date-fns": "^2.16.0"
+    "typescript": "4.9.4"
   },
   "devDependencies": {
     "@types/node": "18.11.17",
