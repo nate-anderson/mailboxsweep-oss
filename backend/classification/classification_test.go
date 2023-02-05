@@ -7,13 +7,13 @@ import (
 )
 
 func TestStripMessages(t *testing.T) {
-	c := NewClassification("none", "level 1")
+	c := NewClassification("none", "level 1", "LEVEL_1")
 	c.Messages = append(c.Messages, inbox.Message{UID: 1})
 
-	c1 := NewClassification("none", "level 2 left")
+	c1 := NewClassification("none", "level 2 left", "LEVEL_2")
 	c1.Messages = append(c1.Messages, inbox.Message{UID: 2})
 
-	c2 := NewClassification("none", "level 2 right")
+	c2 := NewClassification("none", "level 2 right", "LEVEL_2")
 	c2.Messages = append(c2.Messages, inbox.Message{UID: 3})
 
 	c.Children["left"] = c1
@@ -35,17 +35,17 @@ func TestStripMessages(t *testing.T) {
 }
 
 func TestLeafClassifications(t *testing.T) {
-	c := NewClassification("none", "level 1")
+	c := NewClassification("none", "level 1", "LEVEL_1")
 	c.Messages = append(c.Messages, inbox.Message{UID: 1})
 
-	c1 := NewClassification("none", "level 2")
+	c1 := NewClassification("none", "level 2", "LEVEL_2")
 
-	c2 := NewClassification("none", "level 3")
+	c2 := NewClassification("none", "level 3", "LEVEL_3")
 
-	c3 := NewClassification("none", "level 4 left")
+	c3 := NewClassification("none", "level 4 left", "LEVEL_4")
 	c3.Messages = append(c3.Messages, inbox.Message{UID: 2})
 
-	c4 := NewClassification("none", "level 4 right")
+	c4 := NewClassification("none", "level 4 right", "LEVEL_4")
 	c4.Messages = append(c4.Messages, inbox.Message{UID: 3})
 
 	c.Children["child"] = c1
@@ -69,9 +69,9 @@ func TestLeafClassifications(t *testing.T) {
 }
 
 func TestClassificationTraverse(t *testing.T) {
-	c1 := NewClassification("none", "1")
-	c2 := NewClassification("none", "2")
-	c3 := NewClassification("target", "3")
+	c1 := NewClassification("none", "1", "LEVEL_1")
+	c2 := NewClassification("none", "2", "LEVEL_2")
+	c3 := NewClassification("target", "3", "LEVEL_3")
 	c3.Count = 10
 
 	c2.Children["3"] = c3
@@ -89,5 +89,9 @@ func TestClassificationTraverse(t *testing.T) {
 	assert.
 		That(t, node.Dimension).
 		Equals(c3.Dimension)
+
+	assert.
+		That(t, node.TypeKey).
+		Equals(c3.TypeKey)
 
 }

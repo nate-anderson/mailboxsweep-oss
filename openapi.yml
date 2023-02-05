@@ -67,6 +67,8 @@ components:
           type: integer
         label:
           type: string
+        typeKey:
+          type: string
         dimension:
           type: string
         children:
@@ -742,8 +744,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClassificationResponse'
-        '202':
-          description: Classification still pending
         '404':
           description: Not found
         '500':

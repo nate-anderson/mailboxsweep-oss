@@ -33,10 +33,10 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 	}
 
 	for repoType, repo := range repositories {
-		c := NewClassification("none1", "level 1")
+		c := NewClassification("none1", "level 1", "LEVEL_1")
 		c.Count = 2
 
-		c1 := NewClassification("none2", "level 2 left")
+		c1 := NewClassification("none2", "level 2 left", "LEVEL_2")
 		sendDate := time.Now()
 		c1.Messages = append(c1.Messages, inbox.Message{
 			UID:      2,
@@ -46,7 +46,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		})
 		c1.Count = 1
 
-		c2 := NewClassification("none3", "level 2 right")
+		c2 := NewClassification("none3", "level 2 right", "LEVEL_2")
 		c2.Messages = append(c2.Messages, inbox.Message{UID: 3})
 		c2.Count = 1
 
@@ -75,6 +75,11 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				That(t, classification.Classification.Dimension).
 				SoThat(repoType + " should return correct top-level dimension").
 				Equals("none1")
+
+			assert.
+				That(t, classification.Classification.TypeKey).
+				SoThat(repoType + " should return correct classification type key").
+				Equals("LEVEL_1")
 		})
 
 		t.Run("fetch leaf", func(t *testing.T) {
@@ -97,6 +102,11 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				ThatSlice(t, classification.Messages).
 				SoThat(repoType + " fetches all leaf messages").
 				HasLength(1)
+
+			assert.
+				That(t, classification.TypeKey).
+				SoThat(repoType + " returns correct type key").
+				Equals("LEVEL_2")
 
 			msg := classification.Messages[0]
 			assert.

@@ -92,7 +92,7 @@ func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassificati
 		dimension := classifier.Dimension()
 		child, ok := node.Children.Get(key)
 		if !ok {
-			child = NewSafeClassification(dimension, label)
+			child = NewSafeClassification(dimension, label, classifier.Info().TypeKey)
 		} else {
 		}
 		node.Children.Set(key, child)

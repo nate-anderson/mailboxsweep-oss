@@ -13,14 +13,16 @@ import (
 // this is the DTO type used for writing files and API responses
 type Classification struct {
 	Dimension string                    `json:"dimension"`
+	TypeKey   string                    `json:"typeKey"`
 	Label     string                    `json:"label"`
 	Messages  []inbox.Message           `json:"messages,omitempty"`
 	Count     uint                      `json:"count"`
 	Children  map[string]Classification `json:"children,omitempty"`
 }
 
-func NewClassification(dimension, label string) Classification {
+func NewClassification(dimension, label, typeKey string) Classification {
 	return Classification{
+		TypeKey:   typeKey,
 		Dimension: dimension,
 		Label:     label,
 		Children:  make(map[string]Classification),
@@ -149,16 +151,18 @@ func (c *Classification) TreeString() string {
 // tree
 type SafeClassification struct {
 	Dimension string
+	TypeKey   string
 	Label     string
 	Messages  []inbox.Message
 	Count     uint
 	Children  syncmap.Map[string, *SafeClassification]
 }
 
-func NewSafeClassification(dimension, label string) *SafeClassification {
+func NewSafeClassification(dimension, label, typeKey string) *SafeClassification {
 	return &SafeClassification{
 		Dimension: dimension,
 		Label:     label,
+		TypeKey:   typeKey,
 		Children:  syncmap.New[string, *SafeClassification](),
 	}
 }
@@ -176,6 +180,7 @@ func (sc *SafeClassification) Classification() Classification {
 	return Classification{
 		Dimension: sc.Dimension,
 		Label:     sc.Label,
+		TypeKey:   sc.TypeKey,
 		Messages:  sc.Messages,
 		Count:     sc.Count,
 		Children:  dtoChildren,
