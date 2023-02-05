@@ -87,7 +87,7 @@ func main() {
 				ReceiptHandle: m.ReceiptHandle,
 			})
 			if err != nil {
-				log.Fatal("failed to remove message from queue after success: %v (error %s)", m, err)
+				log.Fatalf("failed to remove message from queue after success: %v (error %s)", m, err)
 			}
 		}
 	}
