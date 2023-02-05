@@ -36,3 +36,21 @@ install_openapi_generator:
 .PHONY: http_scaffold
 http_scaffold:
 	oapi-codegen -generate chi-server,types -config $(HTTP_SERVER_GEN_PATH) $(HTTP_SERVER_SPEC_PATH)
+
+.PHONY: migrate_db
+migrate_db:
+	go run ./cmd/migrate dynamo
+
+.PHONY: migrate_s3
+migrate_s3:
+	go run ./cmd/migrate s3
+
+.PHONY: migrate_sqs
+migrate_sqs:
+	go run ./cmd/migrate sqs
+
+.PHONY: migrate
+migrate: migrate_db migrate_s3 migrate_sqs
+	
+.PHONY: seed
+seed: go run ./cmd/seed
