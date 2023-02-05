@@ -188,10 +188,12 @@ func convertClassification(cl classification.Classification) Classification {
 	for key, child := range cl.Children {
 		children[key] = convertClassification(child)
 	}
+
 	var typeKey *string
 	if cl.TypeKey != "" {
 		typeKey = &cl.TypeKey
 	}
+
 	res := Classification{
 		Label:     cl.Label,
 		Dimension: cl.Dimension,

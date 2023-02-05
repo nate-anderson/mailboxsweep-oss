@@ -85,8 +85,13 @@ func (w Worker) Work() error {
 			body := queueItem.Body
 			if strings.TrimSpace(body.Address) == "" {
 				w.log.Errorf("no address in queue item %+v", body)
+				continue
 			}
 			jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
+			w.log.
+				WithField("address", body.Address).
+				WithField("num_classifiers", len(body.Classifiers)).
+				Info("starting inbox classification")
 
 			classifiers := make([]classification.Classifier, len(body.Classifiers))
 			for i, srcl := range body.Classifiers {
