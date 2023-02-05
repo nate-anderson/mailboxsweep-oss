@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/spf13/viper"
 )
 
@@ -24,6 +25,12 @@ type migrateConfig struct {
 	S3Port   int     `mapstructure:"S3_PORT"`
 	S3Region string  `mapstructure:"S3_REGION"`
 	S3Bucket string  `mapstructure:"S3_BUCKET"`
+
+	SQSHost   *string `mapstructure:"SQS_HOST"`
+	SQSPort   int     `mapstructure:"SQS_PORT"`
+	SQSRegion string  `mapstructure:"SQS_REGION"`
+	SQSQueue  string  `mapstructure:"SQS_QUEUE"`
+	SQSDLQ    string  `mapstructure:"SQS_DLQ"`
 
 	Env string `mapstructure:"ENV"`
 }
@@ -100,6 +107,45 @@ func main() {
 		}
 		log.Printf("Created bucket %s!\n", cfg.S3Bucket)
 
+	case "sqs":
+		sqsClient, err := mailboxsweep.ConnectAWSService(
+			mailboxsweep.AWSServiceConfig{
+				ServiceHost:   cfg.SQSHost,
+				ServicePort:   cfg.SQSPort,
+				ServiceRegion: cfg.SQSRegion,
+			},
+			sqs.NewFromConfig,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// create main FIFO queue
+		res, err := sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
+			QueueName: &cfg.SQSQueue,
+			Attributes: map[string]string{
+				"FifoQueue": "true",
+			},
+		})
+		if err != nil {
+			log.Fatalf("failed to create main queue: %s\n", err)
+		}
+
+		log.Printf("Created main queue at %s (region %s)", *res.QueueUrl, cfg.S3Region)
+
+		res, err = sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
+			QueueName: &cfg.SQSDLQ,
+			Attributes: map[string]string{
+				"FifoQueue": "true",
+			},
+		})
+		if err != nil {
+			log.Fatalf("failed to create DLQ: %s", err)
+		}
+
+		log.Printf("created DLQ at %s (region %s)\n", *res.QueueUrl, cfg.SQSRegion)
+
+		// create FIFO DLQ
 	default:
 		log.Println("Unknown command " + cmd)
 	}
