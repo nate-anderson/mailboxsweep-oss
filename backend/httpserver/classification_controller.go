@@ -73,7 +73,7 @@ func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter
 	ctx := req.Context()
 	root, err := c.classificationService.ClassificationSummary(ctx)
 	if err != nil {
-		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		c.respondError(w, err)
 		return
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,11 +39,17 @@ func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox stri
 		Key:    &pathStr,
 	})
 	if err != nil {
-		var one *types.NoSuchKey
-		if !errors.As(err, &one) {
-			return nil, fmt.Errorf("failed to fetch summary: %s", err)
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			switch apiErr.(type) {
+			case *types.NoSuchKey, *types.NoSuchBucket:
+				return nil, mailboxsweep.NotFoundError(apiErr)
+			default:
+				return nil, err
+			}
 		}
-		return nil, mailboxsweep.NotFoundError(err)
+
+		return nil, fmt.Errorf("failed to fetch summary: %s", err)
 	}
 
 	summary := ClassificationDocument{}
