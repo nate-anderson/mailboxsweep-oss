@@ -18,6 +18,8 @@ type Classification struct {
 	Messages  []inbox.Message           `json:"messages,omitempty"`
 	Count     uint                      `json:"count"`
 	Children  map[string]Classification `json:"children,omitempty"`
+	// pagination
+	RankIndex *int `json:"rank_index"`
 }
 
 func NewClassification(dimension, label, typeKey string) Classification {
@@ -77,8 +79,10 @@ type ClassificationDocument struct {
 
 // Store and retrieve classified messages
 type ClassificationRepository interface {
+	// store the whole tree at once
 	Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error
-	FetchSummary(ctx context.Context, inbox string) (root *ClassificationDocument, err error)
+	// fetch a page of the summary
+	FetchSummary(ctx context.Context, inbox string, limit, offset int) (root *ClassificationDocument, err error)
 	FetchLeaf(ctx context.Context, inbox string, path []string) (leaf *Classification, err error)
 }
 

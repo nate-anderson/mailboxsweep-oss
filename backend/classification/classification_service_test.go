@@ -326,7 +326,7 @@ func TestClassificationService(t *testing.T) {
 			NewSenderUsernameClassifier(),
 		}
 
-		n := 30
+		n := 32
 		userNames := []string{
 			"me",
 			"you",
@@ -395,6 +395,18 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
 		})
 
+		senderCounts := map[string]int{
+			"sender=me@gmail.com":   11,
+			"sender=you@gmail.com":  11,
+			"sender=them@gmail.com": 10,
+		}
+
+		userCounts := map[string]int{
+			"me (me@gmail.com)":     11,
+			"you (you@gmail.com)":   11,
+			"them (them@gmail.com)": 10,
+		}
+
 		t.Run("authenticated, success", func(t *testing.T) {
 			// store new request, last one has been marked a failure
 			err := classifyRequestService.RecordRequest(authedCtx)
@@ -403,16 +415,29 @@ func TestClassificationService(t *testing.T) {
 			err = service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNil()
 
-			summary, err := repo.FetchSummary(ctx, testAddress)
+			summary, err := repo.FetchSummary(ctx, testAddress, 100, 0)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, summary.Meta.Created.IsZero()).Equals(false)
 			assert.That(t, summary.Classification).NotEqual(nil)
+
+			// summary children are sorted
+			assert.
+				ThatOrdered(t, *summary.Classification.Children["sender=me@gmail.com"].RankIndex).
+				LessThan(*summary.Classification.Children["sender=them@gmail.com"].RankIndex)
+
+			assert.
+				ThatOrdered(t, *summary.Classification.Children["sender=you@gmail.com"].RankIndex).
+				LessThan(*summary.Classification.Children["sender=them@gmail.com"].RankIndex)
+
+			assert.
+				That(t, *summary.Classification.Children["sender=me@gmail.com"].RankIndex).
+				NotEqual(*summary.Classification.Children["sender=you@gmail.com"].RankIndex)
 
 			cl := summary.Classification
 			assert.That(t, len(cl.Children)).Equals(len(userNames))
 
 			for _, ch := range cl.Children {
-				assert.That(t, ch.Count).Equals(10)
+				assert.That(t, ch.Count).Equals(uint(userCounts[ch.Label]))
 				assert.That(t, len(ch.Children)).Equals(0)
 			}
 
@@ -433,17 +458,11 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, r.err).IsNil()
 		})
 
-		leafPaths := []string{
-			"sender=me@gmail.com",
-			"sender=you@gmail.com",
-			"sender=them@gmail.com",
-		}
-
-		for _, path := range leafPaths {
+		for path, count := range senderCounts {
 			leaf, err := repo.FetchLeaf(ctx, testAddress, []string{path})
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, len(leaf.Messages)).Equals(10)
-			assert.That(t, leaf.Count).Equals(10)
+			assert.That(t, len(leaf.Messages)).Equals(count)
+			assert.That(t, leaf.Count).Equals(uint(count))
 			assert.That(t, len(leaf.Children)).Equals(0)
 
 			addr := strings.TrimPrefix(path, "sender=")

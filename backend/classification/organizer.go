@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
+	"sort"
 	"sync"
 )
 
@@ -79,6 +80,26 @@ func (o Organizer) Organize(ctx context.Context) error {
 
 	wg.Wait()
 	rootDTO := root.Classification()
+
+	// assign order index to support pagination of top-level groups
+	sortedKeys := make([]string, 0, len(rootDTO.Children))
+	for k := range rootDTO.Children {
+		sortedKeys = append(sortedKeys, k)
+	}
+
+	sort.Slice(sortedKeys, func(i, j int) bool {
+		keyI := sortedKeys[i]
+		keyJ := sortedKeys[j]
+		return rootDTO.Children[keyI].Count > rootDTO.Children[keyJ].Count
+	})
+
+	for i, key := range sortedKeys {
+		child := rootDTO.Children[key]
+		rank := i
+		child.RankIndex = &rank
+		rootDTO.Children[key] = child
+	}
+
 	err = o.repo.Store(ctx, o.inbox.Name(), &rootDTO, selectedFolderValidityKeys)
 	return err
 }

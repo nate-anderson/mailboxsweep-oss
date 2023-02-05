@@ -17,7 +17,7 @@ import (
 type Service interface {
 	EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error
 	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
-	ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error)
+	ClassificationSummary(ctx context.Context, limit, offset int) (root *ClassificationDocument, err error)
 	ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error)
 	ListClassifiers() []ClassifierInfo
 }
@@ -187,12 +187,12 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	return err
 }
 
-func (s DefaultService) ClassificationSummary(ctx context.Context) (root *ClassificationDocument, err error) {
+func (s DefaultService) ClassificationSummary(ctx context.Context, limit, offset int) (root *ClassificationDocument, err error) {
 	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.FetchSummary(ctx, address)
+	return s.repo.FetchSummary(ctx, address, limit, offset)
 }
 
 func (s DefaultService) ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error) {
