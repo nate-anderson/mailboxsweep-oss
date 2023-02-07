@@ -737,6 +737,13 @@ paths:
     get:
       operationId: getClassificationSummary
       description: Get the summary tree of inbox classifications
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          required: false
+          description: Result page to fetch, defaults to 0 == first page
       responses:
         '200':
           description: Success

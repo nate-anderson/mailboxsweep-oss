@@ -11,6 +11,7 @@ import { useSnackbar } from "../../components/snackbar";
 import { ApiError, Classification } from "../../client-gen";
 import IconExpandMore from "@mui/icons-material/ExpandMore";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
+import Button from "../../components/button";
 
 const displayTypeKey = (typeKey?: string): string => {
     switch (typeKey) {
@@ -67,9 +68,12 @@ export default function Edit() {
     const [ classificationRoot, setClassificationRoot ] = useState<Classification | undefined>();
 
     const [ errorSnackbar, setError ] = useSnackbar("error");
+
+    const [ requestPage, setRequestPage ] = useState(0);
     
     useEffect(() => {
-        API.getClassificationSummary()
+        console.log("USE EFFECT")
+        API.getClassificationSummary(requestPage)
             .then((data) => {
                 setClassificationRoot(data.classification)
             })
@@ -79,7 +83,7 @@ export default function Edit() {
                     setError(apiError.message);
                 }
             })
-    }, []);
+    }, [requestPage]);
 
     return <>
         <Navbar />
@@ -109,6 +113,14 @@ export default function Edit() {
                 >
                     {renderListItem(classificationRoot)}
                 </Treeview>
+
+                <Box
+                    display="flex"
+                >
+                    <Button onClick={() => setRequestPage((reqPage) => reqPage - 1)}>Previous Page</Button>
+                    <Button onClick={() => setRequestPage((reqPage) => reqPage + 1)}>Next Page</Button>
+
+                </Box>
             </Box>
         </Container>
     </>;
