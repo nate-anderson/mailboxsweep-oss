@@ -12,6 +12,7 @@ import { ApiError, Classification } from "../../client-gen";
 import IconExpandMore from "@mui/icons-material/ExpandMore";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
 import Button from "../../components/button";
+import Chip from "@mui/material/Chip";
 
 const displayTypeKey = (typeKey?: string): string => {
     switch (typeKey) {
@@ -38,7 +39,7 @@ type ClassificationWithId = Classification & {
     id: string
 };
 
-const renderListItem = (root: Classification | undefined) => {
+const renderChildList = (root: Classification | undefined) => {
     if (!root) {
         return <></>;
     }
@@ -51,14 +52,27 @@ const renderListItem = (root: Classification | undefined) => {
         });
     }
 
-    return topLevelClassifications.map(cl => (
+    return topLevelClassifications
+        .sort((a, b) => Number(a.count) > Number(b.count) ? -1 : 1)
+        .map(cl => (
         <TreeItem
             sx={{
                 marginY: 1,
             }}
-            nodeId={cl.id} label={displayTypeKey(cl.typeKey) + " " + cl.label}
+            nodeId={cl.id} label={
+                <Box
+                    display="flex"
+                    justifyContent="space-between"
+                >
+                    <Typography>{displayTypeKey(cl.typeKey) + " " + cl.label}</Typography>
+                    <Chip
+                        label={cl.count} color="primary"
+                        size="small"
+                    />
+                </Box>
+            }
         >
-            {renderListItem(cl)}
+            {renderChildList(cl)}
         </TreeItem>
         )
     )
@@ -111,11 +125,12 @@ export default function Edit() {
                     defaultExpandIcon={<IconChevronRight />}
                     sx={{ flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
                 >
-                    {renderListItem(classificationRoot)}
+                    {renderChildList(classificationRoot)}
                 </Treeview>
 
                 <Box
                     display="flex"
+                    justifyContent="space-between"
                 >
                     <Button onClick={() => setRequestPage((reqPage) => reqPage - 1)}>Previous Page</Button>
                     <Button onClick={() => setRequestPage((reqPage) => reqPage + 1)}>Next Page</Button>
