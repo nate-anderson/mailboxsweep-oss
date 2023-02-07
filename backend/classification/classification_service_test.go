@@ -173,7 +173,7 @@ func TestClassificationService(t *testing.T) {
 	table, dynamoTeardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
 	defer dynamoTeardown()
 
-	repo := NewS3ClassificationRepository(s3Client, bucket)
+	repo := NewS3ClassificationRepository(s3Client, bucket, 2)
 
 	imapServerService := testImapServerService{
 		domain: testDomain,
@@ -415,7 +415,7 @@ func TestClassificationService(t *testing.T) {
 			err = service.Classify(authedCtx, folders, classifiers)
 			assert.ThatError(t, err).IsNil()
 
-			summary, err := repo.FetchSummary(ctx, testAddress, 100, 0)
+			summary, err := service.ClassificationSummary(authedCtx, nil)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, summary.Meta.Created.IsZero()).Equals(false)
 			assert.That(t, summary.Classification).NotEqual(nil)

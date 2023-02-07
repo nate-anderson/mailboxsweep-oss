@@ -17,7 +17,7 @@ import (
 type Service interface {
 	EnqueueClassify(ctx context.Context, folders []string, classifiers []SerializableClassifier) error
 	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
-	ClassificationSummary(ctx context.Context, limit, offset int) (root *ClassificationDocument, err error)
+	ClassificationSummary(ctx context.Context, page *int) (root *ClassificationDocument, err error)
 	ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error)
 	ListClassifiers() []ClassifierInfo
 }
@@ -187,12 +187,28 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	return err
 }
 
-func (s DefaultService) ClassificationSummary(ctx context.Context, limit, offset int) (root *ClassificationDocument, err error) {
+func (s DefaultService) ClassificationSummary(ctx context.Context, page *int) (root *ClassificationDocument, err error) {
 	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.FetchSummary(ctx, address, limit, offset)
+	if page != nil {
+		return s.repo.FetchSummary(ctx, address, *page)
+	}
+
+	pageCount := 1
+	pages := []ClassificationDocument{}
+	for i := 0; i < pageCount; i++ {
+		page, err := s.repo.FetchSummary(ctx, address, i)
+		if err != nil {
+			return nil, err
+		}
+		pages = append(pages, *page)
+		pageCount = page.TotalPages
+	}
+
+	merged := mergePaginatedDocs(pages)
+	return &merged, nil
 }
 
 func (s DefaultService) ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error) {

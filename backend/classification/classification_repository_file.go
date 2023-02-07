@@ -10,16 +10,18 @@ import (
 )
 
 type FileClassificationRepository struct {
-	dir string
+	dir      string
+	pageSize int
 }
 
 /*
 This is really for local testing and is very I/O inefficient
 */
 
-func NewFileClassificationRepository(dir string) *FileClassificationRepository {
+func NewFileClassificationRepository(dir string, pageSize int) *FileClassificationRepository {
 	return &FileClassificationRepository{
-		dir: dir,
+		dir:      dir,
+		pageSize: pageSize,
 	}
 }
 
@@ -48,7 +50,7 @@ func (r FileClassificationRepository) Store(ctx context.Context, inbox string, c
 	})
 }
 
-func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*ClassificationDocument, error) {
+func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox string, page int) (*ClassificationDocument, error) {
 	file, err := os.Open(
 		r.formatFilePath(inbox),
 	)
@@ -64,6 +66,15 @@ func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox st
 	}
 
 	cl := classification.Classification.withoutMessages()
+
+	pageStart := (page * r.pageSize) + 1
+	pageEnd := r.pageSize * (page + 1)
+
+	for key, value := range cl.Children {
+		if value.RankIndex == nil || *value.RankIndex < pageStart || *value.RankIndex > pageEnd {
+			delete(cl.Children, key)
+		}
+	}
 	classification.Classification = &cl
 	return &classification, err
 }

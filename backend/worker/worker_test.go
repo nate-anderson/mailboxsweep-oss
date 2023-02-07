@@ -141,7 +141,7 @@ func TestWorker(t *testing.T) {
 		t:              t,
 		expectedDomain: "example.org",
 	}
-	classificationRepo := classification.NewFileClassificationRepository(t.TempDir())
+	classificationRepo := classification.NewFileClassificationRepository(t.TempDir(), 50)
 	providerService := inboxtesting.NewTestProviderService()
 	numMessages := 100
 	userNames := []string{
@@ -224,7 +224,8 @@ func TestWorker(t *testing.T) {
 		assert.That(t, credentialReadService.FindCredentialCalled).Equals(1)
 
 		// the classification service has a summary for the requested user
-		root, err := classificationService.ClassificationSummary(authedCtx)
+		page := 0
+		root, err := classificationService.ClassificationSummary(authedCtx, &page)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, root.Classification.Count).Equals(uint(numMessages))
 	})

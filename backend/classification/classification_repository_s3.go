@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"path/filepath"
-	"time"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -22,17 +22,19 @@ const perSecondPrefixRateLimit = float32(3600)
 type S3ClassificationRepository struct {
 	client     *s3.Client
 	bucketName string
+	pageSize   int
 }
 
-func NewS3ClassificationRepository(client *s3.Client, bucket string) *S3ClassificationRepository {
+func NewS3ClassificationRepository(client *s3.Client, bucket string, pageSize int) *S3ClassificationRepository {
 	return &S3ClassificationRepository{
 		client:     client,
 		bucketName: bucket,
+		pageSize:   pageSize,
 	}
 }
 
-func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox string) (*ClassificationDocument, error) {
-	pathStr := r.summaryPath(inbox)
+func (r S3ClassificationRepository) FetchSummary(ctx context.Context, inbox string, page int) (*ClassificationDocument, error) {
+	pathStr := r.summaryPath(inbox, page)
 
 	obj, err := r.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &r.bucketName,
@@ -89,7 +91,11 @@ type pathLeafTuple struct {
 	leaf Classification
 }
 
-func (r S3ClassificationRepository) summaryPath(inbox string) string {
+func (r S3ClassificationRepository) summaryPath(inbox string, page int) string {
+	return filepath.Join(r.summaryDirPath(inbox), strconv.Itoa(page))
+}
+
+func (r S3ClassificationRepository) summaryDirPath(inbox string) string {
 	return filepath.Join(inbox, "summary")
 }
 
@@ -157,31 +163,27 @@ func (r S3ClassificationRepository) storeLeaves(ctx context.Context, inbox strin
 }
 
 func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error {
-	// copy before stripping
 	summary := classification.withoutMessages()
-	doc := ClassificationDocument{
-		Meta: ClassificationMeta{
-			Created:      time.Now(),
-			ValidityKeys: validityKeys,
-		},
-		Classification: &summary,
+	docs := sortAndPaginateChildren(summary, validityKeys, r.pageSize)
+
+	for _, doc := range docs {
+		summaryDocument := bytes.Buffer{}
+		err := json.NewEncoder(&summaryDocument).Encode(doc)
+		if err != nil {
+			return fmt.Errorf("failed to encode summary document: %w", err)
+		}
+
+		_, err = r.client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket: &r.bucketName,
+			Key:    aws.String(r.summaryPath(inbox, doc.Page)),
+			Body:   bytes.NewReader(summaryDocument.Bytes()),
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to store summary document: %w", err)
+		}
 	}
 
-	summaryDocument := bytes.Buffer{}
-	err := json.NewEncoder(&summaryDocument).Encode(doc)
-	if err != nil {
-		return fmt.Errorf("failed to encode summary document: %w", err)
-	}
-
-	_, err = r.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: &r.bucketName,
-		Key:    aws.String(r.summaryPath(inbox)),
-		Body:   bytes.NewReader(summaryDocument.Bytes()),
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to store summary document: %w", err)
-	}
 	return nil
 }
 

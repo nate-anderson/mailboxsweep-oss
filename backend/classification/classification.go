@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
+	"math"
 	"path/filepath"
+	"sort"
 	"time"
 )
 
@@ -69,12 +71,14 @@ func NewClassification(dimension, label, typeKey string) Classification {
 type ClassificationMeta struct {
 	Created time.Time `json:"created"`
 	// store folder validity key maps to know when our stored UIDs are invalidated
-	ValidityKeys map[string]uint32 `json:"validityKeys"`
+	ValidityKeys map[string]uint32 `json:"validity_keys"`
 }
 
 type ClassificationDocument struct {
 	Meta           ClassificationMeta `json:"meta"`
 	Classification *Classification    `json:"classification"`
+	Page           int                `json:"page"`
+	TotalPages     int                `json:"total_pages"`
 }
 
 // Store and retrieve classified messages
@@ -82,7 +86,7 @@ type ClassificationRepository interface {
 	// store the whole tree at once
 	Store(ctx context.Context, inbox string, classification *Classification, validityKeys map[string]uint32) error
 	// fetch a page of the summary
-	FetchSummary(ctx context.Context, inbox string, limit, offset int) (root *ClassificationDocument, err error)
+	FetchSummary(ctx context.Context, inbox string, page int) (root *ClassificationDocument, err error)
 	FetchLeaf(ctx context.Context, inbox string, path []string) (leaf *Classification, err error)
 }
 
@@ -189,4 +193,80 @@ func (sc *SafeClassification) Classification() Classification {
 		Count:     sc.Count,
 		Children:  dtoChildren,
 	}
+}
+
+func sortAndPaginateChildren(root Classification, validityKeys map[string]uint32, pageSize int) []ClassificationDocument {
+	n := len(root.Children)
+	numPages := math.Ceil(
+		float64(n) / float64(pageSize),
+	)
+
+	doc := ClassificationDocument{
+		Meta: ClassificationMeta{
+			Created:      time.Now(),
+			ValidityKeys: validityKeys,
+		},
+		Classification: &Classification{
+			Dimension: root.Dimension,
+			TypeKey:   root.TypeKey,
+			Label:     root.Label,
+			Messages:  root.Messages,
+			Count:     root.Count,
+			RankIndex: root.RankIndex,
+			Children:  make(map[string]Classification),
+		},
+		Page:       0,
+		TotalPages: int(numPages),
+	}
+
+	results := []ClassificationDocument{}
+
+	orderedKeys := make([]string, 0, len(root.Children))
+	for key := range root.Children {
+		orderedKeys = append(orderedKeys, key)
+	}
+	sort.Slice(orderedKeys, func(i, j int) bool {
+		keyI := orderedKeys[i]
+		keyJ := orderedKeys[j]
+		return root.Children[keyI].Count > root.Children[keyJ].Count
+	})
+
+	i := 0
+	for _, key := range orderedKeys {
+		doc.Classification.Children[key] = root.Children[key]
+		if len(doc.Classification.Children) >= pageSize || i == (n-1) {
+			results = append(results, doc)
+			doc.Page++
+			// set this to a new value because it's a pointer
+			doc.Classification = &Classification{
+				Dimension: root.Dimension,
+				TypeKey:   root.TypeKey,
+				Label:     root.Label,
+				Messages:  root.Messages,
+				Count:     root.Count,
+				RankIndex: root.RankIndex,
+				Children:  make(map[string]Classification),
+			}
+		}
+		i++
+	}
+
+	return results
+}
+
+func mergePaginatedDocs(paginated []ClassificationDocument) ClassificationDocument {
+	if len(paginated) < 1 {
+		return ClassificationDocument{}
+	}
+
+	joined := paginated[0]
+	joined.Page = 0
+
+	for _, p := range paginated {
+		for key, value := range p.Classification.Children {
+			joined.Classification.Children[key] = value
+		}
+	}
+
+	return joined
 }

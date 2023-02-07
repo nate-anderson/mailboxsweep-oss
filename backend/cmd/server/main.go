@@ -85,6 +85,8 @@ type serverConfig struct {
 	CORSAllowedOrigin string `mapstructure:"CORS_ALLOWED_ORIGIN"`
 
 	SigningKeyFilePath string `mapstructure:"SIGNING_KEY_FILE_PATH"`
+
+	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
 }
 
 func main() {
@@ -184,7 +186,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket)
+	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 	classificationService := classification.NewService(
 		credentialService,
 		imapServerService,

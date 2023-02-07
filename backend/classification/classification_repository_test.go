@@ -14,7 +14,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 
 	s3Client, bucket, teardown := mailboxsweep.SetupTestBucket(ctx, t)
 	defer teardown()
-	s3repo := NewS3ClassificationRepository(s3Client, bucket)
+	s3repo := NewS3ClassificationRepository(s3Client, bucket, 2)
 
 	testSender := inbox.Sender{
 		Address:  "admin@example.com",
@@ -25,7 +25,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 	validityKeys := map[string]uint32{"INBOX": 1}
 	address := "admin@example.com"
 
-	fileRepo := NewFileClassificationRepository(t.TempDir())
+	fileRepo := NewFileClassificationRepository(t.TempDir(), 2)
 
 	repositories := map[string]ClassificationRepository{
 		"s3":   s3repo,
@@ -59,7 +59,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 		})
 
 		t.Run("fetch summary", func(t *testing.T) {
-			classification, err := repo.FetchSummary(ctx, address)
+			classification, err := repo.FetchSummary(ctx, address, 0)
 			assert.ThatError(t, err).IsNil()
 			assert.
 				That(t, classification).

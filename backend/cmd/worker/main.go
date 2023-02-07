@@ -54,6 +54,8 @@ type workerConfig struct {
 	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
 	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
 	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+
+	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
 }
 
 func main() {
@@ -126,7 +128,7 @@ func main() {
 		log.Fatalf("failed to instantiate S3 client: %s", err)
 	}
 
-	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket)
+	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 
 	queue, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{

@@ -215,7 +215,7 @@ var classifyMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		repo := classification.NewFileClassificationRepository("testdata")
+		repo := classification.NewFileClassificationRepository("testdata", 50)
 		organizer := classification.NewOrganizer(mailbox, repo, []string{folderName}, []classification.Classifier{
 			classification.NewSenderDomainClassifier(),
 			classification.NewSenderUsernameClassifier(),
@@ -238,8 +238,8 @@ var queryCmd = &cobra.Command{
 			log.Fatal("username is required")
 		}
 
-		repo := classification.NewFileClassificationRepository("testdata")
-		classification, err := repo.FetchSummary(context.Background(), username)
+		repo := classification.NewFileClassificationRepository("testdata", 50)
+		classification, err := repo.FetchSummary(context.Background(), username, 0)
 		if err != nil {
 			log.Fatal(err)
 		}

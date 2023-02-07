@@ -69,9 +69,13 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 	return
 }
 
-func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter, req *http.Request, params GetClassificationSummaryParams) {
 	ctx := req.Context()
-	root, err := c.classificationService.ClassificationSummary(ctx)
+	page := 0
+	if params.Page != nil {
+		page = *params.Page
+	}
+	root, err := c.classificationService.ClassificationSummary(ctx, &page)
 	if err != nil {
 		c.respondError(w, err)
 		return
