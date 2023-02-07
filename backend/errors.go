@@ -17,6 +17,7 @@ var (
 	ErrNeedsPayment       = errors.New("payment required")
 	ErrAlreadyPaid        = errors.New("account is already paid")
 	ErrPlanLimitMet       = errors.New("plan limits met")
+	ErrBadGateway         = errors.New("bad gateway")
 )
 
 type StatusError interface {
@@ -77,6 +78,12 @@ func NeedsPaymentError(parent error) error {
 func PlanLimitMetError(parent error) error {
 	return planLimitMetError{
 		parent: join(parent, ErrPlanLimitMet),
+	}
+}
+
+func BadGatewayError(parent error) error {
+	return badGatewayError{
+		parent: join(parent, ErrBadGateway),
 	}
 }
 
@@ -159,4 +166,20 @@ func (p planLimitMetError) StatusCode() int {
 
 func (p planLimitMetError) Unwrap() error {
 	return p.parent
+}
+
+type badGatewayError struct {
+	parent error
+}
+
+func (e badGatewayError) Error() string {
+	return ErrBadGateway.Error()
+}
+
+func (e badGatewayError) StatusCode() int {
+	return http.StatusBadGateway
+}
+
+func (e badGatewayError) Unwrap() error {
+	return e.parent
 }
