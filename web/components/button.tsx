@@ -1,7 +1,7 @@
 import { SxProps, Theme } from '@mui/material';
-import MUIButton from '@mui/material/Button';
+import MUIButton, { ButtonProps as MUIButtonProps } from '@mui/material/Button';
 
-interface ButtonProps {
+type ButtonProps = MUIButtonProps & {
     children?: string;
     sx?: SxProps<Theme> | undefined;
     disabled?: boolean;
@@ -13,13 +13,13 @@ export default function Button(props: ButtonProps) {
         <MUIButton
             variant="contained"
             size="large"
-            onClick={props.onClick}
             sx={{
                 backgroundColor: "var(--color-accent)",
                 color: "white",
                 ...props.sx,
             }}
             disabled={props.disabled ?? false}
+            {...props}
         >
             {props.children}
         </MUIButton>
