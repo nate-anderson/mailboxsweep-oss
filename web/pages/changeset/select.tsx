@@ -5,21 +5,34 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Treeview from "@mui/lab/TreeView";
 import TreeItem from "@mui/lab/TreeItem";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
 import { ApiError, Classification } from "../../client-gen";
 import IconExpandMore from "@mui/icons-material/ExpandMore";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
-import SpeedDial from "@mui/material/SpeedDial";
-import SpeedDialAction from "@mui/material/SpeedDialAction";
+import BottomNavigation from "@mui/material/BottomNavigation";
+import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Button from "../../components/button";
 import Chip from "@mui/material/Chip";
 import IconArrowForward from "@mui/icons-material/ArrowForward";
 import IconArrowBackward from "@mui/icons-material/ArrowBack";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
 import IconMarkRead from "@mui/icons-material/MarkEmailRead";
-import IconCheck from "@mui/icons-material/Check";
+import Paper from "@mui/material/Paper";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+
+/*
+Todo: render tree items differently if they have been selected for
+mark-read or deletion.
+
+Store the selected leaf keys in browser storage so they persist
+when paginating, and when a user leaves and returns to the site
+*/
 
 const displayTypeKey = (typeKey?: string): string => {
     switch (typeKey) {
@@ -46,6 +59,35 @@ type ClassificationWithId = Classification & {
     id: string
 };
 
+const renderToggleModeSwitch = (isDeleteMode: boolean, setIsDeleteMode: (v: boolean) => void) => {
+    return <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
+    <Toolbar
+        sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            backgroundColor: isDeleteMode ? "#ffcccc" : "white"
+        }}
+    >
+        <Typography
+            sx={{ marginLeft: 1 }}
+        >
+            120,849 selected
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{
+            marginRight: 1,
+        }}>
+            <IconMarkRead style={{ color: isDeleteMode? undefined : "#1976d2" }}/>
+            <Switch
+                onChange={(_, v) => setIsDeleteMode(v)}
+                value={isDeleteMode}
+                color={isDeleteMode ? "error" : "primary" }
+            />
+            <IconDeleteForever style={{ color: isDeleteMode ? "var(--color-danger)" : undefined }}/>
+        </Stack>
+    </Toolbar>
+</AppBar>
+}
+
 const renderChildList = (
     root: Classification | undefined,
     appendSelectedLeaf: (k: string) => void,
@@ -66,42 +108,43 @@ const renderChildList = (
 
     return topLevelClassifications
         .sort((a, b) => Number(a.count) > Number(b.count) ? -1 : 1)
-        .map(cl => (
-        <TreeItem
-            sx={{
-                marginY: 1,
-                padding: 2,
-                paddingRight: border ? 1 : 0,
-                border: border ? "1px solid lightgray" : "none",
-                borderRadius: "6px",
-            }}
-            nodeId={cl.id} label={
-                <Box
-                    display="flex"
-                    justifyContent="space-between"
-                >
-                    <Typography>{cl.label}</Typography>
-                    <Chip
-                        label={cl.count} color="primary"
-                        size="small"
-                    />
-                </Box>
-            }
-        >
-            {renderChildList(cl, appendSelectedLeaf, removeSelectedLeaf)}
-        </TreeItem>
-        )
+        .map(cl => {
+            const hasChildren = Object.keys(cl.children).length > 0;
+            return <TreeItem
+                sx={{
+                    marginTop: 2,
+                    padding: 2,
+                    paddingRight: border ? 1 : 0,
+                    border: border ? "1px solid lightgray" : "none",
+                    borderRadius: "6px",
+                }}
+                
+                nodeId={cl.id} label={
+                    <Box
+                        display="flex"
+                        justifyContent="space-between"
+                    >
+                        <Typography>{cl.label}</Typography>
+                        <Chip
+                            label={cl.count} color="primary"
+                            size="small"
+                        />
+                    </Box>
+                }
+            >
+                {renderChildList(cl, appendSelectedLeaf, removeSelectedLeaf)}
+            </TreeItem>
+        }
     )
 }
 
 export default function Edit() {
     const [ classificationRoot, setClassificationRoot ] = useState<Classification | undefined>();
-
     const [ errorSnackbar, setError ] = useSnackbar("error");
-
     const [ requestPage, setRequestPage ] = useState(0);
-
+    const [ totalPages, setTotalPages ] = useState(0);
     const [ selectedLeaves, setSelectedLeaves ] = useState(new Set<string>());
+    const [ isDeleteMode, setIsDeleteMode ] = useState(false);
 
     const addLeaf = (leaf: string) => setSelectedLeaves(s => s.add(leaf));
     const removeLeaf = (leaf: string) => setSelectedLeaves(s => {
@@ -113,7 +156,8 @@ export default function Edit() {
         console.log("USE EFFECT")
         API.getClassificationSummary(requestPage)
             .then((data) => {
-                setClassificationRoot(data.classification)
+                setClassificationRoot(data.classification);
+                setTotalPages(data.pageCount);
             })
             .catch((err) => {
                 if (err instanceof ApiError) {
@@ -160,72 +204,28 @@ export default function Edit() {
                         width: "90vw",
                         maxWidth: "600px",
                         marginTop: 1,
-                        marginBottom: 8
+                        marginBottom: 6
                     }}
                 >
-                    <Button
-                        startIcon={<IconArrowBackward />}
-                        onClick={() => setRequestPage((reqPage) => reqPage - 1)}
-                        hidden={requestPage > 0}
-                    >
-                        Back
-                    </Button>
-                    <Button
-                        endIcon={<IconArrowForward />}
-                        onClick={() => setRequestPage((reqPage) => reqPage + 1)}
-                    >
-                        Next
-                    </Button>
+                    {/* @TODO: Use @mui/material/Pagination here instead of these dumbass buttons */}
+                    <Pagination
+                        count={totalPages}
+                        onChange={(_, page) => setRequestPage(page - 1)}
+                        sx={{
+                            marginTop: 3,
+                        }}
+                    />
 
                 </Box>
             </Box>
         </Container>
 
-        <SpeedDial
-            ariaLabel="action menu"
-            icon={<IconCheck />}
-            color="info"
-            FabProps={{
-                size: "large"
-            }}
-            sx={{
-                position: 'fixed',
-                bottom: 20,
-                left: 20,
-            }}
-        >
-            <SpeedDialAction
-                tooltipTitle="Delete"
-                icon={<IconDeleteForever style={{ color: "white" }} />}
-                tooltipOpen
-                tooltipPlacement="right"
-                FabProps={{
-                    size: "large",
-                    color: "error",
-                    sx: {
-                        bgcolor: "#ed5c5c",
-                        '&:hover': {
-                            bgcolor: "#ed5c5c"
-                        }
-                    }
-                }}
-            />
-            <SpeedDialAction
-                tooltipTitle="Mark read"
-                icon={<IconMarkRead style={{ color: "white" }} />}
-                tooltipOpen
-                tooltipPlacement="right"
-                FabProps={{
-                    size: "large",
-                    color: "warning",
-                    sx: {
-                        bgcolor: "#ff904f",
-                        '&:hover': {
-                            bgcolor: "#ff904f",
-                        }
-                    }
-                }}
-            />
-        </SpeedDial>
+        {/* 
+            @TODO: Replace the speed dial with a two-button navigation bar that allows switching between mark-read mode and delete mode
+            It should subtly change colors so the mode is very obvious to the user
+            The color of checkmarks should also change
+        */}
+        {renderToggleModeSwitch(isDeleteMode, setIsDeleteMode)}
+        
     </>;
 }

@@ -2,8 +2,9 @@
   --color-primary: #fa782d;
   --color-black: #2B4162;
   --color-light: #EDEBD7;
-  --color-danger: #AD343E;
+  --color-danger: #a60000;
   --color-accent: #2795f5;
   --color-gray: #6e6e6e;
   --color-info: #2E2E2E;
+  --color-warn: #9e7d11;
 }
