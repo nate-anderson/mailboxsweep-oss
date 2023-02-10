@@ -83,6 +83,7 @@ func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter
 
 	resBody := ClassificationResponse{
 		Classification: convertClassification(*root.Classification),
+		PageCount:      root.TotalPages,
 	}
 
 	c.respond(w, http.StatusOK, resBody)

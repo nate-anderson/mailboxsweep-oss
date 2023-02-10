@@ -80,9 +80,12 @@ components:
       type: object
       required:
         - classification
+        - pageCount
       properties:
         classification:
           $ref: '#/components/schemas/Classification'
+        pageCount:
+          type: integer
 
     ClassificationStatus:
       type: object
