@@ -3,28 +3,27 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Navbar from "../../components/navbar";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Treeview from "@mui/lab/TreeView";
-import TreeItem from "@mui/lab/TreeItem";
-import { useEffect, useRef, useState } from "react";
+import TreeView from "@mui/lab/TreeView";
+import TreeItem, { treeItemClasses } from "@mui/lab/TreeItem";
+import { useEffect, useState } from "react";
 import { API } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
 import { ApiError, Classification } from "../../client-gen";
 import IconExpandMore from "@mui/icons-material/ExpandMore";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
-import BottomNavigation from "@mui/material/BottomNavigation";
-import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-import Button from "../../components/button";
 import Chip from "@mui/material/Chip";
-import IconArrowForward from "@mui/icons-material/ArrowForward";
-import IconArrowBackward from "@mui/icons-material/ArrowBack";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
 import IconMarkRead from "@mui/icons-material/MarkEmailRead";
-import Paper from "@mui/material/Paper";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import { styled } from "@mui/system";
+import Leaf, { LeafProps } from "../../components/changeset/leaf";
+import { ClassificationTree } from "../../lib/tree";
+import Crumbs from "../../components/changeset/crumbs";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -55,17 +54,18 @@ const displayTypeKey = (typeKey?: string): string => {
     }
 }
 
-type ClassificationWithId = Classification & {
-    id: string
-};
-
-const renderToggleModeSwitch = (isDeleteMode: boolean, setIsDeleteMode: (v: boolean) => void) => {
+function ToggleModeSwitch(props: {
+    isDeleteMode: boolean,
+    setIsDeleteMode: (v: boolean) => void,
+    showDeleteTooltip: boolean,
+    showMarkReadTooltip: boolean,
+}) {
     return <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
     <Toolbar
         sx={{
             display: "flex",
             justifyContent: "space-between",
-            backgroundColor: isDeleteMode ? "#ffcccc" : "white"
+            backgroundColor: props.isDeleteMode ? "#ffd4d4" : "white"
         }}
     >
         <Typography
@@ -76,87 +76,149 @@ const renderToggleModeSwitch = (isDeleteMode: boolean, setIsDeleteMode: (v: bool
         <Stack direction="row" spacing={1} alignItems="center" sx={{
             marginRight: 1,
         }}>
-            <IconMarkRead style={{ color: isDeleteMode? undefined : "#1976d2" }}/>
+            <Tooltip
+                title={<Typography sx={{fontSize: "1.3em"}}>Mark messages read</Typography>}
+                arrow
+                disableFocusListener
+                open={props.showMarkReadTooltip}
+            >
+                <IconMarkRead style={{ color: props.isDeleteMode? undefined : "#1976d2" }}/>
+            </Tooltip>
             <Switch
-                onChange={(_, v) => setIsDeleteMode(v)}
-                value={isDeleteMode}
-                color={isDeleteMode ? "error" : "primary" }
+                onChange={(_, v) => props.setIsDeleteMode(v)}
+                value={props.isDeleteMode}
+                color={props.isDeleteMode ? "error" : "primary" }
             />
-            <IconDeleteForever style={{ color: isDeleteMode ? "var(--color-danger)" : undefined }}/>
+            <Tooltip
+                title={<Typography sx={{fontSize: "1.3em"}}>Permanently delete messages</Typography>}
+                arrow
+                disableFocusListener
+                open={props.showDeleteTooltip}
+            >
+                <IconDeleteForever style={{ color: props.isDeleteMode ? "var(--color-danger)" : undefined }}/>
+            </Tooltip>
         </Stack>
     </Toolbar>
 </AppBar>
 }
 
-const renderChildList = (
-    root: Classification | undefined,
+const classificationToLeafProps = (
+    children: Record<string, Classification> | undefined, 
+    navigate: (key: string) => void,
+    appendSelectedNode: (node: string) => void,
+    removeSelectedNode: (node: string) => void,
+): LeafProps[] => {
+    if (!children) {
+        return [];
+    }
+
+    return Object
+        .entries(children)
+        .map(([key, value]) => ({
+            label: value.label,
+            msgCount: value.count,
+            unreadCount: 0,
+            onClickExpand: (key: string) => navigate(key),
+            id: key,
+            children: classificationToLeafProps(value.children, navigate, appendSelectedNode, removeSelectedNode),
+            isChild: true,
+            appendSelectedNode,
+            removeSelectedNode,
+        }))
+        .sort((a, b) => Number(a.msgCount) > Number(b.msgCount) ? -1 : 1);
+}
+
+function List(props: {
+    selected: Classification | undefined,
     appendSelectedLeaf: (k: string) => void,
     removeSelectedLeaf: (k: string) => void,
-    border: boolean = false,
-    ) => {
-    if (!root) {
+    navigate: (key: string) => void,
+}) {
+    if (!props.selected) {
         return <></>;
     }
 
-    const topLevelClassifications = new Array<ClassificationWithId>();
-    for (const [key, value] of Object.entries(root.children)) {
-        topLevelClassifications.push({
+    return <>
+        {Object.entries(props.selected.children)
+        .map(([key, value]) => ({
             ...value,
             id: key,
-        });
-    }
-
-    return topLevelClassifications
+        }))
         .sort((a, b) => Number(a.count) > Number(b.count) ? -1 : 1)
-        .map(cl => {
-            const hasChildren = Object.keys(cl.children).length > 0;
-            return <TreeItem
-                sx={{
-                    marginTop: 2,
-                    padding: 2,
-                    paddingRight: border ? 1 : 0,
-                    border: border ? "1px solid lightgray" : "none",
-                    borderRadius: "6px",
-                }}
-                
-                nodeId={cl.id} label={
-                    <Box
-                        display="flex"
-                        justifyContent="space-between"
-                    >
-                        <Typography>{cl.label}</Typography>
-                        <Chip
-                            label={cl.count} color="primary"
-                            size="small"
-                        />
-                    </Box>
-                }
-            >
-                {renderChildList(cl, appendSelectedLeaf, removeSelectedLeaf)}
-            </TreeItem>
-        }
-    )
+        .map(cl => <Leaf
+            id={cl.id}
+            key={cl.id}
+            label={cl.label}
+            msgCount={cl.count}
+            unreadCount={0}
+            children={classificationToLeafProps(
+                cl.children,
+                props.navigate,
+                props.appendSelectedLeaf,
+                props.removeSelectedLeaf
+            )}
+            onClickExpand={props.navigate}
+            appendSelectedNode={props.appendSelectedLeaf}
+            removeSelectedNode={props.removeSelectedLeaf}
+        />
+        )}
+        </>;
 }
 
 export default function Edit() {
-    const [ classificationRoot, setClassificationRoot ] = useState<Classification | undefined>();
+    const [ classificationRoot, setClassificationRoot ] = useState<ClassificationTree | undefined>();
     const [ errorSnackbar, setError ] = useSnackbar("error");
     const [ requestPage, setRequestPage ] = useState(0);
     const [ totalPages, setTotalPages ] = useState(0);
     const [ selectedLeaves, setSelectedLeaves ] = useState(new Set<string>());
     const [ isDeleteMode, setIsDeleteMode ] = useState(false);
 
+    const [ showDeleteTooltip, setShowDeleteTooltip ] = useState(false);
+    const [ showMarkReadTooltip, setShowMarkReadTooltip ] = useState(false);
+
+    const [ currentPath, setCurrentPath ] = useState<string[]>([]);
+    const navigateDownward = (key: string | undefined) => {
+        console.log("PATH BEFORE", currentPath);
+        if (key) {
+            return setCurrentPath(path => [...path, key]);
+        }
+        return setCurrentPath([]);
+    }
+    const navigateUp = () => {
+        if (currentPath.length > 0) {
+            console.log("PATH BEFORE", currentPath);
+            setCurrentPath(path => path.slice(0, path.length - 1));
+        }
+    }
+
     const addLeaf = (leaf: string) => setSelectedLeaves(s => s.add(leaf));
     const removeLeaf = (leaf: string) => setSelectedLeaves(s => {
         s.delete(leaf);
         return s;
     });
+
+    const toggleMode = (isDel: boolean) => {
+        console.log( {isDel });
+        setIsDeleteMode(isDel);
+        if (isDel) {
+            setShowMarkReadTooltip(false);
+            setShowDeleteTooltip(true);
+            setTimeout(() => {
+                setShowDeleteTooltip(false);
+            }, 5000)
+        } else {
+            setShowDeleteTooltip(false);
+            setShowMarkReadTooltip(true);
+            setTimeout(() => {
+                setShowMarkReadTooltip(false);
+            }, 5000);
+        }
+    }
     
     useEffect(() => {
-        console.log("USE EFFECT")
         API.getClassificationSummary(requestPage)
             .then((data) => {
-                setClassificationRoot(data.classification);
+                setClassificationRoot(new ClassificationTree(data.classification));
                 setTotalPages(data.pageCount);
             })
             .catch((err) => {
@@ -167,65 +229,87 @@ export default function Edit() {
             })
     }, [requestPage]);
 
+    const selectedClassification = classificationRoot
+        ? classificationRoot.jumpToPath(currentPath)
+        : undefined;
+
     return <>
         <Navbar />
-        <Container>
+        <Container disableGutters>
             <CssBaseline />
             {errorSnackbar}
+
+            <Box
+                sx={{
+                    visibility: currentPath.length > 0 ? "visible" : "hidden",
+                    marginTop: 2,
+                    marginLeft: 3,
+                }}
+            >
+                <Crumbs
+                    onClickReset={() => navigateDownward(undefined)}
+                    onClickGoUp={currentPath.length > 1
+                        ? () => navigateUp()
+                        : undefined
+                    }
+                />
+            </Box>
+
             <Box sx={{
                     marginY: 4,
                     maxWidth: 600,
                     width: "auto",
-                    marginX: "auto",
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center'
                 }}>
-                <Typography sx={{
-                    color: "var(--color-black)",
-                    fontSize: "2em",
-                    fontWeight: 100,
-                    marginBottom: 2,
-                }}>
-                Select Messages
-                </Typography>
-                <Treeview
-                    defaultCollapseIcon={<IconExpandMore />}
-                    defaultExpandIcon={<IconChevronRight />}
-                    sx={{ flexGrow: 1, overflowY: 'auto', width: "90vw", maxWidth: "600px" }}
-                >
-                    {renderChildList(classificationRoot, addLeaf, removeLeaf, true)}
-                </Treeview>
+                    
+                    <Typography sx={{
+                        color: "var(--color-black)",
+                        fontSize: "2em",
+                        fontWeight: 100,
+                        marginBottom: 2,
+                    }}>
+                    Select Messages
+                    </Typography>
+                
+                    <List
+                        selected={selectedClassification}
+                        appendSelectedLeaf={addLeaf}
+                        removeSelectedLeaf={removeLeaf}
+                        navigate={navigateDownward}
+                    />
 
                 <Box
                     display="flex"
-                    justifyContent="space-between"
+                    justifyContent="center"
                     sx={{
                         width: "90vw",
                         maxWidth: "600px",
-                        marginTop: 1,
                         marginBottom: 6
                     }}
                 >
-                    {/* @TODO: Use @mui/material/Pagination here instead of these dumbass buttons */}
-                    <Pagination
-                        count={totalPages}
-                        onChange={(_, page) => setRequestPage(page - 1)}
-                        sx={{
-                            marginTop: 3,
-                        }}
-                    />
-
+                    {
+                        currentPath.length <= 0
+                            ? <Pagination
+                                count={totalPages}
+                                onChange={(_, page) => setRequestPage(page - 1)}
+                                sx={{
+                                    marginTop: 3,
+                                }}
+                            />
+                            : <></>
+                    }
+                    
                 </Box>
             </Box>
         </Container>
 
-        {/* 
-            @TODO: Replace the speed dial with a two-button navigation bar that allows switching between mark-read mode and delete mode
-            It should subtly change colors so the mode is very obvious to the user
-            The color of checkmarks should also change
-        */}
-        {renderToggleModeSwitch(isDeleteMode, setIsDeleteMode)}
-        
+        <ToggleModeSwitch
+            isDeleteMode={isDeleteMode}
+            setIsDeleteMode={toggleMode}
+            showDeleteTooltip={showDeleteTooltip}
+            showMarkReadTooltip={showMarkReadTooltip}
+        />
     </>;
 }
