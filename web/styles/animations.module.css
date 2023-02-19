@@ -1,0 +1,17 @@
+@keyframes slide-left {
+    0% { transform: translateX(80px); }
+    100% { transform: none; }
+}
+
+@keyframes slide-right {
+    0% { transform: translateX(-80px); }
+    100% { transform: none; }
+}
+
+.slideLeft {
+    animation: slide-left 0.15s;
+}
+
+.slideRight {
+    animation: slide-right 0.15s;
+}

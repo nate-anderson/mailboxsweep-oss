@@ -29,7 +29,7 @@ export default function Login() {
     return (
         <Container component="main">
         <Box sx={{
-                marginTop: 30,
+                marginTop: "25vh",
                 display: 'flex',
                 flexDirection: "column",
                 alignItems: "center",

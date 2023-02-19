@@ -3,15 +3,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Navbar from "../../components/navbar";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import TreeView from "@mui/lab/TreeView";
-import TreeItem, { treeItemClasses } from "@mui/lab/TreeItem";
 import { useEffect, useState } from "react";
 import { API } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
 import { ApiError, Classification } from "../../client-gen";
-import IconExpandMore from "@mui/icons-material/ExpandMore";
-import IconChevronRight from "@mui/icons-material/ChevronRight";
-import Chip from "@mui/material/Chip";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
 import IconMarkRead from "@mui/icons-material/MarkEmailRead";
 import Pagination from "@mui/material/Pagination";
@@ -20,10 +15,10 @@ import Switch from "@mui/material/Switch";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
-import { styled } from "@mui/system";
 import Leaf, { LeafProps } from "../../components/changeset/leaf";
 import { ClassificationTree } from "../../lib/tree";
 import Crumbs from "../../components/changeset/crumbs";
+import Animation from "../../styles/animations.module.css";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -59,6 +54,7 @@ function ToggleModeSwitch(props: {
     setIsDeleteMode: (v: boolean) => void,
     showDeleteTooltip: boolean,
     showMarkReadTooltip: boolean,
+    numSelected: number
 }) {
     return <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
     <Toolbar
@@ -71,7 +67,7 @@ function ToggleModeSwitch(props: {
         <Typography
             sx={{ marginLeft: 1 }}
         >
-            120,849 selected
+            {props.numSelected.toLocaleString()} selected
         </Typography>
         <Stack direction="row" spacing={1} alignItems="center" sx={{
             marginRight: 1,
@@ -120,7 +116,7 @@ const classificationToLeafProps = (
             unreadCount: 0,
             onClickExpand: (key: string) => navigate(key),
             id: key,
-            children: classificationToLeafProps(value.children, navigate, appendSelectedNode, removeSelectedNode),
+            childCount: Object.keys(value.children).length,
             isChild: true,
             appendSelectedNode,
             removeSelectedNode,
@@ -128,17 +124,24 @@ const classificationToLeafProps = (
         .sort((a, b) => Number(a.msgCount) > Number(b.msgCount) ? -1 : 1);
 }
 
-function List(props: {
+interface ListProps {
     selected: Classification | undefined,
     appendSelectedLeaf: (k: string) => void,
     removeSelectedLeaf: (k: string) => void,
     navigate: (key: string) => void,
-}) {
+    slideBackward: boolean,
+    setSlideBackward: (d: boolean) => void
+}
+
+function List(props: ListProps) {
     if (!props.selected) {
         return <></>;
     }
 
-    return <>
+    return <div
+        className={props.slideBackward ? Animation.slideRight : Animation.slideLeft}
+        key={props.selected.label}
+    >
         {Object.entries(props.selected.children)
         .map(([key, value]) => ({
             ...value,
@@ -151,18 +154,16 @@ function List(props: {
             label={cl.label}
             msgCount={cl.count}
             unreadCount={0}
-            children={classificationToLeafProps(
-                cl.children,
-                props.navigate,
-                props.appendSelectedLeaf,
-                props.removeSelectedLeaf
-            )}
-            onClickExpand={props.navigate}
+            childCount={Object.keys(cl.children).length}
+            onClickExpand={(node) => {
+                props.setSlideBackward(false);
+                props.navigate(node);
+            }}
             appendSelectedNode={props.appendSelectedLeaf}
             removeSelectedNode={props.removeSelectedLeaf}
         />
         )}
-        </>;
+        </div>;
 }
 
 export default function Edit() {
@@ -171,27 +172,25 @@ export default function Edit() {
     const [ requestPage, setRequestPage ] = useState(0);
     const [ totalPages, setTotalPages ] = useState(0);
     const [ selectedLeaves, setSelectedLeaves ] = useState(new Set<string>());
+    const [ selectedCount, setSelectedCount ] = useState(0);
     const [ isDeleteMode, setIsDeleteMode ] = useState(false);
+    const [ slideBackward, setSlideBackward ] = useState(false); 
 
     const [ showDeleteTooltip, setShowDeleteTooltip ] = useState(false);
     const [ showMarkReadTooltip, setShowMarkReadTooltip ] = useState(false);
 
     const [ currentPath, setCurrentPath ] = useState<string[]>([]);
     const navigateDownward = (key: string | undefined) => {
-        console.log("PATH BEFORE", currentPath);
         if (key) {
             return setCurrentPath(path => [...path, key]);
         }
         return setCurrentPath([]);
     }
-    const navigateUp = () => {
-        if (currentPath.length > 0) {
-            console.log("PATH BEFORE", currentPath);
-            setCurrentPath(path => path.slice(0, path.length - 1));
-        }
-    }
 
-    const addLeaf = (leaf: string) => setSelectedLeaves(s => s.add(leaf));
+    const addLeaf = (leaf: string) => {
+        const leaves = setSelectedLeaves(s => s.add(leaf))
+        console.log({ leaves });
+    };
     const removeLeaf = (leaf: string) => setSelectedLeaves(s => {
         s.delete(leaf);
         return s;
@@ -238,69 +237,70 @@ export default function Edit() {
         <Container disableGutters>
             <CssBaseline />
             {errorSnackbar}
-
-            <Box
-                sx={{
-                    visibility: currentPath.length > 0 ? "visible" : "hidden",
-                    marginTop: 2,
-                    marginLeft: 3,
-                }}
-            >
-                <Crumbs
-                    onClickReset={() => navigateDownward(undefined)}
-                    onClickGoUp={currentPath.length > 1
-                        ? () => navigateUp()
-                        : undefined
-                    }
-                />
-            </Box>
-
             <Box sx={{
-                    marginY: 4,
-                    maxWidth: 600,
-                    width: "auto",
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                }}>
-                    
-                    <Typography sx={{
-                        color: "var(--color-black)",
-                        fontSize: "2em",
-                        fontWeight: 100,
-                        marginBottom: 2,
+                marginTop: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+            }}>
+                <Box sx={{
+                        maxWidth: 600,
+                        width: "100%",
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center'
                     }}>
-                    Select Messages
-                    </Typography>
-                
-                    <List
-                        selected={selectedClassification}
-                        appendSelectedLeaf={addLeaf}
-                        removeSelectedLeaf={removeLeaf}
-                        navigate={navigateDownward}
-                    />
+                    <Crumbs
+                            currentPath={currentPath}
+                            onClickBack={() => {
+                                setSlideBackward(true);
+                                console.log({ slideBackward });
+                                setCurrentPath(currentPath.slice(0, -1))
+                            }}
+                            title={selectedClassification?.label}
+                        /> 
+                    </Box>
+                    <Box
+                        sx={{
+                            marginBottom: 2,
+                            maxWidth: 600,
+                            width: "auto",
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <List
+                            selected={selectedClassification}
+                            appendSelectedLeaf={addLeaf}
+                            removeSelectedLeaf={removeLeaf}
+                            navigate={navigateDownward}
+                            slideBackward={slideBackward}
+                            setSlideBackward={setSlideBackward}
+                        />
 
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    sx={{
-                        width: "90vw",
-                        maxWidth: "600px",
-                        marginBottom: 6
-                    }}
-                >
-                    {
-                        currentPath.length <= 0
-                            ? <Pagination
-                                count={totalPages}
-                                onChange={(_, page) => setRequestPage(page - 1)}
-                                sx={{
-                                    marginTop: 3,
-                                }}
-                            />
-                            : <></>
-                    }
-                    
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        sx={{
+                            width: "90vw",
+                            maxWidth: "600px",
+                            marginBottom: 6
+                        }}
+                    >
+                        {
+                            currentPath.length <= 0
+                                ? <Pagination
+                                    count={totalPages}
+                                    onChange={(_, page) => setRequestPage(page - 1)}
+                                    sx={{
+                                        marginTop: 3,
+                                    }}
+                                />
+                                : <></>
+                        }
+                        
+                    </Box>
                 </Box>
             </Box>
         </Container>
@@ -310,6 +310,7 @@ export default function Edit() {
             setIsDeleteMode={toggleMode}
             showDeleteTooltip={showDeleteTooltip}
             showMarkReadTooltip={showMarkReadTooltip}
+            numSelected={selectedCount}
         />
     </>;
 }

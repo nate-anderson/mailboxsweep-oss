@@ -12,12 +12,19 @@ export interface LeafProps {
     msgCount: number;
     unreadCount: number;
     onClickExpand: (node: string) => void,
-    children: LeafProps[];
+    childCount: number;
     appendSelectedNode: (node: string) => void;
     removeSelectedNode: (node: string) => void;
 }
 
 export default function Leaf(props: LeafProps) {
+    const toggleSelected = (selected: boolean) => {
+        if (selected) {
+            props.appendSelectedNode(props.id);
+        } else {
+            props.removeSelectedNode(props.id);
+        }
+    }
     return (
         <Box
             width="95vw"
@@ -34,9 +41,10 @@ export default function Leaf(props: LeafProps) {
                 justifyContent="space-between"
             >
                 <Checkbox
-                sx={{
-                    paddingX: 0,
-                }}
+                    sx={{
+                        paddingX: 0,
+                    }}
+                    onChange={(_, checked) => {toggleSelected(checked)}}
                 />
                 
                 <Box
@@ -92,7 +100,7 @@ export default function Leaf(props: LeafProps) {
                     </Stack>
                 </Box>
                 {
-                    props.children.length > 0
+                    props.childCount > 0
                         ? <IconButton onClick={() => props.onClickExpand(props.id)}>
                             <IconChevronRight/>
                         </IconButton>
