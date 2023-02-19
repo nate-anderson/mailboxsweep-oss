@@ -288,10 +288,11 @@ export default function Edit() {
                         {
                             currentPath.length <= 0
                                 ? <Pagination
+                                    page={requestPage + 1}
                                     count={totalPages}
                                     onChange={(_, page) => setRequestPage(page - 1)}
                                     sx={{
-                                        marginTop: 3,
+                                        marginY: 3,
                                     }}
                                 />
                                 : <></>
