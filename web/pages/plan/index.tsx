@@ -131,22 +131,18 @@ export default function ShowPlan() {
     useEffect(() => {
         API.getPaymentStatus()
             .then(res => {
-                console.log({ res });
                 if (res.plan != null) {
                     setPlan(res.plan);
-                    console.log("plan");
                 }
 
                 if (res.subscribedAt != null) {
                     const subscribedAt = parseISO(res.subscribedAt);
                     setSubscribedAt(subscribedAt);
-                    console.log("subscribedAt");
                 }
 
                 if (res.validUntil != null) {
                     const validUntil = parseISO(res.validUntil);
                     setValidUntil(validUntil);
-                    console.log("validUntil");
 
                 }
             })

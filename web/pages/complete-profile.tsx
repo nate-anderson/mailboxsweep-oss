@@ -44,7 +44,6 @@ export default function CompleteProfile() {
             setShowSuccess(true);
             setSaveButtonEnabled(false);
         }).catch((error) => {
-            console.log(typeof(error));
             setError("Something went wrong. Please try again later.");
         });
     };

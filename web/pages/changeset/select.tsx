@@ -189,7 +189,6 @@ export default function Edit() {
 
     const addLeaf = (leaf: string) => {
         const leaves = setSelectedLeaves(s => s.add(leaf))
-        console.log({ leaves });
     };
     const removeLeaf = (leaf: string) => setSelectedLeaves(s => {
         s.delete(leaf);
@@ -197,7 +196,6 @@ export default function Edit() {
     });
 
     const toggleMode = (isDel: boolean) => {
-        console.log( {isDel });
         setIsDeleteMode(isDel);
         if (isDel) {
             setShowMarkReadTooltip(false);
@@ -254,7 +252,6 @@ export default function Edit() {
                             currentPath={currentPath}
                             onClickBack={() => {
                                 setSlideBackward(true);
-                                console.log({ slideBackward });
                                 setCurrentPath(currentPath.slice(0, -1))
                             }}
                             title={selectedClassification?.label}

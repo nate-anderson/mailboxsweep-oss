@@ -27,7 +27,6 @@ export default function middleware(request: NextRequest) {
     if (!loginRoutes.includes(pathname)) {
         const cookie = request.cookies.get(isLoggedInCookie)
         if (cookie?.value !== "true") {
-            console.log("redirecting");
             return NextResponse.redirect(new URL("/login?prompt=1", request.url));
         }
     }

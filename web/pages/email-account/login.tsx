@@ -116,7 +116,6 @@ export default function Login() {
                 // 2022-12-29T23:15:17-08:00
                 const createdDate = parseISO(res.created);
                 if (isNaN(createdDate.valueOf())) {
-                    console.log(createdDate, res.created);
                     return changeError("Invalid created date.");
                 }
                 changeCreated(createdDate);

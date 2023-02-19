@@ -18,7 +18,6 @@ export default function PaymentSuccess() {
 
         API.completePayment(checkoutSessionId)
             .then((res) => {
-                console.log({ loginSuccess: res });
                 router.push("/plan");
             })
             .catch(console.error);

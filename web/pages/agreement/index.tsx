@@ -54,7 +54,6 @@ export default function Agreements() {
                 setAgreements(res.agreements);
             })
             .catch(err => {
-                console.log(err);
                 setFailureMessage("Failed to fetch your agreements, please try again later.");
             })
     }, []);

@@ -19,7 +19,6 @@ const submitLogin = async (address: string, setModalOpen: (open: boolean) => voi
         const res = await API.initiateLogin({
             address,
         })
-        console.log({ res });
         setModalOpen(true);
     } catch (error) {
         console.log({ initiateLoginError: error });
