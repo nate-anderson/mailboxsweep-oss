@@ -212,7 +212,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 	} else {
 		resBody.Status.Status = Complete
 	}
-	time.Unix(closed.RequestedAt, 0).Format(time.RFC3339)
+	resBody.Status.StartedAt = time.Unix(closed.RequestedAt, 0).Format(time.RFC3339)
 
 	c.respond(w, http.StatusOK, resBody)
 }
