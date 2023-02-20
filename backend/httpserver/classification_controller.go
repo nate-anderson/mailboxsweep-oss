@@ -148,44 +148,76 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 
 	resBody := ClassificationStatusResponse{
 		Address: addr,
+		Status:  &ClassificationStatus{},
 	}
 
 	openRequests, err := c.classifyRequestService.FindOpenRequests(ctx)
-	if errors.Is(err, classifyrequest.ErrNoOpenRequests) || len(openRequests) == 0 {
+	if err == nil {
+		// if there is an open request, respond with that
+		var open classifyrequest.ClassifyRequest
+		if len(openRequests) == 1 {
+			open = openRequests[0]
+		} else {
+			for _, r := range openRequests {
+				if r.RequestedAt > open.RequestedAt {
+					open = r
+				}
+			}
+		}
+
+		fmt.Printf("GOT OPEN REQUEST %+v\n", open)
+		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
+
+		if open.Error != nil {
+			resBody.Status.Status = Errored
+			resBody.Status.Details = open.Error
+		} else if open.CompletedAtUnix != nil {
+			resBody.Status.Status = Complete
+		} else {
+			resBody.Status.Status = InProgress
+		}
+		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
 		c.respond(w, http.StatusOK, resBody)
 		return
-	} else if err != nil {
+
+	} else {
+		if !errors.Is(err, classifyrequest.ErrNoOpenRequests) {
+			c.respondError(w, err)
+			return
+		}
+	}
+
+	closedRequests, err := c.classifyRequestService.FindCompletedRequests(ctx)
+	if err != nil {
 		c.respondError(w, err)
 		return
 	}
 
-	var open classifyrequest.ClassifyRequest
-	if len(openRequests) == 1 {
-		open = openRequests[0]
+	var closed classifyrequest.ClassifyRequest
+	if len(closedRequests) == 0 {
+		c.respondError(w, mailboxsweep.NotFoundError(errors.New("no completed classify requests found")))
+	} else if len(closedRequests) == 1 {
+		closed = closedRequests[0]
 	} else {
-		for _, r := range openRequests {
-			if r.RequestedAt > open.RequestedAt {
-				open = r
+		// if multiple completed requests, use the most recent
+		for _, r := range closedRequests {
+			if r.RequestedAt > closed.RequestedAt {
+				closed = r
 			}
 		}
 	}
 
-	var status ClassificationStatusStatus
-	startedAt := time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
+	fmt.Printf("GOT CLOSED REQUEST %+v\n", closed)
 
-	if open.Error != nil {
-		status = Errored
-	} else if open.CompletedAtUnix != nil {
-		status = Complete
+	if closed.Error != nil {
+		resBody.Status.Status = Errored
+		resBody.Status.Details = closed.Error
 	} else {
-		status = InProgress
+		resBody.Status.Status = Complete
 	}
-	resBody.Status = &ClassificationStatus{
-		StartedAt: startedAt,
-		Status:    status,
-	}
+	time.Unix(closed.RequestedAt, 0).Format(time.RFC3339)
 
-	c.respond(w, http.StatusOK, open)
+	c.respond(w, http.StatusOK, resBody)
 }
 
 func convertClassification(cl classification.Classification) Classification {

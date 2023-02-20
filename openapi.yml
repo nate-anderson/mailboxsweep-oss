@@ -101,6 +101,8 @@ components:
             - in_progress
             - complete
             - errored
+        details:
+          type: string
 
     ClassificationStatusResponse:
       type: object
