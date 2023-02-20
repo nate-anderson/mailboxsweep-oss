@@ -24,6 +24,7 @@ function ActionLink(props: {
     return (<Link href={props.href}
         style={{
             textDecoration: "none",
+            width: "100%",
         }}
     >
         <Box display="flex" justifyContent="end">
@@ -32,11 +33,16 @@ function ActionLink(props: {
                 size="large"
                 sx={{
                     color: props.color,
-                    border: "1px solid white",
+                    border: `1px solid ${props.backgroundColor}`,
                     backgroundColor: props.backgroundColor,
                     fontWeight: "bold",
                     marginRight: 0,
                     marginLeft: "auto",
+                    '&:hover': {
+                        color: props.backgroundColor,
+                        backgroundColor: props.color,
+                        borderColor: props.color
+                    }
 
                 }}
             >{props.text}</Button>
@@ -73,6 +79,10 @@ const renderClassificationStatus = (status: ClassificationStatus.status | undefi
                 variant="filled"
                 sx={{
                     maxWidth: 600,
+                    width: "100%",
+                    '& > .MuiAlert-message': {
+                        width: '100%'
+                    }
                 }}
             >
                     <AlertTitle>Inbox Scan Complete!</AlertTitle>
