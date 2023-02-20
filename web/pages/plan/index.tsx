@@ -160,7 +160,7 @@ export default function ShowPlan() {
             <Container component="main">
                 <CssBaseline />
                 <Box sx={{
-                    marginTop: 6,
+                    marginY: 6,
                     maxWidth: 600,
                     width: "auto",
                     marginX: "auto",
@@ -171,11 +171,14 @@ export default function ShowPlan() {
                     <Avatar sx={{ m: 1, bgcolor: 'var(--color-accent)' }}>
                         <IconFactCheck />
                     </Avatar>
-                    <Typography sx={{
-                        color: "var(--color-black)",
-                        fontSize: "2em",
-                        fontWeight: 100,
-                    }}>
+                    <Typography
+                        align="center"
+                        sx={{
+                            color: "var(--color-black)",
+                            fontSize: "2em",
+                            fontWeight: 100,
+                        }
+                    }>
                         Your Plan & Payment
                     </Typography>
                     {renderPlan(ready, plan, validUntil, subscribedAt)}

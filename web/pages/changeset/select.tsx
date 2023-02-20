@@ -249,13 +249,28 @@ export default function Edit() {
                         alignItems: 'center'
                     }}>
                     <Crumbs
-                            currentPath={currentPath}
-                            onClickBack={() => {
-                                setSlideBackward(true);
-                                setCurrentPath(currentPath.slice(0, -1))
-                            }}
-                            title={selectedClassification?.label}
-                        /> 
+                        currentPath={currentPath}
+                        onClickBack={() => {
+                            setSlideBackward(true);
+                            setCurrentPath(currentPath.slice(0, -1))
+                        }}
+                        title={selectedClassification?.label}
+                    /> 
+                    {
+                        currentPath.length == 0
+                            ? <Typography
+                                align="center"
+                                sx={{
+                                    marginY: 1,
+                                    marginX: 1,
+                                    color: "var(--color-gray)",
+                                    maxWidth: 600,
+                                }}
+                            >
+                                Select a category to update all messages in that group, or expand the category to make specific selections.       
+                            </Typography>
+                            : undefined
+                    }
                     </Box>
                     <Box
                         sx={{
@@ -288,11 +303,14 @@ export default function Edit() {
                         {
                             currentPath.length <= 0
                                 ? <Pagination
+                                    size="small"
                                     page={requestPage + 1}
                                     count={totalPages}
                                     onChange={(_, page) => setRequestPage(page - 1)}
                                     sx={{
                                         marginY: 3,
+                                        // hack to make it fit on small phone screens
+                                        marginX: -1,
                                     }}
                                 />
                                 : <></>

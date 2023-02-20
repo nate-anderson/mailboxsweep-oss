@@ -67,11 +67,14 @@ export default function CompleteProfile() {
                     <Avatar sx={{ m: 1, bgcolor: 'var(--color-accent)' }}>
                         <IconAccountCircle />
                     </Avatar>
-                    <Typography sx={{
-                        color: "var(--color-black)",
-                        fontSize: "2em",
-                        fontWeight: 100,
-                    }}>
+                    <Typography
+                        align="center"
+                        sx={{
+                            color: "var(--color-black)",
+                            fontSize: "2em",
+                            fontWeight: 100,
+                        }}
+                    >
                         Complete your profile
                     </Typography>
                     <Box component="form" sx={{
