@@ -165,7 +165,6 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 			}
 		}
 
-		fmt.Printf("GOT OPEN REQUEST %+v\n", open)
 		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
 
 		if open.Error != nil {
@@ -206,8 +205,6 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 			}
 		}
 	}
-
-	fmt.Printf("GOT CLOSED REQUEST %+v\n", closed)
 
 	if closed.Error != nil {
 		resBody.Status.Status = Errored
