@@ -11,6 +11,38 @@ import { ApiError, ClassificationStatus } from "../client-gen";
 import { API } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
+import Link from "next/link";
+import Button from "@mui/material/Button";
+import IconChevronRight from "@mui/icons-material/ChevronRight"
+
+function ActionLink(props: {
+    color: string,
+    backgroundColor: string,
+    href: string,
+    text: string,
+}) {
+    return (<Link href={props.href}
+        style={{
+            textDecoration: "none",
+        }}
+    >
+        <Box display="flex" justifyContent="end">
+            <Button
+                endIcon={<IconChevronRight />}
+                size="large"
+                sx={{
+                    color: props.color,
+                    border: "1px solid white",
+                    backgroundColor: props.backgroundColor,
+                    fontWeight: "bold",
+                    marginRight: 0,
+                    marginLeft: "auto",
+
+                }}
+            >{props.text}</Button>
+        </Box>
+    </Link>)
+}
 
 const renderClassificationStatus = (status: ClassificationStatus.status | undefined) => {
     const boxify = (children: React.ReactNode) => (<Box sx={{
@@ -24,7 +56,10 @@ const renderClassificationStatus = (status: ClassificationStatus.status | undefi
 
     switch (status) {
         case ClassificationStatus.status.IN_PROGRESS:
-            return boxify(<Alert severity="info" variant="filled" sx={{
+            return boxify(<Alert
+                severity="info"
+                variant="filled"
+                sx={{
                     maxWidth: 600,
                     backgroundColor: "var(--color-accent)"
                 }}>
@@ -33,18 +68,34 @@ const renderClassificationStatus = (status: ClassificationStatus.status | undefi
             </Alert>);
 
         case ClassificationStatus.status.COMPLETE:
-            return boxify(<Alert severity="success" variant="filled" sx={{
-                maxWidth: 600,
-            }}>
+            return boxify(<Alert
+                severity="success"
+                variant="filled"
+                sx={{
+                    maxWidth: 600,
+                }}
+            >
                     <AlertTitle>Inbox Scan Complete!</AlertTitle>
-                    Your inbox scan is complete! Let's start cleaning up.
+                    <p style={{ display: "block" }}>Your inbox scan is complete! Let's start cleaning up.</p>
+                    <ActionLink
+                        href="/changeset/select"
+                        color="#2e7d32"
+                        backgroundColor="#EDF7ED"
+                        text="Let's go"
+                    />
                 </Alert>); 
         case ClassificationStatus.status.ERRORED:
-            return boxify(<Alert severity="error" variant="filled" sx={{
+            return boxify(<Alert severity="error" sx={{
                     maxWidth: 600,
                 }}>
-                    <AlertTitle>Inbox Scan In Progress</AlertTitle>
-                    Something went wrong while classifying your inbox messages. Please try again, or contact support for help.
+                    <AlertTitle>Something went wrong</AlertTitle>
+                    <p style={{ display: "block" }}>Something went wrong while classifying your inbox messages. You can try again, or contact support for help.</p>
+                    <ActionLink
+                        href="/classify/configure"
+                        text="Try again"
+                        backgroundColor="white"
+                        color="var(--color-danger)"
+                    />
                 </Alert>);
         case undefined:
             // display nothing, the stepper should still be visible at this point
