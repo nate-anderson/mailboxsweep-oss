@@ -38,7 +38,7 @@ export default function Leaf(props: LeafProps) {
         >
             <Box
                 display="flex"
-                justifyContent="space-between"
+                maxWidth="100%"
             >
                 <Checkbox
                     sx={{
@@ -47,58 +47,56 @@ export default function Leaf(props: LeafProps) {
                     onChange={(_, checked) => {toggleSelected(checked)}}
                 />
                 
-                <Box
-                    sx={{
-                        width: "100%",
+                <Stack sx={{
+                    alignItems: "start",
+                    maxWidth: "100%",
+                    width: "auto",
+                    flexGrow: "1",
+                    flexBasis: "100px",
+                    marginX: 2,
+                    overflowX: "hidden",
+                    textOverflow: "ellipsis",
+                    
+                }}>
+                    <Typography
+                        sx={{
+                            color: "var(--color-black)",
+                            fontSize: "1.2em",
+                            overflowX: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            width: "100%",
+                        }}
+                        style={{
+                            marginTop: "-6px",
+                        }}
+                    >
+                        {props.label}
+                    </Typography>
+                    <span style={{
                         display: "flex",
-                        fontWeight: "300",
-                        marginX: 2,
-                    }}
-                >
-                    <Stack sx={{
-                        alignItems: "start",
-                        maxWidth: "90%",
-                        width: "auto"
                     }}>
-                        <Typography
+                        <Chip
                             sx={{
-                                color: "var(--color-black)",
-                                fontSize: "1.2em",
-                                maxWidth: "100%",
-                                overflowX: "hidden",
-                                textOverflow: "ellipsis",
+                                bgcolor: "var(--color-gray)",
+                                color: "white",
+                                fontSize: "0.75em",
                             }}
-                            style={{
-                                marginTop: "-6px",
+                            label={`${props.msgCount} messages`}
+                            size="small"
+                        />
+                        <Chip
+                            sx={{
+                                bgcolor: "var(--color-accent)",
+                                marginLeft: "4px",
+                                fontSize: "0.75em",
+                                color: "white",
                             }}
-                        >
-                            {props.label}
-                        </Typography>
-                        <span style={{
-                            display: "flex",
-                        }}>
-                            <Chip
-                                sx={{
-                                    bgcolor: "var(--color-gray)",
-                                    color: "white",
-                                    fontSize: "0.75em",
-                                }}
-                                label={`${props.msgCount} messages`}
-                                size="small"
-                            />
-                            <Chip
-                                sx={{
-                                    bgcolor: "var(--color-accent)",
-                                    marginLeft: "4px",
-                                    fontSize: "0.75em",
-                                    color: "white",
-                                }}
-                                label={`${props.unreadCount} unread`}
-                                size="small"
-                            />
-                        </span>
-                    </Stack>
-                </Box>
+                            label={`${props.unreadCount} unread`}
+                            size="small"
+                        />
+                    </span>
+                </Stack>
                 {
                     props.childCount > 0
                         ? <IconButton onClick={() => props.onClickExpand(props.id)}>
