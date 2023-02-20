@@ -119,9 +119,13 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error) {
 	key := r.buildKey(inbox, startedAt)
 	completed := time.Now().Unix()
-	errDetailsSafe := ""
+	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
+		Value: true,
+	}
 	if errDetails != nil {
-		errDetailsSafe = *errDetails
+		errDetailsValue = &types.AttributeValueMemberS{
+			Value: *errDetails,
+		}
 	}
 	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		Key:                 key,
@@ -137,9 +141,7 @@ func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, start
 			":completed": &types.AttributeValueMemberN{
 				Value: strconv.FormatInt(completed, 10),
 			},
-			":err_details": &types.AttributeValueMemberS{
-				Value: errDetailsSafe,
-			},
+			":err_details": errDetailsValue,
 			":sk": &types.AttributeValueMemberS{
 				Value: r.formatSK(startedAt),
 			},
