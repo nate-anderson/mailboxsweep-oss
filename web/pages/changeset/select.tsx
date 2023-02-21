@@ -14,11 +14,11 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
-import Tooltip from "@mui/material/Tooltip";
 import Leaf, { LeafProps } from "../../components/changeset/leaf";
 import { ClassificationTree } from "../../lib/tree";
 import Crumbs from "../../components/changeset/crumbs";
 import Animation from "../../styles/animations.module.css";
+import Button from "@mui/material/Button";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -28,32 +28,9 @@ Store the selected leaf keys in browser storage so they persist
 when paginating, and when a user leaves and returns to the site
 */
 
-const displayTypeKey = (typeKey?: string): string => {
-    switch (typeKey) {
-        case "SENDER_DOMAIN":
-            return "Sender Domain";
-        case "SENDER_USERNAME":
-            return "Sender Address";
-        case "SEND_DATE":
-            return "Send Date";
-        case undefined:
-            return "";
-        default:
-            return typeKey
-                // tokenize
-                .split("_")
-                // lowercase all letters
-                .map(word => word.toLowerCase())
-                // capitalize first letter
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-    }
-}
-
 function ToggleModeSwitch(props: {
     isDeleteMode: boolean,
     setIsDeleteMode: (v: boolean) => void,
-    showDeleteTooltip: boolean,
-    showMarkReadTooltip: boolean,
     numSelected: number
 }) {
     return <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
@@ -64,35 +41,27 @@ function ToggleModeSwitch(props: {
             backgroundColor: props.isDeleteMode ? "#ffd4d4" : "white"
         }}
     >
-        <Typography
-            sx={{ marginLeft: 1 }}
+        <Button
+            variant="contained"
+            size="small"
+            color={props.isDeleteMode ? "error" : undefined}
+            disabled={props.numSelected == 0}
         >
-            {props.numSelected.toLocaleString()} selected
-        </Typography>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{
-            marginRight: 1,
-        }}>
-            <Tooltip
-                title={<Typography sx={{fontSize: "1.3em"}}>Mark messages read</Typography>}
-                arrow
-                disableFocusListener
-                open={props.showMarkReadTooltip}
-            >
-                <IconMarkRead style={{ color: props.isDeleteMode? undefined : "#1976d2" }}/>
-            </Tooltip>
+            {
+                props.isDeleteMode
+                    ? `Delete ${props.numSelected}`
+                    : `Mark ${props.numSelected} read`
+            }
+        </Button>
+        <Stack direction="row" alignItems="center">
+            <IconMarkRead style={{ color: props.isDeleteMode? undefined : "#1976d2" }}/>
             <Switch
                 onChange={(_, v) => props.setIsDeleteMode(v)}
                 value={props.isDeleteMode}
                 color={props.isDeleteMode ? "error" : "primary" }
+                sx={{ marginLeft: 0 }}
             />
-            <Tooltip
-                title={<Typography sx={{fontSize: "1.3em"}}>Permanently delete messages</Typography>}
-                arrow
-                disableFocusListener
-                open={props.showDeleteTooltip}
-            >
-                <IconDeleteForever style={{ color: props.isDeleteMode ? "var(--color-danger)" : undefined }}/>
-            </Tooltip>
+            <IconDeleteForever style={{ color: props.isDeleteMode ? "var(--color-danger)" : undefined }}/>
         </Stack>
     </Toolbar>
 </AppBar>
@@ -176,9 +145,6 @@ export default function Edit() {
     const [ isDeleteMode, setIsDeleteMode ] = useState(false);
     const [ slideBackward, setSlideBackward ] = useState(false); 
 
-    const [ showDeleteTooltip, setShowDeleteTooltip ] = useState(false);
-    const [ showMarkReadTooltip, setShowMarkReadTooltip ] = useState(false);
-
     const [ currentPath, setCurrentPath ] = useState<string[]>([]);
     const navigateDownward = (key: string | undefined) => {
         if (key) {
@@ -194,23 +160,6 @@ export default function Edit() {
         s.delete(leaf);
         return s;
     });
-
-    const toggleMode = (isDel: boolean) => {
-        setIsDeleteMode(isDel);
-        if (isDel) {
-            setShowMarkReadTooltip(false);
-            setShowDeleteTooltip(true);
-            setTimeout(() => {
-                setShowDeleteTooltip(false);
-            }, 5000)
-        } else {
-            setShowDeleteTooltip(false);
-            setShowMarkReadTooltip(true);
-            setTimeout(() => {
-                setShowMarkReadTooltip(false);
-            }, 5000);
-        }
-    }
     
     useEffect(() => {
         API.getClassificationSummary(requestPage)
@@ -255,6 +204,7 @@ export default function Edit() {
                             setCurrentPath(currentPath.slice(0, -1))
                         }}
                         title={selectedClassification?.label}
+                        typeKey={selectedClassification?.typeKey}
                     /> 
                     {
                         currentPath.length == 0
@@ -323,9 +273,7 @@ export default function Edit() {
 
         <ToggleModeSwitch
             isDeleteMode={isDeleteMode}
-            setIsDeleteMode={toggleMode}
-            showDeleteTooltip={showDeleteTooltip}
-            showMarkReadTooltip={showMarkReadTooltip}
+            setIsDeleteMode={setIsDeleteMode}
             numSelected={selectedCount}
         />
     </>;

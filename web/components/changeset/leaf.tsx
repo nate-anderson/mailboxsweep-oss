@@ -30,7 +30,7 @@ export default function Leaf(props: LeafProps) {
             width="95vw"
             maxWidth="600px"
             sx={{
-                paddingY: 1.5,
+                paddingY: 1.15,
                 paddingX: 1.5,
                 marginTop: 1,
                 borderRadius: "5px",
@@ -47,17 +47,19 @@ export default function Leaf(props: LeafProps) {
                     onChange={(_, checked) => {toggleSelected(checked)}}
                 />
                 
-                <Stack sx={{
-                    alignItems: "start",
-                    maxWidth: "100%",
-                    width: "auto",
-                    flexGrow: "1",
-                    flexBasis: "100px",
-                    marginX: 2,
-                    overflowX: "hidden",
-                    textOverflow: "ellipsis",
-                    
-                }}>
+                <Stack
+                    sx={{
+                        alignItems: "start",
+                        maxWidth: "100%",
+                        width: "auto",
+                        flexGrow: "1",
+                        flexBasis: "100px",
+                        marginX: 2,
+                        overflowX: "hidden",
+                        textOverflow: "ellipsis",
+                    }}
+                    spacing={0.2}
+                >
                     <Typography
                         sx={{
                             color: "var(--color-black)",
