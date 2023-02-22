@@ -48,7 +48,12 @@ function BackHomeBar(props: CrumbsProps) {
                     marginRight: 0,
                 }}
             ><IconBack /></IconButton>
-            <Stack>
+            <Stack
+                sx={{
+                    maxWidth: "90%",
+                    width: "auto"
+                }}
+            >
                 <Typography
                     fontSize=".7em"
                     fontWeight="bold"
@@ -61,6 +66,9 @@ function BackHomeBar(props: CrumbsProps) {
                     fontSize="1.2em"
                     color="var(--color-gray)"
                     marginTop={-0.6}
+                    sx={{
+                        overflowWrap: "break-word"
+                    }}
                 >{props.title}</Typography>
             </Stack>
         </Toolbar>
