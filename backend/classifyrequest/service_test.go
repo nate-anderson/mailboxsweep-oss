@@ -99,7 +99,7 @@ func TestClassifyRequestService(t *testing.T) {
 			assert.That(t, l.CompletedAtUnix).NotEqual(nil)
 			assert.ThatOrdered(t, *l.CompletedAtUnix).GreaterThan(0)
 			assert.That(t, l.Inbox).Equals(testAddr)
-			assert.That(t, *l.Error).Equals("")
+			assert.That(t, l.Error).Equals(nil)
 			assert.ThatOrdered(t, l.RequestedAt).GreaterThan(0)
 		})
 	})
