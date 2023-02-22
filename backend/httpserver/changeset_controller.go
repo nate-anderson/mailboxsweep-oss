@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,30 +39,52 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	}
 
 	resBody := UpdateChangeSetResponse{
-		Folder: reqBody.Folder,
+		Folder:       reqBody.Folder,
+		MessageCount: 0,
 	}
 
-	path := classification.Path(reqBody.Path)
+	var updateFunc func(ctx context.Context, folder string, path classification.Path) (int, error)
+
 	var err error
 	switch reqBody.Operation {
 	case Delete:
-		resBody.MessageCount, err = c.inboxChangeSetService.AddLeafForDelete(ctx, reqBody.Folder, path)
-		if err != nil {
-			c.respondError(w, err)
+		switch reqBody.AddOrRemove {
+		case Remove:
+			updateFunc = c.inboxChangeSetService.RemoveLeafForDelete
+		case Add:
+			updateFunc = c.inboxChangeSetService.AddLeafForDelete
+		default:
+			c.respondError(w, fmt.Errorf("addOrDelete must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
 			return
 		}
 	case MarkRead:
-		resBody.MessageCount, err = c.inboxChangeSetService.AddLeafForMarkRead(ctx, reqBody.Folder, path)
-		if err != nil {
-			c.respondError(w, err)
+		switch reqBody.AddOrRemove {
+		case Remove:
+			updateFunc = c.inboxChangeSetService.RemoveLeafForMarkRead
+		case Add:
+			updateFunc = c.inboxChangeSetService.AddLeafForMarkRead
+		default:
+			c.respondError(w, fmt.Errorf("addOrDelete must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
 			return
 		}
-
 	default:
 		err := fmt.Errorf("unknown update operation '%s'", reqBody.Operation)
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
 		return
 	}
+
+	if updateFunc == nil {
+		c.respondError(w, fmt.Errorf("no update function selected"))
+		return
+	}
+
+	path := classification.Path(reqBody.Path)
+	n, err := updateFunc(ctx, reqBody.Folder, path)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+	resBody.MessageCount = n
 
 	c.respond(w, http.StatusOK, resBody)
 }
