@@ -15,6 +15,9 @@ export interface LeafProps {
     childCount: number;
     appendSelectedNode: (node: string) => void;
     removeSelectedNode: (node: string) => void;
+    onCheck: (checked: boolean) => void;
+    isChecked: boolean;
+    isChildChecked: boolean;
 }
 
 export default function Leaf(props: LeafProps) {
@@ -45,6 +48,8 @@ export default function Leaf(props: LeafProps) {
                         paddingX: 0,
                     }}
                     onChange={(_, checked) => {toggleSelected(checked)}}
+                    checked={props.isChecked}
+                    indeterminate={props.isChildChecked}
                 />
                 
                 <Stack
