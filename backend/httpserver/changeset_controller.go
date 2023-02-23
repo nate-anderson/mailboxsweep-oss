@@ -39,7 +39,6 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	}
 
 	resBody := UpdateChangeSetResponse{
-		Folder:       reqBody.Folder,
 		MessageCount: 0,
 	}
 

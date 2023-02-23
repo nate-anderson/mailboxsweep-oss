@@ -27,7 +27,6 @@ components:
       type: object
       required:
         - path
-        - folder
         - operation
         - addOrRemove
       properties:
@@ -35,8 +34,6 @@ components:
           type: array
           items:
             type: string
-        folder:
-          type: string
         operation:
           $ref: '#/components/schemas/UpdateOperation'
         addOrRemove:
@@ -419,11 +416,8 @@ components:
     UpdateChangeSetResponse:
       type: object
       required:
-        - folder
         - messageCount # number of messages added or removed
       properties:
-        folder:
-          type: string
         messageCount:
           type: integer
 
