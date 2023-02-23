@@ -59,7 +59,7 @@ func NewDynamoChangesetRepository(
 	}, nil
 }
 
-func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string, consistentRead bool) ([]ChangeSet, error) {
+func (d DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, inbox string, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
 	res, err := d.db.Query(ctx, &dynamodb.QueryInput{
 		TableName:              &d.tableName,
 		KeyConditionExpression: aws.String("#pk = :email"),
@@ -74,43 +74,36 @@ func (d DynamoChangesetRepository) ListByInbox(ctx context.Context, inbox string
 		ConsistentRead: &consistentRead,
 	})
 	if err != nil {
-		return []ChangeSet{}, fmt.Errorf("query failed: %w", err)
+		return nil, fmt.Errorf("query failed: %w", err)
 	}
 
 	results := make([]changeSetDocument, len(res.Items))
 	err = attributevalue.UnmarshalListOfMaps(res.Items, &results)
 	if err != nil {
-		return []ChangeSet{}, err
+		return nil, err
 	}
 
-	// group changesets by folder
-	// log.Fatalf("RESULTS: %+v", results)
-	changeSetMap := make(map[string]ChangeSet, len(results))
-	for _, c := range results {
-		if existing, ok := changeSetMap[c.Folder]; !ok {
-			changeSetMap[c.Folder] = c.ChangeSet
-		} else {
-			existing.Paths = append(existing.Paths, c.Paths...)
-			changeSetMap[c.Folder] = existing
-		}
+	cs := ChangeSet{
+		Inbox:     inbox,
+		Operation: operation,
+		Paths:     []string{},
 	}
-	changeSets := make([]ChangeSet, 0, len(changeSetMap))
-	for _, value := range changeSetMap {
-		changeSets = append(changeSets, value)
+	for _, doc := range results {
+		cs.Paths = append(cs.Paths, doc.Paths...)
 	}
-	return changeSets, nil
+	return &cs, nil
 }
 
 func (d DynamoChangesetRepository) formatPK(inbox string) string {
 	return "CHANGESET#" + strings.TrimSpace(inbox)
 }
 
-func (d DynamoChangesetRepository) formatSK(folder string, operation UpdateOperation, partitionID uint64) string {
-	return fmt.Sprintf("FOLDER#%s#%d#%s", strings.TrimSpace(folder), partitionID, operation)
+func (d DynamoChangesetRepository) formatSK(operation UpdateOperation, partitionID uint64) string {
+	return fmt.Sprintf("PAGE#%d#%s", partitionID, operation)
 }
 
-func (d DynamoChangesetRepository) formatLSI1(folder string) string {
-	return folder
+func (d DynamoChangesetRepository) formatLSI1(operation UpdateOperation) string {
+	return fmt.Sprintf("OPERATION#%s", operation)
 }
 
 func (d DynamoChangesetRepository) partitionID(path string) (uint64, error) {
@@ -135,7 +128,7 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 
 	res := make(map[string]ChangeSet)
 	for partitionID, paths := range partitionMap {
-		sk := d.formatSK(changeSet.Folder, changeSet.Operation, partitionID)
+		sk := d.formatSK(changeSet.Operation, partitionID)
 		c := changeSet
 		c.Paths = paths
 		res[sk] = c
@@ -175,7 +168,6 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 				`SET
 				#inbox = :inbox,
 				#lsi1 = :lsi1,
-				#folder = :folder,
 				#operation = :operation,
 				#created = if_not_exists(created, :created),
 				#updated = :updated,
@@ -186,7 +178,6 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 			ExpressionAttributeNames: map[string]string{
 				"#inbox":     "inbox",
 				"#lsi1":      mailboxsweep.DynamoLSI1SK,
-				"#folder":    "folder",
 				"#operation": "operation",
 				"#paths":     "paths",
 				"#created":   "created",
@@ -196,9 +187,6 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":inbox": &types.AttributeValueMemberS{
 					Value: changeSet.Inbox,
-				},
-				":folder": &types.AttributeValueMemberS{
-					Value: changeSet.Folder,
 				},
 				":paths": &types.AttributeValueMemberSS{
 					Value: set.Paths,
@@ -213,7 +201,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 					Value: strconv.FormatInt(expires, 10),
 				},
 				":lsi1": &types.AttributeValueMemberS{
-					Value: d.formatLSI1(changeSet.Folder),
+					Value: d.formatLSI1(changeSet.Operation),
 				},
 				":operation": &types.AttributeValueMemberS{
 					Value: string(changeSet.Operation),
@@ -319,77 +307,4 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 		}
 	}
 	return diff, nil
-}
-
-func (d DynamoChangesetRepository) FindByInboxFolder(ctx context.Context, inbox, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error) {
-	keysRes, err := d.db.Query(ctx, &dynamodb.QueryInput{
-		TableName:              &d.tableName,
-		ConsistentRead:         &consistentRead,
-		KeyConditionExpression: aws.String("#pk = :pk AND #lsi1 = :lsi1"),
-		ExpressionAttributeNames: map[string]string{
-			"#pk":   mailboxsweep.DynamoPK,
-			"#lsi1": mailboxsweep.DynamoLSI1SK,
-		},
-		IndexName: &mailboxsweep.DynamoLSI1,
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk": &types.AttributeValueMemberS{
-				Value: d.formatPK(inbox),
-			},
-			":lsi1": &types.AttributeValueMemberS{
-				Value: d.formatLSI1(folder),
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if keysRes.Count < 1 {
-		return nil, fmt.Errorf("changeset for inbox %s and folder %s not found: %w", inbox, folder, err)
-	}
-
-	keyItems := []changeSetDocument{}
-	if err = attributevalue.UnmarshalListOfMaps(keysRes.Items, &keyItems); err != nil {
-		return nil, fmt.Errorf("failed to get gets for folder items: %w", err)
-	}
-
-	keys := make([]map[string]types.AttributeValue, len(keyItems))
-	for i, item := range keyItems {
-		keys[i] = map[string]types.AttributeValue{
-			mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
-				Value: item.PK,
-			},
-			mailboxsweep.DynamoSK: &types.AttributeValueMemberS{
-				Value: item.SK,
-			},
-		}
-	}
-
-	itemsRes, err := d.db.BatchGetItem(ctx, &dynamodb.BatchGetItemInput{
-		RequestItems: map[string]types.KeysAndAttributes{
-			d.tableName: {
-				Keys: keys,
-			},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve items with batch call: %w", err)
-	}
-
-	items := []changeSetDocument{}
-	if err = attributevalue.UnmarshalListOfMaps(itemsRes.Responses[d.tableName], &items); err != nil {
-		return nil, fmt.Errorf("failed to get gets for folder items: %w", err)
-	}
-
-	operationChangeSets := map[UpdateOperation]ChangeSet{}
-	for _, item := range items {
-		if existing, ok := operationChangeSets[item.Operation]; ok {
-			existing.Paths = append(existing.Paths, item.ChangeSet.Paths...)
-			operationChangeSets[item.Operation] = existing
-		} else {
-			operationChangeSets[item.Operation] = item.ChangeSet
-		}
-	}
-
-	return operationChangeSets, nil
 }

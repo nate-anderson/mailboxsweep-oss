@@ -21,8 +21,7 @@ const (
 var allUpdateOperations = []UpdateOperation{MarkRead, Delete}
 
 type ChangeSet struct {
-	Inbox  string `dynamodbav:"inbox"`
-	Folder string `dynamodbav:"folder"`
+	Inbox string `dynamodbav:"inbox"`
 	// is this a "mark-read" selection, or a "delete" selection?
 	Operation UpdateOperation `dynamodbav:"operation"`
 	// specify a set of paths in a classified inbox
@@ -56,10 +55,6 @@ func (d ChangeSet) Validate() error {
 
 	if strings.TrimSpace(d.Inbox) == "" {
 		return ErrNoInboxSelection
-	}
-
-	if strings.TrimSpace(d.Folder) == "" {
-		return ErrNoFolderSelection
 	}
 
 	return nil

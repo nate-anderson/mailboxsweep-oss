@@ -7,12 +7,11 @@ import (
 )
 
 type Service interface {
-	MarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error)
-	MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
-	UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error)
-	UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error)
-	ListByInbox(ctx context.Context, consistentRead bool) ([]ChangeSet, error)
-	ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error)
+	MarkForDelete(ctx context.Context, paths []classification.Path) (int, error)
+	MarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error)
+	UnmarkForDelete(ctx context.Context, paths []classification.Path) (int, error)
+	UnmarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error)
+	FindByInboxAndOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error)
 }
 
 type DefaultService struct {
@@ -36,7 +35,6 @@ func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths 
 
 	cs := ChangeSet{
 		Inbox:     addr,
-		Folder:    folder,
 		Operation: Delete,
 		Paths:     pathStrings,
 	}
@@ -57,7 +55,6 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, path
 
 	cs := ChangeSet{
 		Inbox:     addr,
-		Folder:    folder,
 		Operation: MarkRead,
 		Paths:     pathStrings,
 	}
@@ -65,22 +62,13 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, path
 	return s.repo.Append(ctx, cs)
 }
 
-func (s DefaultService) ListByInbox(ctx context.Context, consistentRead bool) ([]ChangeSet, error) {
+func (s DefaultService) FindByInboxAndOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.repo.ListByInbox(ctx, addr, consistentRead)
-}
-
-func (s DefaultService) ListByInboxFolder(ctx context.Context, folder string, consistentRead bool) (map[UpdateOperation]ChangeSet, error) {
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.repo.FindByInboxFolder(ctx, addr, folder, consistentRead)
+	return s.repo.FindByInboxAndOperation(ctx, addr, operation, consistentRead)
 }
 
 func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
@@ -96,7 +84,6 @@ func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, path
 
 	cs := ChangeSet{
 		Inbox:     addr,
-		Folder:    folder,
 		Operation: Delete,
 		Paths:     pathStrings,
 	}
@@ -117,7 +104,6 @@ func (s DefaultService) UnmarkForMarkRead(ctx context.Context, folder string, pa
 
 	cs := ChangeSet{
 		Inbox:     addr,
-		Folder:    folder,
 		Operation: MarkRead,
 		Paths:     pathStrings,
 	}
