@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -68,7 +67,7 @@ func (d DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, 
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":email": &types.AttributeValueMemberS{
-				Value: d.formatPK(inbox),
+				Value: d.formatPK(inbox, operation),
 			},
 		},
 		ConsistentRead: &consistentRead,
@@ -94,12 +93,12 @@ func (d DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, 
 	return &cs, nil
 }
 
-func (d DynamoChangesetRepository) formatPK(inbox string) string {
-	return "CHANGESET#" + strings.TrimSpace(inbox)
+func (d DynamoChangesetRepository) formatPK(inbox string, operation UpdateOperation) string {
+	return fmt.Sprintf("CHANGESET#%s#%s", inbox, operation)
 }
 
-func (d DynamoChangesetRepository) formatSK(operation UpdateOperation, partitionID uint64) string {
-	return fmt.Sprintf("PAGE#%d#%s", partitionID, operation)
+func (d DynamoChangesetRepository) formatSK(partitionID uint64) string {
+	return fmt.Sprintf("PAGE#%d", partitionID)
 }
 
 func (d DynamoChangesetRepository) formatLSI1(operation UpdateOperation) string {
@@ -128,7 +127,7 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 
 	res := make(map[string]ChangeSet)
 	for partitionID, paths := range partitionMap {
-		sk := d.formatSK(changeSet.Operation, partitionID)
+		sk := d.formatSK(partitionID)
 		c := changeSet
 		c.Paths = paths
 		res[sk] = c
@@ -146,7 +145,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 		return 0, err
 	}
 
-	pk := d.formatPK(changeSet.Inbox)
+	pk := d.formatPK(changeSet.Inbox, changeSet.Operation)
 
 	// do this serially because
 	// a) it requires less provisioned throughput, and
@@ -231,7 +230,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 		return 0, err
 	}
 
-	pk := d.formatPK(changeSet.Inbox)
+	pk := d.formatPK(changeSet.Inbox, changeSet.Operation)
 
 	// do this serially because
 	// a) it requires less provisioned throughput, and

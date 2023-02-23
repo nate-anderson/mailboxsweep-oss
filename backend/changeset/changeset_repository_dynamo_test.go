@@ -66,6 +66,14 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		})
 	})
 
+	// seed
+	_, err = repo.Append(ctx, ChangeSet{
+		Inbox:     inbox,
+		Paths:     []string{"markread"},
+		Operation: MarkRead,
+	})
+	assert.ThatError(t, err).IsNil()
+
 	t.Run("list for mailbox", func(t *testing.T) {
 		set, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, false)
 		assert.
@@ -78,6 +86,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 
 		assert.That(t, set.Inbox).Equals(inbox)
 		assert.ThatSlice(t, set.Paths).Contains("8")
+		assert.ThatSlice(t, set.Paths).NotContains("markread")
 		for _, uid := range upsertPaths {
 			assert.ThatSlice(t, set.Paths).Contains(uid)
 		}
