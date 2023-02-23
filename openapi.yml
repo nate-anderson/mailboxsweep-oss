@@ -13,7 +13,6 @@ components:
     ChangeSet:
       type: object
       required:
-        - folder
         - operation
         - paths
       properties:
@@ -21,8 +20,6 @@ components:
           type: array
           items:
             type: string
-        folder:
-          type: string
         operation:
           $ref: '#/components/schemas/UpdateOperation'
 
@@ -51,13 +48,11 @@ components:
     ChangeSetResponse:
       type: object
       required:
-        - changeSets
+        - changeSet
         - address
       properties:
-        changeSets:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChangeSet'
+        changeSet:
+          $ref: '#/components/schemas/ChangeSet'
         address:
           type: string
 
@@ -135,10 +130,13 @@ components:
     CommitRequest:
       type: object
       required:
+        - operation
         - confirm
       properties:
         confirm:
           type: boolean
+        operation:
+          $ref: '#/components/schemas/UpdateOperation'
 
     ClassifierInfo:
       type: object
@@ -668,15 +666,15 @@ paths:
           description: Internal server error
 
     get:
-      operationId: getChangesets
+      operationId: getChangeset
       description: Get the current paths and operations the user has selected for update
       parameters:
         - in: query
-          name: folder
+          name: operation
           schema:
-            type: string
-          required: false
-          description: Pass a folder name to get changesets just for that folder
+            $ref: '#/components/schemas/UpdateOperation'
+          required: true
+          description: Get changeset for either mark-read or delete
       responses:
         '200':
           description: Success, list
@@ -687,7 +685,7 @@ paths:
 
   /inbox/changeset/commit:
     post:
-      operationId: commitChangesets
+      operationId: commitChangeset
       description: Commit pending deletes/mark reads selected for this inbox's folders
       requestBody:
         required: true

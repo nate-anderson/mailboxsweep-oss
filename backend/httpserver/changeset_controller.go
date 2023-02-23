@@ -43,7 +43,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 		MessageCount: 0,
 	}
 
-	var updateFunc func(ctx context.Context, folder string, path classification.Path) (int, error)
+	var updateFunc func(ctx context.Context, path classification.Path) (int, error)
 
 	var err error
 	switch reqBody.Operation {
@@ -79,7 +79,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	}
 
 	path := classification.Path(reqBody.Path)
-	n, err := updateFunc(ctx, reqBody.Folder, path)
+	n, err := updateFunc(ctx, path)
 	if err != nil {
 		c.respondError(w, err)
 		return
@@ -89,57 +89,39 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c ChangeSetController) GetChangesets(w http.ResponseWriter, req *http.Request, params GetChangesetsParams) {
+func (c ChangeSetController) GetChangeset(w http.ResponseWriter, req *http.Request, params GetChangesetParams) {
 	ctx := req.Context()
-	var changeSets []changeset.ChangeSet
+
 	// yes it's sloppy - I want the address in the API response
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
-	if params.Folder != nil {
-		changeSetMap, err := c.changeSetService.ListByInboxFolder(ctx, *params.Folder, false)
-		if err != nil {
-			c.respondError(w, err)
-			return
-		}
-		for _, cs := range changeSetMap {
-			changeSets = append(changeSets, cs)
-		}
 
-	} else {
-		var err error
-		changeSets, err = c.changeSetService.ListByInbox(ctx, false)
-		if err != nil {
-			c.respondError(w, err)
-			return
-		}
-
+	operation, err := apiToOperation(params.Operation)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
 	}
 
-	resultChangeSets := make([]ChangeSet, len(changeSets))
-	for i, cs := range changeSets {
-		op, err := operationToAPI(cs.Operation)
-		if err != nil {
-			c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
-			return
-		}
-		resultChangeSets[i] = ChangeSet{
-			Folder:    cs.Folder,
-			Paths:     cs.Paths,
-			Operation: op,
-		}
+	cs, err := c.changeSetService.FindByInboxAndOperation(ctx, operation, false)
+	if err != nil {
+		c.respondError(w, err)
+		return
 	}
 
 	res := ChangeSetResponse{
-		Address:    addr,
-		ChangeSets: resultChangeSets,
+		Address: addr,
+		ChangeSet: ChangeSet{
+			Operation: params.Operation,
+			Paths:     cs.Paths,
+		},
 	}
 	c.respond(w, http.StatusOK, res)
 }
 
-func (c ChangeSetController) CommitChangesets(w http.ResponseWriter, req *http.Request) {
+func (c ChangeSetController) CommitChangeset(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqBody := CommitRequest{}
 	err := json.NewDecoder(req.Body).Decode(&reqBody)
@@ -153,7 +135,13 @@ func (c ChangeSetController) CommitChangesets(w http.ResponseWriter, req *http.R
 		return
 	}
 
-	if err = c.inboxChangeSetService.CommitChanges(ctx); err != nil {
+	operation, err := apiToOperation(reqBody.Operation)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	if err = c.inboxChangeSetService.CommitChanges(ctx, operation); err != nil {
 		c.respondError(w, err)
 		return
 	}
@@ -173,5 +161,16 @@ func operationToAPI(operation changeset.UpdateOperation) (UpdateOperation, error
 		return MarkRead, nil
 	default:
 		return "", fmt.Errorf("unknown update operation '%s'", operation)
+	}
+}
+
+func apiToOperation(o UpdateOperation) (changeset.UpdateOperation, error) {
+	switch o {
+	case MarkRead:
+		return changeset.MarkRead, nil
+	case Delete:
+		return changeset.Delete, nil
+	default:
+		return "", fmt.Errorf("unknown update operation (API) '%s'", o)
 	}
 }

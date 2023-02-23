@@ -2,6 +2,7 @@ package inboxchangeset
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
@@ -12,13 +13,13 @@ import (
 )
 
 type Service interface {
-	AddLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error)
-	AddLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error)
-	RemoveLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error)
-	RemoveLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error)
+	AddLeafForDelete(ctx context.Context, path classification.Path) (int, error)
+	AddLeafForMarkRead(ctx context.Context, path classification.Path) (int, error)
+	RemoveLeafForMarkRead(ctx context.Context, path classification.Path) (int, error)
+	RemoveLeafForDelete(ctx context.Context, path classification.Path) (int, error)
 
 	// do the deletes
-	CommitChanges(ctx context.Context) error
+	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 }
 
 type DefaultService struct {
@@ -42,51 +43,54 @@ func NewService(
 	}
 }
 
-func (s DefaultService) AddLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error) {
+func (s DefaultService) AddLeafForDelete(ctx context.Context, path classification.Path) (int, error) {
 	_, err := s.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
 		return 0, err
 	}
 
-	return s.changeSetService.MarkForDelete(ctx, folder, []classification.Path{path})
+	return s.changeSetService.MarkForDelete(ctx, []classification.Path{path})
 }
 
-func (s DefaultService) AddLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error) {
+func (s DefaultService) AddLeafForMarkRead(ctx context.Context, path classification.Path) (int, error) {
 	_, err := s.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
 		return 0, err
 	}
 
-	return s.changeSetService.MarkForMarkRead(ctx, folder, []classification.Path{path})
+	return s.changeSetService.MarkForMarkRead(ctx, []classification.Path{path})
 }
 
-func (s DefaultService) RemoveLeafForMarkRead(ctx context.Context, folder string, path classification.Path) (int, error) {
+func (s DefaultService) RemoveLeafForMarkRead(ctx context.Context, path classification.Path) (int, error) {
 	_, err := s.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
 		return 0, err
 	}
 
-	return s.changeSetService.UnmarkForMarkRead(ctx, folder, []classification.Path{path})
+	return s.changeSetService.UnmarkForMarkRead(ctx, []classification.Path{path})
 }
 
-func (s DefaultService) RemoveLeafForDelete(ctx context.Context, folder string, path classification.Path) (int, error) {
+func (s DefaultService) RemoveLeafForDelete(ctx context.Context, path classification.Path) (int, error) {
 	_, err := s.classificationService.ClassificationLeaf(ctx, path)
 	if err != nil {
 		return 0, err
 	}
 
-	return s.changeSetService.UnmarkForDelete(ctx, folder, []classification.Path{path})
+	return s.changeSetService.UnmarkForDelete(ctx, []classification.Path{path})
 }
 
-func (s DefaultService) CommitChanges(ctx context.Context) error {
+func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error {
 	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	changeSets, err := s.changeSetService.ListByInbox(ctx, true)
+	changeSet, err := s.changeSetService.FindByInboxAndOperation(ctx, operation, true)
 	if err != nil {
 		return err
+	}
+	if changeSet.Operation != operation {
+		return errors.New("retrieved operation does not match requested")
 	}
 
 	provider, err := s.providerService.GetProvider(ctx, address)
@@ -109,40 +113,45 @@ func (s DefaultService) CommitChanges(ctx context.Context) error {
 		return err
 	}
 
-	for _, cs := range changeSets {
-		folder, err := mailbox.Folder(cs.Folder)
+	// group UIDs by folder for more efficient delete
+	folderUIDs := make(map[string][]string)
+
+	for _, pathStr := range changeSet.Paths {
+		path := classification.ParsePath(pathStr)
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, path)
 		if err != nil {
 			return err
 		}
 
-		for _, pathStr := range cs.Paths {
-			path := classification.ParsePath(pathStr)
-			leaf, err := s.classificationService.ClassificationLeaf(ctx, path)
+		for _, m := range leaf.Messages {
+			if _, ok := folderUIDs[m.Folder]; ok {
+				folderUIDs[m.Folder] = append(folderUIDs[m.Folder], strconv.FormatUint(uint64(m.UID), 10))
+			} else {
+				folderUIDs[m.Folder] = []string{strconv.FormatUint(uint64(m.UID), 10)}
+			}
+		}
+	}
+
+	for folderName, uids := range folderUIDs {
+		folder, err := mailbox.Folder(folderName)
+		if err != nil {
+			return err
+		}
+
+		if operation == changeset.Delete {
+			err = folder.Delete(uids)
 			if err != nil {
 				return err
 			}
-
-			uids := make([]string, len(leaf.Messages))
-			for i, m := range leaf.Messages {
-				uids[i] = strconv.FormatUint(uint64(m.UID), 10)
+		} else if operation == changeset.MarkRead {
+			err = folder.MarkRead(uids)
+			if err != nil {
+				return err
 			}
-
-			switch cs.Operation {
-			case changeset.Delete:
-				if err = folder.Delete(uids); err != nil {
-					return err
-				}
-				break
-			case changeset.MarkRead:
-				if err = folder.MarkRead(uids); err != nil {
-					return err
-				}
-				break
-			default:
-				return fmt.Errorf("unknown change operation %s", cs.Operation)
-			}
-
+		} else {
+			return fmt.Errorf("unknown operation '%s'", operation)
 		}
+
 	}
 
 	return nil
