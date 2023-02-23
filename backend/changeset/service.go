@@ -22,7 +22,7 @@ func NewDefaultService(repo ChangeSetRepository) *DefaultService {
 	return &DefaultService{repo}
 }
 
-func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+func (s DefaultService) MarkForDelete(ctx context.Context, paths []classification.Path) (int, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
@@ -42,7 +42,7 @@ func (s DefaultService) MarkForDelete(ctx context.Context, folder string, paths 
 	return s.repo.Append(ctx, cs)
 }
 
-func (s DefaultService) MarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+func (s DefaultService) MarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
@@ -71,7 +71,7 @@ func (s DefaultService) FindByInboxAndOperation(ctx context.Context, operation U
 	return s.repo.FindByInboxAndOperation(ctx, addr, operation, consistentRead)
 }
 
-func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+func (s DefaultService) UnmarkForDelete(ctx context.Context, paths []classification.Path) (int, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
@@ -91,7 +91,7 @@ func (s DefaultService) UnmarkForDelete(ctx context.Context, folder string, path
 	return s.repo.Remove(ctx, cs)
 }
 
-func (s DefaultService) UnmarkForMarkRead(ctx context.Context, folder string, paths []classification.Path) (int, error) {
+func (s DefaultService) UnmarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return 0, err
