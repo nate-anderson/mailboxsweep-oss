@@ -86,6 +86,7 @@ func TestDynamoChangesetRepository(t *testing.T) {
 
 		assert.That(t, set.Inbox).Equals(inbox)
 		assert.ThatSlice(t, set.Paths).Contains("8")
+		// check that mark-read messages are not included with delete messages
 		assert.ThatSlice(t, set.Paths).NotContains("markread")
 		for _, uid := range upsertPaths {
 			assert.ThatSlice(t, set.Paths).Contains(uid)
