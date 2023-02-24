@@ -205,7 +205,7 @@ func (r S3ClassificationRepository) GetLeavesOfPrefix(ctx context.Context, inbox
 	paths := make([]Path, len(res.Contents))
 
 	for i, c := range res.Contents {
-		p := strings.Split(*c.Key, "/")
+		p := strings.Split(*c.Key, "/")[1:]
 		path := Path(p)
 		paths[i] = path
 	}

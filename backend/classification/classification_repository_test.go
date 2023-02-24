@@ -176,8 +176,8 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				pathStrings[i] = l.String()
 			}
 
-			leftPath := Path([]string{inbox, "1L", "2LL", "3LLL"})
-			rightPath := Path([]string{inbox, "1L", "2LL", "3LLR"})
+			leftPath := Path([]string{"1L", "2LL", "3LLL"})
+			rightPath := Path([]string{"1L", "2LL", "3LLR"})
 
 			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(leftPath.String())
 			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(rightPath.String())

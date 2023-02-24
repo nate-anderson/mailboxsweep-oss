@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mailboxsweep"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -51,8 +53,9 @@ func (r FileClassificationRepository) Store(ctx context.Context, inbox string, c
 }
 
 func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox string, page int) (*ClassificationDocument, error) {
+	path := r.formatFilePath(inbox)
 	file, err := os.Open(
-		r.formatFilePath(inbox),
+		path,
 	)
 	if err != nil {
 		return nil, err
@@ -99,4 +102,38 @@ func (r FileClassificationRepository) FetchLeaf(ctx context.Context, inbox strin
 		return nil, fmt.Errorf("could not find classification at path %v in tree", path)
 	}
 	return &cl, nil
+}
+
+func (r FileClassificationRepository) GetLeavesOfPrefix(ctx context.Context, inbox string, prefix []string) ([]Path, error) {
+	file, err := os.Open(
+		r.formatFilePath(inbox),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var classification ClassificationDocument
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&classification); err != nil {
+		return nil, err
+	}
+
+	cl := classification.Classification.withoutMessages()
+	for _, key := range prefix {
+		child, ok := cl.Children[key]
+		if !ok {
+			return nil, mailboxsweep.NotFoundError(fmt.Errorf("no leaves found for prefix %v", prefix))
+		}
+		cl = child
+	}
+
+	leaves := cl.Leaves()
+	paths := make([]Path, 0, len(leaves))
+	for key := range leaves {
+		path := append(prefix, strings.TrimPrefix(key, "/"))
+		paths = append(paths, path)
+	}
+
+	return paths, nil
 }
