@@ -19,6 +19,7 @@ type Service interface {
 	Classify(ctx context.Context, folders []string, classifiers []Classifier) error
 	ClassificationSummary(ctx context.Context, page *int) (root *ClassificationDocument, err error)
 	ClassificationLeaf(ctx context.Context, path Path) (leaf *Classification, err error)
+	GetLeavesOfPrefix(ctx context.Context, prefix []string) ([]Path, error)
 	ListClassifiers() []ClassifierInfo
 }
 
@@ -225,4 +226,13 @@ func (s DefaultService) ListClassifiers() []ClassifierInfo {
 		info[i] = cl.Info()
 	}
 	return info
+}
+
+func (s DefaultService) GetLeavesOfPrefix(ctx context.Context, prefix []string) ([]Path, error) {
+	address, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetLeavesOfPrefix(ctx, address, prefix)
 }
