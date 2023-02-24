@@ -88,6 +88,7 @@ type ClassificationRepository interface {
 	// fetch a page of the summary
 	FetchSummary(ctx context.Context, inbox string, page int) (root *ClassificationDocument, err error)
 	FetchLeaf(ctx context.Context, inbox string, path []string) (leaf *Classification, err error)
+	GetLeavesOfPrefix(ctx context.Context, inbox string, prefix []string) ([]Path, error)
 }
 
 // return a copy of c with the messages removed recursively

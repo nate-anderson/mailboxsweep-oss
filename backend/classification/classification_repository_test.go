@@ -25,7 +25,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 	validityKeys := map[string]uint32{"INBOX": 1}
 	address := "admin@example.com"
 
-	fileRepo := NewFileClassificationRepository(t.TempDir(), 2)
+	fileRepo := NewFileClassificationRepository("./testdata", 2)
 
 	repositories := map[string]ClassificationRepository{
 		"s3":   s3repo,
@@ -123,6 +123,64 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				That(t, msg.Sender).
 				SoThat(repoType + " message sender address is correct").
 				Equals(testSender)
+		})
+
+		t.Run("get leaves of path", func(t *testing.T) {
+			inbox := "testinboxbarebones@admin.net"
+			cl := Classification{
+				Label: "all",
+				Children: map[string]Classification{
+					"1L": {
+						Children: map[string]Classification{
+							"2LL": {
+								Children: map[string]Classification{
+									"3LLL": {},
+									"3LLR": {},
+								},
+							},
+							"2LR": {
+								Children: map[string]Classification{
+									"3LRL": {},
+									"3LRR": {},
+								},
+							},
+						},
+					},
+					"1R": {
+						Children: map[string]Classification{
+							"2RL": {
+								Children: map[string]Classification{
+									"3RLL": {},
+									"3RLR": {},
+								},
+							},
+							"2RR": {
+								Children: map[string]Classification{
+									"3RRL": {},
+									"3RRR": {},
+								},
+							},
+						},
+					},
+				},
+			}
+			err := repo.Store(ctx, inbox, &cl, map[string]uint32{"INBOX": 19084})
+			assert.ThatError(t, err).IsNil()
+
+			leaves, err := repo.GetLeavesOfPrefix(ctx, inbox, []string{"1L", "2LL"})
+			assert.ThatError(t, err).SoThat(repoType + " should find leaves for known prefix").IsNil()
+
+			assert.That(t, len(leaves)).Equals(2)
+			pathStrings := make([]string, 2)
+			for i, l := range leaves {
+				pathStrings[i] = l.String()
+			}
+
+			leftPath := Path([]string{inbox, "1L", "2LL", "3LLL"})
+			rightPath := Path([]string{inbox, "1L", "2LL", "3LLR"})
+
+			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(leftPath.String())
+			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(rightPath.String())
 		})
 	}
 }

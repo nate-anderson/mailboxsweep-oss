@@ -9,6 +9,7 @@ import (
 	"mailboxsweep"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -185,6 +186,31 @@ func (r S3ClassificationRepository) storeSummaryDocument(ctx context.Context, in
 	}
 
 	return nil
+}
+
+func (r S3ClassificationRepository) GetLeavesOfPrefix(ctx context.Context, inbox string, prefix []string) ([]Path, error) {
+	filePathPrefix := r.leafPath(inbox, filepath.Join(prefix...))
+	res, err := r.client.ListObjects(ctx, &s3.ListObjectsInput{
+		Bucket: &r.bucketName,
+		Prefix: &filePathPrefix,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res.Contents) == 0 {
+		return nil, mailboxsweep.NotFoundError(fmt.Errorf("no leaves found for prefix %v", prefix))
+	}
+
+	paths := make([]Path, len(res.Contents))
+
+	for i, c := range res.Contents {
+		p := strings.Split(*c.Key, "/")
+		path := Path(p)
+		paths[i] = path
+	}
+
+	return paths, nil
 }
 
 var _ ClassificationRepository = &S3ClassificationRepository{}
