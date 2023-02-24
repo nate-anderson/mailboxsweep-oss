@@ -25,7 +25,7 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 	validityKeys := map[string]uint32{"INBOX": 1}
 	address := "admin@example.com"
 
-	fileRepo := NewFileClassificationRepository("./testdata", 2)
+	fileRepo := NewFileClassificationRepository(t.TempDir(), 2)
 
 	repositories := map[string]ClassificationRepository{
 		"s3":   s3repo,
