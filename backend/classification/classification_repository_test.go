@@ -164,23 +164,34 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 					},
 				},
 			}
+
 			err := repo.Store(ctx, inbox, &cl, map[string]uint32{"INBOX": 19084})
 			assert.ThatError(t, err).IsNil()
 
-			leaves, err := repo.GetLeavesOfPrefix(ctx, inbox, []string{"1L", "2LL"})
-			assert.ThatError(t, err).SoThat(repoType + " should find leaves for known prefix").IsNil()
+			t.Run("non-leaf", func(t *testing.T) {
+				leaves, err := repo.GetLeavesOfPrefix(ctx, inbox, []string{"1L", "2LL"})
+				assert.ThatError(t, err).SoThat(repoType + " should find leaves for known prefix").IsNil()
 
-			assert.That(t, len(leaves)).Equals(2)
-			pathStrings := make([]string, 2)
-			for i, l := range leaves {
-				pathStrings[i] = l.String()
-			}
+				assert.That(t, len(leaves)).Equals(2)
+				pathStrings := make([]string, 2)
+				for i, l := range leaves {
+					pathStrings[i] = l.String()
+				}
 
-			leftPath := Path([]string{"1L", "2LL", "3LLL"})
-			rightPath := Path([]string{"1L", "2LL", "3LLR"})
+				leftPath := Path([]string{"1L", "2LL", "3LLL"})
+				rightPath := Path([]string{"1L", "2LL", "3LLR"})
 
-			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(leftPath.String())
-			assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(rightPath.String())
+				assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(leftPath.String())
+				assert.ThatSlice(t, pathStrings).SoThat(repoType + " should return all leaf paths").Contains(rightPath.String())
+			})
+
+			t.Run("leaf", func(t *testing.T) {
+				path := []string{"1L", "2LL", "3LLL"}
+				leaves, err := repo.GetLeavesOfPrefix(ctx, inbox, path)
+				assert.ThatError(t, err).SoThat(repoType + " should not error when retrieving leaf path").IsNil()
+				assert.That(t, len(leaves)).SoThat(repoType + " should return the one leaf path").Equals(1)
+				assert.ThatSlice(t, leaves[0]).SoThat(repoType + " should return the correct leaf path").Equals(path)
+			})
 		})
 	}
 }

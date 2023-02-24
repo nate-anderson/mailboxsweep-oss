@@ -128,12 +128,23 @@ func (r FileClassificationRepository) GetLeavesOfPrefix(ctx context.Context, inb
 		cl = child
 	}
 
+	// returns self if cl is a leaf
 	leaves := cl.Leaves()
 	paths := make([]Path, 0, len(leaves))
+
+	if len(leaves) == 1 {
+		if _, ok := leaves["/"]; ok {
+			paths = append(paths, prefix)
+			return paths, nil
+		}
+	}
+
 	for key := range leaves {
 		path := append(prefix, strings.TrimPrefix(key, "/"))
 		paths = append(paths, path)
 	}
+
+	fmt.Printf("%+v (%+d)\n", paths[0], len(paths[0]))
 
 	return paths, nil
 }
