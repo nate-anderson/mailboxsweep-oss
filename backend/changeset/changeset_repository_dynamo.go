@@ -302,7 +302,7 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 	diff := 0
 	for _, removed := range changeSet.Paths {
 		if _, ok := presentInOld[removed]; ok {
-			diff++
+			diff--
 		}
 	}
 	return diff, nil

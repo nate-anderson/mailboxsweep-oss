@@ -95,23 +95,23 @@ func TestDynamoChangesetRepository(t *testing.T) {
 
 	t.Run("remove from change set", func(t *testing.T) {
 		// remove all even numbers from set
-		evenPaths := []string{}
-		oddPaths := []string{}
+		evenUIDs := []string{}
+		oddUIDs := []string{}
 		for i, uid := range upsertPaths {
 			if (i+1)%2 == 0 {
-				evenPaths = append(evenPaths, uid)
+				evenUIDs = append(evenUIDs, uid)
 			} else {
-				oddPaths = append(oddPaths, uid)
+				oddUIDs = append(oddUIDs, uid)
 			}
 		}
 		delSet := ChangeSet{
 			Inbox:     inbox,
-			Paths:     evenPaths,
+			Paths:     evenUIDs,
 			Operation: Delete,
 		}
 		numDeleted, err := repo.Remove(ctx, delSet)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, numDeleted).Equals(len(evenPaths))
+		assert.That(t, numDeleted).Equals(len(evenUIDs) * -1)
 
 		p, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, false)
 		assert.ThatError(t, err).IsNil()
@@ -119,10 +119,10 @@ func TestDynamoChangesetRepository(t *testing.T) {
 
 		assert.That(t, p.Inbox).Equals(inbox)
 		assert.ThatSlice(t, p.Paths).HasLength(n - len(delSet.Paths))
-		for _, odd := range oddPaths {
+		for _, odd := range oddUIDs {
 			assert.ThatSlice(t, p.Paths).Contains(odd)
 		}
-		for _, even := range evenPaths {
+		for _, even := range evenUIDs {
 			assert.ThatSlice(t, p.Paths).NotContains(even)
 		}
 	})
