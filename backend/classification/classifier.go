@@ -138,7 +138,7 @@ type SendDateClassifier struct {
 	formattedCutoff string
 }
 
-var cutoffDateFormat = "01/02/2006"
+var cutoffDateFormat = "01-02-2006"
 
 func NewSendDateClassifier(cutoff time.Time) SendDateClassifier {
 	return SendDateClassifier{
