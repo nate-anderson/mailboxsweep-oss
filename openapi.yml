@@ -19,7 +19,9 @@ components:
         paths:
           type: array
           items:
-            type: string
+            type: array
+            items:
+              type: string
         operation:
           $ref: '#/components/schemas/UpdateOperation'
 
@@ -30,6 +32,8 @@ components:
         - operation
         - addOrRemove
       properties:
+        # this can be a path prefix, the backend will act on all leaves
+        # underneath this
         path:
           type: array
           items:
@@ -417,9 +421,14 @@ components:
       type: object
       required:
         - messageCount # number of messages added or removed
+        - updatedPaths
       properties:
         messageCount:
           type: integer
+        updatedPaths:
+          type: array
+          items:
+            type: string
 
     UpdateOperation:
       type: string

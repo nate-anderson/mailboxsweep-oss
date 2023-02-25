@@ -49,21 +49,21 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	case Delete:
 		switch reqBody.AddOrRemove {
 		case Remove:
-			updateFunc = c.inboxChangeSetService.RemoveLeafForDelete
+			updateFunc = c.inboxChangeSetService.RemovePathForDelete
 		case Add:
-			updateFunc = c.inboxChangeSetService.AddLeafForDelete
+			updateFunc = c.inboxChangeSetService.AddPathForDelete
 		default:
-			c.respondError(w, fmt.Errorf("addOrDelete must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
+			c.respondError(w, fmt.Errorf("addOrRemove must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
 			return
 		}
 	case MarkRead:
 		switch reqBody.AddOrRemove {
 		case Remove:
-			updateFunc = c.inboxChangeSetService.RemoveLeafForMarkRead
+			updateFunc = c.inboxChangeSetService.RemovePathForMarkRead
 		case Add:
-			updateFunc = c.inboxChangeSetService.AddLeafForMarkRead
+			updateFunc = c.inboxChangeSetService.AddPathForMarkRead
 		default:
-			c.respondError(w, fmt.Errorf("addOrDelete must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
+			c.respondError(w, fmt.Errorf("addOrRemove must be one of 'add' or 'delete'"), withOverrideStatusCode(http.StatusBadRequest))
 			return
 		}
 	default:
@@ -110,11 +110,15 @@ func (c ChangeSetController) GetChangeset(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	paths := [][]string{}
+	for _, path := range cs.Paths {
+		paths = append(paths, classification.ParsePath(path))
+	}
 	res := ChangeSetResponse{
 		Address: addr,
 		ChangeSet: ChangeSet{
 			Operation: params.Operation,
-			Paths:     cs.Paths,
+			Paths:     paths,
 		},
 	}
 	c.respond(w, http.StatusOK, res)
