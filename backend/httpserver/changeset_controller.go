@@ -42,7 +42,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 		MessageCount: 0,
 	}
 
-	var updateFunc func(ctx context.Context, path classification.Path) (int, error)
+	var updateFunc func(ctx context.Context, path classification.Path) (*inboxchangeset.ChangeResult, error)
 
 	var err error
 	switch reqBody.Operation {
@@ -78,12 +78,15 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 	}
 
 	path := classification.Path(reqBody.Path)
-	n, err := updateFunc(ctx, path)
+	result, err := updateFunc(ctx, path)
 	if err != nil {
 		c.respondError(w, err)
 		return
 	}
-	resBody.MessageCount = n
+	resBody.MessageCount = result.MsgCountDiff
+	for _, p := range result.Paths {
+		resBody.UpdatedPaths = append(resBody.UpdatedPaths, p)
+	}
 
 	c.respond(w, http.StatusOK, resBody)
 }

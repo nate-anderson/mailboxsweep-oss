@@ -12,11 +12,18 @@ import (
 	"strconv"
 )
 
+type ChangeResult struct {
+	// leaf Paths added or removed
+	Paths []classification.Path
+	// number of messages added or removed
+	MsgCountDiff int
+}
+
 type Service interface {
-	AddLeafForDelete(ctx context.Context, path classification.Path) (int, error)
-	AddLeafForMarkRead(ctx context.Context, path classification.Path) (int, error)
-	RemoveLeafForMarkRead(ctx context.Context, path classification.Path) (int, error)
-	RemoveLeafForDelete(ctx context.Context, path classification.Path) (int, error)
+	AddPathForDelete(ctx context.Context, path classification.Path) (*ChangeResult, error)
+	AddPathForMarkRead(ctx context.Context, path classification.Path) (*ChangeResult, error)
+	RemovePathForMarkRead(ctx context.Context, path classification.Path) (*ChangeResult, error)
+	RemovePathForDelete(ctx context.Context, path classification.Path) (*ChangeResult, error)
 
 	// do the deletes
 	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
@@ -43,40 +50,115 @@ func NewService(
 	}
 }
 
-func (s DefaultService) AddLeafForDelete(ctx context.Context, path classification.Path) (int, error) {
-	_, err := s.classificationService.ClassificationLeaf(ctx, path)
+/*
+Note that the four methods returning *ChangeResult may return a partial result with an error
+*/
+
+func (s DefaultService) AddPathForDelete(ctx context.Context, path classification.Path) (*ChangeResult, error) {
+	leafPaths, err := s.classificationService.GetLeavesOfPrefix(ctx, path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return s.changeSetService.MarkForDelete(ctx, []classification.Path{path})
+	result := ChangeResult{
+		MsgCountDiff: 0,
+	}
+
+	for _, p := range leafPaths {
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, p)
+		if err != nil {
+			return &result, err
+		}
+
+		_, err = s.changeSetService.MarkForDelete(ctx, []classification.Path{p})
+		if err != nil {
+			return &result, err
+		}
+
+		result.MsgCountDiff += len(leaf.Messages)
+		result.Paths = append(result.Paths, p)
+	}
+
+	return &result, nil
 }
 
-func (s DefaultService) AddLeafForMarkRead(ctx context.Context, path classification.Path) (int, error) {
-	_, err := s.classificationService.ClassificationLeaf(ctx, path)
+func (s DefaultService) AddPathForMarkRead(ctx context.Context, path classification.Path) (*ChangeResult, error) {
+	leafPaths, err := s.classificationService.GetLeavesOfPrefix(ctx, path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return s.changeSetService.MarkForMarkRead(ctx, []classification.Path{path})
+	result := ChangeResult{
+		MsgCountDiff: 0,
+	}
+
+	for _, p := range leafPaths {
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, p)
+		if err != nil {
+			return &result, err
+		}
+
+		_, err = s.changeSetService.MarkForMarkRead(ctx, []classification.Path{p})
+		if err != nil {
+			return &result, err
+		}
+		result.MsgCountDiff += len(leaf.Messages)
+		result.Paths = append(result.Paths, p)
+	}
+
+	return &result, nil
 }
 
-func (s DefaultService) RemoveLeafForMarkRead(ctx context.Context, path classification.Path) (int, error) {
-	_, err := s.classificationService.ClassificationLeaf(ctx, path)
+func (s DefaultService) RemovePathForMarkRead(ctx context.Context, path classification.Path) (*ChangeResult, error) {
+	leafPaths, err := s.classificationService.GetLeavesOfPrefix(ctx, path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return s.changeSetService.UnmarkForMarkRead(ctx, []classification.Path{path})
+	result := ChangeResult{}
+
+	for _, p := range leafPaths {
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, p)
+		if err != nil {
+			return &result, err
+		}
+
+		_, err = s.changeSetService.UnmarkForMarkRead(ctx, []classification.Path{p})
+		if err != nil {
+			return &result, err
+		}
+
+		result.MsgCountDiff -= len(leaf.Messages)
+		result.Paths = append(result.Paths, p)
+	}
+
+	return &result, nil
 }
 
-func (s DefaultService) RemoveLeafForDelete(ctx context.Context, path classification.Path) (int, error) {
-	_, err := s.classificationService.ClassificationLeaf(ctx, path)
+func (s DefaultService) RemovePathForDelete(ctx context.Context, path classification.Path) (*ChangeResult, error) {
+	leafPaths, err := s.classificationService.GetLeavesOfPrefix(ctx, path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return s.changeSetService.UnmarkForDelete(ctx, []classification.Path{path})
+	result := ChangeResult{}
+
+	for _, p := range leafPaths {
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, p)
+		if err != nil {
+			return &result, err
+		}
+
+		_, err = s.changeSetService.UnmarkForDelete(ctx, []classification.Path{path})
+		if err != nil {
+			return &result, err
+		}
+
+		result.MsgCountDiff -= len(leaf.Messages)
+		result.Paths = append(result.Paths, p)
+	}
+
+	return &result, nil
 }
 
 func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error {

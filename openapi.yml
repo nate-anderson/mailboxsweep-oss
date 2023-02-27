@@ -428,7 +428,9 @@ components:
         updatedPaths:
           type: array
           items:
-            type: string
+            type: array
+            items:
+              type: string
 
     UpdateOperation:
       type: string
