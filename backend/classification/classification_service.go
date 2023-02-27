@@ -135,6 +135,17 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
+	// validate classifiers and input values
+	for _, scl := range classifiers {
+		classifier, err := scl.Classifier()
+		if err != nil {
+			return err
+		}
+		if err = classifier.ValidateInput(scl.InitValue); err != nil {
+			return err
+		}
+	}
+
 	// make sure user has paid
 	pmt, err := s.paymentService.VerifyPayment(ctx)
 	if err != nil {

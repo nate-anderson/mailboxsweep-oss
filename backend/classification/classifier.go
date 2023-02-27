@@ -17,6 +17,7 @@ type Classifier interface {
 	Serializeable() SerializableClassifier
 	// Display info about the classifier - should only return static data
 	Info() ClassifierInfo
+	ValidateInput(input string) error
 }
 
 type InputFormat string
@@ -76,6 +77,11 @@ func (c SenderDomainClassifier) Info() ClassifierInfo {
 	}
 }
 
+func (c SenderDomainClassifier) ValidateInput(input string) error {
+	// doesn't accept input
+	return nil
+}
+
 /*
 	Classify by sender username
 	Assumes messages have already been classified by sender domain
@@ -127,6 +133,10 @@ func (c SenderUsernameClassifier) Info() ClassifierInfo {
 		Description: "Classify messages by the sender",
 		TakesInput:  false,
 	}
+}
+
+func (c SenderUsernameClassifier) ValidateInput(input string) error {
+	return nil
 }
 
 /*
@@ -183,6 +193,14 @@ func (s SendDateClassifier) Info() ClassifierInfo {
 		InputLabel:  ptr("Filter date"),
 		InputFormat: ptr(InputDate),
 	}
+}
+
+func (s SendDateClassifier) ValidateInput(input string) error {
+	_, err := time.Parse(input, cutoffDateFormat)
+	if err != nil {
+		return fmt.Errorf("send date classifer input must be of format %s: %w", cutoffDateFormat, err)
+	}
+	return nil
 }
 
 // Classifier serialization
