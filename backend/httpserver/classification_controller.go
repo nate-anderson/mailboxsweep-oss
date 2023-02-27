@@ -194,7 +194,9 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 
 	var closed classifyrequest.ClassifyRequest
 	if len(closedRequests) == 0 {
-		c.respondError(w, mailboxsweep.NotFoundError(errors.New("no completed classify requests found")))
+		resBody.Status = nil
+		c.respond(w, http.StatusOK, resBody)
+		return
 	} else if len(closedRequests) == 1 {
 		closed = closedRequests[0]
 	} else {
