@@ -20,6 +20,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import currency from "currency.js";
+import TableBody from "@mui/material/TableBody";
 
 
 const renderPlan = (ready: boolean, plan?: Plan, validUntil?: Date, subscribedAt?: Date) => {
@@ -61,30 +62,32 @@ const renderPlan = (ready: boolean, plan?: Plan, validUntil?: Date, subscribedAt
                     minWidth: 300,
                     maxWidth: 600
                 }}>
-                    <TableRow>
-                        <TableCell>Subscribed</TableCell>
-                        <TableCell>{format(subscribedAt, displayFormat)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Expires</TableCell>
-                        <TableCell>{format(validUntil, displayFormat)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Scans Included</TableCell>
-                        <TableCell>{plan.allowedScans}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Scans Remaining</TableCell>
-                        <TableCell>@TODO unimplemented</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Price</TableCell>
-                        <TableCell>{price.format()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Order Number</TableCell>
-                        <TableCell>@TODO unimplemented</TableCell>
-                    </TableRow>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell>Subscribed</TableCell>
+                            <TableCell>{format(subscribedAt, displayFormat)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Expires</TableCell>
+                            <TableCell>{format(validUntil, displayFormat)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Scans Included</TableCell>
+                            <TableCell>{plan.allowedScans}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Scans Remaining</TableCell>
+                            <TableCell>@TODO unimplemented</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Price</TableCell>
+                            <TableCell>{price.format()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Order Number</TableCell>
+                            <TableCell>@TODO unimplemented</TableCell>
+                        </TableRow>
+                    </TableBody>
                 </Table>
             </TableContainer>
         </Box>;
