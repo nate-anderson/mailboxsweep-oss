@@ -5,28 +5,37 @@ import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
 import IconButton from "@mui/material/IconButton";
+import { ClassificationTree } from "../../lib/tree";
 
 export interface LeafProps {
     id: string;
+    path: string[]
     label: string;
     msgCount: number;
     unreadCount: number;
     onClickExpand: (node: string) => void,
     childCount: number;
-    appendSelectedNode: (node: string) => void;
-    removeSelectedNode: (node: string) => void;
+    appendSelectedNode: (path: string[]) => void;
+    removeSelectedNode: (path: string[]) => void;
     onCheck: (checked: boolean) => void;
     isChecked: boolean;
     isChildChecked: boolean;
+    classification: ClassificationTree | undefined;
 }
 
 export default function Leaf(props: LeafProps) {
     const toggleSelected = (selected: boolean) => {
-        if (selected) {
-            props.appendSelectedNode(props.id);
-        } else {
-            props.removeSelectedNode(props.id);
+        console.log("toggling", selected);
+        if (!props.classification) {
+            throw new Error("classification tree is undefined in leaf");
         }
+        
+        if (props.isChecked) {
+            props.removeSelectedNode(props.path);
+        } else {
+            props.appendSelectedNode(props.path);
+        }
+
     }
     return (
         <Box

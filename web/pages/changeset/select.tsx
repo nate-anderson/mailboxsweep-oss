@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import { API } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
-import { ApiError, Classification } from "../../client-gen";
+import { ApiError, ChangeSetRequest, Classification, UpdateOperation } from "../../client-gen";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
 import IconMarkRead from "@mui/icons-material/MarkEmailRead";
 import Pagination from "@mui/material/Pagination";
@@ -14,11 +14,12 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
-import Leaf, { LeafProps } from "../../components/changeset/leaf";
+import Leaf from "../../components/changeset/leaf";
 import { ClassificationTree } from "../../lib/tree";
 import Crumbs from "../../components/changeset/crumbs";
 import Animation from "../../styles/animations.module.css";
 import Button from "@mui/material/Button";
+import { Selection } from "../../lib/selection";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -67,39 +68,16 @@ function ToggleModeSwitch(props: {
 </AppBar>
 }
 
-const classificationToLeafProps = (
-    children: Record<string, Classification> | undefined, 
-    navigate: (key: string) => void,
-    appendSelectedNode: (node: string) => void,
-    removeSelectedNode: (node: string) => void,
-): LeafProps[] => {
-    if (!children) {
-        return [];
-    }
-
-    return Object
-        .entries(children)
-        .map(([key, value]) => ({
-            label: value.label,
-            msgCount: value.count,
-            unreadCount: 0,
-            onClickExpand: (key: string) => navigate(key),
-            id: key,
-            childCount: Object.keys(value.children).length,
-            isChild: true,
-            appendSelectedNode,
-            removeSelectedNode,
-        }))
-        .sort((a, b) => Number(a.msgCount) > Number(b.msgCount) ? -1 : 1);
-}
-
 interface ListProps {
     selected: Classification | undefined,
-    appendSelectedLeaf: (k: string) => void,
-    removeSelectedLeaf: (k: string) => void,
+    appendSelectedLeaf: (path: string[]) => void,
+    removeSelectedLeaf: (path: string[]) => void,
     navigate: (key: string) => void,
     slideBackward: boolean,
-    setSlideBackward: (d: boolean) => void
+    setSlideBackward: (d: boolean) => void,
+    pathPrefix: string[],
+    classificationTree: ClassificationTree | undefined,
+    selectedNodes: Selection
 }
 
 function List(props: ListProps) {
@@ -109,7 +87,7 @@ function List(props: ListProps) {
 
     return <div
         className={props.slideBackward ? Animation.slideRight : Animation.slideLeft}
-        key={props.selected.label}
+        key={`${props.selected.label}`}
     >
         {Object.entries(props.selected.children)
         .map(([key, value]) => ({
@@ -117,9 +95,15 @@ function List(props: ListProps) {
             id: key,
         }))
         .sort((a, b) => Number(a.count) > Number(b.count) ? -1 : 1)
-        .map(cl => <Leaf
+        .map(cl => {
+            const path = [...props.pathPrefix, cl.id];
+            const childLeaves = props.classificationTree?.getLeavesOfPath(path) ?? [];
+            const isChecked = props.selectedNodes.has(path) || (childLeaves.length > 0 && props.selectedNodes.hasAll(childLeaves));
+            const isChildChecked = props.selectedNodes.hasAny(childLeaves) && !isChecked;
+        return <Leaf
             id={cl.id}
-            key={cl.id}
+            path={[...props.pathPrefix, cl.id]}
+            key={`${cl.id}_${isChecked}_${isChildChecked}`}
             label={cl.label}
             msgCount={cl.count}
             unreadCount={0}
@@ -130,8 +114,12 @@ function List(props: ListProps) {
             }}
             appendSelectedNode={props.appendSelectedLeaf}
             removeSelectedNode={props.removeSelectedLeaf}
+            isChecked={isChecked}
+            isChildChecked={isChildChecked}
+            onCheck={(v: boolean) => {}}
+            classification={props.classificationTree}
         />
-        )}
+})}
         </div>;
 }
 
@@ -140,12 +128,16 @@ export default function Edit() {
     const [ errorSnackbar, setError ] = useSnackbar("error");
     const [ requestPage, setRequestPage ] = useState(0);
     const [ totalPages, setTotalPages ] = useState(0);
-    const [ selectedLeaves, setSelectedLeaves ] = useState(new Set<string>());
-    const [ selectedCount, setSelectedCount ] = useState(0);
+    const [ deleteCount, setDeleteCount ] = useState(0);
+    const [ markReadCount, setMarkReadCount ] = useState(0);
     const [ isDeleteMode, setIsDeleteMode ] = useState(false);
     const [ slideBackward, setSlideBackward ] = useState(false); 
 
     const [ currentPath, setCurrentPath ] = useState<string[]>([]);
+
+    const [ deleteSelection, setDeleteSelection ] = useState(new Selection([]));
+    const [ markReadSelection, setMarkReadSelection ] = useState(new Selection([]));
+
     const navigateDownward = (key: string | undefined) => {
         if (key) {
             return setCurrentPath(path => [...path, key]);
@@ -153,19 +145,75 @@ export default function Edit() {
         return setCurrentPath([]);
     }
 
-    const addLeaf = (leaf: string) => {
-        const leaves = setSelectedLeaves(s => s.add(leaf))
+    const addLeaf = async (path: string[]) => {
+
+        const res = await API.updateChangeSet({
+            operation: isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ,
+            path,
+            addOrRemove: ChangeSetRequest.addOrRemove.ADD,
+        });
+        if (isDeleteMode) {
+            setDeleteSelection(sel => {
+                res.updatedPaths.forEach(path => sel.add(path));
+                return sel;
+            });
+            setDeleteCount(count => count + res.messageCount);
+        } else {
+            setMarkReadSelection(sel => {
+                res.updatedPaths.forEach(path => sel.add(path));
+                return sel;
+            });
+            setMarkReadCount(count => count + res.messageCount);
+        }
     };
-    const removeLeaf = (leaf: string) => setSelectedLeaves(s => {
-        s.delete(leaf);
-        return s;
-    });
+
+    const getSelection = (): Selection => {
+        if (isDeleteMode) {
+            return deleteSelection;
+        }
+        return markReadSelection;
+    }
+
+    const removeLeaf = async (path: string[]) => {
+        const res = await API.updateChangeSet({
+            operation: isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ,
+            path,
+            addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
+        });
+
+        if (isDeleteMode) {
+            setDeleteSelection(sel => {
+                res.updatedPaths.forEach(p => sel.remove(p));
+                return sel;
+            });
+            setDeleteCount(count => count + res.messageCount);
+        } else {
+            setMarkReadSelection(sel => {
+                res.updatedPaths.forEach(p => sel.remove(p));
+                return sel;
+            });
+            setMarkReadCount(count => count + res.messageCount);
+        }
+    };
     
     useEffect(() => {
         API.getClassificationSummary(requestPage)
             .then((data) => {
                 setClassificationRoot(new ClassificationTree(data.classification));
                 setTotalPages(data.pageCount);
+            })
+            .catch((err) => {
+                if (err instanceof ApiError) {
+                    const apiError = err as ApiError;
+                    setError(apiError.message);
+                }
+            })
+
+        API.getChangeset(isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ)
+            .then((data) => {
+                if (isDeleteMode) {
+                    setDeleteSelection(new Selection(data.changeSet.paths));
+                }
             })
             .catch((err) => {
                 if (err instanceof ApiError) {
@@ -239,6 +287,9 @@ export default function Edit() {
                             navigate={navigateDownward}
                             slideBackward={slideBackward}
                             setSlideBackward={setSlideBackward}
+                            pathPrefix={currentPath}
+                            classificationTree={classificationRoot}
+                            selectedNodes={getSelection()}
                         />
 
                     <Box
@@ -274,7 +325,7 @@ export default function Edit() {
         <ToggleModeSwitch
             isDeleteMode={isDeleteMode}
             setIsDeleteMode={setIsDeleteMode}
-            numSelected={selectedCount}
+            numSelected={isDeleteMode ? deleteCount : markReadCount}
         />
     </>;
 }
