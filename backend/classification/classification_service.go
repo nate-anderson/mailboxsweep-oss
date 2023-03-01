@@ -137,11 +137,8 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 
 	// validate classifiers and input values
 	for _, scl := range classifiers {
-		classifier, err := scl.Classifier()
+		_, err := scl.Classifier()
 		if err != nil {
-			return err
-		}
-		if err = classifier.ValidateInput(scl.InitValue); err != nil {
 			return err
 		}
 	}

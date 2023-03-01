@@ -3,6 +3,7 @@ package classification
 import (
 	"fmt"
 	"mailboxsweep/inbox"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -17,7 +18,6 @@ type Classifier interface {
 	Serializeable() SerializableClassifier
 	// Display info about the classifier - should only return static data
 	Info() ClassifierInfo
-	ValidateInput(input string) error
 }
 
 type InputFormat string
@@ -77,11 +77,6 @@ func (c SenderDomainClassifier) Info() ClassifierInfo {
 	}
 }
 
-func (c SenderDomainClassifier) ValidateInput(input string) error {
-	// doesn't accept input
-	return nil
-}
-
 /*
 	Classify by sender username
 	Assumes messages have already been classified by sender domain
@@ -135,10 +130,6 @@ func (c SenderUsernameClassifier) Info() ClassifierInfo {
 	}
 }
 
-func (c SenderUsernameClassifier) ValidateInput(input string) error {
-	return nil
-}
-
 /*
 	Classify by a cutoff date
 */
@@ -150,11 +141,15 @@ type SendDateClassifier struct {
 
 var cutoffDateFormat = "01-02-2006"
 
-func NewSendDateClassifier(cutoff time.Time) SendDateClassifier {
+func NewSendDateClassifier(cutoffStr string) (SendDateClassifier, error) {
+	cutoff, err := time.Parse(cutoffStr, cutoffDateFormat)
+	if err != nil {
+		return SendDateClassifier{}, fmt.Errorf("send date classifer input must be of format %s: %w", cutoffDateFormat, err)
+	}
 	return SendDateClassifier{
 		cutoff:          cutoff,
 		formattedCutoff: cutoff.Format(cutoffDateFormat),
-	}
+	}, nil
 }
 
 func (s SendDateClassifier) Key(m inbox.Message) string {
@@ -195,12 +190,64 @@ func (s SendDateClassifier) Info() ClassifierInfo {
 	}
 }
 
-func (s SendDateClassifier) ValidateInput(input string) error {
-	_, err := time.Parse(input, cutoffDateFormat)
-	if err != nil {
-		return fmt.Errorf("send date classifer input must be of format %s: %w", cutoffDateFormat, err)
+const TypeKeySubjectKeyword = "SUBJECT_KEYWORD"
+
+type SubjectKeywordClassifier struct {
+	keyword string
+	regex   *regexp.Regexp
+}
+
+func NewSubjectKeywordClassifier(keyword string) (SubjectKeywordClassifier, error) {
+	clean := strings.TrimSpace(strings.ToLower(keyword))
+	if len(clean) < 3 {
+		return SubjectKeywordClassifier{}, fmt.Errorf("invalid keyword '%s': must be at least 3 characters", keyword)
 	}
-	return nil
+
+	expr := fmt.Sprintf("(^|\\s+|['?.,!@&*=+-_~:;\"></^()%%])%s($|\\s+|['?.,!@&*=+-_~:;\"></^()%%])", clean)
+	regex, err := regexp.Compile(expr)
+	if err != nil {
+		return SubjectKeywordClassifier{}, err
+	}
+	return SubjectKeywordClassifier{
+		keyword: clean,
+		regex:   regex,
+	}, nil
+}
+
+func (c SubjectKeywordClassifier) Key(m inbox.Message) string {
+	if c.regex.MatchString(strings.ToLower(m.Subject)) {
+		return fmt.Sprintf("contains_keyword_%s", c.keyword)
+	}
+	return fmt.Sprintf("not_contains_keyword_%s", c.keyword)
+}
+
+func (c SubjectKeywordClassifier) Classify(m inbox.Message) string {
+	if c.regex.MatchString(strings.ToLower(m.Subject)) {
+		return fmt.Sprintf("Subject includes \"%s\"", c.keyword)
+	}
+	return fmt.Sprintf("Subject does not include \"%s\"", c.keyword)
+}
+
+func (c SubjectKeywordClassifier) Dimension() string {
+	return "subject_keyword_" + c.keyword
+}
+
+func (c SubjectKeywordClassifier) Serializeable() SerializableClassifier {
+	return SerializableClassifier{
+		TypeKey:   TypeKeySubjectKeyword,
+		InitValue: c.keyword,
+	}
+}
+
+func (c SubjectKeywordClassifier) Info() ClassifierInfo {
+	return ClassifierInfo{
+		Name:        "Subject keyword",
+		TypeKey:     TypeKeySubjectKeyword,
+		Description: "Classify messages by subject keyword",
+		TakesInput:  true,
+		InputFormat: ptr(InputString),
+		InputLabel:  ptr("Keyword"),
+	}
 }
 
 // Classifier serialization
@@ -217,11 +264,9 @@ func (s SerializableClassifier) Classifier() (Classifier, error) {
 	case TypeKeySenderUsername:
 		return NewSenderUsernameClassifier(), nil
 	case TypeKeySendDate:
-		cutoff, err := time.Parse(cutoffDateFormat, s.InitValue)
-		if err != nil {
-			return nil, fmt.Errorf("invalid cutoff date to initialize send date classifier '%s'", s.InitValue)
-		}
-		return NewSendDateClassifier(cutoff), nil
+		return NewSendDateClassifier(s.InitValue)
+	case TypeKeySubjectKeyword:
+		return NewSubjectKeywordClassifier(s.InitValue)
 	default:
 		return nil, fmt.Errorf("unknown type key for serialized classifier '%s'", s.TypeKey)
 	}
@@ -231,6 +276,7 @@ var allClassifiers = []Classifier{
 	SenderDomainClassifier{},
 	SenderUsernameClassifier{},
 	SendDateClassifier{},
+	SubjectKeywordClassifier{},
 }
 
 func ptr[t any](v t) *t {
