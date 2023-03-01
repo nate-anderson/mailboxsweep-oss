@@ -25,6 +25,8 @@ type Service interface {
 	RemovePathForMarkRead(ctx context.Context, path classification.Path) (*ChangeResult, error)
 	RemovePathForDelete(ctx context.Context, path classification.Path) (*ChangeResult, error)
 
+	FindByOperation(ctx context.Context, operation changeset.UpdateOperation) (changeSet *changeset.ChangeSet, size int, err error)
+
 	// do the deletes
 	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 }
@@ -167,7 +169,7 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		return err
 	}
 
-	changeSet, err := s.changeSetService.FindByInboxAndOperation(ctx, operation, true)
+	changeSet, err := s.changeSetService.FindByOperation(ctx, operation, true)
 	if err != nil {
 		return err
 	}
@@ -237,4 +239,24 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 	}
 
 	return nil
+}
+
+func (s DefaultService) FindByOperation(ctx context.Context, operation changeset.UpdateOperation) (*changeset.ChangeSet, int, error) {
+	changeSet, err := s.changeSetService.FindByOperation(ctx, operation, false)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	n := 0
+
+	for _, path := range changeSet.Paths {
+		leaf, err := s.classificationService.ClassificationLeaf(ctx, classification.ParsePath(path))
+		if err != nil {
+			return nil, 0, err
+		}
+
+		n += int(leaf.Count)
+	}
+
+	return changeSet, n, nil
 }

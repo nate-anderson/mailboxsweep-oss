@@ -11,7 +11,7 @@ type Service interface {
 	MarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error)
 	UnmarkForDelete(ctx context.Context, paths []classification.Path) (int, error)
 	UnmarkForMarkRead(ctx context.Context, paths []classification.Path) (int, error)
-	FindByInboxAndOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error)
+	FindByOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error)
 }
 
 type DefaultService struct {
@@ -62,7 +62,7 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, paths []classificat
 	return s.repo.Append(ctx, cs)
 }
 
-func (s DefaultService) FindByInboxAndOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
+func (s DefaultService) FindByOperation(ctx context.Context, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err

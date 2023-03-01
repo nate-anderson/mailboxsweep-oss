@@ -51,11 +51,14 @@ components:
       required:
         - changeSet
         - address
+        - size
       properties:
         changeSet:
           $ref: '#/components/schemas/ChangeSet'
         address:
           type: string
+        size:
+          type: integer
 
     Classification:
       type: object

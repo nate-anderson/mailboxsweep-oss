@@ -107,7 +107,7 @@ func (c ChangeSetController) GetChangeset(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	cs, err := c.changeSetService.FindByInboxAndOperation(ctx, operation, false)
+	cs, size, err := c.inboxChangeSetService.FindByOperation(ctx, operation)
 	if err != nil {
 		c.respondError(w, err)
 		return
@@ -123,6 +123,7 @@ func (c ChangeSetController) GetChangeset(w http.ResponseWriter, req *http.Reque
 			Operation: params.Operation,
 			Paths:     paths,
 		},
+		Size: size,
 	}
 	c.respond(w, http.StatusOK, res)
 }
