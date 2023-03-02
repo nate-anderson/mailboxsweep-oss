@@ -1,7 +1,7 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import Container from "@mui/material/Container";
 import Navbar from "../components/navbar";
-import Alert from "@mui/material/Alert"
+import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -13,228 +13,281 @@ import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
 import Link from "next/link";
 import Button from "@mui/material/Button";
-import IconChevronRight from "@mui/icons-material/ChevronRight"
+import IconChevronRight from "@mui/icons-material/ChevronRight";
 
 function ActionLink(props: {
-    color: string,
-    backgroundColor: string,
-    href: string,
-    text: string,
+  color: string;
+  backgroundColor: string;
+  href: string;
+  text: string;
 }) {
-    return (<Link href={props.href}
-        style={{
-            textDecoration: "none",
-            width: "100%",
-        }}
+  return (
+    <Link
+      href={props.href}
+      style={{
+        textDecoration: "none",
+        width: "100%",
+      }}
     >
-        <Box display="flex" justifyContent="end">
-            <Button
-                endIcon={<IconChevronRight />}
-                size="large"
-                sx={{
-                    color: props.color,
-                    border: `1px solid ${props.backgroundColor}`,
-                    backgroundColor: props.backgroundColor,
-                    fontWeight: "bold",
-                    marginRight: 0,
-                    marginLeft: "auto",
-                    '&:hover': {
-                        color: props.backgroundColor,
-                        backgroundColor: props.color,
-                        borderColor: props.color
-                    }
-
-                }}
-            >{props.text}</Button>
-        </Box>
-    </Link>)
+      <Box display="flex" justifyContent="end">
+        <Button
+          endIcon={<IconChevronRight />}
+          size="large"
+          sx={{
+            color: props.color,
+            border: `1px solid ${props.backgroundColor}`,
+            backgroundColor: props.backgroundColor,
+            fontWeight: "bold",
+            marginRight: 0,
+            marginLeft: "auto",
+            "&:hover": {
+              color: props.backgroundColor,
+              backgroundColor: props.color,
+              borderColor: props.color,
+            },
+          }}
+        >
+          {props.text}
+        </Button>
+      </Box>
+    </Link>
+  );
 }
 
-const renderClassificationStatus = (status: ClassificationStatus.status | undefined) => {
-    const boxify = (children: React.ReactNode) => (<Box sx={{
+const renderClassificationStatus = (
+  status: ClassificationStatus.status | undefined
+) => {
+  const boxify = (children: React.ReactNode) => (
+    <Box
+      sx={{
         marginTop: 3,
-        display: 'flex',
+        display: "flex",
         flexDirection: "column",
         alignItems: "center",
-    }}>
-        {children}
-    </Box>);
+      }}
+    >
+      {children}
+    </Box>
+  );
 
-    switch (status) {
-        case ClassificationStatus.status.IN_PROGRESS:
-            return boxify(<Alert
-                severity="info"
-                variant="filled"
-                sx={{
-                    maxWidth: 600,
-                    backgroundColor: "var(--color-accent)"
-                }}>
-                <AlertTitle>Inbox Scan In Progress</AlertTitle>
-                We're categorizing your inbox messages now. This requires going through a lot of emails and can take some time. We'll send you a message when we're ready to start cleaning up!
-            </Alert>);
+  switch (status) {
+    case ClassificationStatus.status.IN_PROGRESS:
+      return boxify(
+        <Alert
+          severity="info"
+          variant="filled"
+          sx={{
+            maxWidth: 600,
+            backgroundColor: "var(--color-accent)",
+          }}
+        >
+          <AlertTitle>Inbox Scan In Progress</AlertTitle>
+          We're categorizing your inbox messages now. This requires going
+          through a lot of emails and can take some time. We'll send you a
+          message when we're ready to start cleaning up!
+        </Alert>
+      );
 
-        case ClassificationStatus.status.COMPLETE:
-            return boxify(<Alert
-                severity="success"
-                variant="filled"
-                sx={{
-                    maxWidth: 600,
-                    width: "100%",
-                    '& > .MuiAlert-message': {
-                        width: '100%'
-                    }
-                }}
-            >
-                    <AlertTitle>Inbox Scan Complete!</AlertTitle>
-                    <p style={{ display: "block" }}>Your inbox scan is complete! Let's start cleaning up.</p>
-                    <ActionLink
-                        href="/changeset/select"
-                        color="#2e7d32"
-                        backgroundColor="#EDF7ED"
-                        text="Let's go"
-                    />
-                </Alert>); 
-        case ClassificationStatus.status.ERRORED:
-            return boxify(<Alert severity="error" sx={{
-                    maxWidth: 600,
-                }}>
-                    <AlertTitle>Something went wrong</AlertTitle>
-                    <p style={{ display: "block" }}>Something went wrong while classifying your inbox messages. You can try again, or contact support for help.</p>
-                    <ActionLink
-                        href="/classify/configure"
-                        text="Try again"
-                        backgroundColor="white"
-                        color="var(--color-danger)"
-                    />
-                </Alert>);
-        case undefined:
-            // display nothing, the stepper should still be visible at this point
-            return <></>;
-    }
-}
+    case ClassificationStatus.status.COMPLETE:
+      return boxify(
+        <Alert
+          severity="success"
+          variant="filled"
+          sx={{
+            maxWidth: 600,
+            width: "100%",
+            "& > .MuiAlert-message": {
+              width: "100%",
+            },
+          }}
+        >
+          <AlertTitle>Inbox Scan Complete!</AlertTitle>
+          <p style={{ display: "block" }}>
+            Your inbox scan is complete! Let's start cleaning up.
+          </p>
+          <ActionLink
+            href="/changeset/select"
+            color="#2e7d32"
+            backgroundColor="#EDF7ED"
+            text="Let's go"
+          />
+        </Alert>
+      );
+    case ClassificationStatus.status.ERRORED:
+      return boxify(
+        <Alert
+          severity="error"
+          sx={{
+            maxWidth: 600,
+          }}
+        >
+          <AlertTitle>Something went wrong</AlertTitle>
+          <p style={{ display: "block" }}>
+            Something went wrong while classifying your inbox messages. You can
+            try again, or contact support for help.
+          </p>
+          <ActionLink
+            href="/classify/configure"
+            text="Try again"
+            backgroundColor="white"
+            color="var(--color-danger)"
+          />
+        </Alert>
+      );
+    case undefined:
+      // display nothing, the stepper should still be visible at this point
+      return <></>;
+  }
+};
 
 export default function Home() {
-    const [ address, setAddress ] = useState("");
-    const [ errorSnackbar, setErrorMessage ] = useSnackbar("error");
-    const [ allMessagesCount, setAllMessagesCount ] = useState<number>(0);
-    const [ unreadMessagesCount, setUnreadMessagesCount ] = useState<number>(0);
-    const [ classificationStatus, setClassificationStatus ] = useState<ClassificationStatus.status | undefined>();
+  const [address, setAddress] = useState("");
+  const [errorSnackbar, setErrorMessage] = useSnackbar("error");
+  const [allMessagesCount, setAllMessagesCount] = useState<number>(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+  const [classificationStatus, setClassificationStatus] = useState<
+    ClassificationStatus.status | undefined
+  >();
 
-    useEffect(() => {
-        API.getInboxFolders()
-            .then((res) => {
-                const totalMessageCount = res.folders.reduce((sum, folder) => sum + folder.allMessages, 0);
-                const unreadMessageCount = res.folders.reduce((sum, folder) => sum + folder.unreadMessages, 0);
+  useEffect(() => {
+    API.getInboxFolders()
+      .then((res) => {
+        const totalMessageCount = res.folders.reduce(
+          (sum, folder) => sum + folder.allMessages,
+          0
+        );
+        const unreadMessageCount = res.folders.reduce(
+          (sum, folder) => sum + folder.unreadMessages,
+          0
+        );
 
-                setAllMessagesCount(totalMessageCount);
-                setUnreadMessagesCount(unreadMessageCount);
-            })
-            .catch((err) => {
-                if (err instanceof ApiError) {
-                    const e = err as ApiError;
-                    switch (e.status) {
-                        case 404:
-                            return;
-                    }
-                }
-                console.log(err.toString());
-                setErrorMessage("Something went wrong");
-            })
+        setAllMessagesCount(totalMessageCount);
+        setUnreadMessagesCount(unreadMessageCount);
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          const e = err as ApiError;
+          switch (e.status) {
+            case 404:
+              return;
+          }
+        }
+        console.log(err.toString());
+        setErrorMessage("Something went wrong");
+      });
 
-        API.getClassificationStatus()
-            .then((res) => {
-                setAddress(res.address);
-                if (res.status) {
-                    setClassificationStatus(res.status.status);
-                }
-            })
-            .catch((err) => {
-                if (err instanceof ApiError) {
-                    const e = err as ApiError;
-                    setErrorMessage(e.message);
-                }
-            })
-    }, []);
+    API.getClassificationStatus()
+      .then((res) => {
+        setAddress(res.address);
+        if (res.status) {
+          setClassificationStatus(res.status.status);
+        }
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          const e = err as ApiError;
+          setErrorMessage(e.message);
+        }
+      });
+  }, []);
 
-    return (
-        <>
-            <Navbar page="Home" />
-            <Container component="main">
-                {errorSnackbar}
-                <CssBaseline />
-                
-                {renderClassificationStatus(classificationStatus)}
-                
-                <Card
-                    sx={{
-                        maxWidth: 600,
-                        width: "auto",
-                        marginTop: 3,
-                        marginX: "auto",
-                    }}
-                >
-                    <CardContent>
-                        <Typography sx={{
-                            color: "var(--color-gray)"
-                        }}>
-                            Your inbox
-                        </Typography>
-                        <Typography sx={{
-                            fontSize: "1.6em",
-                        }}>
-                            {address}
-                        </Typography>
-                        <Typography sx={{
-                            marginTop: 1,
-                            color: "var(--color-gray)"
-                        }}>
-                            {allMessagesCount.toLocaleString()} Messages
-                        </Typography>
-                        <Typography sx={{
-                            color: "var(--color-accent)"
-                        }}>
-                            {unreadMessagesCount.toLocaleString()} Unread
-                        </Typography>
-                    </CardContent>
-                    
-                    {/* If scan is complete, link to scan inside the inbox
+  return (
+    <>
+      <Navbar page="Home" />
+      <Container component="main">
+        {errorSnackbar}
+        <CssBaseline />
+
+        {renderClassificationStatus(classificationStatus)}
+
+        <Card
+          sx={{
+            maxWidth: 600,
+            width: "auto",
+            marginTop: 3,
+            marginX: "auto",
+          }}
+        >
+          <CardContent>
+            <Typography
+              sx={{
+                color: "var(--color-gray)",
+              }}
+            >
+              Your inbox
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "1.6em",
+              }}
+            >
+              {address}
+            </Typography>
+            <Typography
+              sx={{
+                marginTop: 1,
+                color: "var(--color-gray)",
+              }}
+            >
+              {allMessagesCount.toLocaleString()} Messages
+            </Typography>
+            <Typography
+              sx={{
+                color: "var(--color-accent)",
+              }}
+            >
+              {unreadMessagesCount.toLocaleString()} Unread
+            </Typography>
+          </CardContent>
+
+          {/* If scan is complete, link to scan inside the inbox
                     card with a big "Continue ->" button or similar */}
-                </Card>
-            
-                <Card sx={{
-                    marginTop: 3,
-                    maxWidth: 600,
-                    marginX: "auto",
-                }}>
-                    <CardContent>
-                        <Typography sx={{
-                            color: "var(--color-gray)"
-                        }}>
-                            Your plan
-                        </Typography>
-                        <Typography sx={{
-                            fontSize: "1.6em",
-                            color: "var(--color-primary)",
-                        }}>
-                            Mailboxsweep
-                        </Typography>
-                        <Typography sx={{
-                            marginTop: 1,
-                            color: "var(--color-gray)"
-                        }}>
-                            Expires 12/15/2023
-                        </Typography>
-                        <Typography sx={{
-                            color: "var(--color-accent)"
-                        }}>
-                            120k messages deleted
-                        </Typography>
-                    </CardContent>
-                    
-                    {/* If scan is complete, link to scan inside the inbox
+        </Card>
+
+        <Card
+          sx={{
+            marginTop: 3,
+            maxWidth: 600,
+            marginX: "auto",
+          }}
+        >
+          <CardContent>
+            <Typography
+              sx={{
+                color: "var(--color-gray)",
+              }}
+            >
+              Your plan
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "1.6em",
+                color: "var(--color-primary)",
+              }}
+            >
+              Mailboxsweep
+            </Typography>
+            <Typography
+              sx={{
+                marginTop: 1,
+                color: "var(--color-gray)",
+              }}
+            >
+              Expires 12/15/2023
+            </Typography>
+            <Typography
+              sx={{
+                color: "var(--color-accent)",
+              }}
+            >
+              120k messages deleted
+            </Typography>
+          </CardContent>
+
+          {/* If scan is complete, link to scan inside the inbox
                     card with a big "Continue ->" button or similar */}
-                </Card>
-            </Container>
-        </>
-    );
+        </Card>
+      </Container>
+    </>
+  );
 }

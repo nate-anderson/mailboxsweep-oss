@@ -18,93 +18,124 @@ import IconClose from "@mui/icons-material/Close";
 import IconHome from "@mui/icons-material/Home";
 import Link from "next/link";
 
-const renderDrawerItem = (props: { text: string, icon: any, path: string, selected: boolean }) =>
-    <Link key={props.text} href={props.path} passHref style={{textDecoration: 'none', color: "black"}}>
-        <ListItem sx={{
-            marginTop: 0,
-            marginRight: 5,
-            color: "inherit"
-        }}>
-            <ListItemButton selected={props.selected}>
-                <ListItemIcon sx={{ marginLeft: 0 }}>
-                    {props.icon}
-                </ListItemIcon>
-                <ListItemText>{props.text}</ListItemText>
-            </ListItemButton>
-        </ListItem>
-    </Link>;
+const renderDrawerItem = (props: {
+  text: string;
+  icon: any;
+  path: string;
+  selected: boolean;
+}) => (
+  <Link
+    key={props.text}
+    href={props.path}
+    passHref
+    style={{ textDecoration: "none", color: "black" }}
+  >
+    <ListItem
+      sx={{
+        marginTop: 0,
+        marginRight: 5,
+        color: "inherit",
+      }}
+    >
+      <ListItemButton selected={props.selected}>
+        <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
+        <ListItemText>{props.text}</ListItemText>
+      </ListItemButton>
+    </ListItem>
+  </Link>
+);
 
 const drawerItems = [
-    { text: "Home", icon: <IconHome />, path: "/home" },
-    { text: "My Profile", icon: <IconAccountCircle />, path: "/complete-profile" },
-    { text: "Email Account", icon: <IconEnvelope />, path: "/email-account/login"},
-    { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
+  { text: "Home", icon: <IconHome />, path: "/home" },
+  {
+    text: "My Profile",
+    icon: <IconAccountCircle />,
+    path: "/complete-profile",
+  },
+  {
+    text: "Email Account",
+    icon: <IconEnvelope />,
+    path: "/email-account/login",
+  },
+  { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
 ];
 
 interface NavbarProps {
-    page?: string;
+  page?: string;
 }
 
 export default function Navbar(props: NavbarProps) {
-    const [ drawerOpen, setDrawerOpen ] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-    return (
-        <Box sx={{ flexGrow: 1 }}>
-            <AppBar 
-                sx={{
-                    backgroundColor: "var(--color-primary)",
-                }}
-                position="static"
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar
+        sx={{
+          backgroundColor: "var(--color-primary)",
+        }}
+        position="static"
+      >
+        <Container maxWidth={false}>
+          <ToolBar
+            disableGutters
+            sx={{
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ width: "24px" }}></div>
+            <Typography
+              sx={{
+                fontFamily: "Lobster",
+                fontSize: "1.5em",
+                color: "white",
+                marginX: "auto",
+              }}
             >
-                <Container maxWidth={false}>
-                    <ToolBar disableGutters sx={{
-                        justifyContent: "space-between",
-                    }}>
-                        <div style={{width: "24px"}}></div>
-                        <Typography sx={{
-                            fontFamily: "Lobster",
-                            fontSize: "1.5em",
-                            color: "white",
-                            marginX: "auto",
-                        }}>MailboxSweep</Typography>
-                        <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => setDrawerOpen(!drawerOpen)}>
-                          <IconMenu />
-                        </IconButton>
-                    </ToolBar>
-                </Container>
-                <Drawer
-                    anchor="right"
-                    open={drawerOpen}
-                    onClose={() => setDrawerOpen(false)}
-                >
-                    <Box
-                        sx={{
-                            padding: 0,
-                            display: "flex",
-                            justifyContent: "right"
-                        }}
-                    >
-                        <IconButton
-                            edge="start"
-                            aria-label="close menu"
-                            onClick={() => setDrawerOpen(false)}
-                            sx={{
-                                marginTop: 2,
-                                marginBottom: 0,
-                                marginRight: 2,
-                            }}
-                        >
-                            <IconClose />
-                        </IconButton>
-                    </Box>
-                    {drawerItems.map(item => renderDrawerItem(
-                        {
-                            ...item,
-                            selected: props.page === item.text,
-                        }
-                    ))}
-                </Drawer>
-            </AppBar>
-        </Box>
-    );
+              MailboxSweep
+            </Typography>
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={() => setDrawerOpen(!drawerOpen)}
+            >
+              <IconMenu />
+            </IconButton>
+          </ToolBar>
+        </Container>
+        <Drawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        >
+          <Box
+            sx={{
+              padding: 0,
+              display: "flex",
+              justifyContent: "right",
+            }}
+          >
+            <IconButton
+              edge="start"
+              aria-label="close menu"
+              onClick={() => setDrawerOpen(false)}
+              sx={{
+                marginTop: 2,
+                marginBottom: 0,
+                marginRight: 2,
+              }}
+            >
+              <IconClose />
+            </IconButton>
+          </Box>
+          {drawerItems.map((item) =>
+            renderDrawerItem({
+              ...item,
+              selected: props.page === item.text,
+            })
+          )}
+        </Drawer>
+      </AppBar>
+    </Box>
+  );
 }
