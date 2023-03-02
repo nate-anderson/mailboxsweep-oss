@@ -84,6 +84,7 @@ var (
 	PersonalInbox        Agreement = "PERSONAL_INBOX"
 	BackupResponsibility Agreement = "BACKUP_RESPONSIBILITY"
 	NecessaryCookies     Agreement = "COOKIES_NECESSARY"
+	Marketing            Agreement = "MARKETING"
 )
 
 var requiredAgreements = []Agreement{
@@ -98,6 +99,7 @@ var allAgreements = []Agreement{
 	PersonalInbox,
 	BackupResponsibility,
 	NecessaryCookies,
+	Marketing,
 }
 
 func ParseAgreement(str string) (Agreement, error) {
@@ -110,6 +112,8 @@ func ParseAgreement(str string) (Agreement, error) {
 		return BackupResponsibility, nil
 	case NecessaryCookies:
 		return NecessaryCookies, nil
+	case Marketing:
+		return Marketing, nil
 	default:
 		return "", fmt.Errorf("unknown agreement string '%s'", str)
 	}
