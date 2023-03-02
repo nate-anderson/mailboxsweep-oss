@@ -153,7 +153,8 @@ export default function Login() {
         }
         console.log({ getInboxCredentialError: error });
       });
-  }, [changeError]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submitCredential = () => {
     changeSubmitButtonEnabled(false);

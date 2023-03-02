@@ -189,7 +189,8 @@ export default function Home() {
           setErrorMessage(e.message);
         }
       });
-  }, [setErrorMessage]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

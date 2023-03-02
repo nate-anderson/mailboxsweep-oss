@@ -255,7 +255,9 @@ export default function Edit() {
           setError(apiError.message);
         }
       });
-  }, [requestPage, isDeleteMode, setError]);
+  
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestPage, isDeleteMode]);
 
   const selectedClassification = classificationRoot
     ? classificationRoot.jumpToPath(currentPath)
