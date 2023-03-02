@@ -255,7 +255,7 @@ export default function Edit() {
           setError(apiError.message);
         }
       });
-  }, [requestPage, isDeleteMode]);
+  }, [requestPage, isDeleteMode, setError]);
 
   const selectedClassification = classificationRoot
     ? classificationRoot.jumpToPath(currentPath)

@@ -189,7 +189,7 @@ export default function Home() {
           setErrorMessage(e.message);
         }
       });
-  }, []);
+  }, [setErrorMessage]);
 
   return (
     <>
