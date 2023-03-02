@@ -42,14 +42,14 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	existingUser, err := c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
+	_, err = c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
 
 	resBody := StartLoginResponse{
-		RedirectToSignup: !existingUser,
+		Ok: true,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }
@@ -78,6 +78,10 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 
 	resBody := LoginResponse{
 		Address: user.Address,
+	}
+
+	if !user.ProfileComplete() {
+		resBody.RedirectToSignup = true
 	}
 
 	sessionCookie := session.AuthCookie(c.isDev)

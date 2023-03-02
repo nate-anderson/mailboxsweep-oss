@@ -127,3 +127,7 @@ func contains[t comparable](slice []t, value t) bool {
 	}
 	return false
 }
+
+func (u InboxUser) ProfileComplete() bool {
+	return u.NameFirst != "" && u.NameLast != ""
+}

@@ -290,9 +290,12 @@ components:
       type: object
       required:
         - address
+        - redirectToSignup
       properties:
         address:
           type: string
+        redirectToSignup:
+          type: boolean
 
     MessagePreview:
       type: object
@@ -391,9 +394,9 @@ components:
     StartLoginResponse:
       type: object
       required:
-        - redirectToSignup
+        - ok
       properties:
-        redirectToSignup:
+        ok:
           type: boolean
 
     StatusResponse:
