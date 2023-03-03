@@ -16,20 +16,32 @@ func TestIMAPServerService(t *testing.T) {
 	repo := NewIMAPServerRepository(db, table)
 	service := NewService(repo)
 
-	server := Server{
-		Domain: "gmail.com",
-		Host:   "imap.gmail.com",
-		Port:   993,
+	addr := "user@mailboxsweep.com"
+	userServer := Server{
+		Domain:    "mailboxsweep.com",
+		Host:      "imap.mailboxsweep.com",
+		CreatedBy: &addr,
+		Port:      993,
+		IsGlobal:  false,
 	}
 
-	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, "user@domain.com", t)
+	globalServer := Server{
+		Domain:   "domain.com",
+		Host:     "imap.domain.com",
+		Port:     993,
+		IsGlobal: true,
+	}
+	err := repo.Store(ctx, globalServer)
+	assert.ThatError(t, err).IsNil()
+
+	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, addr, t)
 
 	t.Run("store", func(t *testing.T) {
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			err := service.Store(context.Background(), server)
+			err := service.Store(context.Background(), userServer)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 
-			found, err := service.FindByDomain(authedCtx, server.Domain)
+			found, err := service.Find(authedCtx)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 			assert.That(t, found).Equals(nil)
 		})
@@ -55,28 +67,43 @@ func TestIMAPServerService(t *testing.T) {
 		})
 
 		t.Run("success", func(t *testing.T) {
-			err := service.Store(authedCtx, server)
+			err := service.Store(authedCtx, userServer)
 			assert.ThatError(t, err).IsNil()
 		})
 	})
 
-	t.Run("find by domain", func(t *testing.T) {
+	t.Run("find", func(t *testing.T) {
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			s, err := service.FindByDomain(context.Background(), server.Domain)
+			s, err := service.Find(context.Background())
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, s).Equals(nil)
 		})
 
 		t.Run("not found, failure", func(t *testing.T) {
-			s, err := service.FindByDomain(authedCtx, "gooble.com")
+			authedCtx2 := mailboxsweep.AuthorizeAPIContext(ctx, "beans@gooble.com")
+			s, err := service.Find(authedCtx2)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 			assert.That(t, s).Equals(nil)
 		})
 
-		t.Run("success", func(t *testing.T) {
-			s, err := service.FindByDomain(authedCtx, server.Domain)
+		t.Run("success - user server", func(t *testing.T) {
+			s, err := service.Find(authedCtx)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, *s).Equals(server)
+			assert.That(t, *s.CreatedBy).Equals(addr)
+			assert.That(t, s.Domain).Equals(userServer.Domain)
+			assert.That(t, s.Host).Equals(userServer.Host)
+			assert.That(t, s.Port).Equals(userServer.Port)
+			assert.That(t, s.IsGlobal).Equals(false)
+		})
+
+		t.Run("success - global server", func(t *testing.T) {
+			authedCtx2 := mailboxsweep.AuthorizeAPIContext(ctx, "user@domain.com")
+			s, err := service.Find(authedCtx2)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, s.Domain).Equals(globalServer.Domain)
+			assert.That(t, s.Host).Equals(globalServer.Host)
+			assert.That(t, s.Port).Equals(globalServer.Port)
+			assert.That(t, s.IsGlobal).Equals(true)
 		})
 	})
 }

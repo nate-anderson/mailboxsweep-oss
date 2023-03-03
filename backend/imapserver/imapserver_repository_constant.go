@@ -2,7 +2,9 @@ package imapserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"mailboxsweep"
 )
 
 type ConstantIMAPServerRepository struct {
@@ -32,4 +34,8 @@ func (r ConstantIMAPServerRepository) FindByDomain(ctx context.Context, domain s
 func (r *ConstantIMAPServerRepository) Store(ctx context.Context, server Server) error {
 	r.db[server.Domain] = server
 	return nil
+}
+
+func (r *ConstantIMAPServerRepository) FindByUserAddress(ctx context.Context, userAddress string) (*Server, error) {
+	return nil, mailboxsweep.NotFoundError(errors.New("constant repo does not support user-scoped IMAP servers"))
 }

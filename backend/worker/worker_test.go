@@ -50,6 +50,10 @@ func (s testImapServerService) Store(ctx context.Context, server imapserver.Serv
 	return nil
 }
 
+func (s testImapServerService) FindByUserAddress(ctx context.Context) (*imapserver.Server, error) {
+	return nil, errors.New("testImapServerService does not implement FindByUserAddress")
+}
+
 func TestWorker(t *testing.T) {
 	t.Skip() // @TODO - figure out how to get this test working
 	ctx := context.Background()
