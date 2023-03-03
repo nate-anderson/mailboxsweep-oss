@@ -145,14 +145,14 @@ func TestChangeSetService(t *testing.T) {
 		repo.inbox = inbox
 
 		t.Run("unauthenticated. failure", func(t *testing.T) {
-			changeSet, err := service.FindByInboxAndOperation(ctx, Delete, false)
+			changeSet, err := service.FindByOperation(ctx, Delete, false)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, changeSet).Equals(nil)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			changeSet, err := service.FindByInboxAndOperation(authedCtx, Delete, false)
+			changeSet, err := service.FindByOperation(authedCtx, Delete, false)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, changeSet).NotEqual(nil)
 			assert.That(t, changeSet.Operation).Equals(Delete)
