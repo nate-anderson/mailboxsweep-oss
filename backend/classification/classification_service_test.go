@@ -26,7 +26,17 @@ type testImapServerService struct {
 	port   int
 }
 
-func (t testImapServerService) FindByDomain(ctx context.Context, domain string) (*imapserver.Server, error) {
+func (t testImapServerService) Find(ctx context.Context) (*imapserver.Server, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	domain, err := mailboxsweep.DomainFromEmail(addr)
+	if err != nil {
+		return nil, err
+	}
+
 	if domain != t.domain {
 		return nil, mailboxsweep.ErrNotFound
 	}

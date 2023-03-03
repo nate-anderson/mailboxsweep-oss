@@ -35,7 +35,17 @@ type testImapServerService struct {
 	wasCalled      bool
 }
 
-func (s *testImapServerService) FindByDomain(ctx context.Context, domain string) (*imapserver.Server, error) {
+func (s *testImapServerService) Find(ctx context.Context) (*imapserver.Server, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	domain, err := mailboxsweep.DomainFromEmail(addr)
+	if err != nil {
+		return nil, err
+	}
+
 	assert.That(s.t, domain).Equals(domain)
 	s.wasCalled = true
 	return &imapserver.Server{

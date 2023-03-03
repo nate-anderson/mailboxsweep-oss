@@ -121,21 +121,12 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 		return
 	}
 
-	// revisit - for now, don't allow users to overwrite
-	_, err = c.imapServerService.FindByDomain(ctx, parsedEmail.Domain)
-	if err == nil {
-		resErr := fmt.Errorf("cannot update - a server record exists for domain %s", parsedEmail.Domain)
-		c.respondError(w, resErr, withOverrideStatusCode(http.StatusUnprocessableEntity))
-		return
-	} else if !errors.Is(err, mailboxsweep.ErrNotFound) {
-		c.respondError(w, err)
-		return
-	}
-
 	server := imapserver.Server{
-		Domain: parsedEmail.Domain,
-		Host:   reqBody.ImapHost,
-		Port:   reqBody.ImapPort,
+		Domain:    parsedEmail.Domain,
+		Host:      reqBody.ImapHost,
+		Port:      reqBody.ImapPort,
+		CreatedBy: &addr,
+		IsGlobal:  false,
 	}
 	err = c.imapServerService.Store(ctx, server)
 	if err != nil {
