@@ -136,6 +136,28 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 		}
 	}
 
+	provider, err := c.providerService.GetProvider(ctx, addr)
+	if err != nil {
+		// this will be a 404 if this provider isn't known, and the frontend should present a form
+		// to collect the server connection info
+		c.respondError(w, err)
+		return
+	}
+
+	_, err = provider.Login(addr, reqBody.Password)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
+		return
+	}
+
+	// end validation
+
+	_, err = c.service.StoreCredential(ctx, reqBody.Password)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
 	resBody := CreateCredentialResponse{
 		Address: addr,
 	}

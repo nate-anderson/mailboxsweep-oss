@@ -313,7 +313,7 @@ export default function Login() {
         <Box
           component="form"
           sx={{
-            mt: 3,
+            marginY: 3,
             maxWidth: 600,
             width: "auto",
             marginX: "auto",
