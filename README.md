@@ -1,6 +1,7 @@
 # Mailboxsweep
 
 ## Running locally
+
 Run locally with HTTPS using `local-ssl-proxy`:
 
 1. `npm install -g local-ssl-proxy`
@@ -10,18 +11,18 @@ Run locally with HTTPS using `local-ssl-proxy`:
 
 ```json
 {
-    "backend": {
-        "source": 8081,
-        "target": 8080,
-        "cert": "localhost.pem",
-        "key": "localhost-key.pem"
-    },
-    "frontend": {
-        "source": 3001,
-        "target": 3000,
-        "cert": "localhost.pem",
-        "key": "localhost-key.pem"
-    }
+	"backend": {
+		"source": 8081,
+		"target": 8080,
+		"cert": "localhost.pem",
+		"key": "localhost-key.pem"
+	},
+	"frontend": {
+		"source": 3001,
+		"target": 3000,
+		"cert": "localhost.pem",
+		"key": "localhost-key.pem"
+	}
 }
 ```
 
@@ -38,3 +39,51 @@ Migrate (create s3 bucket, Dynamo table, SQS queue) with:
 Run frontend with `npm run dev`
 
 Run backend with `go run ./cmd/server`
+
+## Configuring Greenmail to work with local SSL
+
+Greenmail is an SMTP/IMAP server bundle used for testing.
+
+https://github.com/greenmail-mail-test/greenmail/issues/448#issuecomment-1068376521
+
+1. Generate cert
+
+```
+openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+ -keyout greenmail.key -out greenmail.crt -subj "/CN=localhost" \
+ -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+```
+
+2. Generate .p12 keystore
+
+```
+openssl pkcs12 -export -out greenmail.p12 -inkey greenmail.key -in greenmail.crt
+```
+
+When it asks for a password, use `changeit`. 3. Add certificate as a Trusted Root Certificate Authority
+
+```
+sudo cp greenmail.crt /usr/local/share/ca-certificates/
+
+# arch
+# https://wiki.archlinux.org/title/User:Grawity/Adding_a_trusted_CA_certificate
+sudo trust anchor --store ./greenmail.crt
+
+sudo update-ca-certificates
+```
+
+4. Add the keystore to the JAR (located at https://repo1.maven.org/maven2/com/icegreen/greenmail-standalone/1.6.11/greenmail-standalone-1.6.11.jar)
+
+```
+jar uvf greenmail-standalone.jar greenmail.p12
+```
+
+5. Bind mount when running docker
+
+```
+docker run -v <full path to greenmail-standalone.jar>:/home/greenmail/greenmail-standalone.jar -t -i -e GREENMAIL_OPTS='-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled -D-Dgreenmail.verbose' -p 3025:3025 -p 3110:3110 -p 3143:3143 -p 3465:3465 -p 3993:3993 -p 3995:3995 greenmail/standalone:1.6.7
+```
+
+Using the full path of the local JAR file to get it working
+
+# I didn't actually try any of this yet ^^^
