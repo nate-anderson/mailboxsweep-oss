@@ -1,6 +1,6 @@
 name: Build and test Go package
 
-on: [ push ]
+on: [push]
 
 jobs:
   build:
@@ -26,6 +26,13 @@ jobs:
 
       - name: Build
         run: cd backend && go build .
-      
+
       - name: Test
         run: cd backend && go test ./...
+        env:
+          TEST_ADDRESS: ${{ secrets.TEST_ADDRESS }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_IMAP_HOST: imap.gmail.com
+          TEST_SMTP_HOST: smtp.gmail.com
+          TEST_IMAP_PORT: 993
+          TEST_SMTP_PORT: 587
