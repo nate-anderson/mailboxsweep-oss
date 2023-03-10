@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net"
 	"net/smtp"
@@ -122,12 +123,10 @@ func GetTestConfig() (testConfig, error) {
 	viper.SetConfigFile("test.env")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("ERROR TYPE %T %+v\n", err, err)
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if _, ok := err.(*fs.PathError); !ok {
 			return tc, err
-		} else {
-			log.Println("No test.env found, not using")
 		}
+		log.Println("Could not read test.env, skipping")
 	}
 
 	if err := viper.Unmarshal(&tc); err != nil {
