@@ -4,8 +4,9 @@ on: [push]
 
 jobs:
   build:
-    name: Build
+    name: Build and test
     runs-on: ubuntu-latest
+    container: ubuntu
 
     services:
       localstack:
