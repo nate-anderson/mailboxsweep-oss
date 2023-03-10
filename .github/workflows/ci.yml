@@ -19,8 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: start containers
-        run: cd backend && make up
+      # - name: start containers
+      #   run: cd backend && make up
 
       - name: Set up Go
         uses: actions/setup-go@v3
