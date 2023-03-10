@@ -6,7 +6,7 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    container: ubuntu
+    container: golang:1.20-buster
 
     services:
       localstack:
