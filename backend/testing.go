@@ -119,14 +119,13 @@ type testConfig struct {
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
 	viper.SetConfigType("env")
+	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
 		viper.SetConfigFile("test.env")
 		if err := viper.ReadInConfig(); err != nil {
 			return tc, err
 		}
 	}
-
-	viper.AutomaticEnv()
 
 	if err := viper.Unmarshal(&tc); err != nil {
 		return tc, err
