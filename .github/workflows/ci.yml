@@ -23,10 +23,10 @@ jobs:
       # - name: start containers
       #   run: cd backend && make up
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
+      # - name: Set up Go
+      #   uses: actions/setup-go@v3
+      #   with:
+      #     go-version: 1.19
 
       - name: Install server generator
         run: cd backend && make install_openapi_generator
