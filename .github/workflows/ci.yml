@@ -30,6 +30,8 @@ jobs:
       - name: Test
         run: cd backend && go test ./...
         env:
+          AWS_ACCESS_KEY_ID: test_none
+          AWS_SECRET_ACCESS_KEY: test_none
           TEST_ADDRESS: ${{ secrets.TEST_ADDRESS }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           TEST_IMAP_HOST: imap.gmail.com
