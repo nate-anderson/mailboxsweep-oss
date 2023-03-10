@@ -36,7 +36,7 @@ func randToken(l int) (string, error) {
 func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
 	var host string
 	// default to localhost if environment doesn't specify otherwise
-	if host = os.Getenv("DYNAMODB_HOST"); host == "" {
+	if host = os.Getenv("S3_HOST"); host == "" {
 		host = "localhost"
 	}
 
@@ -133,7 +133,22 @@ func GetTestConfig() (testConfig, error) {
 }
 
 func SetupTestDynamoClient() *dynamodb.Client {
-	endpoint := "http://localhost:4566"
+	var host string
+	// default to localhost if environment doesn't specify otherwise
+	if host = os.Getenv("DYNAMODB_HOST"); host == "" {
+		host = "localhost"
+	}
+
+	port := 4566
+	var err error
+	if portStr := os.Getenv("DYNAMODB_PORT"); portStr != "" {
+		port, err = strconv.Atoi(portStr)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	endpoint := fmt.Sprintf("http://%s:%d", host, port)
 	region := "us-west-2"
 
 	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
