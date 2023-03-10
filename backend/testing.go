@@ -122,6 +122,7 @@ func GetTestConfig() (testConfig, error) {
 	viper.SetConfigFile("test.env")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("ERROR TYPE %T %+v\n", err, err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return tc, err
 		} else {
