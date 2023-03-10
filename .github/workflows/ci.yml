@@ -6,7 +6,15 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: ubuntu
+
+    services:
+      localstack:
+        image: localstack/localstack
+        ports:
+          - "4566:4566" # LocalStack Gateway
+          - "4510-4559:4510-4559" # external services port range
+        volumes:
+          - "localstack:/tmp/localstack"
 
     steps:
       - uses: actions/checkout@v3
@@ -39,3 +47,5 @@ jobs:
           TEST_SMTP_HOST: smtp.gmail.com
           TEST_IMAP_PORT: 993
           TEST_SMTP_PORT: 587
+          DYNAMODB_HOST: localstack
+          S3_HOST: localstack
