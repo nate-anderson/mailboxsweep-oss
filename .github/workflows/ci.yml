@@ -38,3 +38,4 @@ jobs:
           TEST_SMTP_HOST: smtp.gmail.com
           TEST_IMAP_PORT: 993
           TEST_SMTP_PORT: 587
+          DYNAMODB_HOST: localstack

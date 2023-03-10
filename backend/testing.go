@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/smtp"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -33,6 +34,12 @@ func randToken(l int) (string, error) {
 }
 
 func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
+	var host string
+	// default to localhost if environment doesn't specify otherwise
+	if host = os.Getenv("DYNAMODB_HOST"); host == "" {
+		host = "localhost"
+	}
+
 	token, err := randToken(5)
 	if err != nil {
 		log.Fatalf("failed to generate a test bucket name: %s", err)
@@ -40,7 +47,7 @@ func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 	bucket := strings.ToLower(t.Name() + "-" + token)
 
 	client, err := ConnectAWSService(AWSServiceConfig{
-		ServiceHost:   aws.String("localhost"),
+		ServiceHost:   &host,
 		ServicePort:   4566,
 		ServiceRegion: "us-west-2",
 	},
