@@ -122,6 +122,7 @@ const renderPlan = (
     >
       <Typography
         variant="h6"
+        align="center"
         sx={{
           color: "var(--color-accent)",
           marginY: 3,

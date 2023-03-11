@@ -44,7 +44,7 @@ export default function DateClassifierCard(props: Props) {
     >
       <ListItemText
         sx={{
-          paddingY: 2,
+
         }}
       >
         {props.classifier.name}
@@ -53,8 +53,13 @@ export default function DateClassifierCard(props: Props) {
         value={value}
         onChange={props.setInput}
         label={props.classifier.inputLabel}
+        inputFormat="MM/dd/yy"
         renderInput={(params) => (
-          <TextField sx={{ maxWidth: "140px", marginRight: 1 }} {...params} />
+          <TextField
+            variant="standard"
+            sx={{ maxWidth: "80px", marginRight: 0.5 }}
+            {...params}
+          />
         )}
       />
     </ClassifierCard>

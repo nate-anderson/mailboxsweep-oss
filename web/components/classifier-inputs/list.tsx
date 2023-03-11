@@ -15,6 +15,7 @@ import { Dispatch, SetStateAction } from "react";
 import { dateFormat, reorder, SelectedClassifier } from "../../lib/classifier";
 import { format } from "date-fns";
 import { InputFormat } from "../../client-gen";
+import Box from "@mui/material/Box";
 
 interface Props {
   classifiers: SelectedClassifier[];
@@ -36,59 +37,63 @@ export default function SelectedClassifierList(props: Props) {
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="classifier-droppable-list">
-        {(provided) => (
-          <List ref={provided.innerRef} {...provided.droppableProps}>
-            {props.classifiers.map((cl, i) => {
-              const toggleExpanded = () =>
-                props.setExpandedIndex(
-                  props.expandedIndex === i ? undefined : i
-                );
+    <Box
+      minHeight={((88 + 8) * props.classifiers.length) - 8 + "px"}
+    >
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="classifier-droppable-list">
+          {(provided) => (
+            <List ref={provided.innerRef} {...provided.droppableProps}>
+              {props.classifiers.map((cl, i) => {
+                const toggleExpanded = () =>
+                  props.setExpandedIndex(
+                    props.expandedIndex === i ? undefined : i
+                  );
 
-              const toggleEnabled = () => {
-                props.setSelectedClassifiers((cls) =>
-                  cls.map((ecl, j) =>
-                    j === i ? { ...ecl, enabled: !ecl.enabled } : ecl
-                  )
-                );
-              };
-
-              const setDateInput = (date: Date | null) => {
-                if (!date) {
-                  return;
-                }
-                props.setSelectedClassifiers((cls) =>
-                  cls.map((ecl, j) =>
-                    j === i
-                      ? { ...ecl, initValue: format(date, dateFormat) ?? "" }
-                      : ecl
-                  )
-                );
-              };
-
-              return (
-                <Draggable key={i} draggableId={i.toString()} index={i}>
-                  {(provided, snapshot) =>
-                    renderClassifierListItem(
-                      cl,
-                      i,
-                      toggleEnabled,
-                      props.expandedIndex,
-                      toggleExpanded,
-                      provided.innerRef,
-                      provided.draggableProps,
-                      provided.dragHandleProps,
-                      setDateInput
+                const toggleEnabled = () => {
+                  props.setSelectedClassifiers((cls) =>
+                    cls.map((ecl, j) =>
+                      j === i ? { ...ecl, enabled: !ecl.enabled } : ecl
                     )
+                  );
+                };
+
+                const setDateInput = (date: Date | null) => {
+                  if (!date) {
+                    return;
                   }
-                </Draggable>
-              );
-            })}
-          </List>
-        )}
-      </Droppable>
-    </DragDropContext>
+                  props.setSelectedClassifiers((cls) =>
+                    cls.map((ecl, j) =>
+                      j === i
+                        ? { ...ecl, initValue: format(date, dateFormat) ?? "" }
+                        : ecl
+                    )
+                  );
+                };
+
+                return (
+                  <Draggable key={i} draggableId={i.toString()} index={i}>
+                    {(provided, snapshot) =>
+                      renderClassifierListItem(
+                        cl,
+                        i,
+                        toggleEnabled,
+                        props.expandedIndex,
+                        toggleExpanded,
+                        provided.innerRef,
+                        provided.draggableProps,
+                        provided.dragHandleProps,
+                        setDateInput
+                      )
+                    }
+                  </Draggable>
+                );
+              })}
+            </List>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </Box>
   );
 }
 

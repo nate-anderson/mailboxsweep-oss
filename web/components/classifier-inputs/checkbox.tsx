@@ -31,7 +31,7 @@ export default function CheckboxClassifierCard(props: Props) {
     >
       <ListItemText
         sx={{
-          paddingY: 2,
+          paddingY: 1,
         }}
       >
         {props.classifier.name}
