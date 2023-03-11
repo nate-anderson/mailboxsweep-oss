@@ -142,7 +142,7 @@ type SendDateClassifier struct {
 var cutoffDateFormat = "01-02-2006"
 
 func NewSendDateClassifier(cutoffStr string) (SendDateClassifier, error) {
-	cutoff, err := time.Parse(cutoffStr, cutoffDateFormat)
+	cutoff, err := time.Parse(cutoffDateFormat, cutoffStr)
 	if err != nil {
 		return SendDateClassifier{}, fmt.Errorf("send date classifer input must be of format %s: %w", cutoffDateFormat, err)
 	}
