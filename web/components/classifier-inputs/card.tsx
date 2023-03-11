@@ -62,7 +62,7 @@ export default function ClassifierCard(props: Props) {
       <Collapse in={props.expanded}>
         <Typography
           sx={{
-            padding: 1,
+            padding: 2,
           }}
         >
           {props.classifier.description}
