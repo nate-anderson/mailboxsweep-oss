@@ -19,7 +19,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Roboto:wght@300;400&display=swap" rel="stylesheet"> 
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
+        <link rel="icon" href="img/favicon.ico" />
     </head>
     <body>
         <nav class="navbar navbar-expand-lg navbar-light navbar-mbs shadow">
@@ -51,20 +51,16 @@
             </div>
             <div class="row justify-content-center">
                 <div class="col-lg-6 col-md-8 col-sm-12 col-xs-12">
-                    <div class="input-group my-4">
-                        <input type="email" class="form-control" placeholder="Sign up for email updates" id="emailInput">
-                        <div class="input-group-append">
-                            <button class="btn btn-primary btn-styled btn-group-end" type="button">
-                                <span class="material-icons py-1">arrow_forward_ios</span>
-                            </button>
+                    <form action="https://mailboxsweep.us9.list-manage.com/subscribe/post?u=0ad0f9a32fdaecab0dd14f812&amp;id=5e4e9abf8c&amp;f_id=008916e1f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_self">
+                        <div class="input-group my-4">
+                            <input type="email" value="" name="EMAIL" class="form-control" id="mce-EMAIL" placeholder="Sign up for email updates" required>
+                            <div class="input-group-append">
+                                <button id="mc-embedded-subscribe" type="submit" name="subscribe" class="btn btn-primary btn-styled btn-group-end">
+                                    <span class="material-icons py-1">arrow_forward_ios</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div id="successAlert" class="alert alert-success" role="alert" style="display: none">
-                        Thank you for signing up! We'll notify you when MailboxSweep is ready to use.
-                    </div>
-                    <div id="failureAlert" class="alert alert-success" role="alert" style="display: none">
-                        We're sorry, but something went wrong. Please try again later.
-                    </div>
+                    </form>
 
                     <p class="text my-3">
                         MailboxSweep can organize your inbox to help you delete or mark messages read quickly, helping you clean up in minutes instead of hours.
