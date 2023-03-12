@@ -31,6 +31,7 @@
 
 .tagline {
     font-family: 'Roboto', sans-serif;
+    color: var(--color-black);
 }
 
 .text {
@@ -73,4 +74,8 @@
 
 .reason-text {
     font-family: 'Roboto', sans-serif;
+}
+
+.feature-list > li {
+    margin-bottom: 10px;
 }
