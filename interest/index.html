@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>MailboxSweep Preview</title>
+        <meta name="description" content="Take back control of your inbox with MailboxSweep, a powerful tool that organizes your inbox and lets you delete messages or mark them read quickly. Don't spend hours combing through years old messages when MailboxSweep can do it for you."/>
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+            integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+            crossorigin="anonymous"
+        >
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="./styles.css"
+        >
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Roboto:wght@300;400&display=swap" rel="stylesheet"> 
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light navbar-mbs shadow">
+            <h1 class="navbar-text py-1">MailboxSweep</h1>
+        </nav>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-sm-12 col-md-12 col-xs-12">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-sm-12 col-lg-4 col-md-5">
+                                <img
+                                    src="img/Sweep.svg"
+                                    class="img-fluid mascot"
+                                    alt="MailboxSweep mascot, a man dressed as a mail carrier and carrying an old-timey chimney brush."
+                                >
+                            </div>
+                            <div class="col-sm-12 col-lg-4 col-md-5 mt-lg-5 mt-md-5">
+                                <h2
+                                    class="tagline text-center text-md-start text-lg-start"
+                                >
+                                    Take back control of your inbox.
+                                </h2>
+                                <p class="promise text-center text-md-start text-lg-start">Coming soon.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-6 col-md-8 col-sm-12 col-xs-12">
+                    <div class="input-group my-4">
+                        <input type="email" class="form-control" placeholder="Sign up for email updates" id="emailInput">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary btn-styled btn-group-end" type="button">
+                                <span class="material-icons py-1">arrow_forward_ios</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="successAlert" class="alert alert-success" role="alert" style="display: none">
+                        Thank you for signing up! We'll notify you when MailboxSweep is ready to use.
+                    </div>
+                    <div id="failureAlert" class="alert alert-success" role="alert" style="display: none">
+                        We're sorry, but something went wrong. Please try again later.
+                    </div>
+
+                    <p class="text my-3">
+                        MailboxSweep can organize your inbox to help you delete or mark messages read quickly, helping you clean up in minutes instead of hours.
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-6 col-sm-12 col-md-8 col-xs-12">
+                    <hr />
+                    <div class="px-4 mt-4 mb-5 d-flex">
+                        <img
+                            src="img/email-icon.svg"
+                            class="img-fluid reason-img-mail"
+                        >
+                        <p class="reason-text mx-3 my-auto">If you're tired of your homescreen notifying you about thousands of unread messages you don't care about, MailboxSweep can help.</p>
+                    </div>
+                    <div class="px-4 my-4 d-flex">
+                        <img
+                            src="img/hd-notice.svg"
+                            class="img-fluid reason-img-hd"
+                        >
+                        <p class="reason-text mx-3 my-auto">Don't pay monthly for storage to keep messages you'll never read. Free up storage easily with MailboxSweep.</p>
+                    </div>
+                    <hr />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col d-flex w-100">
+                    
+                    <small class="mx-auto my-3">©2023 MailboxSweep</small>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
