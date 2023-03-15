@@ -189,12 +189,13 @@ func (sc *SafeClassification) Classification() Classification {
 	}
 
 	return Classification{
-		Dimension: sc.Dimension,
-		Label:     sc.Label,
-		TypeKey:   sc.TypeKey,
-		Messages:  sc.Messages,
-		Count:     sc.Count,
-		Children:  dtoChildren,
+		Dimension:   sc.Dimension,
+		Label:       sc.Label,
+		TypeKey:     sc.TypeKey,
+		Messages:    sc.Messages,
+		Count:       sc.Count,
+		UnreadCount: sc.UnreadCount,
+		Children:    dtoChildren,
 	}
 }
 

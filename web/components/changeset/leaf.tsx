@@ -66,7 +66,7 @@ export default function Leaf(props: LeafProps) {
             width: "auto",
             flexGrow: "1",
             flexBasis: "100px",
-            marginX: 2,
+            marginLeft: 2,
             overflowX: "hidden",
             textOverflow: "ellipsis",
           }}
