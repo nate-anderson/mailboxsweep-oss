@@ -23,7 +23,7 @@ components:
             items:
               type: string
         operation:
-          $ref: '#/components/schemas/UpdateOperation'
+          $ref: "#/components/schemas/UpdateOperation"
 
     ChangeSetRequest:
       type: object
@@ -39,13 +39,13 @@ components:
           items:
             type: string
         operation:
-          $ref: '#/components/schemas/UpdateOperation'
+          $ref: "#/components/schemas/UpdateOperation"
         addOrRemove:
           type: string
           enum:
             - add
             - remove
-    
+
     ChangeSetResponse:
       type: object
       required:
@@ -54,7 +54,7 @@ components:
         - size
       properties:
         changeSet:
-          $ref: '#/components/schemas/ChangeSet'
+          $ref: "#/components/schemas/ChangeSet"
         address:
           type: string
         size:
@@ -64,11 +64,14 @@ components:
       type: object
       required:
         - count
+        - unreadCount
         - label
         - dimension
         - children
       properties:
         count:
+          type: integer
+        unreadCount:
           type: integer
         label:
           type: string
@@ -79,7 +82,7 @@ components:
         children:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Classification'
+            $ref: "#/components/schemas/Classification"
 
     ClassificationResponse:
       type: object
@@ -88,7 +91,7 @@ components:
         - pageCount
       properties:
         classification:
-          $ref: '#/components/schemas/Classification'
+          $ref: "#/components/schemas/Classification"
         pageCount:
           type: integer
 
@@ -117,7 +120,7 @@ components:
         address:
           type: string
         status:
-          $ref: '#/components/schemas/ClassificationStatus'
+          $ref: "#/components/schemas/ClassificationStatus"
 
     Classifier:
       type: object
@@ -130,7 +133,7 @@ components:
         initValue:
           type: string
           description: the optional initializer for thie classifier
-    
+
     CommitRequest:
       type: object
       required:
@@ -140,7 +143,7 @@ components:
         confirm:
           type: boolean
         operation:
-          $ref: '#/components/schemas/UpdateOperation'
+          $ref: "#/components/schemas/UpdateOperation"
 
     ClassifierInfo:
       type: object
@@ -164,9 +167,9 @@ components:
           description: does this classifier take input?
         inputLabel:
           type: string
-          description: display label for the input 
+          description: display label for the input
         inputFormat:
-          $ref: '#/components/schemas/InputFormat'
+          $ref: "#/components/schemas/InputFormat"
 
     CreateCredentialRequest:
       type: object
@@ -183,7 +186,7 @@ components:
       properties:
         address:
           type: string
-    
+
     FolderMessageCount:
       type: object
       required:
@@ -223,7 +226,7 @@ components:
         folders:
           type: array
           items:
-            $ref: '#/components/schemas/FolderMessageCount'
+            $ref: "#/components/schemas/FolderMessageCount"
 
     InitiatePaymentRequest:
       type: object
@@ -232,7 +235,7 @@ components:
       properties:
         plan:
           type: string
-    
+
     InitiatePaymentResponse:
       type: object
       required:
@@ -241,7 +244,7 @@ components:
         checkoutUrl:
           type: string
           nullable: true
-    
+
     InputFormat:
       type: string
       enum:
@@ -256,7 +259,7 @@ components:
         classifiers:
           type: array
           items:
-            $ref: '#/components/schemas/ClassifierInfo'
+            $ref: "#/components/schemas/ClassifierInfo"
 
     ListPlansResponse:
       type: object
@@ -266,7 +269,7 @@ components:
         plans:
           type: array
           items:
-            $ref: '#/components/schemas/Plan'
+            $ref: "#/components/schemas/Plan"
 
     ListUserAgreementsResponse:
       type: object
@@ -276,7 +279,7 @@ components:
         agreements:
           type: array
           items:
-            $ref: '#/components/schemas/UserAgreement'
+            $ref: "#/components/schemas/UserAgreement"
 
     LoginRequest:
       type: object
@@ -303,7 +306,7 @@ components:
         - sender
       properties:
         sender:
-          $ref: '#/components/schemas/Sender'
+          $ref: "#/components/schemas/Sender"
         subject:
           type: string
 
@@ -354,7 +357,7 @@ components:
           type: array
           items:
             type: string
-    
+
     SetUserAgreementsResponse:
       type: object
       required:
@@ -389,8 +392,8 @@ components:
         classifiers:
           type: array
           items:
-            $ref: '#/components/schemas/Classifier'
-    
+            $ref: "#/components/schemas/Classifier"
+
     StartLoginResponse:
       type: object
       required:
@@ -443,7 +446,7 @@ components:
       enum:
         - delete
         - mark_read
-    
+
     UserAgreement:
       type: object
       required:
@@ -487,7 +490,7 @@ components:
         - validUntil
       properties:
         plan:
-          $ref: '#/components/schemas/Plan'
+          $ref: "#/components/schemas/Plan"
           nullable: true
         validUntil:
           type: string
@@ -505,12 +508,12 @@ paths:
     get:
       description: List available classifiers
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListClassifiersResponse'
+                $ref: "#/components/schemas/ListClassifiersResponse"
 
   /credential:
     post:
@@ -521,30 +524,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCredentialRequest'
+              $ref: "#/components/schemas/CreateCredentialRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateCredentialResponse'
-        '400':
+                $ref: "#/components/schemas/CreateCredentialResponse"
+        "400":
           description: Bad request
-        '500':
+        "500":
           description: Internal server error
 
     get:
       operationId: getInboxCredential
       description: Get the currently in-use credential
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetCredentialResponse'
-        '404':
+                $ref: "#/components/schemas/GetCredentialResponse"
+        "404":
           description: Not found - probably not created
 
   /imap/server:
@@ -556,17 +559,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StoreImapServerAndCredentialsRequest'
+              $ref: "#/components/schemas/StoreImapServerAndCredentialsRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateCredentialResponse'
-        '400':
+                $ref: "#/components/schemas/CreateCredentialResponse"
+        "400":
           description: Bad request
-        '500':
+        "500":
           description: Internal server error
 
   /user:
@@ -574,13 +577,13 @@ paths:
       operationId: getUserData
       description: Get user basic data
       responses:
-        '200':
+        "200":
           description: Success, user data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserData'
-        '401':
+                $ref: "#/components/schemas/UserData"
+        "401":
           description: Unauthorized
 
   /user/name:
@@ -592,26 +595,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetUserNameRequest'
+              $ref: "#/components/schemas/SetUserNameRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
+                $ref: "#/components/schemas/StatusResponse"
 
   /user/agreements:
     get:
       operationId: listUserAgreements
       description: See agreed and outstanding agreements
       responses:
-        '200':
+        "200":
           description: Success, agreement list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListUserAgreementsResponse'
+                $ref: "#/components/schemas/ListUserAgreementsResponse"
     patch:
       operationId: setConsentedAgreements
       description: Set agreed agreements for an inbox accoutn
@@ -620,17 +623,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetUserAgreementsRequest'
+              $ref: "#/components/schemas/SetUserAgreementsRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SetUserAgreementsResponse'
-        '400':
+                $ref: "#/components/schemas/SetUserAgreementsResponse"
+        "400":
           description: Bad request
-        '500':
+        "500":
           Description: Internal server error
 
   /user/agreements/{agreementSlug}:
@@ -644,14 +647,13 @@ paths:
             type: string
           required: true
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref:
-                  '#/components/schemas/UserAgreement'
-        '404':
+                $ref: "#/components/schemas/UserAgreement"
+        "404":
           description: Not found
 
   /inbox/changeset:
@@ -663,17 +665,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangeSetRequest'
+              $ref: "#/components/schemas/ChangeSetRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateChangeSetResponse'
-        '404':
+                $ref: "#/components/schemas/UpdateChangeSetResponse"
+        "404":
           description: Not found
-        '500':
+        "500":
           description: Internal server error
 
     get:
@@ -683,16 +685,16 @@ paths:
         - in: query
           name: operation
           schema:
-            $ref: '#/components/schemas/UpdateOperation'
+            $ref: "#/components/schemas/UpdateOperation"
           required: true
           description: Get changeset for either mark-read or delete
       responses:
-        '200':
+        "200":
           description: Success, list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChangeSetResponse'
+                $ref: "#/components/schemas/ChangeSetResponse"
 
   /inbox/changeset/commit:
     post:
@@ -703,17 +705,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CommitRequest'
+              $ref: "#/components/schemas/CommitRequest"
       responses:
-        '200':
+        "200":
           description: Success, committed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
-        '400':
+                $ref: "#/components/schemas/StatusResponse"
+        "400":
           description: Bad or unconfirmed request
-        '500':
+        "500":
           description: Internal server error
 
   /inbox/classification:
@@ -725,32 +727,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StartInboxClassifyRequest'
+              $ref: "#/components/schemas/StartInboxClassifyRequest"
       responses:
-        '202':
+        "202":
           description: Success, processing has been enqueued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
-        '400':
+                $ref: "#/components/schemas/StatusResponse"
+        "400":
           description: Bad request
-        '500':
+        "500":
           description: Internal server error
-    
+
     get:
       operationId: getClassificationLeaf
       description: Get classification leaf by path
       responses:
-        '200':
+        "200":
           description: Success, classification leaf
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClassificationResponse'
-        '404':
+                $ref: "#/components/schemas/ClassificationResponse"
+        "404":
           description: Inbox or leaf not found
-        '500':
+        "500":
           description: Internal server error
 
   /inbox/classification/summary:
@@ -765,29 +767,29 @@ paths:
           required: false
           description: Result page to fetch, defaults to 0 == first page
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClassificationResponse'
-        '404':
+                $ref: "#/components/schemas/ClassificationResponse"
+        "404":
           description: Not found
-        '500':
+        "500":
           description: Internal server error
-  
+
   /inbox/classification/status:
     get:
       operationId: getClassificationStatus
       description: Get the status of the current classification request for this account (if any)
       responses:
-        '200':
+        "200":
           description: Classification status response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClassificationStatusResponse'
-        '500':
+                $ref: "#/components/schemas/ClassificationStatusResponse"
+        "500":
           description: Internal server error
 
   /inbox/folders:
@@ -795,25 +797,25 @@ paths:
       operationId: getInboxFolders
       description: List inbox folders
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetFoldersResponse'
+                $ref: "#/components/schemas/GetFoldersResponse"
 
   /plans:
     get:
       description: Get available plans
       operationId: listPlans
       responses:
-        '200':
+        "200":
           description: Success, list of plans
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListPlansResponse'
-        '500':
+                $ref: "#/components/schemas/ListPlansResponse"
+        "500":
           description: Internal server errror
 
   /payment:
@@ -821,13 +823,13 @@ paths:
       description: Get payment details
       operationId: getPaymentStatus
       responses:
-        '200':
+        "200":
           description: Success - payment details enclosed. Status code does not reflect payment status
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPaymentStatus'
-        '500':
+                $ref: "#/components/schemas/UserPaymentStatus"
+        "500":
           description: Internal server error
 
     post:
@@ -838,15 +840,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InitiatePaymentRequest'
+              $ref: "#/components/schemas/InitiatePaymentRequest"
       responses:
-        '200':
+        "200":
           description: Payment initiated, follow redirect link
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InitiatePaymentResponse'
-        '500':
+                $ref: "#/components/schemas/InitiatePaymentResponse"
+        "500":
           description: Internal server error
 
   /payment/success:
@@ -859,15 +861,15 @@ paths:
           required: true
           schema:
             type: string
-          description: Stripe checkout session ID 
+          description: Stripe checkout session ID
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
-        '500':
+                $ref: "#/components/schemas/StatusResponse"
+        "500":
           description: Internal server error
 
   # Note:
@@ -884,34 +886,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StartLoginResponse'
-        '401':
+                $ref: "#/components/schemas/StartLoginResponse"
+        "401":
           description: Auth failure
-  
+
   /login/{token}/{signature}:
     get:
       operationId: submitLoginToken
       description: Complete login
       security: []
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: "#/components/schemas/LoginResponse"
           headers:
             Set-Cookie:
               schema:
                 type: string
-        '401':
+        "401":
           description: Auth failure
       parameters:
         - in: path

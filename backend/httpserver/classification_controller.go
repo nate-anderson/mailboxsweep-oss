@@ -231,11 +231,12 @@ func convertClassification(cl classification.Classification) Classification {
 	}
 
 	res := Classification{
-		Label:     cl.Label,
-		Dimension: cl.Dimension,
-		TypeKey:   typeKey,
-		Count:     int(cl.Count),
-		Children:  children,
+		Label:       cl.Label,
+		Dimension:   cl.Dimension,
+		TypeKey:     typeKey,
+		Count:       int(cl.Count),
+		UnreadCount: int(cl.UnreadCount),
+		Children:    children,
 	}
 	return res
 }

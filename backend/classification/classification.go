@@ -14,12 +14,13 @@ import (
 // Classifications act as a tree. Only leaf nodes should have messages
 // this is the DTO type used for writing files and API responses
 type Classification struct {
-	Dimension string                    `json:"dimension"`
-	TypeKey   string                    `json:"typeKey"`
-	Label     string                    `json:"label"`
-	Messages  []inbox.Message           `json:"messages,omitempty"`
-	Count     uint                      `json:"count"`
-	Children  map[string]Classification `json:"children,omitempty"`
+	Dimension   string                    `json:"dimension"`
+	TypeKey     string                    `json:"typeKey"`
+	Label       string                    `json:"label"`
+	Messages    []inbox.Message           `json:"messages,omitempty"`
+	Count       uint                      `json:"count"`
+	UnreadCount uint                      `json:"unreadCount"`
+	Children    map[string]Classification `json:"children,omitempty"`
 	// pagination
 	RankIndex *int `json:"rank_index"`
 }
@@ -159,12 +160,13 @@ func (c *Classification) TreeString() string {
 // one or more goroutines, and need to safely update the classification
 // tree
 type SafeClassification struct {
-	Dimension string
-	TypeKey   string
-	Label     string
-	Messages  []inbox.Message
-	Count     uint
-	Children  syncmap.Map[string, *SafeClassification]
+	Dimension   string
+	TypeKey     string
+	Label       string
+	Messages    []inbox.Message
+	Count       uint
+	UnreadCount uint
+	Children    syncmap.Map[string, *SafeClassification]
 }
 
 func NewSafeClassification(dimension, label, typeKey string) *SafeClassification {

@@ -120,6 +120,9 @@ func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassificati
 		path = append(path, label)
 		node = child
 		node.Count++
+		if !message.Read {
+			node.UnreadCount++
+		}
 	}
 	node.Messages = append(node.Messages, message)
 	// only append to leaf node
