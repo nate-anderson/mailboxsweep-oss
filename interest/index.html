@@ -20,9 +20,10 @@
         <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Roboto:wght@300;400&display=swap" rel="stylesheet"> 
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link rel="icon" href="img/favicon.ico" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous">
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-light navbar-mbs shadow">
+        <nav class="navbar navbar-expand-lg navbar-light navbar-mbs">
             <h1 class="navbar-text py-1">MailboxSweep</h1>
         </nav>
         <div class="container">
@@ -50,16 +51,14 @@
                 </div>
             </div>
             <div class="row justify-content-center">
-                <div class="col-lg-6 col-md-8 col-sm-12 col-xs-12">
-                    <form action="https://mailboxsweep.us9.list-manage.com/subscribe/post?u=0ad0f9a32fdaecab0dd14f812&amp;id=5e4e9abf8c&amp;f_id=008916e1f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_self">
-                        <div class="input-group my-4">
-                            <input type="email" value="" name="EMAIL" class="form-control" id="mce-EMAIL" placeholder="Sign up for email updates" required>
-                            <div class="input-group-append">
-                                <button id="mc-embedded-subscribe" type="submit" name="subscribe" class="btn btn-primary btn-styled btn-group-end">
-                                    <span class="material-icons py-1">arrow_forward_ios</span>
-                                </button>
-                            </div>
-                        </div>
+                <div class="col-lg-5 col-md-8 col-sm-10 col-xs-12">
+                    <form class="mb-3" action="https://mailboxsweep.us9.list-manage.com/subscribe/post?u=0ad0f9a32fdaecab0dd14f812&amp;id=5e4e9abf8c&amp;f_id=008916e1f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_self">
+                        <input type="text" value="" name="FNAME" class="form-control mt-4 mb-2" id="mce-FNAME" placeholder="First Name">
+                        <input type="email" value="" name="EMAIL" class="form-control mb-2" id="mce-EMAIL" placeholder="Email" required>
+                        <button id="mc-embedded-subscribe" type="submit" name="subscribe" class="btn btn-primary btn-styled btn-end">
+                            Sign up
+                            <span class="fa fa-right"></span>
+                        </button>
                     </form>
 
                     <p class="text my-3">
@@ -115,7 +114,7 @@
             </div>
             <div class="row justify-content-center">
                 <div class="col d-flex w-100">
-                    <small class="mx-auto my-3">©2023 MailboxSweep</small>
+                    <small class="mx-auto my-3">&copy;2023 MailboxSweep</small>
                 </div>
             </div>
         </div>
