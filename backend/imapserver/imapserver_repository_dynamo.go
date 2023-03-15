@@ -130,7 +130,7 @@ func (r DefaultRepository) FindByUserAddress(ctx context.Context, userAddress st
 	}
 
 	if len(keyRes.Items) == 0 {
-		return nil, mailboxsweep.NotFoundError(errors.New("no server details foudn for this user"))
+		return nil, mailboxsweep.NotFoundError(errors.New("no server details found for this user"))
 	}
 
 	key := keyRes.Items[0]
