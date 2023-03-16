@@ -18,7 +18,7 @@ export class InterestStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
-        const bucketName = `mailboxsweep-interest-${props.envirnomentName}-bucket`;
+        const bucketName = `mailboxsweep-interest-${props.environmentName}-bucket`;
         const siteBucket = new S3.Bucket(this, bucketName, {
             bucketName: bucketName,
             publicReadAccess: true,
@@ -38,14 +38,14 @@ export class InterestStack extends cdk.Stack {
         });
         
 
-        const deploymentName = `mailboxsweep_interest_${props.envirnomentName}_bdpl`;
+        const deploymentName = `mailboxsweep_interest_${props.environmentName}_bdpl`;
         const deployment = new S3Deployment.BucketDeployment(this, deploymentName, {
             destinationBucket: siteBucket,
             sources: [S3Deployment.Source.asset(resolve(__dirname, "../../interest"))]
         })
         const originAccessIdentity = new CloudFront.OriginAccessIdentity(this, 'OriginAccessIdentity');
 
-        const distName = `mailboxsweep_interest_dist_${props.envirnomentName}_dist`;
+        const distName = `mailboxsweep_interest_dist_${props.environmentName}_dist`;
         const siteDistribution = new CloudFront.Distribution(this, distName, {
             certificate: siteCert,
             defaultRootObject: "index.html",
@@ -67,7 +67,7 @@ export class InterestStack extends cdk.Stack {
       }
         });
         
-        const recordName = `mailboxsweep_interest_arecord_${props.envirnomentName}`;
+        const recordName = `mailboxsweep_interest_arecord_${props.environmentName}`;
         new route53.ARecord(this, recordName, {
             target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(siteDistribution)),
             zone,

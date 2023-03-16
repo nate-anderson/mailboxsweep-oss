@@ -5,7 +5,7 @@ import { InfraStack } from '../lib/infra-stack';
 
 const app = new cdk.App();
 new InfraStack(app, 'InfraStack', {
-  envirnomentName: "prod", 
+  environmentName: "prod", 
   env: {
     region: "us-west-2",
     account: "968574982400",
