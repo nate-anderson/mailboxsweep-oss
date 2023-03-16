@@ -77,7 +77,7 @@ func (s DefaultService) AddPathForDelete(ctx context.Context, path classificatio
 			return &result, err
 		}
 
-		result.MsgCountDiff += len(leaf.Messages)
+		result.MsgCountDiff += int(leaf.Count)
 		result.Paths = append(result.Paths, p)
 	}
 
@@ -104,7 +104,7 @@ func (s DefaultService) AddPathForMarkRead(ctx context.Context, path classificat
 		if err != nil {
 			return &result, err
 		}
-		result.MsgCountDiff += len(leaf.Messages)
+		result.MsgCountDiff += int(leaf.UnreadCount)
 		result.Paths = append(result.Paths, p)
 	}
 
@@ -130,7 +130,7 @@ func (s DefaultService) RemovePathForMarkRead(ctx context.Context, path classifi
 			return &result, err
 		}
 
-		result.MsgCountDiff -= len(leaf.Messages)
+		result.MsgCountDiff -= int(leaf.UnreadCount)
 		result.Paths = append(result.Paths, p)
 	}
 
@@ -156,7 +156,7 @@ func (s DefaultService) RemovePathForDelete(ctx context.Context, path classifica
 			return &result, err
 		}
 
-		result.MsgCountDiff -= len(leaf.Messages)
+		result.MsgCountDiff -= int(leaf.Count)
 		result.Paths = append(result.Paths, p)
 	}
 
