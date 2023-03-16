@@ -1,15 +1,20 @@
 package inbox
 
 import (
+	"context"
+	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
 )
 
 func TestIMAPInbox(t *testing.T) {
-	provider, err := NewTestIMAPProvider("localhost", 3143)
+	testConf, err := mailboxsweep.GetTestConfig()
+	assert.ThatError(t, err).IsNil()
+	ctx := context.Background()
+	provider, err := NewIMAPProvider(ctx, testConf.IMAPHost, testConf.IMAPPort, testConf.Address, nil, nil)
 	assert.ThatError(t, err).IsNil()
 
-	inbox, err := provider.Login("testuser@localhost", "buddy")
+	inbox, err := provider.Login(testConf.Address, testConf.Password)
 	assert.ThatError(t, err).IsNil()
 
 	var folders []string
@@ -19,8 +24,8 @@ func TestIMAPInbox(t *testing.T) {
 		folders, err = inbox.Folders()
 		assert.ThatError(t, err).IsNil()
 
-		assert.ThatSlice(t, folders).HasLength(1)
-		assert.That(t, folders[0]).Equals("INBOX")
+		assert.ThatOrdered(t, len(folders)).GreaterThanOrEqual(1)
+		assert.ThatSlice(t, folders).Contains("INBOX")
 	})
 
 	t.Run("get named folder", func(t *testing.T) {
