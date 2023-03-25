@@ -26,6 +26,7 @@ import Animation from "../../styles/animations.module.css";
 import Button from "@mui/material/Button";
 import { Selection } from "../../lib/selection";
 import debounce from "debounce";
+import { useRouter } from "next/router";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -39,6 +40,7 @@ function ToggleModeSwitch(props: {
   isDeleteMode: boolean;
   setIsDeleteMode: (v: boolean) => void;
   numSelected: number;
+  onClickSubmit: (isDeleteMode: boolean) => void;
 }) {
   return (
     <AppBar position="fixed" color="default" sx={{ top: "auto", bottom: 0 }}>
@@ -54,6 +56,7 @@ function ToggleModeSwitch(props: {
           size="small"
           color={props.isDeleteMode ? "error" : undefined}
           disabled={props.numSelected <= 0}
+          onClick={() => props.onClickSubmit(props.isDeleteMode)}
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected}`
@@ -126,7 +129,7 @@ function List(props: ListProps) {
               key={`${cl.id}_${isChecked}_${isChildChecked}`}
               label={cl.label}
               msgCount={cl.count}
-              unreadCount={0}
+              unreadCount={cl.unreadCount}
               childCount={Object.keys(cl.children).length}
               onClickExpand={(node) => {
                 props.setSlideBackward(false);
@@ -162,6 +165,7 @@ export default function Edit() {
 
   const [deleteSelection, setDeleteSelection] = useState(new Selection([]));
   const [markReadSelection, setMarkReadSelection] = useState(new Selection([]));
+  const router = useRouter()
 
   const navigateDownward = (key: string | undefined) => {
     if (key) {
@@ -263,6 +267,16 @@ export default function Edit() {
     ? classificationRoot.jumpToPath(currentPath)
     : undefined;
 
+  const navigateOnSubmit = async (isDeleteMode: boolean): Promise<void> => {
+    if (isDeleteMode) {
+      await router.push("/changeset/confirm/delete");
+      return;
+    } else {
+      await router.push("/changeset/confirm/mark-read");
+      return;
+    }
+  }
+
   return (
     <>
       <Navbar />
@@ -362,6 +376,7 @@ export default function Edit() {
       </Container>
 
       <ToggleModeSwitch
+        onClickSubmit={navigateOnSubmit}
         isDeleteMode={isDeleteMode}
         setIsDeleteMode={debouncedSetIsDeleteMode}
         numSelected={isDeleteMode ? deleteCount : markReadCount}

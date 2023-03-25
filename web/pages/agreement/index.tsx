@@ -82,6 +82,7 @@ export default function Agreements() {
             <IconGrading />
           </Avatar>
           <Typography
+            align="center"
             sx={{
               color: "var(--color-black)",
               fontSize: "2em",
