@@ -232,6 +232,10 @@ func TestClassificationService(t *testing.T) {
 		publisher,
 	)
 
+	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
+
+	assert.ThatError(t, err).IsNil()
+
 	t.Run("enqueue classification", func(t *testing.T) {
 		folders := []string{"INBOX", "spam"}
 		t.Run("unauthenticated, failure", func(t *testing.T) {
@@ -243,8 +247,6 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 			assert.That(t, len(publisher.Entries)).Equals(0)
 		})
-
-		authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)
 
 		t.Run("authenticated, not paid, failure", func(t *testing.T) {
 			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
@@ -336,11 +338,20 @@ func TestClassificationService(t *testing.T) {
 
 	t.Run("classify", func(t *testing.T) {
 		folders := []string{"INBOX", "trash"}
+		n := 32
+
+		// store inbox metadata
+		err = inboxMetadataService.Set(authedCtx, inbox.Metadata{
+			Inbox:        testAddress,
+			Folders:      folders,
+			MessageCount: n,
+			Expires:      time.Now().Add(time.Hour).Unix(),
+		})
+
 		classifiers := []Classifier{
 			NewSenderUsernameClassifier(),
 		}
 
-		n := 32
 		userNames := []string{
 			"me",
 			"you",
@@ -362,6 +373,7 @@ func TestClassificationService(t *testing.T) {
 					Domain:   "gmail.com",
 				},
 				SendDate: time.Now().Add(time.Hour * 24 * 365 * -1 * time.Duration(i)),
+				Read:     i%2 == 0,
 			}
 			messages[i] = msg
 		}
@@ -470,6 +482,13 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, numErrs).Equals(1)
 			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
 			assert.ThatError(t, r.err).IsNil()
+
+			// metadata is updated with unread count
+			meta, err := inboxMetadataService.Get(authedCtx)
+			assert.ThatError(t, err).IsNil()
+
+			assert.That(t, meta.UnreadCount).Equals(n / 2)
+			assert.That(t, meta.MessageCount).Equals(n)
 		})
 
 		for path, count := range senderCounts {
