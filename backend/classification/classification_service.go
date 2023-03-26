@@ -32,6 +32,7 @@ type DefaultService struct {
 	paymentService         payment.Service
 	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
+	inboxMetadataService   inbox.MetadataService
 }
 
 func NewService(
@@ -41,6 +42,7 @@ func NewService(
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
 	paymentService payment.Service,
+	inboxMetadataService inbox.MetadataService,
 	logger *logrus.Logger,
 	pub mailboxsweep.EventPublisher[ClassifyQueueItem],
 ) *DefaultService {
@@ -53,10 +55,12 @@ func NewService(
 		paymentService,
 		logger,
 		pub,
+		inboxMetadataService,
 	}
 }
 
 // Runs from the context of a job worker
+// also updates the unread count because the IMAP response doesn't contain it
 func (s DefaultService) Classify(ctx context.Context, folders []string, classifiers []Classifier) error {
 	var err error
 	var addr string
@@ -117,7 +121,18 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 
 	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers)
 
-	err = organizer.Organize(ctx)
+	classificationRoot, err := organizer.Organize(ctx)
+	if err != nil {
+		return err
+	}
+
+	meta, err := s.inboxMetadataService.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	meta.UnreadCount = int(classificationRoot.UnreadCount)
+	err = s.inboxMetadataService.Set(ctx, *meta)
 	return err
 }
 

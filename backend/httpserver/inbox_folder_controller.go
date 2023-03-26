@@ -38,18 +38,9 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	folders := make([]FolderMessageCount, len(meta.Folders))
-	for folder, counts := range meta.Folders {
-		folders = append(folders, FolderMessageCount{
-			Folder:         folder,
-			AllMessages:    int(counts.All),
-			UnreadMessages: int(counts.Unread),
-		})
-	}
-
 	resBody := GetFoldersResponse{
 		Address: addr,
-		Folders: folders,
+		Folders: meta.Folders,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }

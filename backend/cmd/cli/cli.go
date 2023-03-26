@@ -221,7 +221,7 @@ var classifyMessagesCmd = &cobra.Command{
 			classification.NewSenderUsernameClassifier(),
 		})
 
-		err = organizer.Organize(context.Background())
+		_, err = organizer.Organize(context.Background())
 		if err != nil {
 			log.Fatalf("Organize failed: %s", err)
 		}

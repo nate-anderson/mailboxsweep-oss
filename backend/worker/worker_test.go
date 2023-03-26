@@ -192,6 +192,9 @@ func TestWorker(t *testing.T) {
 	err = classifyRequestService.RecordRequest(authedCtx)
 	assert.ThatError(t, err).IsNil()
 
+	inboxMetadataRepo := inbox.NewMetadataRepository(db, table)
+	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, time.Minute)
+
 	eventPublisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](client, *queueURL)
 	classificationService := classification.NewService(
 		credentialReadService,
@@ -200,6 +203,7 @@ func TestWorker(t *testing.T) {
 		providerService,
 		classifyRequestService,
 		paymentService,
+		inboxMetadataService,
 		log,
 		eventPublisher,
 	)

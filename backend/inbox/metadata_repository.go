@@ -15,16 +15,12 @@ import (
 // these cache entries should have a pretty short TTL because
 // this stuff can change
 
-type MessageCount struct {
-	All    uint32 `dynamodbav:"all_messages"`
-	Unread uint32 `dynamodbav:"unread_messages"`
-}
-
 type Metadata struct {
-	Inbox string `dynamodbav:"inbox"`
-	// map names to message counts
-	Folders map[string]MessageCount `dynamodbav:"folders"`
-	Expires int64                   `dynamodbav:"expires_at"`
+	Inbox        string   `dynamodbav:"inbox"`
+	Folders      []string `dynamodbav:"folders"`
+	MessageCount int      `dynamodbav:"message_count"`
+	UnreadCount  int      `dynamodbav:"unread_count"`
+	Expires      int64    `dynamodbav:"expires_at"`
 }
 
 type MetadataRepository interface {

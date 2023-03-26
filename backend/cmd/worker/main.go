@@ -56,6 +56,8 @@ type workerConfig struct {
 	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 
 	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
+
+	InboxMetadataTTLMinutes int `mapstructure:"INBOX_METADATA_TTL_MINUTES"`
 }
 
 func main() {
@@ -158,6 +160,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	metadataRepo := inbox.NewMetadataRepository(db, cfg.DynamoDBTable)
+	metadataService := inbox.NewMetadataService(
+		metadataRepo,
+		providerService,
+		credentialService,
+		time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute,
+	)
+
 	service := classification.NewService(
 		credentialService,
 		imapServerService,
@@ -165,6 +175,7 @@ func main() {
 		providerService,
 		classifyRequestService,
 		paymentService,
+		metadataService,
 		log,
 		pub,
 	)

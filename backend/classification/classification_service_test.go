@@ -217,6 +217,9 @@ func TestClassificationService(t *testing.T) {
 	)
 	assert.ThatError(t, err).IsNil()
 
+	inboxMetadataRepo := inbox.NewMetadataRepository(db, table)
+	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, time.Minute)
+
 	service := NewService(
 		credentialReadService,
 		imapServerService,
@@ -224,6 +227,7 @@ func TestClassificationService(t *testing.T) {
 		providerService,
 		&classifyRequestService,
 		paymentService,
+		inboxMetadataService,
 		logrus.New(),
 		publisher,
 	)

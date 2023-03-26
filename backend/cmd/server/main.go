@@ -186,6 +186,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	metadataRepo := inbox.NewMetadataRepository(db, cfg.DynamoDBTable)
+	if cfg.InboxMetadataTTLMinutes <= 0 {
+		err = errors.New("InboxMetadataTTLMinutes must be greater than zero")
+		log.Fatal(err)
+	}
+	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
+
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 	classificationService := classification.NewService(
 		credentialService,
@@ -194,16 +201,10 @@ func main() {
 		providerService,
 		classifyRequestService,
 		paymentService,
+		metadataService,
 		log,
 		publisher,
 	)
-
-	metadataRepo := inbox.NewMetadataRepository(db, cfg.DynamoDBTable)
-	if cfg.InboxMetadataTTLMinutes <= 0 {
-		err = errors.New("InboxMetadataTTLMinutes must be greater than zero")
-		log.Fatal(err)
-	}
-	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
 
 	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
 

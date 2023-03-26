@@ -28,7 +28,7 @@ func NewOrganizer(inbox inbox.Inbox, repo ClassificationRepository, folders []st
 	}
 }
 
-func (o Organizer) Organize(ctx context.Context) error {
+func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 	/*
 		This function should accept a chan Message and process each message as it is read,
 		traversing the tree and calling the classifier functions one at a time.
@@ -43,7 +43,7 @@ func (o Organizer) Organize(ctx context.Context) error {
 
 	validityKeys, err := o.inbox.ValidityKeys()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve inbox UidValidities: %w", err)
+		return nil, fmt.Errorf("failed to retrieve inbox UidValidities: %w", err)
 	}
 	selectedFolderValidityKeys := map[string]uint32{}
 
@@ -54,7 +54,7 @@ func (o Organizer) Organize(ctx context.Context) error {
 		wg.Add(1)
 		f, err := o.inbox.Folder(name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		selectedFolderValidityKeys[name] = validityKeys[name]
 
@@ -101,7 +101,7 @@ func (o Organizer) Organize(ctx context.Context) error {
 	}
 
 	err = o.repo.Store(ctx, o.inbox.Name(), &rootDTO, selectedFolderValidityKeys)
-	return err
+	return &rootDTO, err
 }
 
 func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassification) {

@@ -70,18 +70,18 @@ func TestMetadataService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, m.Expires).NotEqual(0)
 			assert.That(t, m.Inbox).Equals(testAddress)
-			assert.That(t, len(m.Folders)).Equals(2)
-			assert.That(t, m.Folders["INBOX"].All).Equals(uint32(n))
-			assert.That(t, m.Folders["trash"].All).Equals(0)
+			assert.That(t, m.MessageCount).Equals(n)
+			assert.That(t, m.UnreadCount).Equals(0)
+			assert.ThatSlice(t, m.Folders).ContainsAll([]string{"INBOX", "trash"})
 
 			// check that cache is populated
 			mr, err := repo.Get(ctx, testAddress)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, mr.Expires).NotEqual(0)
 			assert.That(t, mr.Inbox).Equals(testAddress)
-			assert.That(t, len(mr.Folders)).Equals(2)
-			assert.That(t, mr.Folders["INBOX"].All).Equals(uint32(n))
-			assert.That(t, mr.Folders["trash"].All).Equals(0)
+			assert.That(t, mr.MessageCount).Equals(n)
+			assert.That(t, m.UnreadCount).Equals(0)
+			assert.ThatSlice(t, m.Folders).ContainsAll([]string{"INBOX", "trash"})
 		})
 
 		t.Run("cache hit", func(t *testing.T) {
@@ -89,20 +89,18 @@ func TestMetadataService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, m.Expires).NotEqual(0)
 			assert.That(t, m.Inbox).Equals(testAddress)
-			assert.That(t, len(m.Folders)).Equals(2)
-			assert.That(t, m.Folders["INBOX"].All).Equals(uint32(n))
-			assert.That(t, m.Folders["trash"].All).Equals(0)
+			assert.That(t, m.MessageCount).Equals(n)
+			assert.That(t, m.UnreadCount).Equals(0)
+			assert.ThatSlice(t, m.Folders).ContainsAll([]string{"INBOX", "trash"})
 		})
 	})
 
 	t.Run("Set", func(t *testing.T) {
 		m := inbox.Metadata{
-			Inbox: testAddress,
-			Folders: map[string]inbox.MessageCount{"INBOX2": {
-				All:    20,
-				Unread: 10,
-			}},
-			Expires: time.Now().Add(time.Minute).Unix(),
+			Inbox:        testAddress,
+			MessageCount: 20,
+			UnreadCount:  12,
+			Expires:      time.Now().Add(time.Minute).Unix(),
 		}
 		t.Run("unauthenticated, failure", func(t *testing.T) {
 			err := service.Set(context.Background(), m)
@@ -117,11 +115,8 @@ func TestMetadataService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, r.Expires).Equals(m.Expires)
 			assert.That(t, r.Inbox).Equals(testAddress)
-			assert.ThatMap(t, r.Folders).HasLength(1)
-			assert.ThatMap(t, r.Folders).HasValueAt("INBOX2", inbox.MessageCount{
-				All:    20,
-				Unread: 10,
-			})
+			assert.That(t, r.MessageCount).Equals(m.MessageCount)
+			assert.That(t, r.UnreadCount).Equals(m.UnreadCount)
 		})
 	})
 }
