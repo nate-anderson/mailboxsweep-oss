@@ -150,19 +150,10 @@ export default function Home() {
   >();
 
   useEffect(() => {
-    API.getInboxFolders()
+    API.getInboxMetadata()
       .then((res) => {
-        const totalMessageCount = res.folders.reduce(
-          (sum, folder) => sum + folder.allMessages,
-          0
-        );
-        const unreadMessageCount = res.folders.reduce(
-          (sum, folder) => sum + folder.unreadMessages,
-          0
-        );
-
-        setAllMessagesCount(totalMessageCount);
-        setUnreadMessagesCount(unreadMessageCount);
+        setAllMessagesCount(res.messageCount);
+        setUnreadMessagesCount(res.unreadCount);
       })
       .catch((err) => {
         if (err instanceof ApiError) {
@@ -219,12 +210,13 @@ export default function Home() {
             </Typography>
             <Typography
               sx={{
-                fontSize: "1.6em",
+                fontSize: "1.4em",
               }}
             >
               {address}
             </Typography>
             <Typography
+              display={allMessagesCount > 0 ? "block" : "none"}
               sx={{
                 marginTop: 1,
                 color: "var(--color-gray)",
@@ -233,6 +225,7 @@ export default function Home() {
               {allMessagesCount.toLocaleString()} Messages
             </Typography>
             <Typography
+              display={allMessagesCount > 0 ? "block" : "none"}
               sx={{
                 color: "var(--color-accent)",
               }}
