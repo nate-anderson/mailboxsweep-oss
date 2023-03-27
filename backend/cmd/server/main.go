@@ -254,7 +254,7 @@ func main() {
 		log.Fatal("stripe API key must be set")
 	}
 
-	inboxChangesetService := inboxchangeset.NewService(changesetService, classificationService, providerService, credentialService)
+	inboxChangesetService := inboxchangeset.NewService(changesetService, classificationService, providerService, credentialService, classifyRequestService)
 
 	controller := httpserver.NewController(
 		userService,

@@ -82,11 +82,11 @@ func TestClassifyRequestRepository(t *testing.T) {
 			assert.That(t, nonError).Equals(1)
 		})
 
-		t.Run("update", func(t *testing.T) {
+		t.Run("mark completed", func(t *testing.T) {
 			var requestedAt int64 = 10000000
 
 			t.Run("successful outcome", func(t *testing.T) {
-				updated, err := repo.Update(ctx, testAddress, requestedAt, nil)
+				updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, nil)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, updated.Inbox).Equals(testAddress)
 				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
@@ -110,9 +110,8 @@ func TestClassifyRequestRepository(t *testing.T) {
 			})
 
 			t.Run("failed outcome", func(t *testing.T) {
-
 				errMsg := "a big error"
-				updated, err := repo.Update(ctx, testAddress, requestedAt, &errMsg)
+				updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, &errMsg)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, updated.Inbox).Equals(testAddress)
 				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
@@ -133,6 +132,31 @@ func TestClassifyRequestRepository(t *testing.T) {
 				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
 				assert.That(t, updated.UserUUID).Equals(id)
 				assert.That(t, *updated.Error).Equals(errMsg)
+			})
+		})
+
+		t.Run("mark executed", func(t *testing.T) {
+			requestedAt := 10000001
+
+			t.Run("success", func(t *testing.T) {
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), nil)
+				assert.ThatError(t, err).IsNil()
+				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
+				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
+				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
+				assert.That(t, req.Inbox).Equals(testAddress)
+				assert.That(t, req.Error).Equals(nil)
+			})
+
+			t.Run("error", func(t *testing.T) {
+				errDetails := "something horrible happened"
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), &errDetails)
+				assert.ThatError(t, err).IsNil()
+				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
+				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
+				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
+				assert.That(t, req.Inbox).Equals(testAddress)
+				assert.That(t, *req.Error).Equals(errDetails)
 			})
 		})
 	})

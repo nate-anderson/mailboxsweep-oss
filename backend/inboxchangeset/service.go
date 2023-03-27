@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
+	"mailboxsweep/classifyrequest"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"strconv"
@@ -36,6 +38,7 @@ type DefaultService struct {
 	classificationService classification.Service
 	providerService       inbox.ProviderService
 	credentialService     inboxcredential.CredentialReadService
+	requestService        classifyrequest.Service
 }
 
 func NewService(
@@ -43,12 +46,14 @@ func NewService(
 	classificationService classification.Service,
 	providerService inbox.ProviderService,
 	credentialService inboxcredential.CredentialReadService,
+	requestService classifyrequest.Service,
 ) *DefaultService {
 	return &DefaultService{
 		changeSetService:      changeSetService,
 		classificationService: classificationService,
 		providerService:       providerService,
 		credentialService:     credentialService,
+		requestService:        requestService,
 	}
 }
 
@@ -168,6 +173,20 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err == nil {
+			updateErr := s.requestService.MarkExecutedSuccess(ctx)
+			if updateErr != nil {
+				log.Println("failed to update request: ", updateErr)
+			}
+		} else {
+			updateErr := s.requestService.MarkExecutedError(ctx, err)
+			if updateErr != nil {
+				log.Println("failed to update request: ", updateErr)
+			}
+		}
+	}()
 
 	changeSet, err := s.changeSetService.FindByOperation(ctx, operation, true)
 	if err != nil {

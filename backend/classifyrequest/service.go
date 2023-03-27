@@ -13,8 +13,14 @@ type Service interface {
 	RecordRequest(ctx context.Context) error
 	FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error)
 	FindCompletedRequests(ctx context.Context) ([]ClassifyRequest, error)
-	CompleteSuccess(ctx context.Context) error
-	CompleteError(ctx context.Context, err error) error
+
+	// classification has finished, ready for user to create a change set
+	MarkCompletedSuccess(ctx context.Context) error
+	MarkCompletedError(ctx context.Context, err error) error
+
+	// change set has been executed, a new scan is needed to do anything else
+	MarkExecutedSuccess(ctx context.Context) error
+	MarkExecutedError(ctx context.Context, err error) error
 }
 
 type DefaultService struct {
@@ -131,7 +137,7 @@ func (s DefaultService) FindCompletedRequests(ctx context.Context) ([]ClassifyRe
 
 var ErrNoOpenRequests = errors.New("no open classify requests")
 
-func (s DefaultService) CompleteSuccess(ctx context.Context) error {
+func (s DefaultService) MarkCompletedSuccess(ctx context.Context) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -153,11 +159,11 @@ func (s DefaultService) CompleteSuccess(ctx context.Context) error {
 		return ErrNoOpenRequests
 	}
 
-	_, err = s.requestRepo.Update(ctx, addr, selected.RequestedAt, nil)
+	_, err = s.requestRepo.MarkCompleted(ctx, addr, selected.RequestedAt, nil)
 	return err
 }
 
-func (s DefaultService) CompleteError(ctx context.Context, classifyErr error) error {
+func (s DefaultService) MarkCompletedError(ctx context.Context, classifyErr error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -180,6 +186,89 @@ func (s DefaultService) CompleteError(ctx context.Context, classifyErr error) er
 	}
 
 	msg := classifyErr.Error()
-	_, err = s.requestRepo.Update(ctx, addr, selected.RequestedAt, &msg)
+	_, err = s.requestRepo.MarkCompleted(ctx, addr, selected.RequestedAt, &msg)
+	return err
+}
+
+func (s DefaultService) MarkExecutedSuccess(ctx context.Context) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	requests, err := s.requestRepo.List(ctx, addr, false, true)
+	if err != nil {
+		return err
+	}
+
+	// find oldest request that has been completed but not executed
+	var oldestClosedRequest ClassifyRequest
+	found := false
+	for _, req := range requests {
+		if req.CompletedAtUnix == nil {
+			continue
+		}
+
+		if req.ExecutedAtUnix != nil {
+			continue
+		}
+
+		if !found {
+			oldestClosedRequest = req
+			found = true
+		} else if *req.CompletedAtUnix < *oldestClosedRequest.CompletedAtUnix {
+			oldestClosedRequest = req
+		}
+	}
+
+	if !found {
+		return errors.New("no completed requests found")
+	}
+
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, nil)
+	return err
+}
+
+func (s DefaultService) MarkExecutedError(ctx context.Context, executeError error) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if executeError == nil {
+		return errors.New("nil error passed to MarkExecutedError")
+	}
+
+	requests, err := s.requestRepo.List(ctx, addr, false, true)
+	if err != nil {
+		return err
+	}
+
+	// find oldest request that has been completed but not executed
+	var oldestClosedRequest ClassifyRequest
+	found := false
+	for _, req := range requests {
+		if req.CompletedAtUnix == nil {
+			continue
+		}
+
+		if req.ExecutedAtUnix != nil {
+			continue
+		}
+
+		if !found {
+			oldestClosedRequest = req
+			found = true
+		} else if *req.CompletedAtUnix < *oldestClosedRequest.CompletedAtUnix {
+			oldestClosedRequest = req
+		}
+	}
+
+	if !found {
+		return errors.New("no completed requests found")
+	}
+
+	errMsg := executeError.Error()
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, &errMsg)
 	return err
 }

@@ -67,9 +67,9 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	defer func() {
 		var recordErr error
 		if err != nil {
-			recordErr = s.classifyRequestService.CompleteError(ctx, err)
+			recordErr = s.classifyRequestService.MarkCompletedError(ctx, err)
 		} else {
-			recordErr = s.classifyRequestService.CompleteSuccess(ctx)
+			recordErr = s.classifyRequestService.MarkCompletedSuccess(ctx)
 		}
 		if recordErr != nil {
 			s.logger.

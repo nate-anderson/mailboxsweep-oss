@@ -16,7 +16,8 @@ import (
 type ClassifyRequestRepository interface {
 	Store(ctx context.Context, req ClassifyRequest) error
 	List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error)
-	Update(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
+	MarkCompleted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
+	MarkExecuted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
 }
 
 type DynamoRequestRepository struct {
@@ -116,7 +117,7 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 	return requests, nil
 }
 
-func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error) {
+func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error) {
 	key := r.buildKey(inbox, startedAt)
 	completed := time.Now().Unix()
 	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
@@ -140,6 +141,47 @@ func (r DynamoRequestRepository) Update(ctx context.Context, inbox string, start
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":completed": &types.AttributeValueMemberN{
 				Value: strconv.FormatInt(completed, 10),
+			},
+			":err_details": errDetailsValue,
+			":sk": &types.AttributeValueMemberS{
+				Value: r.formatSK(startedAt),
+			},
+		},
+		ReturnValues: types.ReturnValueAllNew,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	c := ClassifyRequest{}
+	err = attributevalue.UnmarshalMap(res.Attributes, &c)
+	return &c, err
+}
+
+func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error) {
+	key := r.buildKey(inbox, startedAt)
+	executed := time.Now().Unix()
+	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
+		Value: true,
+	}
+	if errDetails != nil {
+		errDetailsValue = &types.AttributeValueMemberS{
+			Value: *errDetails,
+		}
+	}
+	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		Key:                 key,
+		TableName:           &r.tableName,
+		UpdateExpression:    aws.String("SET #executed = :executed, #error = :err_details"),
+		ConditionExpression: aws.String("#sk = :sk"),
+		ExpressionAttributeNames: map[string]string{
+			"#executed": "executed_at_unix",
+			"#error":    "error",
+			"#sk":       mailboxsweep.DynamoSK,
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":executed": &types.AttributeValueMemberN{
+				Value: strconv.FormatInt(executed, 10),
 			},
 			":err_details": errDetailsValue,
 			":sk": &types.AttributeValueMemberS{

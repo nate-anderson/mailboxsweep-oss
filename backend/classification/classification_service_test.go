@@ -55,6 +55,7 @@ func (t testImapServerService) Store(ctx context.Context, server imapserver.Serv
 type testRequest struct {
 	started   int64
 	completed *int64
+	executed  *int64
 	err       error
 }
 
@@ -118,7 +119,7 @@ func (r *testRequestRecorder) FindCompletedRequests(ctx context.Context) ([]clas
 	return reqs, nil
 }
 
-func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
+func (r *testRequestRecorder) MarkCompletedSuccess(ctx context.Context) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -139,7 +140,7 @@ func (r *testRequestRecorder) CompleteSuccess(ctx context.Context) error {
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr error) error {
+func (r *testRequestRecorder) MarkCompletedError(ctx context.Context, classifyErr error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -152,6 +153,49 @@ func (r *testRequestRecorder) CompleteError(ctx context.Context, classifyErr err
 		if l.completed == nil {
 			updated := l
 			updated.completed = aws.Int64(time.Now().Unix())
+			updated.err = classifyErr
+			list[i] = updated
+			r.requests[addr] = list
+			return nil
+		}
+	}
+	return mailboxsweep.ErrNotFound
+}
+
+func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return mailboxsweep.ErrNotFound
+	}
+	for i, l := range list {
+		if l.completed != nil {
+			updated := l
+			updated.executed = aws.Int64(time.Now().Unix())
+			list[i] = updated
+			r.requests[addr] = list
+			return nil
+		}
+	}
+	return mailboxsweep.ErrNotFound
+}
+
+func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, classifyErr error) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return mailboxsweep.ErrNotFound
+	}
+	for i, l := range list {
+		if l.completed != nil {
+			updated := l
+			updated.executed = aws.Int64(time.Now().Unix())
 			updated.err = classifyErr
 			list[i] = updated
 			r.requests[addr] = list
