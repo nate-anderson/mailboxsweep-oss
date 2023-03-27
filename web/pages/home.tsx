@@ -8,7 +8,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import { ApiError, ClassificationStatus } from "../client-gen";
-import { API } from "../client";
+import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
 import Link from "next/link";
@@ -148,6 +148,8 @@ export default function Home() {
   const [classificationStatus, setClassificationStatus] = useState<
     ClassificationStatus.status | undefined
   >();
+
+  const API = useAPIClient();
 
   useEffect(() => {
     API.getInboxMetadata()

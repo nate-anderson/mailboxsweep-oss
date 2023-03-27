@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { API } from "../client";
+import { useAPIClient } from "../client";
 import Container from "@mui/material/Container";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
@@ -8,6 +8,8 @@ import Typography from "@mui/material/Typography";
 
 export default function Login() {
   const router = useRouter();
+
+  const API = useAPIClient();
 
   useEffect(() => {
     if (!router.isReady) return;

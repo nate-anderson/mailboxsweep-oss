@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { API } from "../../client";
-import { ApiError, Classifier, FolderMessageCount } from "../../client-gen";
+import { useAPIClient } from "../../client";
+import { ApiError, Classifier } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -25,12 +25,13 @@ const defaultClassifiers: Classifier[] = [
 ];
 
 export default function Configure() {
+  const API = useAPIClient();
   const [expandedIndex, setExpandedIndex] = useState<number | undefined>();
   const [error, setError] = useState<string | undefined>();
   const [selectedClassifiers, setSelectedClassifiers] = useState<
     SelectedClassifier[]
   >([]);
-  const [folders, setFolders] = useState<FolderMessageCount[]>([]);
+  const [folders, setFolders] = useState<string[]>([]);
   const [successSnackbar, showSuccessSnackbar] = useConstantSnackbar(
     "Success!",
     "success",
@@ -73,7 +74,7 @@ export default function Configure() {
         setError(err);
       });
 
-    API.getInboxFolders()
+    API.getInboxMetadata()
       .then((res) => {
         setFolders(res.folders);
       })

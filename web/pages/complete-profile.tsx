@@ -1,4 +1,4 @@
-import { API } from "../client";
+import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import Container from "@mui/material/Container";
@@ -24,6 +24,8 @@ export default function CompleteProfile() {
     "success"
   );
   const [errorSnackbar, setError] = useSnackbar("error");
+
+  const API = useAPIClient();
 
   useEffect(() => {
     API.getUserData()

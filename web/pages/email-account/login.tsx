@@ -1,4 +1,4 @@
-import { API } from "../../client";
+import { useAPIClient } from "../../client";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -117,6 +117,8 @@ export default function Login() {
   const [imapPort, setImapPort] = useState<number>(993);
 
   const resetFilledInput = () => changePassword("********");
+
+  const API = useAPIClient();
 
   useEffect(() => {
     API.getInboxCredential()

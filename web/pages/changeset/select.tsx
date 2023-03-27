@@ -4,7 +4,7 @@ import Navbar from "../../components/navbar";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
-import { API } from "../../client";
+import { useAPIClient } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
 import {
   ApiError,
@@ -173,6 +173,8 @@ export default function Edit() {
     }
     return setCurrentPath([]);
   };
+
+  const API = useAPIClient();
 
   const addLeaf = async (path: string[]) => {
     const res = await API.updateChangeSet({
