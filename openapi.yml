@@ -201,14 +201,20 @@ components:
         expires:
           type: string
 
-    GetFoldersResponse:
+    InboxMetadataResponse:
       type: object
       required:
         - address
+        - messageCount
+        - unreadCount
         - folders
       properties:
         address:
           type: string
+        messageCount:
+          type: integer
+        unreadCount:
+          type: integer
         folders:
           type: array
           items:
@@ -642,6 +648,18 @@ paths:
         "404":
           description: Not found
 
+  /inbox:
+    get:
+      operationId: getInboxMetadata
+      description: Get information about the inbox
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxMetadataResponse"
+
   /inbox/changeset:
     patch:
       operationId: updateChangeSet
@@ -777,18 +795,6 @@ paths:
                 $ref: "#/components/schemas/ClassificationStatusResponse"
         "500":
           description: Internal server error
-
-  /inbox/folders:
-    get:
-      operationId: getInboxFolders
-      description: List inbox folders
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetFoldersResponse"
 
   /plans:
     get:

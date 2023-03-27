@@ -22,7 +22,7 @@ func NewFolderController(metadataService inbox.MetadataService, log *logrus.Logg
 	}
 }
 
-func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Request) {
+func (c FolderController) GetInboxMetadata(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	meta, err := c.metadataService.Get(ctx)
@@ -38,9 +38,11 @@ func (c FolderController) GetInboxFolders(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	resBody := GetFoldersResponse{
-		Address: addr,
-		Folders: meta.Folders,
+	resBody := InboxMetadataResponse{
+		Address:      addr,
+		MessageCount: meta.MessageCount,
+		UnreadCount:  meta.UnreadCount,
+		Folders:      meta.Folders,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }
