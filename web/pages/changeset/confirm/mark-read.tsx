@@ -3,7 +3,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { useAPIClient } from "../../../client";
 import Navbar from "../../../components/navbar";
 import { ChangeSet, UpdateOperation } from "../../../client-gen";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useConstantSnackbar } from "../../../components/snackbar";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -21,7 +21,8 @@ export default function ConfirmMarkRead() {
     const [ successSnackbar, showSuccessSnackbar ] = useConstantSnackbar('Messages successfully marked read!', 'success');
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
-    api.getChangeset(UpdateOperation.MARK_READ)
+    useEffect(() => {
+        api.getChangeset(UpdateOperation.MARK_READ)
         .then((res) => {
             setMarkReadChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -30,7 +31,8 @@ export default function ConfirmMarkRead() {
             setError(err);
             showErrorSnackbar(true);
         });
-
+    }, [])
+    
     const submit = () => {
         api.commitChangeset({
             confirm: isConfirmed,
