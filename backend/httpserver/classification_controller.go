@@ -211,6 +211,8 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 	if closed.Error != nil {
 		resBody.Status.Status = Errored
 		resBody.Status.Details = closed.Error
+	} else if closed.ExecutedAtUnix != nil {
+		resBody.Status.Status = Executed
 	} else {
 		resBody.Status.Status = Complete
 	}

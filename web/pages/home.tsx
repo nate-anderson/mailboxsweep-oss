@@ -134,6 +134,26 @@ const renderClassificationStatus = (
           />
         </Alert>
       );
+    case ClassificationStatus.status.EXECUTED:
+      return boxify(
+        <Alert
+          severity="info"
+          sx={{
+            maxWidth: 600,
+          }}
+        >
+          <AlertTitle>Classification completed!</AlertTitle>
+          <p style={{ display: "block" }}>
+            We scanned and cleaned up your inbox! If you want to make more changes, you can scan your inbox again.
+          </p>
+          <ActionLink
+            href="/classify/configure"
+            text="Clean up more"
+            backgroundColor="var(--color-accent)"
+            color="white"
+          />
+        </Alert>
+      )
     case undefined:
       // display nothing, the stepper should still be visible at this point
       return <></>;
@@ -227,7 +247,7 @@ export default function Home() {
               {allMessagesCount.toLocaleString()} Messages
             </Typography>
             <Typography
-              display={allMessagesCount > 0 ? "block" : "none"}
+              display={unreadMessagesCount > 0 ? "block" : "none"}
               sx={{
                 color: "var(--color-accent)",
               }}
