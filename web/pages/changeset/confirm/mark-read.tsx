@@ -81,7 +81,7 @@ export default function ConfirmMarkRead() {
                         maxWidth: 600,
                     }}
                 >
-                    These messages will be marked as read and remain in your inbox, no longer being counted in your unread messages. This will not delete any information, but it cannot be undone.
+                    These messages will be marked as read and remain in your inbox, no longer being counted in your unread messages. This will not delete any information, <b style={{color: "var(--color-red)"}}>but it cannot be undone.</b>
                 </Typography>
                 <ConfirmBar
                     confirmButtonEnabled={isConfirmed}
