@@ -2,6 +2,7 @@ package inbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 
@@ -26,6 +27,7 @@ type Metadata struct {
 type MetadataRepository interface {
 	Store(ctx context.Context, metadata Metadata) error
 	Get(ctx context.Context, address string) (*Metadata, error)
+	Delete(ctx context.Context, address string) error
 }
 
 type DefaultMetadataRepository struct {
@@ -90,4 +92,23 @@ func (r DefaultMetadataRepository) Get(ctx context.Context, address string) (*Me
 	m := Metadata{}
 	err = attributevalue.UnmarshalMap(res.Item, &m)
 	return &m, err
+}
+
+func (r DefaultMetadataRepository) Delete(ctx context.Context, address string) error {
+	key := r.buildKey(address)
+	res, err := r.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		Key:          key,
+		TableName:    &r.tableName,
+		ReturnValues: types.ReturnValueAllOld,
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(res.Attributes) == 0 {
+		err = errors.New("no metadata stored for that address")
+		return mailboxsweep.NotFoundError(err)
+	}
+
+	return nil
 }

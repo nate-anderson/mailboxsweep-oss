@@ -47,4 +47,21 @@ func TestMetadataRepository(t *testing.T) {
 			assert.That(t, r).Equals(nil)
 		})
 	})
+
+	t.Run("delete metadata", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			err := repo.Delete(ctx, m.Inbox)
+			assert.ThatError(t, err).IsNil()
+
+			// no longer present in store
+			retrieved, err := repo.Get(ctx, m.Inbox)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+			assert.That(t, retrieved).Equals(nil)
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			err := repo.Delete(ctx, m.Inbox)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+		})
+	})
 }

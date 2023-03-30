@@ -39,6 +39,7 @@ type DefaultService struct {
 	providerService       inbox.ProviderService
 	credentialService     inboxcredential.CredentialReadService
 	requestService        classifyrequest.Service
+	metadataService       inbox.MetadataService
 }
 
 func NewService(
@@ -47,6 +48,7 @@ func NewService(
 	providerService inbox.ProviderService,
 	credentialService inboxcredential.CredentialReadService,
 	requestService classifyrequest.Service,
+	metadataService inbox.MetadataService,
 ) *DefaultService {
 	return &DefaultService{
 		changeSetService:      changeSetService,
@@ -54,6 +56,7 @@ func NewService(
 		providerService:       providerService,
 		credentialService:     credentialService,
 		requestService:        requestService,
+		metadataService:       metadataService,
 	}
 }
 
@@ -168,6 +171,13 @@ func (s DefaultService) RemovePathForDelete(ctx context.Context, path classifica
 	return &result, nil
 }
 
+// used for tracking changes to inbox counts
+type messageCountDiff struct {
+	markedReadCount    int
+	unreadDeletedCount int
+	readDeletedCount   int
+}
+
 func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error {
 	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
@@ -184,6 +194,12 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 			updateErr := s.requestService.MarkExecutedError(ctx, err)
 			if updateErr != nil {
 				log.Println("failed to update request: ", updateErr)
+			}
+
+			// if something has gone wrong, invalidate inbox metadata
+			invalidateErr := s.metadataService.Invalidate(ctx)
+			if invalidateErr != nil {
+				log.Println("failed to invalidate metadata after an error occurred: ", invalidateErr)
 			}
 		}
 	}()
@@ -216,6 +232,8 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		return err
 	}
 
+	var diff messageCountDiff
+
 	// group UIDs by folder for more efficient delete
 	folderUIDs := make(map[string][]string)
 
@@ -231,6 +249,15 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 				folderUIDs[m.Folder] = append(folderUIDs[m.Folder], strconv.FormatUint(uint64(m.UID), 10))
 			} else {
 				folderUIDs[m.Folder] = []string{strconv.FormatUint(uint64(m.UID), 10)}
+			}
+
+			// track changes to inbox counts
+			if m.Read && operation == changeset.Delete {
+				diff.readDeletedCount++
+			} else if !m.Read && operation == changeset.Delete {
+				diff.unreadDeletedCount++
+			} else if !m.Read && operation == changeset.MarkRead {
+				diff.markedReadCount++
 			}
 		}
 	}
@@ -254,10 +281,28 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		} else {
 			return fmt.Errorf("unknown operation '%s'", operation)
 		}
-
 	}
 
-	return nil
+	err = s.updateInboxMetadata(ctx, diff, changeSet.Operation)
+	return err
+}
+
+func (s DefaultService) updateInboxMetadata(ctx context.Context, diff messageCountDiff, operation changeset.UpdateOperation) error {
+	meta, err := s.metadataService.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update inbox metadata: %w", err)
+	}
+
+	// unread count shrinks by the number of newly marked read messages
+	meta.UnreadCount -= diff.markedReadCount
+	// unread coutn shrinks by number of unread messages deleted
+	meta.UnreadCount -= diff.unreadDeletedCount
+	// total messages shrinks by number of messages deleted
+	meta.MessageCount -= diff.readDeletedCount
+	meta.MessageCount -= diff.unreadDeletedCount
+
+	err = s.metadataService.Set(ctx, *meta)
+	return err
 }
 
 func (s DefaultService) FindByOperation(ctx context.Context, operation changeset.UpdateOperation) (*changeset.ChangeSet, int, error) {

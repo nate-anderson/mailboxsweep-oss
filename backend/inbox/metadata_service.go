@@ -11,6 +11,9 @@ import (
 type MetadataService interface {
 	Get(ctx context.Context) (*Metadata, error)
 	Set(ctx context.Context, m Metadata) error
+
+	// invalidate cached metadata
+	Invalidate(ctx context.Context) error
 }
 
 type DefaultMetadataService struct {
@@ -104,4 +107,13 @@ func (s DefaultMetadataService) Set(ctx context.Context, m Metadata) error {
 	}
 
 	return s.repo.Store(ctx, m)
+}
+
+func (s DefaultMetadataService) Invalidate(ctx context.Context) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.Delete(ctx, addr)
 }
