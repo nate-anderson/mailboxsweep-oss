@@ -12,6 +12,8 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"strconv"
+
+	"golang.org/x/exp/constraints"
 )
 
 type ChangeResult struct {
@@ -294,12 +296,12 @@ func (s DefaultService) updateInboxMetadata(ctx context.Context, diff messageCou
 	}
 
 	// unread count shrinks by the number of newly marked read messages
-	meta.UnreadCount -= diff.markedReadCount
+	meta.UnreadCount = max(meta.UnreadCount-diff.markedReadCount, 0)
 	// unread coutn shrinks by number of unread messages deleted
-	meta.UnreadCount -= diff.unreadDeletedCount
+	meta.UnreadCount = max(meta.UnreadCount-diff.unreadDeletedCount, 0)
 	// total messages shrinks by number of messages deleted
-	meta.MessageCount -= diff.readDeletedCount
-	meta.MessageCount -= diff.unreadDeletedCount
+	meta.MessageCount = max(meta.MessageCount-diff.readDeletedCount, 0)
+	meta.MessageCount = max(meta.MessageCount-diff.unreadDeletedCount, 0)
 
 	err = s.metadataService.Set(ctx, *meta)
 	return err
@@ -323,4 +325,11 @@ func (s DefaultService) FindByOperation(ctx context.Context, operation changeset
 	}
 
 	return changeSet, n, nil
+}
+
+func max[T constraints.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
 }

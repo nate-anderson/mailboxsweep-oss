@@ -368,7 +368,7 @@ func TestInboxChangesetService(t *testing.T) {
 			})
 
 			t.Run("unread count is updated", func(t *testing.T) {
-				assert.That(t, meta.UnreadCount).Equals(numMessages - 4)
+				assert.That(t, meta.UnreadCount).Equals(0)
 			})
 		})
 	})
