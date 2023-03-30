@@ -10,6 +10,11 @@ type TestProvider struct {
 
 	ConnectError error
 	LoginError   error
+
+	// maintain reference for testing
+	// @TODO: figure out a better way to mock than this
+	// one inbox per username
+	Inboxes map[string]*TestInbox
 }
 
 func (t TestProvider) Connect() error {
@@ -24,8 +29,16 @@ func (t *TestProvider) Login(username, password string) (inbox.Inbox, error) {
 		return nil, t.LoginError
 	}
 
-	return TestInbox{
-		name:     username,
-		messages: t.Messages,
-	}, nil
+	if existing, ok := t.Inboxes[username]; ok {
+		return existing, nil
+	}
+
+	inbox := &TestInbox{
+		name:         username,
+		messages:     t.Messages,
+		InboxFolders: make(map[string]*TestFolder),
+	}
+
+	t.Inboxes[username] = inbox
+	return inbox, nil
 }

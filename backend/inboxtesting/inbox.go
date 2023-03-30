@@ -15,6 +15,11 @@ type TestInbox struct {
 	foldersError      error
 	folderError       error
 	validityKeysError error
+
+	// maintain reference for testing
+	// @TODO: figure out a better way to mock than this
+	// one TestFolder per inbox
+	InboxFolders map[string]*TestFolder
 }
 
 func (t TestInbox) Name() string {
@@ -37,15 +42,23 @@ func (t TestInbox) Folder(name string) (inbox.Folder, error) {
 		return nil, t.folderError
 	}
 
+	if existing, ok := t.InboxFolders[name]; ok {
+		return existing, nil
+	}
+
 	messages, ok := t.messages[name]
 	if !ok {
 		return nil, fmt.Errorf("folder '%s' not found: %w", name, mailboxsweep.ErrNotFound)
 	}
 
-	return &TestFolder{
+	f := &TestFolder{
 		FolderName:     name,
 		FolderMessages: messages,
-	}, nil
+	}
+
+	t.InboxFolders[name] = f
+
+	return f, nil
 }
 
 func (t TestInbox) ValidityKeys() (map[string]uint32, error) {
