@@ -8,6 +8,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
+	"mailboxsweep/inboxcredential"
 	"mailboxsweep/metering"
 	"strconv"
 
@@ -73,7 +74,12 @@ var listMailboxesCmd = &cobra.Command{
 		}
 		log.Println("Connected!")
 
-		inbox, err := provider.Login(username, password)
+		cred, err := inboxcredential.NewIMAPInboxCredential(username, password, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		inbox, err := provider.Login(username, cred)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -136,7 +142,12 @@ var listMessagesCmd = &cobra.Command{
 
 		log.Println("Connected!")
 
-		mailbox, err := provider.Login(username, password)
+		cred, err := inboxcredential.NewIMAPInboxCredential(username, password, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		mailbox, err := provider.Login(username, cred)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -200,7 +211,12 @@ var classifyMessagesCmd = &cobra.Command{
 		}
 		log.Println("Connected!")
 
-		mailbox, err := provider.Login(username, password)
+		cred, err := inboxcredential.NewIMAPInboxCredential(username, password, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		mailbox, err := provider.Login(username, cred)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -284,7 +300,12 @@ var deleteCmd = &cobra.Command{
 		}
 		log.Println("Connected!")
 
-		inbox, err := provider.Login(username, password)
+		cred, err := inboxcredential.NewIMAPInboxCredential(username, password, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		inbox, err := provider.Login(username, cred)
 		if err != nil {
 			log.Fatal(err)
 		}

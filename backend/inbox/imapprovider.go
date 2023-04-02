@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/inboxcredential"
 	"mailboxsweep/metering"
 	"net"
 	"strconv"
@@ -71,8 +72,13 @@ func (p *IMAPProvider) Connect() error {
 	return nil
 }
 
-func (p *IMAPProvider) Login(username, password string) (Inbox, error) {
-	err := p.client.Login(username, password)
+func (p *IMAPProvider) Login(username string, credential inboxcredential.Credential) (Inbox, error) {
+	imapCred, ok := credential.(*inboxcredential.IMAPInboxCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential type mismatch: expected IMAP, got %t", credential)
+	}
+
+	err := p.client.Login(username, imapCred.Password)
 	if err != nil {
 		msg := strings.ToLower(err.Error())
 		if strings.Contains(msg, "invalid credentials") {

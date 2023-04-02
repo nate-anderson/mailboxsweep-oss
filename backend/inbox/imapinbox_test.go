@@ -4,6 +4,7 @@ import (
 	"context"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/inboxcredential"
 	"testing"
 )
 
@@ -14,7 +15,9 @@ func TestIMAPInbox(t *testing.T) {
 	provider, err := NewIMAPProvider(ctx, testConf.IMAPHost, testConf.IMAPPort, testConf.Address, nil, nil)
 	assert.ThatError(t, err).IsNil()
 
-	inbox, err := provider.Login(testConf.Address, testConf.Password)
+	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password, 32)
+	assert.ThatError(t, err).IsNil()
+	inbox, err := provider.Login(testConf.Address, imapCred)
 	assert.ThatError(t, err).IsNil()
 
 	var folders []string

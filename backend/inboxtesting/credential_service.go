@@ -16,7 +16,7 @@ type TestCredentialReadService struct {
 	FindError error
 }
 
-func (t *TestCredentialReadService) FindCredential(ctx context.Context) (*inboxcredential.InboxCredential, error) {
+func (t *TestCredentialReadService) FindCredential(ctx context.Context) (inboxcredential.Credential, error) {
 	t.FindCredentialCalled++
 	address, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
@@ -31,14 +31,14 @@ func (t *TestCredentialReadService) FindCredential(ctx context.Context) (*inboxc
 		return nil, mailboxsweep.ErrNotFound
 	}
 
-	return &inboxcredential.InboxCredential{
-		Address:  address,
-		Password: t.Password,
-		Created:  time.Now(),
-		Expires:  time.Now().Add(time.Hour).Unix(),
+	return &inboxcredential.IMAPInboxCredential{
+		EmailAddress: address,
+		Password:     t.Password,
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Hour).Unix(),
 	}, nil
 }
 
-func (t TestCredentialReadService) DecryptCredential(ctx context.Context, cred *inboxcredential.InboxCredential) (password string, err error) {
-	return cred.Password, nil
+func (t TestCredentialReadService) DecryptCredential(ctx context.Context, cred inboxcredential.Credential) (inboxcredential.Credential, error) {
+	return cred, nil
 }

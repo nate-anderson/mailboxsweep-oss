@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/inboxcredential"
 	"mailboxsweep/metering"
 	"strconv"
 	"sync"
@@ -49,9 +50,12 @@ func TestIMAPFolder(t *testing.T) {
 	)
 	assert.ThatError(t, err).IsNil()
 
+	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password, 32)
+	assert.ThatError(t, err).IsNil()
+
 	inbox, err := provider.Login(
 		testConf.Address,
-		testConf.Password,
+		imapCred,
 	)
 	assert.ThatError(t, err).IsNil()
 

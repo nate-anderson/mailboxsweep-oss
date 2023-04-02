@@ -95,7 +95,10 @@ func main() {
 		log.Fatalf("failed to decode configured AES Cipher key: %s", err)
 	}
 
-	credentialService := inboxcredential.NewService(credentialRepo, cipherKey)
+	credentialService, err := inboxcredential.NewService(credentialRepo, cipherKey)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	imapServerRepo := imapserver.NewIMAPServerRepository(db, cfg.DynamoDBTable)
 	imapServerService := imapserver.NewService(imapServerRepo)

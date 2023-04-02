@@ -14,6 +14,8 @@ import (
 
 type Credential interface {
 	Address() string
+	Created() time.Time
+	Expires() time.Time
 	// encrypt in place
 	encrypt(encryptor cipher.AEAD) error
 	// decrypt in place
@@ -29,8 +31,8 @@ type IMAPInboxCredential struct {
 	nonceBytes []byte
 	// base64-encoded ciphertext
 	Password  string    `dynamodbav:"password"`
-	Created   time.Time `dynamodbav:"created"`
-	Expires   int64     `dynamodbav:"expires_at"`
+	CreatedAt time.Time `dynamodbav:"created"`
+	ExpiresAt int64     `dynamodbav:"expires_at"`
 	Encrypted bool      `dynamodbav:"encrypted"`
 	IsIMAP    bool      `dynamodbav:"is_imap,omitempty"`
 }
@@ -48,8 +50,8 @@ func NewIMAPInboxCredential(address, password string, nonceSize int) (*IMAPInbox
 		Password:     password,
 		Nonce:        encodedNonce,
 		nonceBytes:   nonce,
-		Created:      now,
-		Expires:      now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
+		CreatedAt:    now,
+		ExpiresAt:    now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
 		IsIMAP:       true,
 	}, nil
 }
@@ -93,6 +95,14 @@ func (i *IMAPInboxCredential) decrypt(decryptor cipher.AEAD) error {
 
 func (i IMAPInboxCredential) Address() string {
 	return i.EmailAddress
+}
+
+func (i IMAPInboxCredential) Created() time.Time {
+	return i.CreatedAt
+}
+
+func (i IMAPInboxCredential) Expires() time.Time {
+	return time.Unix(i.ExpiresAt, 0)
 }
 
 type InboxCredentialRepository interface {

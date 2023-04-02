@@ -1,6 +1,9 @@
 package inboxtesting
 
-import "mailboxsweep/inbox"
+import (
+	"mailboxsweep/inbox"
+	"mailboxsweep/inboxcredential"
+)
 
 type TestProvider struct {
 	Username string
@@ -21,9 +24,11 @@ func (t TestProvider) Connect() error {
 	return t.ConnectError
 }
 
-func (t *TestProvider) Login(username, password string) (inbox.Inbox, error) {
+func (t *TestProvider) Login(username string, credential inboxcredential.Credential) (inbox.Inbox, error) {
 	t.Username = username
-	t.Password = password
+	if imapCred, ok := credential.(*inboxcredential.IMAPInboxCredential); ok {
+		t.Password = imapCred.Password
+	}
 
 	if t.LoginError != nil {
 		return nil, t.LoginError
