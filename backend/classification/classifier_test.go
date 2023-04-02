@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mailboxsweep/assert"
 	"mailboxsweep/inbox"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -22,7 +23,7 @@ func TestClassifiers(t *testing.T) {
 			for i, matchFmt := range matchSubjectFormats {
 				subj := fmt.Sprintf(matchFmt, keyword)
 				msg := inbox.Message{
-					UID:     uint32(i),
+					UID:     strconv.Itoa(i),
 					Folder:  "bs-folder",
 					Subject: subj,
 				}
@@ -37,7 +38,7 @@ func TestClassifiers(t *testing.T) {
 			for i, noMatchFmt := range notMatchSubjectFormats {
 				subj := fmt.Sprintf(noMatchFmt, keyword)
 				msg := inbox.Message{
-					UID:     uint32(i),
+					UID:     strconv.Itoa(i),
 					Folder:  "bs-folder",
 					Subject: subj,
 				}

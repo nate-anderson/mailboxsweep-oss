@@ -12,6 +12,7 @@ import (
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/payment"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -407,7 +408,7 @@ func TestClassificationService(t *testing.T) {
 			un := userNames[i%3]
 			sender := fmt.Sprintf("%s@gmail.com", un)
 			msg := inbox.Message{
-				UID:     uint32(i),
+				UID:     strconv.Itoa(i),
 				Folder:  "INBOX",
 				Subject: fmt.Sprintf("msg %d", i),
 				Sender: inbox.Sender{

@@ -7,6 +7,7 @@ import (
 	"mailboxsweep/assert"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxtesting"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -27,7 +28,7 @@ func TestMetadataService(t *testing.T) {
 		un := "me"
 		sender := fmt.Sprintf("%s@gmail.com", un)
 		msg := inbox.Message{
-			UID:     uint32(i),
+			UID:     strconv.Itoa(i),
 			Folder:  "INBOX",
 			Subject: fmt.Sprintf("msg %d", i),
 			Sender: inbox.Sender{

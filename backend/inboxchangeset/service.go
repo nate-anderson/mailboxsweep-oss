@@ -11,7 +11,6 @@ import (
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
-	"strconv"
 
 	"golang.org/x/exp/constraints"
 )
@@ -248,9 +247,9 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 
 		for _, m := range leaf.Messages {
 			if _, ok := folderUIDs[m.Folder]; ok {
-				folderUIDs[m.Folder] = append(folderUIDs[m.Folder], strconv.FormatUint(uint64(m.UID), 10))
+				folderUIDs[m.Folder] = append(folderUIDs[m.Folder], m.UID)
 			} else {
-				folderUIDs[m.Folder] = []string{strconv.FormatUint(uint64(m.UID), 10)}
+				folderUIDs[m.Folder] = []string{m.UID}
 			}
 
 			// track changes to inbox counts

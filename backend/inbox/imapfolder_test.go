@@ -7,7 +7,6 @@ import (
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/metering"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -50,8 +49,7 @@ func TestIMAPFolder(t *testing.T) {
 	)
 	assert.ThatError(t, err).IsNil()
 
-	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
-	assert.ThatError(t, err).IsNil()
+	imapCred := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
 
 	inbox, err := provider.Login(
 		testConf.Address,
@@ -96,7 +94,7 @@ func TestIMAPFolder(t *testing.T) {
 
 	msgIDs := make([]string, 0, n)
 	for _, m := range msgs {
-		msgIDs = append(msgIDs, strconv.FormatUint(uint64(m.UID), 10))
+		msgIDs = append(msgIDs, m.UID)
 	}
 
 	t.Run("mark messages read", func(t *testing.T) {

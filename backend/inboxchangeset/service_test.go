@@ -14,6 +14,7 @@ import (
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/payment"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -142,7 +143,7 @@ func TestInboxChangesetService(t *testing.T) {
 	for i := 0; i < numMessages; i++ {
 		senderIndex := i % 3
 		m := inbox.Message{
-			UID:     uint32(i),
+			UID:     strconv.Itoa(i),
 			Folder:  folder,
 			Subject: fmt.Sprintf("Msg #%d", i),
 			Sender: inbox.Sender{

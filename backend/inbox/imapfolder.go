@@ -99,7 +99,7 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 	}
 	return Message{
 		Subject:   i.Envelope.Subject,
-		UID:       i.Uid,
+		UID:       strconv.FormatUint(uint64(i.Uid), 10),
 		Folder:    folder,
 		InReplyTo: i.Envelope.InReplyTo,
 		Sender: Sender{
