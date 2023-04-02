@@ -41,7 +41,7 @@ func (r DynamoInboxCredentialRepository) buildKey(address string) map[string]typ
 	}
 }
 
-func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential InboxCredential) error {
+func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential Credential) error {
 	attrs, err := attributevalue.MarshalMap(credential)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential 
 
 	item := mailboxsweep.MergeAttributeValueMaps(
 		attrs,
-		r.buildKey(credential.Address),
+		r.buildKey(credential.Address()),
 	)
 
 	_, err = r.db.PutItem(ctx, &dynamodb.PutItemInput{
@@ -60,26 +60,30 @@ func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential 
 	return err
 }
 
-func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, address string) (*InboxCredential, error) {
+func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, address string) (Credential, error) {
+	var ic Credential
 	key := r.buildKey(address)
 	res, err := r.db.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: &r.tableName,
 		Key:       key,
 	})
 	if err != nil {
-		return nil, err
+		return ic, err
 	}
 
 	if res.Item == nil {
-		return nil, mailboxsweep.ErrNotFound
+		return ic, mailboxsweep.ErrNotFound
 	}
 
-	ic := InboxCredential{}
+	if _, ok := res.Item["is_imap"]; ok {
+		ic = &IMAPInboxCredential{}
+	}
+
 	if err := attributevalue.UnmarshalMap(res.Item, &ic); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal credential result: %w", err)
+		return ic, fmt.Errorf("failed to unmarshal credential result: %w", err)
 	}
 
-	return &ic, nil
+	return ic, nil
 }
 
 func (r DynamoInboxCredentialRepository) DeleteByAddress(ctx context.Context, address string) error {

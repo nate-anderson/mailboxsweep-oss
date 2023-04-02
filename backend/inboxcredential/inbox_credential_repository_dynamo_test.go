@@ -2,6 +2,8 @@ package inboxcredential
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"testing"
@@ -19,11 +21,20 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 	pass := "test_pass_bingo_bongo_%"
 	cipherKey := []byte("987_zxy_456_defg")
 
-	cred, err := NewInboxCredential(address, pass, cipherKey)
+	block, err := aes.NewCipher(cipherKey)
+	assert.ThatError(t, err).IsNil()
+
+	encryptor, err := cipher.NewGCM(block)
+	assert.ThatError(t, err).IsNil()
+
+	cred, err := NewIMAPInboxCredential(address, pass, encryptor.NonceSize())
+	assert.ThatError(t, err).IsNil()
+
+	err = cred.encrypt(encryptor)
 	assert.ThatError(t, err).IsNil()
 
 	t.Run("upsert credential (insert)", func(t *testing.T) {
-		err := repo.Upsert(ctx, *cred)
+		err := repo.Upsert(ctx, cred)
 		assert.ThatError(t, err).IsNil()
 	})
 
@@ -31,38 +42,46 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 		t.Run("doesn't exist", func(t *testing.T) {
 			retrieved, err := repo.FindByAddress(ctx, "nobody@me.com")
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
-			assert.That(t, retrieved).Equals(nil)
+			assert.That(t, retrieved == nil).Equals(true)
 		})
 
 		t.Run("exists", func(t *testing.T) {
 			retrieved, err := repo.FindByAddress(ctx, address)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, retrieved.Address).Equals(cred.Address)
-			assert.That(t, *retrieved.Nonce).Equals(*cred.Nonce)
-			assert.That(t, retrieved.Password).NotEqual("")
+			imapCred, ok := retrieved.(*IMAPInboxCredential)
+			assert.That(t, ok).Equals(true)
+			assert.That(t, imapCred.EmailAddress).Equals(cred.EmailAddress)
+			assert.That(t, imapCred.Nonce).Equals(cred.Nonce)
+			assert.That(t, imapCred.Password).NotEqual("")
 
-			decrypted, err := retrieved.decryptPassword(cipherKey)
+			err = imapCred.decrypt(encryptor)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, decrypted).Equals(pass)
+			assert.That(t, imapCred.Password).Equals(pass)
 		})
 	})
 
 	t.Run("upsert (update)", func(t *testing.T) {
 		pass2 := "blunko"
-		cred2, err := NewInboxCredential(address, pass2, cipherKey)
+		cred2, err := NewIMAPInboxCredential(address, pass2, encryptor.NonceSize())
 		assert.ThatError(t, err).IsNil()
-		err = repo.Upsert(ctx, *cred2)
+		err = cred2.encrypt(encryptor)
+		assert.ThatError(t, err).IsNil()
+
+		err = repo.Upsert(ctx, cred2)
 		assert.ThatError(t, err).IsNil()
 
 		retrieved, err := repo.FindByAddress(ctx, address)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, retrieved.Address).Equals(cred2.Address)
-		assert.That(t, *retrieved.Nonce).Equals(*cred2.Nonce)
-		assert.That(t, retrieved.Password).NotEqual("")
+		assert.That(t, retrieved.Address()).Equals(cred2.EmailAddress)
 
-		decrypted, err := retrieved.decryptPassword(cipherKey)
+		imapCred, ok := retrieved.(*IMAPInboxCredential)
+		assert.That(t, ok).Equals(true)
+		assert.That(t, imapCred.Nonce).Equals(cred2.Nonce)
+		assert.That(t, imapCred.Password).NotEqual("")
+
+		err = imapCred.decrypt(encryptor)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, decrypted).Equals(pass2)
+		assert.That(t, imapCred.Password).Equals(pass2)
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -71,6 +90,6 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 
 		retrieved, err := repo.FindByAddress(ctx, address)
 		assert.ThatError(t, err).IsNotNil()
-		assert.That(t, retrieved).Equals(nil)
+		assert.That(t, retrieved == nil).Equals(true)
 	})
 }

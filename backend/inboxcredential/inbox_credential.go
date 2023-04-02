@@ -2,92 +2,101 @@ package inboxcredential
 
 import (
 	"context"
-	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mailboxsweep"
 	"time"
 )
 
-// InboxCredential represents the user-provided login information for an inbox
-type InboxCredential struct {
-	Address string `dynamodbav:"address"`
-	// base64-encoded byte array
-	Nonce *string `dynamodbav:"nonce"`
-	// base64-encoded ciphertext
-	Password string    `dynamodbav:"password"`
-	Created  time.Time `dynamodbav:"created"`
-	Expires  int64     `dynamodbav:"expires_at"`
+type Credential interface {
+	Address() string
+	// encrypt in place
+	encrypt(encryptor cipher.AEAD) error
+	// decrypt in place
+	decrypt(decryptor cipher.AEAD) error
 }
 
-func NewInboxCredential(address, password string, cipherKey []byte) (*InboxCredential, error) {
-	block, err := aes.NewCipher(cipherKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
-	}
+// IMAPInboxCredential represents the user-provided login information for an inbox
+type IMAPInboxCredential struct {
+	EmailAddress string `dynamodbav:"address"`
+	// base64-encoded byte array
+	Nonce string `dynamodbav:"nonce"`
 
-	encryptor, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cipher AEAD: %w", err)
-	}
+	nonceBytes []byte
+	// base64-encoded ciphertext
+	Password  string    `dynamodbav:"password"`
+	Created   time.Time `dynamodbav:"created"`
+	Expires   int64     `dynamodbav:"expires_at"`
+	Encrypted bool      `dynamodbav:"encrypted"`
+	IsIMAP    bool      `dynamodbav:"is_imap,omitempty"`
+}
 
-	nonce := make([]byte, encryptor.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+func NewIMAPInboxCredential(address, password string, nonceSize int) (*IMAPInboxCredential, error) {
+	nonce := make([]byte, nonceSize)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
 
-	var b []byte
-	b = encryptor.Seal(b, nonce, []byte(password), nil)
 	encodedNonce := base64.RawStdEncoding.EncodeToString(nonce)
 	now := time.Now()
-	return &InboxCredential{
-		Address:  address,
-		Password: base64.RawStdEncoding.EncodeToString(b),
-		Nonce:    &encodedNonce,
-		Created:  now,
-		Expires:  now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
+	return &IMAPInboxCredential{
+		EmailAddress: address,
+		Password:     password,
+		Nonce:        encodedNonce,
+		nonceBytes:   nonce,
+		Created:      now,
+		Expires:      now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
+		IsIMAP:       true,
 	}, nil
 }
 
-func (i InboxCredential) decryptPassword(cipherKey []byte) (string, error) {
-	if i.Nonce == nil {
-		return i.Password, nil
+func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD) error {
+	if i.Encrypted {
+		return errors.New("cannot encrypt credential: already encrypted")
 	}
+	var b []byte
+	b = encryptor.Seal(b, i.nonceBytes, []byte(i.Password), nil)
+	i.Password = base64.RawStdEncoding.EncodeToString(b)
+	i.Encrypted = true
+	return nil
+}
 
-	block, err := aes.NewCipher(cipherKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to create AES cipher (decrypt): %w", err)
+func (i *IMAPInboxCredential) decrypt(decryptor cipher.AEAD) error {
+	if !i.Encrypted {
+		return errors.New("cannot decrypt credential: already decrypted")
 	}
-
-	encryptor, err := cipher.NewGCM(block)
+	decodedNonce, err := base64.RawStdEncoding.DecodeString(i.Nonce)
 	if err != nil {
-		return "", fmt.Errorf("failed to create cipher AEAD (decrypt): %w", err)
-	}
-
-	decodedNonce, err := base64.RawStdEncoding.DecodeString(*i.Nonce)
-	if err != nil {
-		return "", fmt.Errorf("failed to decode nonce: %w", err)
+		return fmt.Errorf("failed to decode nonce: %w", err)
 	}
 
 	decodedPasswordCipher, err := base64.RawStdEncoding.DecodeString(i.Password)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode password ciphertext: %w", err)
+		return fmt.Errorf("failed to decode password ciphertext: %w", err)
 	}
 
 	var b []byte
-	b, err = encryptor.Open(b, decodedNonce, decodedPasswordCipher, nil)
+	b, err = decryptor.Open(b, decodedNonce, decodedPasswordCipher, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to decrypt credential: %w", err)
+		return fmt.Errorf("failed to decrypt credential: %w", err)
 	}
 
-	return string(b), nil
+	i.Password = string(b)
+	i.Encrypted = false
+
+	return nil
+}
+
+func (i IMAPInboxCredential) Address() string {
+	return i.EmailAddress
 }
 
 type InboxCredentialRepository interface {
-	Upsert(ctx context.Context, credential InboxCredential) error
-	FindByAddress(ctx context.Context, address string) (*InboxCredential, error)
+	Upsert(ctx context.Context, credential Credential) error
+	FindByAddress(ctx context.Context, address string) (Credential, error)
 	DeleteByAddress(ctx context.Context, address string) error
 }
