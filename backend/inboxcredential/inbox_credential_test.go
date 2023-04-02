@@ -22,16 +22,15 @@ func TestInboxCredential(t *testing.T) {
 		var i *IMAPInboxCredential
 		t.Run("encrypt", func(t *testing.T) {
 			var err error
-			i, err = NewIMAPInboxCredential(testAddr, password, encryptor.NonceSize())
+			i, err = NewIMAPInboxCredential(testAddr, password)
 			assert.ThatError(t, err).IsNil()
 
 			assert.That(t, i.EmailAddress).Equals(testAddr)
-			assert.That(t, i.nonceBytes != nil).Equals(true)
-			assert.That(t, i.Nonce).NotEqual("")
 			assert.That(t, len(i.Password) > 0).Equals(true)
 
-			err = i.encrypt(encryptor)
+			err = i.encrypt(encryptor, encryptor.NonceSize())
 			assert.ThatError(t, err).IsNil()
+			assert.That(t, i.Nonce).NotEqual("")
 			assert.That(t, i.Password).NotEqual(password)
 			assert.That(t, i.Address()).Equals(testAddr)
 		})

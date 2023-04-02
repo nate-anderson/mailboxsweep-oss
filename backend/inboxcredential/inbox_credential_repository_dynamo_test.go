@@ -27,10 +27,10 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 	encryptor, err := cipher.NewGCM(block)
 	assert.ThatError(t, err).IsNil()
 
-	cred, err := NewIMAPInboxCredential(address, pass, encryptor.NonceSize())
+	cred, err := NewIMAPInboxCredential(address, pass)
 	assert.ThatError(t, err).IsNil()
 
-	err = cred.encrypt(encryptor)
+	err = cred.encrypt(encryptor, encryptor.NonceSize())
 	assert.ThatError(t, err).IsNil()
 
 	t.Run("upsert credential (insert)", func(t *testing.T) {
@@ -62,9 +62,9 @@ func TestDynamoInboxCredentialRepository(t *testing.T) {
 
 	t.Run("upsert (update)", func(t *testing.T) {
 		pass2 := "blunko"
-		cred2, err := NewIMAPInboxCredential(address, pass2, encryptor.NonceSize())
+		cred2, err := NewIMAPInboxCredential(address, pass2)
 		assert.ThatError(t, err).IsNil()
-		err = cred2.encrypt(encryptor)
+		err = cred2.encrypt(encryptor, encryptor.NonceSize())
 		assert.ThatError(t, err).IsNil()
 
 		err = repo.Upsert(ctx, cred2)

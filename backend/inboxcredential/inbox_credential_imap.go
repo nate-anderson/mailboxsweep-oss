@@ -1,7 +1,6 @@
 package inboxcredential
 
 import (
-	"context"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
@@ -17,7 +16,7 @@ type Credential interface {
 	Created() time.Time
 	Expires() time.Time
 	// encrypt in place
-	encrypt(encryptor cipher.AEAD) error
+	encrypt(encryptor cipher.AEAD, nonceSize int) error
 	// decrypt in place
 	decrypt(decryptor cipher.AEAD) error
 }
@@ -28,7 +27,6 @@ type IMAPInboxCredential struct {
 	// base64-encoded byte array
 	Nonce string `dynamodbav:"nonce"`
 
-	nonceBytes []byte
 	// base64-encoded ciphertext
 	Password  string    `dynamodbav:"password"`
 	CreatedAt time.Time `dynamodbav:"created"`
@@ -37,33 +35,34 @@ type IMAPInboxCredential struct {
 	IsIMAP    bool      `dynamodbav:"is_imap,omitempty"`
 }
 
-func NewIMAPInboxCredential(address, password string, nonceSize int) (*IMAPInboxCredential, error) {
-	nonce := make([]byte, nonceSize)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	encodedNonce := base64.RawStdEncoding.EncodeToString(nonce)
+func NewIMAPInboxCredential(address, password string) (*IMAPInboxCredential, error) {
 	now := time.Now()
 	return &IMAPInboxCredential{
 		EmailAddress: address,
 		Password:     password,
-		Nonce:        encodedNonce,
-		nonceBytes:   nonce,
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
 		IsIMAP:       true,
 	}, nil
 }
 
-func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD) error {
+func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD, nonceSize int) error {
 	if i.Encrypted {
 		return errors.New("cannot encrypt credential: already encrypted")
 	}
+
+	nonce := make([]byte, nonceSize)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return err
+	}
+
+	encodedNonce := base64.RawStdEncoding.EncodeToString(nonce)
+
 	var b []byte
-	b = encryptor.Seal(b, i.nonceBytes, []byte(i.Password), nil)
+	b = encryptor.Seal(b, nonce, []byte(i.Password), nil)
 	i.Password = base64.RawStdEncoding.EncodeToString(b)
 	i.Encrypted = true
+	i.Nonce = encodedNonce
 	return nil
 }
 
@@ -103,10 +102,4 @@ func (i IMAPInboxCredential) Created() time.Time {
 
 func (i IMAPInboxCredential) Expires() time.Time {
 	return time.Unix(i.ExpiresAt, 0)
-}
-
-type InboxCredentialRepository interface {
-	Upsert(ctx context.Context, credential Credential) error
-	FindByAddress(ctx context.Context, address string) (Credential, error)
-	DeleteByAddress(ctx context.Context, address string) error
 }

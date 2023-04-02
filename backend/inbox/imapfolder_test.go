@@ -50,7 +50,7 @@ func TestIMAPFolder(t *testing.T) {
 	)
 	assert.ThatError(t, err).IsNil()
 
-	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password, 32)
+	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
 	assert.ThatError(t, err).IsNil()
 
 	inbox, err := provider.Login(

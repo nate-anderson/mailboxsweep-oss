@@ -62,28 +62,27 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 
 	// This endpoint is only called for IMAP providers, because we get the Gmail credentials
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
-	validationCred, err := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password, 32)
+	credential, err := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusInternalServerError))
 		return
 	}
 
-	_, err = provider.Login(address, validationCred)
+	_, err = provider.Login(address, credential)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
 	}
 
 	// end validation
-
-	addr, err := c.service.StoreCredential(ctx, reqBody.Password)
+	err = c.service.StoreCredential(ctx, credential)
 	if err != nil {
 		c.respondError(w, err)
 		return
 	}
 
 	res := CreateCredentialResponse{
-		Address: addr,
+		Address: address,
 	}
 	c.respond(w, http.StatusOK, res)
 }
@@ -154,13 +153,13 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 
 	// This endpoint is only called for IMAP providers, because we get the Gmail credentials
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
-	validationCred, err := inboxcredential.NewIMAPInboxCredential(addr, reqBody.Password, 32)
+	credential, err := inboxcredential.NewIMAPInboxCredential(addr, reqBody.Password)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusInternalServerError))
 		return
 	}
 
-	_, err = provider.Login(addr, validationCred)
+	_, err = provider.Login(addr, credential)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
@@ -168,7 +167,7 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 
 	// end validation
 
-	_, err = c.service.StoreCredential(ctx, reqBody.Password)
+	err = c.service.StoreCredential(ctx, credential)
 	if err != nil {
 		c.respondError(w, err)
 		return

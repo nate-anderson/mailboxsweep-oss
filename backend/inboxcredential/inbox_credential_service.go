@@ -15,7 +15,7 @@ type CredentialReadService interface {
 }
 
 type CredentialWriteService interface {
-	StoreCredential(ctx context.Context, password string) (address string, err error)
+	StoreCredential(ctx context.Context, cred Credential) error
 	DeleteCredential(ctx context.Context) error
 }
 
@@ -54,7 +54,7 @@ func (s DefaultService) StoreCredential(ctx context.Context, credential Credenti
 		return err
 	}
 
-	if err = credential.encrypt(s.encryptor); err != nil {
+	if err = credential.encrypt(s.encryptor, s.encryptor.NonceSize()); err != nil {
 		return err
 	}
 

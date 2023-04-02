@@ -24,7 +24,7 @@ func TestInboxCredentialService(t *testing.T) {
 		authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, testAddr)
 
 		t.Run("store credential", func(t *testing.T) {
-			cred, err := NewIMAPInboxCredential(testAddr, testPassword, service.encryptor.NonceSize())
+			cred, err := NewIMAPInboxCredential(testAddr, testPassword)
 			assert.ThatError(t, err).IsNil()
 
 			t.Run("unauthenticated, failure", func(t *testing.T) {

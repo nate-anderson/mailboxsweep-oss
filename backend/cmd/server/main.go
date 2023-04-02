@@ -123,7 +123,10 @@ func main() {
 	}
 
 	credentialRepo := inboxcredential.NewDynamoInboxCredentialRepository(db, cfg.DynamoDBTable)
-	credentialService := inboxcredential.NewService(credentialRepo, cipherKey)
+	credentialService, err := inboxcredential.NewService(credentialRepo, cipherKey)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	s3, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
