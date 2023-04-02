@@ -1,0 +1,174 @@
+package login
+
+import (
+	"context"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"io"
+	"mailboxsweep"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/session"
+	"time"
+)
+
+type LinkService interface {
+	CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error)
+	ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error)
+}
+
+type DefaultService struct {
+	repo           LinkRepository
+	userService    inboxuser.Service
+	sessionService session.Service
+	sender         Sender
+	linkLifespan   time.Duration
+	tokenLength    int
+	signingCert    *rsa.PrivateKey
+}
+
+func NewService(
+	repo LinkRepository,
+	userService inboxuser.Service,
+	sessionService session.Service,
+	sender Sender,
+	signingCert *rsa.PrivateKey,
+	linkLifespan time.Duration,
+	tokenLength int,
+) *DefaultService {
+	return &DefaultService{
+		repo,
+		userService,
+		sessionService,
+		sender,
+		linkLifespan,
+		tokenLength,
+		signingCert,
+	}
+}
+
+func (s DefaultService) signToken(tokenBytes []byte) (string, error) {
+	checksum := sha256.Sum256(tokenBytes)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, s.signingCert, crypto.SHA256, checksum[:])
+	if err != nil {
+		return "", fmt.Errorf("failed to checksum token: %w", err)
+	}
+
+	sigString := hex.EncodeToString(signature)
+	return sigString, nil
+}
+
+func (s DefaultService) verifyToken(tokenBytes []byte, signature []byte) error {
+	checksum := sha256.Sum256(tokenBytes)
+	if err := rsa.VerifyPKCS1v15(&s.signingCert.PublicKey, crypto.SHA256, checksum[:], signature); err != nil {
+		return fmt.Errorf("failed to validate signature of token: %w", err)
+	}
+
+	return nil
+}
+
+func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error) {
+	user, err := s.userService.FindByAddress(ctx, address)
+	sendAddress := address
+	if err != nil {
+		// if this is an error other than "not found", fail
+		if !errors.Is(err, mailboxsweep.ErrNotFound) {
+			return false, err
+		}
+
+		// store the new user
+		user, err = s.userService.Store(ctx, address)
+		if err != nil {
+			return false, err
+		}
+
+		// otherwise, consider this first login
+	} else {
+		sendAddress = user.Address
+		existingUser = true
+	}
+
+	tokenBytes := make([]byte, s.tokenLength)
+	_, err = io.ReadFull(rand.Reader, tokenBytes)
+	if err != nil {
+		return false, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	now := time.Now()
+	expires := now.Add(s.linkLifespan)
+	token := hex.EncodeToString(tokenBytes)
+
+	signature, err := s.signToken(tokenBytes)
+	if err != nil {
+		return false, err
+	}
+
+	link := Link{
+		UserUUID:      user.UUID,
+		Token:         token,
+		Expires:       expires.Unix(),
+		Created:       now,
+		InitiatedByIP: initiatedByIP,
+		Signature:     signature,
+	}
+
+	// only allow one active login link at a time
+	if err = s.repo.InvalidateByUserUUID(ctx, user.UUID); err != nil {
+		return false, err
+	}
+
+	if err = s.repo.Store(ctx, link); err != nil {
+		return false, err
+	}
+
+	sendReq := SendRequest{
+		Address:   sendAddress,
+		Expires:   expires,
+		Token:     link.Token,
+		Signature: link.Signature,
+	}
+	return existingUser, s.sender.Send(ctx, sendReq)
+}
+
+func (s DefaultService) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
+	// verify signature before doing anything else
+	tokenBytes, err := hex.DecodeString(token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signatureBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = s.verifyToken(tokenBytes, signatureBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid login link (signature)")
+	}
+
+	link, err := s.repo.Find(ctx, token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = s.repo.InvalidateByUserUUID(ctx, link.UserUUID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user, err := s.userService.FindByUUID(ctx, link.UserUUID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sess, err := s.sessionService.StartSession(ctx, user.Address)
+	if err != nil {
+		return nil, nil, err
+	}
+	return user, sess, err
+}
