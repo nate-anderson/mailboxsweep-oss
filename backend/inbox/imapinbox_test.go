@@ -15,8 +15,8 @@ func TestIMAPInbox(t *testing.T) {
 	provider, err := NewIMAPProvider(ctx, testConf.IMAPHost, testConf.IMAPPort, testConf.Address, nil, nil)
 	assert.ThatError(t, err).IsNil()
 
-	imapCred, err := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
-	assert.ThatError(t, err).IsNil()
+	imapCred := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
+
 	inbox, err := provider.Login(testConf.Address, imapCred)
 	assert.ThatError(t, err).IsNil()
 

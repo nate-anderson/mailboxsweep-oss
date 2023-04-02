@@ -62,11 +62,7 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 
 	// This endpoint is only called for IMAP providers, because we get the Gmail credentials
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
-	credential, err := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password)
-	if err != nil {
-		c.respondError(w, err, withOverrideStatusCode(http.StatusInternalServerError))
-		return
-	}
+	credential := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password)
 
 	_, err = provider.Login(address, credential)
 	if err != nil {
@@ -153,11 +149,7 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 
 	// This endpoint is only called for IMAP providers, because we get the Gmail credentials
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
-	credential, err := inboxcredential.NewIMAPInboxCredential(addr, reqBody.Password)
-	if err != nil {
-		c.respondError(w, err, withOverrideStatusCode(http.StatusInternalServerError))
-		return
-	}
+	credential := inboxcredential.NewIMAPInboxCredential(addr, reqBody.Password)
 
 	_, err = provider.Login(addr, credential)
 	if err != nil {

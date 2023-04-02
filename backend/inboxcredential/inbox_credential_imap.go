@@ -35,7 +35,7 @@ type IMAPInboxCredential struct {
 	IsIMAP    bool      `dynamodbav:"is_imap,omitempty"`
 }
 
-func NewIMAPInboxCredential(address, password string) (*IMAPInboxCredential, error) {
+func NewIMAPInboxCredential(address, password string) *IMAPInboxCredential {
 	now := time.Now()
 	return &IMAPInboxCredential{
 		EmailAddress: address,
@@ -43,7 +43,7 @@ func NewIMAPInboxCredential(address, password string) (*IMAPInboxCredential, err
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
 		IsIMAP:       true,
-	}, nil
+	}
 }
 
 func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD, nonceSize int) error {
