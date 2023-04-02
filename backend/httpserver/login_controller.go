@@ -12,14 +12,14 @@ import (
 
 type LoginController struct {
 	log          *logrus.Logger
-	service      login.Service
+	service      login.LinkService
 	cookieDomain string
 	cookiePath   string
 	isDev        bool
 	baseController
 }
 
-func NewLoginController(service login.Service, cookieDomain, cookiePath string, isDev bool, log *logrus.Logger) *LoginController {
+func NewLoginController(service login.LinkService, cookieDomain, cookiePath string, isDev bool, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,

@@ -32,7 +32,7 @@ func NewController(
 	classificationService classification.Service,
 	metadataService inbox.MetadataService,
 	providerService inbox.ProviderService,
-	loginService login.Service,
+	loginService login.LinkService,
 	changesetService changeset.Service,
 	inboxChangesetService inboxchangeset.Service,
 	imapServerService imapserver.Service,
