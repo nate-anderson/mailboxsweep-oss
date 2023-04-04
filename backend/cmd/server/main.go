@@ -88,8 +88,9 @@ type serverConfig struct {
 
 	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
 
-	GoogleClientID     string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleClientID        string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret    string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleAuthRedirectURL string `mapstructure:"GOOGLE_OAUTH_REDIRECT_URL"`
 }
 
 func main() {
@@ -249,7 +250,9 @@ func main() {
 		log.Fatalf("failed to read signing cert: %s", err)
 	}
 
-	loginService := login.NewService(loginRepo, userService, sessionService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
+	loginLinkService := login.NewLinkService(loginRepo, userService, sessionService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
+	gmailLoginService := login.NewGmailLoginService(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
+	loginService := login.NewService(loginLinkService, gmailLoginService)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
 		log.Fatal("cookie domain and path are not configured")

@@ -3,11 +3,20 @@ package login
 import (
 	"context"
 	"mailboxsweep"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/session"
 )
 
 type Service struct {
 	linkService       LinkService
 	gmailLoginService *GmailLoginService
+}
+
+func NewService(linkService LinkService, gmailLoginService *GmailLoginService) *Service {
+	return &Service{
+		linkService:       linkService,
+		gmailLoginService: gmailLoginService,
+	}
 }
 
 func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP string) (redirectURL string, redirect bool, err error) {
@@ -29,4 +38,8 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		return "", false, nil
 	}
 
+}
+
+func (s Service) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
+	return s.ValidateLoginLink(ctx, token, signature)
 }

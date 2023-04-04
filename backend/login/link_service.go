@@ -21,7 +21,7 @@ type LinkService interface {
 	ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error)
 }
 
-type DefaultService struct {
+type DefaultLinkService struct {
 	repo           LinkRepository
 	userService    inboxuser.Service
 	sessionService session.Service
@@ -31,7 +31,7 @@ type DefaultService struct {
 	signingCert    *rsa.PrivateKey
 }
 
-func NewService(
+func NewLinkService(
 	repo LinkRepository,
 	userService inboxuser.Service,
 	sessionService session.Service,
@@ -39,8 +39,8 @@ func NewService(
 	signingCert *rsa.PrivateKey,
 	linkLifespan time.Duration,
 	tokenLength int,
-) *DefaultService {
-	return &DefaultService{
+) *DefaultLinkService {
+	return &DefaultLinkService{
 		repo,
 		userService,
 		sessionService,
@@ -51,7 +51,7 @@ func NewService(
 	}
 }
 
-func (s DefaultService) signToken(tokenBytes []byte) (string, error) {
+func (s DefaultLinkService) signToken(tokenBytes []byte) (string, error) {
 	checksum := sha256.Sum256(tokenBytes)
 	signature, err := rsa.SignPKCS1v15(rand.Reader, s.signingCert, crypto.SHA256, checksum[:])
 	if err != nil {
@@ -62,7 +62,7 @@ func (s DefaultService) signToken(tokenBytes []byte) (string, error) {
 	return sigString, nil
 }
 
-func (s DefaultService) verifyToken(tokenBytes []byte, signature []byte) error {
+func (s DefaultLinkService) verifyToken(tokenBytes []byte, signature []byte) error {
 	checksum := sha256.Sum256(tokenBytes)
 	if err := rsa.VerifyPKCS1v15(&s.signingCert.PublicKey, crypto.SHA256, checksum[:], signature); err != nil {
 		return fmt.Errorf("failed to validate signature of token: %w", err)
@@ -71,7 +71,7 @@ func (s DefaultService) verifyToken(tokenBytes []byte, signature []byte) error {
 	return nil
 }
 
-func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error) {
+func (s DefaultLinkService) CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error) {
 	user, err := s.userService.FindByAddress(ctx, address)
 	sendAddress := address
 	if err != nil {
@@ -134,7 +134,7 @@ func (s DefaultService) CreateLoginLink(ctx context.Context, address, initiatedB
 	return existingUser, s.sender.Send(ctx, sendReq)
 }
 
-func (s DefaultService) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
+func (s DefaultLinkService) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
 	// verify signature before doing anything else
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {

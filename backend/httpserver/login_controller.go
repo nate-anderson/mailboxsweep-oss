@@ -12,14 +12,14 @@ import (
 
 type LoginController struct {
 	log          *logrus.Logger
-	service      login.LinkService
+	service      *login.Service
 	cookieDomain string
 	cookiePath   string
 	isDev        bool
 	baseController
 }
 
-func NewLoginController(service login.LinkService, cookieDomain, cookiePath string, isDev bool, log *logrus.Logger) *LoginController {
+func NewLoginController(service *login.Service, cookieDomain, cookiePath string, isDev bool, log *logrus.Logger) *LoginController {
 	return &LoginController{
 		log,
 		service,
@@ -42,14 +42,16 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	_, err = c.service.CreateLoginLink(ctx, reqBody.Address, requestIP(req))
+	redirectURL, redirect, err := c.service.InitiateLogin(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
 
 	resBody := StartLoginResponse{
-		Ok: true,
+		Ok:          true,
+		Redirect:    redirect,
+		RedirectUrl: &redirectURL,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }

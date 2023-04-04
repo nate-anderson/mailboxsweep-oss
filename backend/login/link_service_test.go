@@ -29,7 +29,7 @@ func TestLoginService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	repo := NewDynamoLinkRepository(db, table)
-	service := NewService(repo, userService, sessionService, sender, cert, time.Minute, 20)
+	service := NewLinkService(repo, userService, sessionService, sender, cert, time.Minute, 20)
 
 	testAddress := "admin3@example.org"
 	testIP := "192.168.0.24"
