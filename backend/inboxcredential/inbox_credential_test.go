@@ -22,13 +22,12 @@ func TestInboxCredential(t *testing.T) {
 		var i *IMAPInboxCredential
 		t.Run("encrypt", func(t *testing.T) {
 			var err error
-			i, err = NewIMAPInboxCredential(testAddr, password)
-			assert.ThatError(t, err).IsNil()
+			i = NewIMAPInboxCredential(testAddr, password)
 
 			assert.That(t, i.EmailAddress).Equals(testAddr)
 			assert.That(t, len(i.Password) > 0).Equals(true)
 
-			err = i.encrypt(encryptor, encryptor.NonceSize())
+			err = i.encrypt(encryptor)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, i.Nonce).NotEqual("")
 			assert.That(t, i.Password).NotEqual(password)
@@ -39,6 +38,41 @@ func TestInboxCredential(t *testing.T) {
 			err := i.decrypt(encryptor)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, i.Password).Equals(password)
+		})
+	})
+
+	t.Run("Gmail inbox credential", func(t *testing.T) {
+		apiToken := "test_api_token"
+		refreshToken := "refresh_token"
+
+		var i *GmailInboxCredential
+		t.Run("encrypt", func(t *testing.T) {
+			i = NewGmailInboxCredential(testAddr, apiToken, refreshToken)
+
+			assert.That(t, i.EmailAddress).Equals(testAddr)
+			assert.That(t, i.APIToken).Equals(apiToken)
+			assert.That(t, i.RefreshToken).Equals(refreshToken)
+			assert.That(t, i.CreatedAt.IsZero()).Equals(false)
+			assert.ThatOrdered(t, i.ExpiresAt).GreaterThan(0)
+			assert.That(t, i.IsGmail).Equals(true)
+
+			err := i.encrypt(encryptor)
+			assert.ThatError(t, err).IsNil()
+
+			assert.That(t, i.EmailAddress).Equals(testAddr)
+			assert.That(t, i.APIToken).NotEqual(apiToken)
+			assert.That(t, i.RefreshToken).NotEqual(refreshToken)
+			assert.That(t, i.CreatedAt.IsZero()).Equals(false)
+			assert.ThatOrdered(t, i.ExpiresAt).GreaterThan(0)
+			assert.That(t, i.IsGmail).Equals(true)
+		})
+
+		t.Run("decrypt", func(t *testing.T) {
+			err := i.decrypt(encryptor)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, i.APIToken).Equals(apiToken)
+			assert.That(t, i.RefreshToken).Equals(refreshToken)
+			assert.That(t, i.EmailAddress).Equals(testAddr)
 		})
 	})
 

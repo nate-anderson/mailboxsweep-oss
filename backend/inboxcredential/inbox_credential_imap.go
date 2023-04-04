@@ -16,7 +16,7 @@ type Credential interface {
 	Created() time.Time
 	Expires() time.Time
 	// encrypt in place
-	encrypt(encryptor cipher.AEAD, nonceSize int) error
+	encrypt(encryptor cipher.AEAD) error
 	// decrypt in place
 	decrypt(decryptor cipher.AEAD) error
 }
@@ -46,12 +46,12 @@ func NewIMAPInboxCredential(address, password string) *IMAPInboxCredential {
 	}
 }
 
-func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD, nonceSize int) error {
+func (i *IMAPInboxCredential) encrypt(encryptor cipher.AEAD) error {
 	if i.Encrypted {
 		return errors.New("cannot encrypt credential: already encrypted")
 	}
 
-	nonce := make([]byte, nonceSize)
+	nonce := make([]byte, encryptor.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return err
 	}
