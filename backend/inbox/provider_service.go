@@ -14,17 +14,29 @@ type ProviderService interface {
 type DefaultProviderService struct {
 	imapServerService imapserver.Service
 	usageRepository   metering.UsageRepository
+
+	googleClientID     string
+	googleClientSecret string
 }
 
-func NewProviderService(imapServerService imapserver.Service, usageRepository metering.UsageRepository) *DefaultProviderService {
+func NewProviderService(
+	imapServerService imapserver.Service,
+	usageRepository metering.UsageRepository,
+	googleClientID,
+	googleClientSecret string,
+) *DefaultProviderService {
 	return &DefaultProviderService{
 		imapServerService,
 		usageRepository,
+		googleClientID,
+		googleClientSecret,
 	}
 }
 
 // Gmail quota is 2500mb/day, allow IMAP clients other than us to keep working
 var defaultQuota int = metering.Megabyte * 1800
+
+const domainGmail = "gmail.com"
 
 func (s DefaultProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
 	domain, err := mailboxsweep.DomainFromEmail(address)
@@ -34,6 +46,8 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 
 	var provider Provider
 	switch domain {
+	case domainGmail:
+		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret)
 
 	// default to IMAP
 	default:

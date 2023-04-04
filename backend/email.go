@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
+// DomainFromEmail parses an email address and returns a lowercase domain
 func DomainFromEmail(email string) (string, error) {
-	_, err := mail.ParseAddress(email)
+	_, err := mail.ParseAddress(strings.TrimSpace(email))
 	if err != nil {
 		return "", fmt.Errorf("invalid email: %w", err)
 	}

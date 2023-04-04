@@ -58,6 +58,9 @@ type workerConfig struct {
 	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
 
 	InboxMetadataTTLMinutes int `mapstructure:"INBOX_METADATA_TTL_MINUTES"`
+
+	GoogleClientID     string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
 }
 
 func main() {
@@ -105,7 +108,7 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
-	providerService := inbox.NewProviderService(imapServerService, usageRepo)
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {
