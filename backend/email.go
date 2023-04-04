@@ -21,3 +21,7 @@ func DomainFromEmail(email string) (string, error) {
 	domain := strings.ToLower(tokens[lastIdx])
 	return domain, nil
 }
+
+const (
+	DomainGmail = "gmail.com"
+)

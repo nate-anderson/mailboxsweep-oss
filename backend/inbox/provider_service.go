@@ -36,8 +36,6 @@ func NewProviderService(
 // Gmail quota is 2500mb/day, allow IMAP clients other than us to keep working
 var defaultQuota int = metering.Megabyte * 1800
 
-const domainGmail = "gmail.com"
-
 func (s DefaultProviderService) GetProvider(ctx context.Context, address string) (Provider, error) {
 	domain, err := mailboxsweep.DomainFromEmail(address)
 	if err != nil {
@@ -46,7 +44,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 
 	var provider Provider
 	switch domain {
-	case domainGmail:
+	case mailboxsweep.DomainGmail:
 		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret)
 
 	// default to IMAP
