@@ -109,3 +109,36 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 
 	c.respond(w, http.StatusOK, resBody)
 }
+
+func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.Request, params SubmitGmailStateTokenParams) {
+	ctx := req.Context()
+	token := strings.TrimSpace(
+		strings.ToLower(
+			params.StateToken,
+		),
+	)
+
+	cookie, err := req.Cookie(externalAuthCookieName)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	user, sess, err := c.service.ValidateGmailStateToken(ctx, token, cookie.Value)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	resBody := LoginResponse{
+		Address: user.Address,
+	}
+
+	sessionCookie := sess.AuthCookie(c.isDev)
+	http.SetCookie(w, sessionCookie)
+
+	isLoggedInCookie := sess.IsLoggedInCookie()
+	http.SetCookie(w, isLoggedInCookie)
+
+	c.respond(w, http.StatusOK, resBody)
+}

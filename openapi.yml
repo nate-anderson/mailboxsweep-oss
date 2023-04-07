@@ -924,3 +924,28 @@ paths:
           schema:
             type: string
           required: true
+
+  /login/gmail:
+    get:
+      operationId: submitGmailStateToken
+      description: Complete Gmail login
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        "401":
+          description: Auth failure
+      parameters:
+        - in: query
+          name: stateToken
+          schema:
+            type: string
+          required: true
