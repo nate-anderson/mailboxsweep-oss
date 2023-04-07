@@ -1,6 +1,10 @@
 package login
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"io"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -14,10 +18,8 @@ var apiScopes = []string{
 	"https://mail.google.com/",
 }
 
-const redirectURL = "mailboxsweep.com"
-
 func NewGmailLoginService(clientID, clientSecret, redirectURL string) *GmailLoginService {
-	config := oauth2.Config{
+	conf := oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
@@ -25,10 +27,27 @@ func NewGmailLoginService(clientID, clientSecret, redirectURL string) *GmailLogi
 		Scopes:       apiScopes,
 	}
 	return &GmailLoginService{
-		&config,
+		oauthConfig: &conf,
 	}
 }
 
-func (s GmailLoginService) GetAuthURL() string {
-	return s.oauthConfig.AuthCodeURL("@TODO", oauth2.AccessTypeOffline)
+func (s GmailLoginService) makeStateToken() (string, error) {
+	buf := make([]byte, 24)
+	_, err := io.ReadFull(rand.Reader, buf)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(buf), nil
+}
+
+func (s GmailLoginService) GetAuthURL() (string, error) {
+	// @TODO: we need to check the state token when the user is redirected back here
+
+	stateToken, err := s.makeStateToken()
+	if err != nil {
+		return "", err
+	}
+
+	return s.oauthConfig.AuthCodeURL(stateToken, oauth2.AccessTypeOffline), nil
 }

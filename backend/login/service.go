@@ -27,7 +27,10 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 
 	switch domain {
 	case mailboxsweep.DomainGmail:
-		authURL := s.gmailLoginService.GetAuthURL()
+		authURL, err := s.gmailLoginService.GetAuthURL()
+		if err != nil {
+			return "", false, err
+		}
 		return authURL, true, nil
 
 	default:

@@ -391,9 +391,14 @@ components:
       type: object
       required:
         - ok
+        - redirect
       properties:
         ok:
           type: boolean
+        redirect:
+          type: boolean
+        redirectUrl:
+          type: string
 
     StatusResponse:
       type: object

@@ -5,7 +5,7 @@ const isLoggedInCookie = "X-MailboxSweep-LoggedIn";
 
 const PUBLIC_FILE = /\.(.*)$/;
 
-const loginRoutes = ["/login", "/login-token"];
+const loginRoutes = ["/login", "/login-token", "/login/gmail"];
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

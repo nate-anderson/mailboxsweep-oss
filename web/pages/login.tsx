@@ -16,13 +16,24 @@ import ImageLogo from "../components/image-logo";
 
 const submitLogin = async (
   address: string,
-  setModalOpen: (open: boolean) => void
+  setMagicLinkModalOpen: (open: boolean) => void
 ) => {
   try {
     const res = await API.initiateLogin({
       address,
     });
-    setModalOpen(true);
+
+    if (res.ok && !res.redirect) {
+      setMagicLinkModalOpen(true);
+    }
+
+    if (res.ok && res.redirect) {
+      if (!res.redirectUrl) {
+        console.error("Redirect was true, but no URL was provided");
+        return;
+      }
+      window.location.href = res.redirectUrl;
+    }
   } catch (error) {
     console.log({ initiateLoginError: error });
   }
