@@ -37,18 +37,25 @@ func NewGmailProvider(
 	}
 }
 
-func (p GmailProvider) Connect() error {
+func (p GmailProvider) Connect(_ context.Context) error {
 	// no need
 	return nil
 }
 
-func (p *GmailProvider) Login(username string, credential inboxcredential.Credential) (Inbox, error) {
+func (p *GmailProvider) Login(ctx context.Context, username string, credential inboxcredential.Credential) (Inbox, error) {
 	gmailCred, ok := credential.(*inboxcredential.GmailInboxCredential)
 	if !ok {
 		return nil, fmt.Errorf("expected Gmail credential: got %T", credential)
 	}
 
-	client, err := gmail.NewService(context.Background(), option.WithAPIKey(gmailCred.APIToken))
+	oauthToken, err := gmailCred.OAuth2Token()
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient := p.conf.Client(ctx, oauthToken)
+
+	client, err := gmail.NewService(context.Background(), option.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"mailboxsweep"
 	"mailboxsweep/inbox"
 	"net/http"
 
@@ -31,15 +30,8 @@ func (c FolderController) GetInboxMetadata(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		c.log.Errorf("no address associated with context inside handler - THIS IS VERY BAD")
-		c.respondAuthError(w, err)
-		return
-	}
-
 	resBody := InboxMetadataResponse{
-		Address:      addr,
+		Address:      meta.Inbox,
 		MessageCount: meta.MessageCount,
 		UnreadCount:  meta.UnreadCount,
 		Folders:      meta.Folders,
