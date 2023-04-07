@@ -9,27 +9,32 @@ import (
 	"io"
 	"mailboxsweep"
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 type GmailInboxCredential struct {
-	EmailAddress string `dynamodbav:"address"`
-	Nonce        string `dynamodbav:"nonce"`
-	APIToken     string `dynamodbav:"api_token"`
-	RefreshToken string `dynamodbav:"refresh_token"`
+	EmailAddress string    `dynamodbav:"address"`
+	Nonce        string    `dynamodbav:"nonce"`
+	APIToken     string    `dynamodbav:"api_token"`
+	RefreshToken string    `dynamodbav:"refresh_token"`
+	TokenExpiry  time.Time `dynamodbav:"token_expiry"`
 
 	CreatedAt time.Time `dynamodbav:"created"`
-	ExpiresAt int64     `dynamodbav:"expires_at"`
-	Encrypted bool      `dynamodbav:"encrypted"`
-	IsGmail   bool      `dynamodbav:"is_gmail"`
+	// Dynamo TTL - different from token expiry because we may need to refresh
+	ExpiresAt int64 `dynamodbav:"expires_at"`
+	Encrypted bool  `dynamodbav:"encrypted"`
+	IsGmail   bool  `dynamodbav:"is_gmail"`
 }
 
-func NewGmailInboxCredential(address, apiToken, refreshToken string) *GmailInboxCredential {
+func NewGmailInboxCredential(address, apiToken, refreshToken string, expiry time.Time) *GmailInboxCredential {
 	now := time.Now()
 	return &GmailInboxCredential{
 		EmailAddress: address,
 		APIToken:     apiToken,
 		RefreshToken: refreshToken,
 		CreatedAt:    now,
+		TokenExpiry:  expiry,
 		ExpiresAt:    now.Add(mailboxsweep.DynamoUserDataTTL).Unix(),
 		IsGmail:      true,
 	}
@@ -106,4 +111,16 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 	c.RefreshToken = string(buf)
 
 	return nil
+}
+
+func (c GmailInboxCredential) OAuth2Token() (*oauth2.Token, error) {
+	if c.Encrypted {
+		return nil, errors.New("cannot turn credential into oauth token without decrypting")
+	}
+
+	return &oauth2.Token{
+		AccessToken:  c.APIToken,
+		RefreshToken: c.RefreshToken,
+		Expiry:       c.TokenExpiry,
+	}, nil
 }

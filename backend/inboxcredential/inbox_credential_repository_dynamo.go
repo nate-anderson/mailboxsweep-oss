@@ -77,6 +77,8 @@ func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, addr
 
 	if _, ok := res.Item["is_imap"]; ok {
 		ic = &IMAPInboxCredential{}
+	} else if _, ok := res.Item["is_gmail"]; ok {
+		ic = &GmailInboxCredential{}
 	}
 
 	if err := attributevalue.UnmarshalMap(res.Item, &ic); err != nil {

@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"mailboxsweep/assert"
 	"testing"
+	"time"
 )
 
 func TestInboxCredential(t *testing.T) {
@@ -44,10 +45,11 @@ func TestInboxCredential(t *testing.T) {
 	t.Run("Gmail inbox credential", func(t *testing.T) {
 		apiToken := "test_api_token"
 		refreshToken := "refresh_token"
+		expiry := time.Now().Add(time.Hour)
 
 		var i *GmailInboxCredential
 		t.Run("encrypt", func(t *testing.T) {
-			i = NewGmailInboxCredential(testAddr, apiToken, refreshToken)
+			i = NewGmailInboxCredential(testAddr, apiToken, refreshToken, expiry)
 
 			assert.That(t, i.EmailAddress).Equals(testAddr)
 			assert.That(t, i.APIToken).Equals(apiToken)
@@ -55,6 +57,7 @@ func TestInboxCredential(t *testing.T) {
 			assert.That(t, i.CreatedAt.IsZero()).Equals(false)
 			assert.ThatOrdered(t, i.ExpiresAt).GreaterThan(0)
 			assert.That(t, i.IsGmail).Equals(true)
+			assert.That(t, i.TokenExpiry.Equal(expiry)).Equals(true)
 
 			err := i.encrypt(encryptor)
 			assert.ThatError(t, err).IsNil()
@@ -65,6 +68,7 @@ func TestInboxCredential(t *testing.T) {
 			assert.That(t, i.CreatedAt.IsZero()).Equals(false)
 			assert.ThatOrdered(t, i.ExpiresAt).GreaterThan(0)
 			assert.That(t, i.IsGmail).Equals(true)
+			assert.That(t, i.TokenExpiry.Equal(expiry)).Equals(true)
 		})
 
 		t.Run("decrypt", func(t *testing.T) {
@@ -73,6 +77,7 @@ func TestInboxCredential(t *testing.T) {
 			assert.That(t, i.APIToken).Equals(apiToken)
 			assert.That(t, i.RefreshToken).Equals(refreshToken)
 			assert.That(t, i.EmailAddress).Equals(testAddr)
+			assert.That(t, i.TokenExpiry).Equals(expiry)
 		})
 	})
 
