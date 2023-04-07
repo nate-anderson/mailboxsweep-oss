@@ -48,6 +48,7 @@ func NewService(repo InboxCredentialRepository, cipherKey []byte) (*DefaultServi
 	}, nil
 }
 
+// StoreCredential encrypts then stores the credential
 func (s DefaultService) StoreCredential(ctx context.Context, credential Credential) (err error) {
 	_, err = mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
@@ -66,6 +67,7 @@ func (s DefaultService) StoreCredential(ctx context.Context, credential Credenti
 	return nil
 }
 
+// FindCredential retrieves and returns the encrypted credential. Call `DecryptCredential` to get plaintext
 func (s DefaultService) FindCredential(ctx context.Context) (Credential, error) {
 	var cred Credential
 	address, err := mailboxsweep.UserAddressFromContext(ctx)

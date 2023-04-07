@@ -109,6 +109,7 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 		return err
 	}
 	c.RefreshToken = string(buf)
+	c.Encrypted = false
 
 	return nil
 }
