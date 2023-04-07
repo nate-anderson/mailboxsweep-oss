@@ -30,6 +30,9 @@ func NewLoginController(service *login.Service, cookieDomain, cookiePath string,
 	}
 }
 
+const externalAuthCookieName = "X-Mailboxsweep-Ext-Auth"
+const externalAuthCookieDuration = time.Duration(15) * time.Minute
+
 func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqBody := LoginRequest{}
@@ -42,10 +45,22 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	redirectURL, redirect, err := c.service.InitiateLogin(ctx, reqBody.Address, requestIP(req))
+	redirectURL, redirect, cookie, err := c.service.InitiateLogin(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
+	}
+
+	if cookie != nil {
+		cookie := http.Cookie{
+			Name:     externalAuthCookieName,
+			Value:    *cookie,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			Expires:  time.Now().Add(externalAuthCookieDuration),
+		}
+		http.SetCookie(w, &cookie)
 	}
 
 	resBody := StartLoginResponse{

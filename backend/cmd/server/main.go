@@ -250,9 +250,11 @@ func main() {
 		log.Fatalf("failed to read signing cert: %s", err)
 	}
 
-	loginLinkService := login.NewLinkService(loginRepo, userService, sessionService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
-	gmailLoginService := login.NewGmailLoginService(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
-	loginService := login.NewService(loginLinkService, gmailLoginService)
+	gmailTokenRepository := login.NewDynamoGmailTokenRepository(db, cfg.DynamoDBTable)
+
+	loginLinkService := login.NewLinkService(loginRepo, userService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
+	gmailLoginService := login.NewGmailLoginService(gmailTokenRepository, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
+	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
 		log.Fatal("cookie domain and path are not configured")
