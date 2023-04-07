@@ -114,7 +114,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	mailbox, err := provider.Login(addr, password)
+	mailbox, err := provider.Login(ctx, addr, password)
 	if err != nil {
 		return err
 	}

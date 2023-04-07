@@ -17,7 +17,7 @@ func TestIMAPInbox(t *testing.T) {
 
 	imapCred := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
 
-	inbox, err := provider.Login(testConf.Address, imapCred)
+	inbox, err := provider.Login(ctx, testConf.Address, imapCred)
 	assert.ThatError(t, err).IsNil()
 
 	var folders []string

@@ -1,6 +1,7 @@
 package inboxtesting
 
 import (
+	"context"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 )
@@ -20,11 +21,11 @@ type TestProvider struct {
 	Inboxes map[string]*TestInbox
 }
 
-func (t TestProvider) Connect() error {
+func (t TestProvider) Connect(_ context.Context) error {
 	return t.ConnectError
 }
 
-func (t *TestProvider) Login(username string, credential inboxcredential.Credential) (inbox.Inbox, error) {
+func (t *TestProvider) Login(_ context.Context, username string, credential inboxcredential.Credential) (inbox.Inbox, error) {
 	t.Username = username
 	if imapCred, ok := credential.(*inboxcredential.IMAPInboxCredential); ok {
 		t.Password = imapCred.Password

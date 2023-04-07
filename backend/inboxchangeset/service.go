@@ -228,7 +228,7 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		return err
 	}
 
-	mailbox, err := provider.Login(address, password)
+	mailbox, err := provider.Login(ctx, address, password)
 	if err != nil {
 		return err
 	}

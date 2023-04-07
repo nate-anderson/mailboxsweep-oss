@@ -52,6 +52,7 @@ func TestIMAPFolder(t *testing.T) {
 	imapCred := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)
 
 	inbox, err := provider.Login(
+		ctx,
 		testConf.Address,
 		imapCred,
 	)
@@ -59,8 +60,6 @@ func TestIMAPFolder(t *testing.T) {
 
 	folder, err := inbox.Folder("INBOX")
 	assert.ThatError(t, err).IsNil()
-
-	// time.Sleep(time.Second * 60)
 
 	msgs := make([]Message, 0, n)
 

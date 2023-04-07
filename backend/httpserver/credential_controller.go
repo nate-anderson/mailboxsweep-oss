@@ -64,7 +64,7 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
 	credential := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password)
 
-	_, err = provider.Login(address, credential)
+	_, err = provider.Login(ctx, address, credential)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return
@@ -151,7 +151,7 @@ func (c CredentialController) StoreImapServerAndCredentials(w http.ResponseWrite
 	// when the user links their Google account, so it is safe to treat this as an IMAP credential
 	credential := inboxcredential.NewIMAPInboxCredential(addr, reqBody.Password)
 
-	_, err = provider.Login(addr, credential)
+	_, err = provider.Login(ctx, addr, credential)
 	if err != nil {
 		c.respondError(w, err, withOverrideStatusCode(http.StatusBadGateway))
 		return

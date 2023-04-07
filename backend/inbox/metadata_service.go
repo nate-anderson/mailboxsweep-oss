@@ -69,7 +69,7 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 		return nil, err
 	}
 
-	mailbox, err := provider.Login(addr, password)
+	mailbox, err := provider.Login(ctx, addr, password)
 	if err != nil {
 		return nil, err
 	}

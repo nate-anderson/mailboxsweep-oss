@@ -61,7 +61,7 @@ func NewTestIMAPProvider(host string, port int) (*IMAPProvider, error) {
 	}, nil
 }
 
-func (p *IMAPProvider) Connect() error {
+func (p *IMAPProvider) Connect(_ context.Context) error {
 	addr := fmt.Sprintf("%s:%d", p.IMAPHost, p.IMAPPort)
 	cl, err := client.DialTLS(addr, nil)
 	if err != nil {
@@ -72,7 +72,7 @@ func (p *IMAPProvider) Connect() error {
 	return nil
 }
 
-func (p *IMAPProvider) Login(username string, credential inboxcredential.Credential) (Inbox, error) {
+func (p *IMAPProvider) Login(_ context.Context, username string, credential inboxcredential.Credential) (Inbox, error) {
 	imapCred, ok := credential.(*inboxcredential.IMAPInboxCredential)
 	if !ok {
 		return nil, fmt.Errorf("credential type mismatch: expected IMAP, got %t", credential)
