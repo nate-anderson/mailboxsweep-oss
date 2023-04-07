@@ -253,7 +253,7 @@ func main() {
 	gmailTokenRepository := login.NewDynamoGmailTokenRepository(db, cfg.DynamoDBTable)
 
 	loginLinkService := login.NewLinkService(loginRepo, userService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
-	gmailLoginService := login.NewGmailLoginService(gmailTokenRepository, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
+	gmailLoginService := login.NewGmailLoginService(gmailTokenRepository, credentialService, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
 	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {

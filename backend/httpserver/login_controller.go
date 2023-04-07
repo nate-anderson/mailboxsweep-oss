@@ -45,16 +45,16 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	redirectURL, redirect, cookie, err := c.service.InitiateLogin(ctx, reqBody.Address, requestIP(req))
+	loginInit, err := c.service.InitiateLogin(ctx, reqBody.Address, requestIP(req))
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
 
-	if cookie != nil {
+	if loginInit.ExternalAuthCookie != nil {
 		cookie := http.Cookie{
 			Name:     externalAuthCookieName,
-			Value:    *cookie,
+			Value:    *loginInit.ExternalAuthCookie,
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   true,
@@ -65,8 +65,8 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 
 	resBody := StartLoginResponse{
 		Ok:          true,
-		Redirect:    redirect,
-		RedirectUrl: &redirectURL,
+		Redirect:    loginInit.Redirect,
+		RedirectUrl: &loginInit.RedirectURL,
 	}
 	c.respond(w, http.StatusOK, resBody)
 }
@@ -87,7 +87,7 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 	// slow down login spamming
 	time.Sleep(time.Second)
 
-	user, session, err := c.service.ValidateLoginLink(ctx, token, signature)
+	user, session, err := c.service.CompleteLinkLogin(ctx, token, signature)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
@@ -124,7 +124,12 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 		return
 	}
 
-	user, sess, err := c.service.ValidateGmailStateToken(ctx, token, cookie.Value)
+	redirectData := login.GmailLoginRedirectData{
+		StateToken:         token,
+		ExternalAuthCookie: cookie.Value,
+		Code:               params.Code,
+	}
+	user, sess, err := c.service.CompleteGmailLogin(ctx, redirectData)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
@@ -132,6 +137,9 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 
 	resBody := LoginResponse{
 		Address: user.Address,
+
+		// login.Service.CompleteGmailLogin pulls the user's profile data
+		RedirectToSignup: false,
 	}
 
 	sessionCookie := sess.AuthCookie(c.isDev)

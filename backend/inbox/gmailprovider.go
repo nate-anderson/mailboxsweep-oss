@@ -3,6 +3,7 @@ package inbox
 import (
 	"context"
 	"fmt"
+	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 
 	"golang.org/x/oauth2"
@@ -14,11 +15,6 @@ import (
 type GmailProvider struct {
 	client *gmail.Service
 	conf   *oauth2.Config
-}
-
-// OAuth2 scopes
-var apiScopes = []string{
-	"https://mail.google.com/",
 }
 
 const redirectURL = "mailboxsweep.com"
@@ -33,7 +29,7 @@ func NewGmailProvider(
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  redirectURL,
-		Scopes:       apiScopes,
+		Scopes:       mailboxsweep.GoogleAPIScopes,
 	}
 
 	return &GmailProvider{

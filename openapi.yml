@@ -949,3 +949,8 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: true

@@ -7,16 +7,14 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
-	"mailboxsweep"
 	"mailboxsweep/inboxuser"
 	"time"
 )
 
 type LinkService interface {
-	CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error)
+	CreateLoginLink(ctx context.Context, user inboxuser.InboxUser, initiatedByIP string) error
 	ValidateLoginLink(ctx context.Context, token, signature string) (userUUID string, err error)
 }
 
@@ -67,31 +65,12 @@ func (s DefaultLinkService) verifyToken(tokenBytes []byte, signature []byte) err
 	return nil
 }
 
-func (s DefaultLinkService) CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error) {
-	user, err := s.userService.FindByAddress(ctx, address)
-	sendAddress := address
-	if err != nil {
-		// if this is an error other than "not found", fail
-		if !errors.Is(err, mailboxsweep.ErrNotFound) {
-			return false, err
-		}
-
-		// store the new user
-		user, err = s.userService.Store(ctx, address)
-		if err != nil {
-			return false, err
-		}
-
-		// otherwise, consider this first login
-	} else {
-		sendAddress = user.Address
-		existingUser = true
-	}
+func (s DefaultLinkService) CreateLoginLink(ctx context.Context, user inboxuser.InboxUser, initiatedByIP string) error {
 
 	tokenBytes := make([]byte, s.tokenLength)
-	_, err = io.ReadFull(rand.Reader, tokenBytes)
+	_, err := io.ReadFull(rand.Reader, tokenBytes)
 	if err != nil {
-		return false, fmt.Errorf("failed to generate token: %w", err)
+		return fmt.Errorf("failed to generate token: %w", err)
 	}
 
 	now := time.Now()
@@ -100,7 +79,7 @@ func (s DefaultLinkService) CreateLoginLink(ctx context.Context, address, initia
 
 	signature, err := s.signToken(tokenBytes)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	link := Link{
@@ -114,20 +93,20 @@ func (s DefaultLinkService) CreateLoginLink(ctx context.Context, address, initia
 
 	// only allow one active login link at a time
 	if err = s.repo.InvalidateByUserUUID(ctx, user.UUID); err != nil {
-		return false, err
+		return err
 	}
 
 	if err = s.repo.Store(ctx, link); err != nil {
-		return false, err
+		return err
 	}
 
 	sendReq := SendRequest{
-		Address:   sendAddress,
+		Address:   user.Address,
 		Expires:   expires,
 		Token:     link.Token,
 		Signature: link.Signature,
 	}
-	return existingUser, s.sender.Send(ctx, sendReq)
+	return s.sender.Send(ctx, sendReq)
 }
 
 func (s DefaultLinkService) ValidateLoginLink(ctx context.Context, token, signature string) (userUUID string, err error) {

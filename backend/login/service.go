@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"errors"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/session"
@@ -23,31 +24,59 @@ func NewService(linkService LinkService, gmailLoginService *GmailLoginService, u
 	}
 }
 
-func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP string) (redirectURL string, redirect bool, cookie *string, err error) {
+type LoginInitResult struct {
+	RedirectURL        string
+	Redirect           bool
+	ExternalAuthCookie *string
+}
+
+func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP string) (LoginInitResult, error) {
+	var res LoginInitResult
+
+	// check if we know this user
+	user, err := s.userService.FindByAddress(ctx, address)
+	if err != nil {
+		// if this is an error other than "not found", fail
+		if !errors.Is(err, mailboxsweep.ErrNotFound) {
+			return res, err
+		}
+
+		// store the new user
+		user, err = s.userService.Store(ctx, address)
+		if err != nil {
+			return res, err
+		}
+
+		// otherwise, consider this first login
+	}
+
 	domain, err := mailboxsweep.DomainFromEmail(address)
 	if err != nil {
-		return "", false, nil, err
+		return res, err
 	}
 
 	switch domain {
 	case mailboxsweep.DomainGmail:
-		authURL, cookie, err := s.gmailLoginService.GetAuthURL(ctx, address)
+		authURL, cookie, err := s.gmailLoginService.GetAuthURL(ctx, user.Address)
 		if err != nil {
-			return "", false, nil, err
+			return res, err
 		}
-		return authURL, true, &cookie, nil
+		res.Redirect = true
+		res.RedirectURL = authURL
+		res.ExternalAuthCookie = &cookie
+		return res, nil
 
 	default:
-		_, err := s.linkService.CreateLoginLink(ctx, address, initiatedByIP)
+		err := s.linkService.CreateLoginLink(ctx, *user, initiatedByIP)
 		if err != nil {
-			return "", false, nil, err
+			return res, err
 		}
-		return "", false, nil, nil
+		return res, nil
 	}
 
 }
 
-func (s Service) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
+func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
 	userUUID, err := s.linkService.ValidateLoginLink(ctx, token, signature)
 	if err != nil {
 		return nil, nil, err
@@ -66,8 +95,8 @@ func (s Service) ValidateLoginLink(ctx context.Context, token, signature string)
 	return user, sess, nil
 }
 
-func (s Service) ValidateGmailStateToken(ctx context.Context, token string, cookie string) (*inboxuser.InboxUser, *session.Session, error) {
-	addr, err := s.gmailLoginService.Validate(ctx, token, cookie)
+func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRedirectData) (*inboxuser.InboxUser, *session.Session, error) {
+	addr, err := s.gmailLoginService.CompleteLogin(ctx, loginData)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -80,6 +109,20 @@ func (s Service) ValidateGmailStateToken(ctx context.Context, token string, cook
 	sess, err := s.sessionService.StartSession(ctx, user.Address)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// fetch user's profile data if it's incomplete
+	if !user.ProfileComplete() {
+		// the user is authenticated, authorize their context
+		authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, user.Address)
+		nameFirst, nameLast, err := s.gmailLoginService.FetchUserProfile(authedCtx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if err = s.userService.SetName(authedCtx, nameFirst, nameLast); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return user, sess, nil

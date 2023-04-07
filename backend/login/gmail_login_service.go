@@ -5,39 +5,40 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"mailboxsweep"
+	"mailboxsweep/inboxcredential"
 	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	googleoauth "google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
 )
 
 type GmailLoginService struct {
-	oauthConfig *oauth2.Config
-	tokenRepo   GmailTokenRepository
+	oauthConfig       *oauth2.Config
+	tokenRepo         GmailTokenRepository
+	credentialService inboxcredential.Service
 }
 
-// OAuth2 scopes
-var apiScopes = []string{
-	"https://mail.google.com/",
-}
-
-func NewGmailLoginService(tokenRepo GmailTokenRepository, clientID, clientSecret, redirectURL string) *GmailLoginService {
+func NewGmailLoginService(tokenRepo GmailTokenRepository, credentialService inboxcredential.Service, clientID, clientSecret, redirectURL string) *GmailLoginService {
 	conf := oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  redirectURL,
-		Scopes:       apiScopes,
+		Scopes:       mailboxsweep.GoogleAPIScopes,
 	}
 	return &GmailLoginService{
-		oauthConfig: &conf,
-		tokenRepo:   tokenRepo,
+		oauthConfig:       &conf,
+		tokenRepo:         tokenRepo,
+		credentialService: credentialService,
 	}
 }
 
-const tokenLen = 30
+const tokenLen = 40
 
 func (s GmailLoginService) makeToken() (string, error) {
 	buf := make([]byte, tokenLen)
@@ -46,7 +47,7 @@ func (s GmailLoginService) makeToken() (string, error) {
 		return "", err
 	}
 
-	return base64.URLEncoding.EncodeToString(buf), nil
+	return strings.ToLower(base64.URLEncoding.EncodeToString(buf)), nil
 }
 
 func (s GmailLoginService) GetAuthURL(ctx context.Context, address string) (redirect string, cookie string, err error) {
@@ -74,21 +75,87 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context, address string) (redi
 	return s.oauthConfig.AuthCodeURL(stateToken, oauth2.AccessTypeOffline), cookie, nil
 }
 
-func (s GmailLoginService) Validate(ctx context.Context, token, cookie string) (string, error) {
-	known, err := s.tokenRepo.Get(ctx, token)
+type GmailLoginRedirectData struct {
+	// The state token we gave to Google when the user initiated login
+	StateToken string
+	// The cookie we set on the user's browser when they initiated login
+	ExternalAuthCookie string
+	// The temporary access code Google gives us in the user's redirect URL query
+	Code string
+}
+
+// CompleteLogin takes the data from the redirect provided by Google, validates the user's external auth cookie
+// and the token Google gives back, and returns the user's address who initiated the login
+// If the user has not had their profile data pulled, we pull it and store it
+func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRedirectData) (string, error) {
+	known, err := s.tokenRepo.Get(ctx, data.StateToken)
 	if err != nil {
 		return "", err
 	}
 
 	authErr := errors.New("redirect data mismatch")
 
-	if known.Cookie != strings.TrimSpace(cookie) {
+	if known.Cookie != strings.TrimSpace(data.ExternalAuthCookie) {
 		return "", mailboxsweep.UnauthenticatedError(authErr)
 	}
 
-	if known.Token != strings.TrimSpace(token) {
+	if known.Token != strings.TrimSpace(data.StateToken) {
 		return "", mailboxsweep.UnauthenticatedError(authErr)
+	}
+
+	// exchange code for real credentials
+	token, err := s.oauthConfig.Exchange(ctx, data.Code)
+	if err != nil {
+		err := fmt.Errorf("failed to exchange with Google for login: %w", err)
+		return "", mailboxsweep.BadGatewayError(err)
+	}
+
+	// the user is authenticated, authorize their context
+	authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, known.Address)
+
+	// store the Gmail credentials
+	gmailCred := inboxcredential.NewGmailInboxCredential(known.Address, token.AccessToken, token.RefreshToken, token.Expiry)
+	err = s.credentialService.StoreCredential(authedCtx, gmailCred)
+	if err != nil {
+		return "", fmt.Errorf("failed to store Gmail token: %w", err)
 	}
 
 	return known.Address, nil
+}
+
+func (s GmailLoginService) FetchUserProfile(ctx context.Context) (nameFirst, nameLast string, err error) {
+	cred, err := s.credentialService.FindCredential(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	cred, err = s.credentialService.DecryptCredential(ctx, cred)
+	if err != nil {
+		return "", "", err
+	}
+
+	gmailCred, ok := cred.(*inboxcredential.GmailInboxCredential)
+	if !ok {
+		return "", "", errors.New("stored credential is not for Gmail")
+	}
+
+	oauth2Token, err := gmailCred.OAuth2Token()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create oauth2 token from Gmail credential: %w", err)
+	}
+
+	client := s.oauthConfig.Client(ctx, oauth2Token)
+
+	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.GoogleAPIScopes...), option.WithHTTPClient(client))
+	if err != nil {
+		return "", "", err
+	}
+
+	res, err := oauthService.Userinfo.V2.Me.Get().Do()
+	if err != nil {
+		return "", "", err
+	}
+
+	return res.GivenName, res.FamilyName, err
+
 }
