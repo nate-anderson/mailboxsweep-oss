@@ -12,29 +12,26 @@ import (
 	"io"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
-	"mailboxsweep/session"
 	"time"
 )
 
 type LinkService interface {
 	CreateLoginLink(ctx context.Context, address, initiatedByIP string) (existingUser bool, error error)
-	ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error)
+	ValidateLoginLink(ctx context.Context, token, signature string) (userUUID string, err error)
 }
 
 type DefaultLinkService struct {
-	repo           LinkRepository
-	userService    inboxuser.Service
-	sessionService session.Service
-	sender         Sender
-	linkLifespan   time.Duration
-	tokenLength    int
-	signingCert    *rsa.PrivateKey
+	repo         LinkRepository
+	userService  inboxuser.Service
+	sender       Sender
+	linkLifespan time.Duration
+	tokenLength  int
+	signingCert  *rsa.PrivateKey
 }
 
 func NewLinkService(
 	repo LinkRepository,
 	userService inboxuser.Service,
-	sessionService session.Service,
 	sender Sender,
 	signingCert *rsa.PrivateKey,
 	linkLifespan time.Duration,
@@ -43,7 +40,6 @@ func NewLinkService(
 	return &DefaultLinkService{
 		repo,
 		userService,
-		sessionService,
 		sender,
 		linkLifespan,
 		tokenLength,
@@ -134,41 +130,32 @@ func (s DefaultLinkService) CreateLoginLink(ctx context.Context, address, initia
 	return existingUser, s.sender.Send(ctx, sendReq)
 }
 
-func (s DefaultLinkService) ValidateLoginLink(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
+func (s DefaultLinkService) ValidateLoginLink(ctx context.Context, token, signature string) (userUUID string, err error) {
 	// verify signature before doing anything else
 	tokenBytes, err := hex.DecodeString(token)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 
 	signatureBytes, err := hex.DecodeString(signature)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 
 	err = s.verifyToken(tokenBytes, signatureBytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid login link (signature)")
+		return "", fmt.Errorf("invalid login link (signature)")
 	}
 
 	link, err := s.repo.Find(ctx, token)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 
 	err = s.repo.InvalidateByUserUUID(ctx, link.UserUUID)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 
-	user, err := s.userService.FindByUUID(ctx, link.UserUUID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	sess, err := s.sessionService.StartSession(ctx, user.Address)
-	if err != nil {
-		return nil, nil, err
-	}
-	return user, sess, err
+	return link.UserUUID, nil
 }

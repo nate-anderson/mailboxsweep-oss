@@ -5,7 +5,6 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxuser"
-	"mailboxsweep/session"
 	"testing"
 	"time"
 )
@@ -22,14 +21,11 @@ func TestLoginService(t *testing.T) {
 
 	sender := &testSender{}
 
-	sessionRepo := session.NewDynamoSessionRepository(db, table)
-	sessionService := session.NewService(sessionRepo, 10, time.Minute)
-
 	cert, err := ReadTestCert(t)
 	assert.ThatError(t, err).IsNil()
 
 	repo := NewDynamoLinkRepository(db, table)
-	service := NewLinkService(repo, userService, sessionService, sender, cert, time.Minute, 20)
+	service := NewLinkService(repo, userService, sender, cert, time.Minute, 20)
 
 	testAddress := "admin3@example.org"
 	testIP := "192.168.0.24"
@@ -92,24 +88,21 @@ func TestLoginService(t *testing.T) {
 	t.Run("validate login link", func(t *testing.T) {
 		t.Run("invalid signature", func(t *testing.T) {
 			sigCopy := signature + "1"
-			user, session, err := service.ValidateLoginLink(ctx, token, sigCopy)
+			userUUID, err := service.ValidateLoginLink(ctx, token, sigCopy)
 			assert.ThatError(t, err).IsNotNil()
-			assert.That(t, user).Equals(nil)
-			assert.That(t, session).Equals(nil)
+			assert.That(t, userUUID).Equals("")
 		})
 
 		t.Run("invalid token", func(t *testing.T) {
-			user, sess, err := service.ValidateLoginLink(ctx, token+"1", signature)
+			userUUID, err := service.ValidateLoginLink(ctx, token+"1", signature)
 			assert.ThatError(t, err).IsNotNil()
-			assert.That(t, user).Equals(nil)
-			assert.That(t, sess).Equals(nil)
+			assert.That(t, userUUID).Equals("")
 		})
 
 		t.Run("success", func(t *testing.T) {
-			user, session, err := service.ValidateLoginLink(ctx, token, signature)
+			userUUID, err := service.ValidateLoginLink(ctx, token, signature)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, user.Address).Equals(testAddress)
-			assert.That(t, session).NotEqual(nil)
+			assert.That(t, userUUID).Equals(user.UUID)
 		})
 	})
 }
