@@ -11,6 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+/*
+These are production data seeds, things that need to be in the DB after deployment
+NOT seeds used for testing
+*/
+
 type seedCmdConfig struct {
 	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
