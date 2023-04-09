@@ -2,19 +2,25 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/login"
 	"mailboxsweep/metering"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 var rootCmd = &cobra.Command{
@@ -322,12 +328,155 @@ var deleteCmd = &cobra.Command{
 	},
 }
 
+type cmdConfig struct {
+	GoogleClientID        string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret    string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleAuthRedirectURL string `mapstructure:"GOOGLE_OAUTH_REDIRECT_URL"`
+
+	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
+	DynamoDBTable  string  `mapstructure:"DYNAMODB_TABLE"`
+
+	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
+}
+
+var cfg cmdConfig
+
+var gmailMessageSummary = &cobra.Command{
+	Use:   "gmail-summary",
+	Short: "Summarize gmail messages",
+	Run: func(cmd *cobra.Command, args []string) {
+		viper.SetConfigType("env")
+		viper.SetConfigFile(".env")
+		viper.AutomaticEnv()
+		err := viper.ReadInConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := viper.Unmarshal(&cfg); err != nil {
+			log.Fatal(err)
+		}
+
+		ctx := context.Background()
+		provider := inbox.NewGmailProvider(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret)
+
+		db, err := mailboxsweep.ConnectAWSService(
+			mailboxsweep.AWSServiceConfig{
+				ServiceHost:   cfg.DynamoDBHost,
+				ServicePort:   cfg.DynamoDBPort,
+				ServiceRegion: cfg.DynamoDBRegion,
+			},
+			dynamodb.NewFromConfig,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// let user log in
+		tokenRepo := login.NewDynamoGmailTokenRepository(db, cfg.DynamoDBTable)
+
+		credentialRepo := inboxcredential.NewDynamoInboxCredentialRepository(db, cfg.DynamoDBTable)
+
+		cipherKey, err := base64.RawStdEncoding.DecodeString(cfg.CredentialCipherKeyBase64)
+		if err != nil {
+			log.Fatalf("failed to decode configured AES Cipher key: %s", err)
+		}
+		credentialService, err := inboxcredential.NewService(credentialRepo, cipherKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		redirectURL := "https://localhost:3001/login-gmail"
+		gmailLoginService := login.NewGmailLoginService(tokenRepo, credentialService, cfg.GoogleClientID, cfg.GoogleClientSecret, redirectURL)
+
+		config := oauth2.Config{
+			ClientID:     cfg.GoogleClientID,
+			ClientSecret: cfg.GoogleClientSecret,
+			Endpoint:     google.Endpoint,
+			RedirectURL:  redirectURL,
+			Scopes:       mailboxsweep.GoogleAPIScopes,
+		}
+
+		authedCtx := mailboxsweep.AuthorizeJobContext(ctx, username)
+		gmailCredential, err := credentialService.FindCredential(authedCtx)
+		if err == nil {
+			gmailCredential, err = credentialService.DecryptCredential(authedCtx, gmailCredential)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if errors.Is(err, mailboxsweep.ErrNotFound) {
+
+			url, _, err := gmailLoginService.GetAuthURL(ctx, username)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			log.Printf("Go to URL %s to authenticate\n", url)
+
+			log.Println("Enter auth code: ")
+			var authCode string
+			if _, err := fmt.Scan(&authCode); err != nil {
+				log.Fatalf("Unable to read authorization code: %v", err)
+			}
+
+			fmt.Printf("Got auth code '%s'\n", authCode)
+			tok, err := config.Exchange(context.TODO(), authCode)
+			if err != nil {
+				log.Fatalf("Unable to retrieve token from web: %v", err)
+			}
+
+			gmailCredential = inboxcredential.NewGmailInboxCredential(username, tok.AccessToken, tok.RefreshToken, tok.Expiry)
+			err = credentialService.StoreCredential(authedCtx, gmailCredential)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Fatal(err)
+		}
+
+		myInbox, err := provider.Login(ctx, username, gmailCredential)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		folder, err := myInbox.Folder("INBOX")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		count := folder.Count()
+		mChan := make(chan inbox.Message)
+		eChan := make(chan error)
+		go folder.Messages(0, uint32(count), mChan, eChan)
+
+		readCount := 0
+
+		for {
+			select {
+			case e := <-eChan:
+				if e == nil {
+					fmt.Printf("Finished read!")
+					return
+				}
+				fmt.Printf("Error from Messages read: %s\n", e)
+				return
+			case m := <-mChan:
+				fmt.Printf("Got message %s (from %s)\n", m.Subject, m.Sender.Address)
+				readCount++
+			}
+		}
+	},
+}
+
 func main() {
 	rootCmd.AddCommand(listMailboxesCmd)
 	rootCmd.AddCommand(listMessagesCmd)
 	rootCmd.AddCommand(classifyMessagesCmd)
 	rootCmd.AddCommand(queryCmd)
 	rootCmd.AddCommand(deleteCmd)
+	rootCmd.AddCommand(gmailMessageSummary)
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatal(err)

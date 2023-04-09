@@ -2,7 +2,13 @@ package inbox
 
 import (
 	"fmt"
+	"html"
+	"mailboxsweep"
+	"net/mail"
 
+	"time"
+
+	"github.com/mcnijman/go-emailaddress"
 	"google.golang.org/api/gmail/v1"
 )
 
@@ -49,14 +55,94 @@ func (f GmailFolder) MarkRead(ids []string) error {
 }
 
 func (f GmailFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
-	res, err := f.client.Users.Messages.List(f.address).LabelIds(f.label.Id).Do()
-	if err != nil {
-		e <- err
-	}
+	var i uint32 = 0
+	var nextPageToken string
+	for i < end {
+		res, err := f.client.Users.Messages.
+			List(f.address).
+			LabelIds(f.label.Id).
+			PageToken(nextPageToken).
+			Do()
 
-	for _, msg := range res.Messages {
-		m <- Message{
-			UID: msg.Id,
+		if err != nil {
+			e <- err
+		}
+
+		nextPageToken = res.NextPageToken
+
+		for _, msg := range res.Messages {
+			msgRes, err := f.client.Users.Messages.Get(f.address, msg.Id).Do()
+			if err != nil {
+				e <- err
+				return
+			}
+
+			sender, err := parseGmailSender(getHeader("From", msgRes.Payload.Headers))
+			if err != nil {
+				e <- err
+				return
+			}
+
+			sendDate := time.Unix(0, msgRes.InternalDate*int64(time.Millisecond))
+
+			m <- Message{
+				UID:       msg.Id,
+				Folder:    f.label.Name,
+				Subject:   getHeader("Subject", msgRes.Payload.Headers),
+				Sender:    sender,
+				InReplyTo: msg.ThreadId,
+				SendDate:  sendDate,
+				Read:      !includes(msgRes.LabelIds, "UNREAD"),
+			}
+
+			i++
+			if i >= end {
+				return
+			}
 		}
 	}
+
+}
+
+func getHeader(header string, list []*gmail.MessagePartHeader) string {
+	for _, val := range list {
+		if val.Name == header {
+			return val.Value
+		}
+	}
+	return ""
+}
+
+func parseGmailSender(sender string) (Sender, error) {
+	addr, err := mail.ParseAddress(html.UnescapeString(sender))
+	if err != nil {
+		return Sender{}, err
+	}
+
+	domain, err := mailboxsweep.DomainFromEmail(addr.Address)
+	if err != nil {
+		return Sender{}, err
+	}
+
+	s := Sender{
+		Address: addr.Address,
+		Name:    addr.Name,
+		Domain:  domain,
+	}
+
+	mailAddr, err := emailaddress.Parse(addr.Address)
+	if err == nil && mailAddr != nil {
+		s.Username = mailAddr.LocalPart
+	}
+
+	return s, nil
+}
+
+func includes[t comparable](list []t, value t) bool {
+	for _, v := range list {
+		if value == v {
+			return true
+		}
+	}
+	return false
 }
