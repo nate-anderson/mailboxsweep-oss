@@ -21,8 +21,9 @@ export default function Login() {
     const query = router.query;
 
     const stateToken = query["state"] as string;
+    const authCode = query["code"] as string;
 
-    API.submitGmailStateToken(stateToken)
+    API.submitGmailStateToken(stateToken, authCode)
       .then((res) => {
         console.log({ loginSuccess: res });
         if (res.redirectToSignup) {
