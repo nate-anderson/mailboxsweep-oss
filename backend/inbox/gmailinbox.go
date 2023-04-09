@@ -64,6 +64,8 @@ func (i GmailInbox) Folder(name string) (Folder, error) {
 	}
 
 	return GmailFolder{
-		label: label,
+		label:   label,
+		client:  i.client,
+		address: i.address,
 	}, nil
 }
