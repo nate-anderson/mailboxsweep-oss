@@ -94,6 +94,14 @@ func (s DefaultService) DeleteCredential(ctx context.Context) error {
 }
 
 func (s DefaultService) DecryptCredential(ctx context.Context, cred Credential) (credential Credential, err error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	err = cred.decrypt(s.encryptor)
+	if cred.Address() != addr {
+		return nil, errors.New("incorrect context user for credential")
+	}
 	return cred, err
 }
