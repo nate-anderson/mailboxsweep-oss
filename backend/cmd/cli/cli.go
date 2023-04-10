@@ -164,7 +164,7 @@ var listMessagesCmd = &cobra.Command{
 
 		msgChan := make(chan inbox.Message)
 		errChan := make(chan error)
-		go folder.Messages(1, count, msgChan, errChan)
+		go folder.Messages(ctx, 1, count, msgChan, errChan)
 
 		go func() {
 			for m := range msgChan {
@@ -449,7 +449,7 @@ var gmailMessageSummary = &cobra.Command{
 		count := folder.Count()
 		mChan := make(chan inbox.Message)
 		eChan := make(chan error)
-		go folder.Messages(0, uint32(count), mChan, eChan)
+		go folder.Messages(ctx, 0, uint32(count), mChan, eChan)
 
 		readCount := 0
 

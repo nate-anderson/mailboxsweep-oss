@@ -1,6 +1,7 @@
 package inbox
 
 import (
+	"context"
 	"fmt"
 	"net/mail"
 	"regexp"
@@ -26,7 +27,7 @@ func (f IMAPFolder) UnreadCount() uint32 {
 	return f.mailbox.Unseen
 }
 
-func (f IMAPFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
+func (f IMAPFolder) Messages(ctx context.Context, start, end uint32, m chan<- Message, e chan<- error) {
 	seq := imap.SeqSet{}
 	seq.AddRange(start, end)
 

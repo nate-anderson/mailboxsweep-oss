@@ -1,6 +1,9 @@
 package inboxtesting
 
-import "mailboxsweep/inbox"
+import (
+	"context"
+	"mailboxsweep/inbox"
+)
 
 type TestFolder struct {
 	FolderName     string
@@ -21,7 +24,7 @@ func (t TestFolder) Name() string {
 	return t.FolderName
 }
 
-func (t *TestFolder) Messages(start, end uint32, m chan<- inbox.Message, e chan<- error) {
+func (t *TestFolder) Messages(_ context.Context, start, end uint32, m chan<- inbox.Message, e chan<- error) {
 	t.MessagesStart = start
 	t.MessagesEnd = end
 

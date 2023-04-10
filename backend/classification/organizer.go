@@ -3,6 +3,7 @@ package classification
 import (
 	"context"
 	"fmt"
+	"log"
 	"mailboxsweep/inbox"
 	"mailboxsweep/pkg/syncmap"
 	"sort"
@@ -65,17 +66,13 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 					o.organizeMessage(msg, root)
 
 				case err = <-e:
-					wg.Done()
-					if err != nil {
-						panic(err)
-					}
-					return
+					log.Println("Error reading from message stream: ", err)
 				}
 			}
 		}()
 
 		msgCount := f.Count()
-		go f.Messages(1, msgCount, m, e)
+		go f.Messages(ctx, 1, msgCount, m, e)
 	}
 
 	wg.Wait()
