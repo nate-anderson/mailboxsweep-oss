@@ -69,7 +69,7 @@ func TestIMAPFolder(t *testing.T) {
 
 		wg := sync.WaitGroup{}
 
-		go folder.Messages(1, uint32(n), mChan, errChan)
+		go folder.Messages(ctx, 1, uint32(n), mChan, errChan)
 
 		wg.Add(1)
 		go func() {
@@ -107,7 +107,7 @@ func TestIMAPFolder(t *testing.T) {
 
 		mChan := make(chan Message)
 		errChan := make(chan error)
-		go folder.Messages(1, uint32(n), mChan, errChan)
+		go folder.Messages(ctx, 1, uint32(n), mChan, errChan)
 
 		wg.Add(1)
 		go func() {
@@ -141,7 +141,7 @@ func TestIMAPFolder(t *testing.T) {
 		wg := sync.WaitGroup{}
 		mChan := make(chan Message)
 		errChan := make(chan error)
-		go folder.Messages(1, uint32(n), mChan, errChan)
+		go folder.Messages(ctx, 1, uint32(n), mChan, errChan)
 
 		wg.Add(1)
 		go func() {
