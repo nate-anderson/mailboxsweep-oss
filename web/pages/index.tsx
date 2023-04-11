@@ -46,7 +46,7 @@ export default function Home() {
         sx={{
           backgroundColor: "var(--color-light)",
           height: "100vh",
-          paddingY: 2,
+          paddingY: 3,
         }}
       >
         <CssBaseline />
@@ -91,13 +91,17 @@ export default function Home() {
             >
               <Typography
                 fontFamily="Roboto"
-                fontSize="2.5em"
                 sx={{
                   textAlign: {
                     xs: "center",
                     sm: "center",
                     md: "left",
                   },
+                  fontSize: {
+                    xs: "2.3em",
+                    md: "2.5em",
+                  },
+                  lineHeight: "1.35",
                 }}
               >
                 Inbox cleanup made simple.

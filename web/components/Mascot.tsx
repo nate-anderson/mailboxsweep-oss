@@ -11,7 +11,8 @@ export default function Mascot() {
             display: "block",
             width: "40vw",
             height: "auto",
-            maxWidth: "220px",
+            maxWidth: "200px",
+            minWidth: "150px",
             marginBottom: "10px",
           }}
         />

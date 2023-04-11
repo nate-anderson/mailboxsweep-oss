@@ -57,7 +57,7 @@ const drawerItems = [
         icon: <IconMarkEmailUnread />,
         path: "/landing/how",
     },
-    { text: "FAQs", icon: <IconQuestions />, path: "/landing/plans" },
+    { text: "Common Questions", icon: <IconQuestions />, path: "/landing/plans" },
 ];
 
 interface NavbarProps {
