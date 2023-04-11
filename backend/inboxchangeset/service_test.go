@@ -209,9 +209,9 @@ func TestInboxChangesetService(t *testing.T) {
 			assert.ThatSlice(t, markReadRes.Paths[0]).Equals(p)
 		}
 
-		markReadSet, markReadCountount, err := service.FindByOperation(authedCtx, changeset.MarkRead)
+		markReadSet, markReadCount, err := service.FindByOperation(authedCtx, changeset.MarkRead)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, markReadCountount).Equals(7)
+		assert.That(t, markReadCount).Equals(7)
 		assert.ThatSlice(t, markReadSet.Paths).HasLength(2)
 		for _, pathStr := range markReadSet.Paths {
 			p := classification.ParsePath(pathStr)
@@ -224,6 +224,61 @@ func TestInboxChangesetService(t *testing.T) {
 			}
 			assert.That(t, found).Equals(true)
 		}
+	})
+
+	t.Run("remove for mark read", func(t *testing.T) {
+		// add then remove
+		path := classification.Path{
+			"domain=example.org",
+			"sender=sender2@example.org",
+			"on_or_after_01-01-2020",
+		}
+
+		_, err := service.AddPathForMarkRead(authedCtx, path)
+		assert.ThatError(t, err).IsNil()
+
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			res, err := service.RemovePathForMarkRead(ctx, path)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+			assert.That(t, res == nil).Equals(true)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			res, err := service.RemovePathForMarkRead(authedCtx, path)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, res.MsgCountDiff).Equals(-3)
+			assert.ThatSlice(t, res.Paths[0]).Equals(path)
+
+			expectedPaths := []classification.Path{
+				{
+					"domain=example.org",
+					"sender=sender3@example.org",
+					"on_or_after_01-01-2020",
+				},
+				{
+					"domain=mailboxsweep.com",
+					"sender=sender1@mailboxsweep.com",
+					"on_or_after_01-01-2020",
+				},
+			}
+
+			markReadSet, markReadCount, err := service.FindByOperation(authedCtx, changeset.MarkRead)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, markReadCount).Equals(7)
+			assert.ThatSlice(t, markReadSet.Paths).HasLength(2)
+
+			for _, pathStr := range markReadSet.Paths {
+				p := classification.ParsePath(pathStr)
+				assert.ThatSlice(t, p).HasLength(3)
+				found := false
+				for _, seedPath := range expectedPaths {
+					if slicesAreEqual(seedPath, p) {
+						found = true
+					}
+				}
+				assert.That(t, found).Equals(true)
+			}
+		})
 	})
 
 	t.Run("add for delete", func(t *testing.T) {
@@ -263,6 +318,61 @@ func TestInboxChangesetService(t *testing.T) {
 			}
 			assert.That(t, found).Equals(true)
 		}
+	})
+
+	t.Run("remove for delete", func(t *testing.T) {
+		// add then remove
+		path := classification.Path{
+			"domain=example.org",
+			"sender=sender3@example.org",
+			"on_or_after_01-01-2020",
+		}
+
+		_, err := service.AddPathForDelete(authedCtx, path)
+		assert.ThatError(t, err).IsNil()
+
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			res, err := service.RemovePathForDelete(ctx, path)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+			assert.That(t, res == nil).Equals(true)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			res, err := service.RemovePathForDelete(authedCtx, path)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, res.MsgCountDiff).Equals(-3)
+			assert.ThatSlice(t, res.Paths[0]).Equals(path)
+
+			expectedPaths := []classification.Path{
+				{
+					"domain=example.org",
+					"sender=sender2@example.org",
+					"on_or_after_01-01-2020",
+				},
+				{
+					"domain=mailboxsweep.com",
+					"sender=sender1@mailboxsweep.com",
+					"on_or_after_01-01-2020",
+				},
+			}
+
+			deleteSet, deleteCount, err := service.FindByOperation(authedCtx, changeset.Delete)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, deleteCount).Equals(7)
+			assert.ThatSlice(t, deleteSet.Paths).HasLength(2)
+
+			for _, pathStr := range deleteSet.Paths {
+				p := classification.ParsePath(pathStr)
+				assert.ThatSlice(t, p).HasLength(3)
+				found := false
+				for _, seedPath := range expectedPaths {
+					if slicesAreEqual(seedPath, p) {
+						found = true
+					}
+				}
+				assert.That(t, found).Equals(true)
+			}
+		})
 	})
 
 	t.Run("Execute: mark read", func(t *testing.T) {
