@@ -6,6 +6,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -75,6 +76,7 @@ func (w Worker) Work() error {
 		w.log.Infof("read %d messages from the queue", len(batch.Messages))
 
 		for _, m := range batch.Messages {
+			start := time.Now()
 			queueItem := mailboxsweep.EventBody[classification.ClassifyQueueItem]{}
 			err := json.Unmarshal([]byte(*m.Body), &queueItem)
 			if err != nil {
@@ -104,9 +106,11 @@ func (w Worker) Work() error {
 			}
 
 			err = w.service.Classify(jobCtx, body.Folders, classifiers)
+			end := time.Now()
 			if err != nil {
 				w.log.
 					WithError(err).
+					WithField("execution_time_seconds", end.Sub(start).Seconds()).
 					Error("classify failed")
 				// push to DLQ
 				err = w.dlqPub.PublishEvent(ctx, queueItem)
@@ -124,13 +128,18 @@ func (w Worker) Work() error {
 					}
 				}
 			} else {
-				w.log.Info("classify complete")
+				w.log.
+					WithField("address", body.Address).
+					WithField("execution_time_seconds", end.Sub(start).Seconds()).
+					Info("classify complete")
 				_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
 					QueueUrl:      &w.queueURL,
 					ReceiptHandle: m.ReceiptHandle,
 				})
 				if err != nil {
-					w.log.Errorf("failed to delete message after classify: %s", err.Error())
+					w.log.
+						WithField("address", body.Address).
+						Errorf("failed to delete message after classify: %s", err.Error())
 				}
 			}
 		}

@@ -66,7 +66,12 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 					o.organizeMessage(msg, root)
 
 				case err = <-e:
-					log.Println("Error reading from message stream: ", err)
+					if err != nil {
+						log.Println("Error reading from message stream: ", err)
+					} else {
+						wg.Done()
+						return
+					}
 				}
 			}
 		}()

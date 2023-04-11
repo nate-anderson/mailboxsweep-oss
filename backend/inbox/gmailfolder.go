@@ -1,15 +1,22 @@
 package inbox
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"html"
+	"log"
 	"mailboxsweep"
+	"net/http"
 	"net/mail"
+	"strings"
 
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
+	"golang.org/x/time/rate"
 	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/googleapi"
 )
 
 // Gmail labels are approximated to folders in our system
@@ -54,49 +61,90 @@ func (f GmailFolder) MarkRead(ids []string) error {
 	return nil
 }
 
-func (f GmailFolder) Messages(start, end uint32, m chan<- Message, e chan<- error) {
+func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- Message, e chan<- error) {
 	var i uint32 = 0
 	var nextPageToken string
+
+	// Gmail API allows up to 50 calls per second of the APIs used here
+	// (250 units/second, 5 units/call)
+	// https://developers.google.com/gmail/api/reference/quota
+	callCost := 5
+	limiter := rate.NewLimiter(250, callCost)
+
 	for i < end {
+		err := limiter.WaitN(ctx, callCost)
+		if err != nil {
+			e <- fmt.Errorf("rate limit error: %w", err)
+			return
+		}
 		res, err := f.client.Users.Messages.
 			List(f.address).
 			LabelIds(f.label.Id).
+			MaxResults(500).
 			PageToken(nextPageToken).
 			Do()
 
 		if err != nil {
+			var apiErr *googleapi.Error
+			if errors.As(err, &apiErr) {
+				// cool off
+				if apiErr.Code == http.StatusForbidden {
+					log.Println("Got limit error from Google: cooling off")
+					time.Sleep(time.Second * 10)
+					continue
+				}
+			}
 			e <- err
 		}
 
 		nextPageToken = res.NextPageToken
 
+		concurrencyLimit := 10
+		workers := make(chan bool, concurrencyLimit)
+
 		for _, msg := range res.Messages {
-			msgRes, err := f.client.Users.Messages.Get(f.address, msg.Id).Do()
-			if err != nil {
-				e <- err
-				return
-			}
-
-			sender, err := parseGmailSender(getHeader("From", msgRes.Payload.Headers))
-			if err != nil {
-				e <- err
-				return
-			}
-
-			sendDate := time.Unix(0, msgRes.InternalDate*int64(time.Millisecond))
-
-			m <- Message{
-				UID:       msg.Id,
-				Folder:    f.label.Name,
-				Subject:   getHeader("Subject", msgRes.Payload.Headers),
-				Sender:    sender,
-				InReplyTo: msg.ThreadId,
-				SendDate:  sendDate,
-				Read:      !includes(msgRes.LabelIds, "UNREAD"),
-			}
-
+			workers <- true
 			i++
+			go func() {
+				defer func() {
+					<-workers
+				}()
+				err := limiter.WaitN(ctx, callCost)
+				msgRes, err := f.client.Users.
+					Messages.
+					Get(f.address, msg.Id).
+					Format("metadata").
+					Do()
+				if err != nil {
+					e <- err
+					return
+				}
+
+				sender, err := getGmailSender(msgRes.Payload.Headers)
+				if err != nil {
+					log.Printf("error parsing gmail sender %s for message %s (account %s): %s", getHeader("From", msgRes.Payload.Headers), msg.Id, f.address, err)
+					log.Println("itmes in workers chan: ", len(workers))
+					// if there's no sender, log errors and skip. We just won't let the user act on this message from our app.
+					return
+				}
+
+				// InternalDate is the date Gmail received the message, not the date it was sent
+				// but it's close enough. the header dates have inconsistent formatting and are sometimes missing.
+				sendDate := time.Unix(0, msgRes.InternalDate*int64(time.Millisecond))
+
+				m <- Message{
+					UID:       msg.Id,
+					Folder:    f.label.Name,
+					Subject:   getHeader("Subject", msgRes.Payload.Headers),
+					Sender:    sender,
+					InReplyTo: msg.ThreadId,
+					SendDate:  sendDate,
+					Read:      !includes(msgRes.LabelIds, "UNREAD"),
+				}
+			}()
+
 			if i >= end {
+				e <- nil
 				return
 			}
 		}
@@ -105,12 +153,21 @@ func (f GmailFolder) Messages(start, end uint32, m chan<- Message, e chan<- erro
 }
 
 func getHeader(header string, list []*gmail.MessagePartHeader) string {
+	lowerHeader := strings.ToLower(header)
 	for _, val := range list {
-		if val.Name == header {
+		if strings.ToLower(val.Name) == lowerHeader {
 			return val.Value
 		}
 	}
 	return ""
+}
+
+func getGmailSender(headers []*gmail.MessagePartHeader) (Sender, error) {
+	if sender, err := parseGmailSender(getHeader("from", headers)); err == nil {
+		return sender, nil
+	} else {
+		return Sender{}, fmt.Errorf("Failed to parse sender header: %w", err)
+	}
 }
 
 func parseGmailSender(sender string) (Sender, error) {
