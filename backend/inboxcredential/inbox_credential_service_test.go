@@ -58,11 +58,19 @@ func TestInboxCredentialService(t *testing.T) {
 				})
 
 				t.Run("decrypt password", func(t *testing.T) {
-					decrypted, err := service.DecryptCredential(ctx, ret)
-					imapCred, ok := decrypted.(*IMAPInboxCredential)
-					assert.That(t, ok).Equals(true)
-					assert.ThatError(t, err).IsNil()
-					assert.That(t, imapCred.Password).Equals(testPassword)
+					t.Run("unauthenticated, faulre", func(t *testing.T) {
+						decrypted, err := service.DecryptCredential(ctx, ret)
+						assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+						assert.That(t, decrypted == nil).Equals(true)
+					})
+
+					t.Run("success", func(t *testing.T) {
+						decrypted, err := service.DecryptCredential(authedCtx, ret)
+						assert.ThatError(t, err).IsNil()
+						imapCred, ok := decrypted.(*IMAPInboxCredential)
+						assert.That(t, ok).Equals(true)
+						assert.That(t, imapCred.Password).Equals(testPassword)
+					})
 				})
 			})
 		})
@@ -129,14 +137,22 @@ func TestInboxCredentialService(t *testing.T) {
 				})
 
 				t.Run("decrypt password", func(t *testing.T) {
-					decrypted, err := service.DecryptCredential(ctx, ret)
-					gmailCred, ok := decrypted.(*GmailInboxCredential)
-					assert.That(t, ok).Equals(true)
-					assert.ThatError(t, err).IsNil()
-					assert.That(t, gmailCred.APIToken).Equals(apiToken)
-					assert.That(t, gmailCred.RefreshToken).Equals(refreshToken)
-					assert.That(t, gmailCred.TokenExpiry.Equal(expiry)).Equals(true)
-					assert.That(t, gmailCred.Encrypted).Equals(false)
+					t.Run("unauthenticated, failure", func(t *testing.T) {
+						decrypted, err := service.DecryptCredential(ctx, ret)
+						assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+						assert.That(t, decrypted == nil).Equals(true)
+					})
+
+					t.Run("authenticated, success", func(t *testing.T) {
+						decrypted, err := service.DecryptCredential(authedCtx, ret)
+						assert.ThatError(t, err).IsNil()
+						gmailCred, ok := decrypted.(*GmailInboxCredential)
+						assert.That(t, ok).Equals(true)
+						assert.That(t, gmailCred.APIToken).Equals(apiToken)
+						assert.That(t, gmailCred.RefreshToken).Equals(refreshToken)
+						assert.That(t, gmailCred.TokenExpiry.Equal(expiry)).Equals(true)
+						assert.That(t, gmailCred.Encrypted).Equals(false)
+					})
 				})
 			})
 		})
