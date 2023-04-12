@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
@@ -254,7 +255,7 @@ func main() {
 
 	loginLinkService := login.NewLinkService(loginRepo, userService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
 	gmailLoginService := login.NewGmailLoginService(gmailTokenRepository, credentialService, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
-	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService)
+	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService, log)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
 		log.Fatal("cookie domain and path are not configured")
@@ -315,11 +316,17 @@ func main() {
 		).ServeHTTP,
 	)
 
+	loggingFormatter := middleware.DefaultLogFormatter{
+		Logger:  log,
+		NoColor: !cfg.DevMode,
+	}
+	loggingMiddleware := middleware.RequestLogger(&loggingFormatter)
 	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
 		BaseRouter: root,
 		Middlewares: []httpserver.MiddlewareFunc{
 			auth.Middleware,
 			cors.Middleware,
+			loggingMiddleware,
 		},
 	})
 
