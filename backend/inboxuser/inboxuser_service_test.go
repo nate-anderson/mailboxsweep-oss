@@ -4,6 +4,7 @@ import (
 	"context"
 	"mailboxsweep"
 	"mailboxsweep/assert"
+	"mailboxsweep/pkg/slice"
 	"testing"
 	"time"
 )
@@ -53,7 +54,7 @@ func TestInboxUserService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(userAgreements)).Equals(len(allAgreements))
 			for _, ua := range userAgreements {
-				if contains(agreements, ua.Agreement) {
+				if slice.Contains(agreements, ua.Agreement) {
 					assert.That(t, ua.Agreed).Equals(true)
 					assert.That(t, ua.AgreedAt.IsZero()).Equals(false)
 				} else {

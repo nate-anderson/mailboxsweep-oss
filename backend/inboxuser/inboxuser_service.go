@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/pkg/slice"
 	"strings"
 	"time"
 
@@ -144,7 +145,7 @@ func (s DefaultService) ListUserAgreements(ctx context.Context) ([]UserAgreement
 			Agreed:           ok,
 			AgreedAt:         agreed,
 			Body:             doc.Name,
-			Required:         contains(requiredAgreements, agr),
+			Required:         slice.Contains(requiredAgreements, agr),
 			Name:             doc.Name,
 			AgreementUpdated: doc.Updated,
 		})
@@ -182,7 +183,7 @@ func (s DefaultService) GetAgreement(ctx context.Context, code Agreement) (*User
 		Agreement:        agr.Code,
 		Body:             agr.Body,
 		Name:             agr.Name,
-		Required:         contains(requiredAgreements, agr.Code),
+		Required:         slice.Contains(requiredAgreements, agr.Code),
 		Description:      agr.Description,
 		AgreementUpdated: agr.Updated,
 	}

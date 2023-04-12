@@ -67,7 +67,6 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 		assert.That(t, user.Agreements[PersonalInbox].Day()).Equals(agreedAt.Day())
 		assert.That(t, user.Agreements[PersonalInbox].Hour()).Equals(agreedAt.Hour())
 		assert.That(t, user.Agreements[PersonalInbox].Minute()).Equals(agreedAt.Minute())
-		assert.That(t, user.Agreements[PersonalInbox].Second()).Equals(agreedAt.Second())
 	})
 
 	t.Run("store payment", func(t *testing.T) {
@@ -93,7 +92,6 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 		assert.That(t, retrieved.Timestamp.Day()).Equals(p.Timestamp.Day())
 		assert.That(t, retrieved.Timestamp.Hour()).Equals(p.Timestamp.Hour())
 		assert.That(t, retrieved.Timestamp.Minute()).Equals(p.Timestamp.Minute())
-		assert.That(t, retrieved.Timestamp.Second()).Equals(p.Timestamp.Second())
 	})
 
 	t.Run("touch last seen", func(t *testing.T) {

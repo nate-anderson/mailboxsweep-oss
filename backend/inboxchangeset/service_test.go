@@ -14,6 +14,7 @@ import (
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/payment"
+	"mailboxsweep/pkg/slice"
 	"strconv"
 	"strings"
 	"testing"
@@ -404,7 +405,7 @@ func TestInboxChangesetService(t *testing.T) {
 
 		t.Run("other messages have not been marked read", func(t *testing.T) {
 			for i := '0'; i <= '9'; i++ {
-				if !contains(expectedMarkReadUIDs, string(i)) {
+				if !slice.Contains(expectedMarkReadUIDs, string(i)) {
 					assert.ThatSlice(t, inboxFolder.MarkReads).NotContains(string(i))
 				}
 			}
@@ -456,7 +457,7 @@ func TestInboxChangesetService(t *testing.T) {
 
 		t.Run("other messages have not been deleted", func(t *testing.T) {
 			for i := '0'; i <= '9'; i++ {
-				if !contains(expectedDeleteUIDs, string(i)) {
+				if !slice.Contains(expectedDeleteUIDs, string(i)) {
 					assert.ThatSlice(t, inboxFolder.Deletes).NotContains(string(i))
 				}
 			}
@@ -498,13 +499,4 @@ func slicesAreEqual[T comparable](a, b []T) bool {
 	}
 
 	return true
-}
-
-func contains[T comparable](slice []T, val T) bool {
-	for _, v := range slice {
-		if v == val {
-			return true
-		}
-	}
-	return false
 }

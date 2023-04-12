@@ -1,30 +1,72 @@
 package mailboxsweep
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 )
 
 // Sentinel errors
 // The error constructors below wrap these
-// These should be used for comparisons, not returned directly
-var (
-	ErrNotFound           = errors.New("not found")
-	ErrUnauthenticated    = errors.New("context not authenticated")
-	ErrNoStoredCredential = errors.New("no credential stored for inbox")
-	ErrBadInboxCredential = errors.New("could not login to inbox with stored credential")
-	ErrNeedsPayment       = errors.New("payment required")
-	ErrAlreadyPaid        = errors.New("account is already paid")
-	ErrPlanLimitMet       = errors.New("plan limits met")
-	ErrBadGateway         = errors.New("bad gateway")
-)
+// These should be used for comparisons or wrapped, not returned directly
 
 type StatusError interface {
-	error
 	StatusCode() int
-	Unwrap() error
 }
+
+type ApplicationError struct {
+	status int
+	msg    string
+}
+
+func (e ApplicationError) Error() string {
+	return e.msg
+}
+
+func (e ApplicationError) StatusCode() int {
+	return e.status
+}
+
+var (
+	ErrNotFound = ApplicationError{
+		status: http.StatusNotFound,
+		msg:    "not found",
+	}
+
+	ErrUnauthenticated = ApplicationError{
+		status: http.StatusUnauthorized,
+		msg:    "unauthenticated",
+	}
+
+	ErrNoStoredCredential = ApplicationError{
+		status: http.StatusNotFound,
+		msg:    "no credential stored for inbox",
+	}
+
+	ErrBadInboxCredential = ApplicationError{
+		status: http.StatusNotFound,
+		msg:    "could not login to inbox with stored credential",
+	}
+
+	ErrNeedsPayment = ApplicationError{
+		status: http.StatusPaymentRequired,
+		msg:    "payment required",
+	}
+
+	ErrAlreadyPaid = ApplicationError{
+		status: http.StatusUnprocessableEntity,
+		msg:    "account is already paid",
+	}
+
+	ErrPlanLimitMet = ApplicationError{
+		status: http.StatusTooManyRequests,
+		msg:    "plan limits met",
+	}
+
+	ErrBadGateway = ApplicationError{
+		status: http.StatusBadGateway,
+		msg:    "bad gateway",
+	}
+)
 
 /*
 The application should use the wrapping functions in this file to inform the upper
@@ -38,148 +80,30 @@ layer can determine the correct status code. The default is 500 for errors
 not implementing StatusError
 */
 
-func join(parent error, sentinel error) error {
-	if parent == nil {
-		return sentinel
-	}
-	return fmt.Errorf("%w: %s", sentinel, parent.Error())
-}
-
 func NotFoundError(parent error) error {
-	return notFoundError{
-		parent: join(parent, ErrNotFound),
-	}
+	return fmt.Errorf("%w: %w", ErrNotFound, parent)
 }
 
 func UnauthenticatedError(parent error) error {
-	return unauthenticatedError{
-		parent: join(parent, ErrUnauthenticated),
-	}
+	return fmt.Errorf("%w: %w", ErrUnauthenticated, parent)
 }
 
 func NoStoredCredentialError(parent error) error {
-	return credentialError{
-		parent: join(parent, ErrNoStoredCredential),
-	}
+	return fmt.Errorf("%w: %w", ErrNoStoredCredential, parent)
 }
 
 func BadInboxCredentialError(parent error) error {
-	return credentialError{
-		parent: join(parent, ErrBadInboxCredential),
-	}
+	return fmt.Errorf("%w: %w", ErrBadInboxCredential, parent)
 }
 
 func NeedsPaymentError(parent error) error {
-	return paymentError{
-		parent: join(parent, ErrNeedsPayment),
-	}
+	return fmt.Errorf("%w: %w", ErrNeedsPayment, parent)
 }
 
 func PlanLimitMetError(parent error) error {
-	return planLimitMetError{
-		parent: join(parent, ErrPlanLimitMet),
-	}
+	return fmt.Errorf("%w: %w", ErrPlanLimitMet, parent)
 }
 
 func BadGatewayError(parent error) error {
-	return badGatewayError{
-		parent: join(parent, ErrBadGateway),
-	}
-}
-
-// Something wasn't found
-type notFoundError struct {
-	parent error
-}
-
-func (n notFoundError) Error() string {
-	return n.parent.Error()
-}
-
-func (n notFoundError) StatusCode() int {
-	return http.StatusNotFound
-}
-
-func (n notFoundError) Unwrap() error {
-	return n.parent
-}
-
-type unauthenticatedError struct {
-	parent error
-}
-
-func (u unauthenticatedError) Error() string {
-	return "unauthenticated"
-}
-
-func (u unauthenticatedError) StatusCode() int {
-	return http.StatusUnauthorized
-}
-
-func (u unauthenticatedError) Unwrap() error {
-	return u.parent
-}
-
-type credentialError struct {
-	parent error
-}
-
-func (c credentialError) Error() string {
-	return c.parent.Error()
-}
-
-func (c credentialError) StatusCode() int {
-	return http.StatusNotFound
-}
-
-func (c credentialError) Unwrap() error {
-	return c.parent
-}
-
-type paymentError struct {
-	parent error
-}
-
-func (p paymentError) Error() string {
-	return ErrNeedsPayment.Error()
-}
-
-func (p paymentError) StatusCode() int {
-	return http.StatusPaymentRequired
-}
-
-func (p paymentError) Unwrap() error {
-	return p.parent
-}
-
-type planLimitMetError struct {
-	parent error
-}
-
-func (p planLimitMetError) Error() string {
-	return ErrPlanLimitMet.Error()
-}
-
-func (p planLimitMetError) StatusCode() int {
-	return http.StatusForbidden
-}
-
-func (p planLimitMetError) Unwrap() error {
-	return p.parent
-}
-
-type badGatewayError struct {
-	parent error
-}
-
-func (e badGatewayError) Error() string {
-	return ErrBadGateway.Error()
-}
-
-func (e badGatewayError) StatusCode() int {
-	return http.StatusBadGateway
-}
-
-func (e badGatewayError) Unwrap() error {
-	return e.parent
+	return fmt.Errorf("%w: %w", ErrBadGateway, parent)
 }

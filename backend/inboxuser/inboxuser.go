@@ -119,15 +119,6 @@ func ParseAgreement(str string) (Agreement, error) {
 	}
 }
 
-func contains[t comparable](slice []t, value t) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
 func (u InboxUser) ProfileComplete() bool {
 	return u.NameFirst != "" && u.NameLast != ""
 }

@@ -3,6 +3,7 @@ package inbox
 import (
 	"context"
 	"fmt"
+	"mailboxsweep/pkg/slice"
 	"net/mail"
 	"regexp"
 	"strconv"
@@ -117,17 +118,8 @@ func imapToMessage(i imap.Message, folder string) (Message, error) {
 			Username: username,
 		},
 		SendDate: i.Envelope.Date,
-		Read:     contains(i.Flags, imap.SeenFlag),
+		Read:     slice.Contains(i.Flags, imap.SeenFlag),
 	}, nil
-}
-
-func contains[t comparable](slice []t, val t) bool {
-	for _, v := range slice {
-		if val == v {
-			return true
-		}
-	}
-	return false
 }
 
 // returns the first value in list not equal to not
