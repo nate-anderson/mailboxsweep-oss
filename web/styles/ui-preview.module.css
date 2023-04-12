@@ -1,0 +1,21 @@
+.device {
+    border: 14px solid black;
+    border-top: 30px solid black;
+    border-bottom: 30px solid black;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 3px 3px 12px #333333;
+    padding-bottom: 0;
+}
+
+.device:before {
+    content: " ";
+    position: absolute;
+    z-index: 1;
+    top: -30px;
+    left: -16px;
+    right: -18px;
+    bottom: -30px;
+    border: 3px solid #7a7a7a;
+    border-radius: 20px;
+}

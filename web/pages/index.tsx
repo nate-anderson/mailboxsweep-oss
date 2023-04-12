@@ -7,6 +7,9 @@ import Button from "@mui/material/Button";
 import Grid from '@mui/material/Grid';
 import Typography from "@mui/material/Typography";
 import IconArrowForward from "@mui/icons-material/ArrowForward";
+import UIDemo from "../components/landing/ui-demo";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 
 function CTA(props: { text: string, href: string }) {
   return <Button
@@ -45,7 +48,6 @@ export default function Home() {
         maxWidth={false}
         sx={{
           backgroundColor: "var(--color-light)",
-          height: "100vh",
           paddingY: 3,
         }}
       >
@@ -129,10 +131,78 @@ export default function Home() {
             display="flex"
             justifyContent="center"
             sx={{
-              marginY: 2
+              marginY: 4
             }}
           >
             <CTA text="Start Cleaning Now" href="/login"/>
+          </Grid>
+        </Grid>
+            
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop="20px"
+        >
+          <Grid
+            container
+            item
+            xs={12}
+            sm={12}
+            md={8}
+            lg={6}
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+            spacing={5}
+          >
+            <Grid
+              item
+              container
+              xs={12}
+              sm={12}
+              md={6}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <UIDemo />
+            </Grid>
+            <Grid
+              item
+              container
+              xs={10}
+              sm={8}
+              md={6}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <List
+                sx={{
+                  listStyleType: 'disc',
+                  pl: 4,
+                  fontFamily: "Roboto"
+                }}
+              >
+                <ListItem
+                  sx={{ display: 'list-item' }}
+                >
+                  Mark messages read to hide notification badges, or delete them entirely to free up space and declutter.
+                </ListItem>
+                <ListItem
+                  sx={{ display: 'list-item' }}
+                >
+                  Select large groups to delete quickly, or make precise selections to keep exactly what you want.
+                </ListItem>
+                <ListItem
+                  sx={{ display: 'list-item' }}
+                >
+                  Customize how your inbox is organized, or use our recommended settings for easy cleanup.
+                </ListItem>
+              </List>
+            </Grid>
           </Grid>
         </Grid>
       </Container>
