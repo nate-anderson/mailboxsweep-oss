@@ -403,7 +403,7 @@ var gmailMessageSummary = &cobra.Command{
 			ClientSecret: cfg.GoogleClientSecret,
 			Endpoint:     google.Endpoint,
 			RedirectURL:  redirectURL,
-			Scopes:       mailboxsweep.GoogleAPIScopes,
+			Scopes:       mailboxsweep.FullGoogleAPIScopes,
 		}
 
 		authedCtx := mailboxsweep.AuthorizeJobContext(ctx, username)

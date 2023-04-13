@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 
@@ -137,7 +138,7 @@ func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, er
 
 	l := Link{}
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.NotFoundError(errors.New("user not found"))
 	}
 	err = attributevalue.UnmarshalMap(res.Item, &l)
 	return &l, err
@@ -166,7 +167,7 @@ func (r DynamoLinkRepository) FindByUserUUID(ctx context.Context, userUUID strin
 	}
 
 	if keyRes.Count < 1 {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.NotFoundError(errors.New("user not found"))
 	}
 
 	key := keyRes.Items[0]

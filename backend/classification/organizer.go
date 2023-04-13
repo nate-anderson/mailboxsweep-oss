@@ -77,6 +77,10 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 		}()
 
 		msgCount := f.Count()
+		if msgCount == 0 {
+			wg.Done()
+			continue
+		}
 		go f.Messages(ctx, 1, msgCount, m, e)
 	}
 

@@ -62,6 +62,15 @@ func (f GmailFolder) MarkRead(ids []string) error {
 }
 
 func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- Message, e chan<- error) {
+	if start <= end {
+		e <- fmt.Errorf("folder.Messages called with start == end")
+		return
+	}
+
+	if end == 0 {
+		e <- fmt.Errorf("folder.Messages called with zero end")
+	}
+
 	var i uint32 = 0
 	var nextPageToken string
 

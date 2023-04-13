@@ -2,6 +2,7 @@ package inboxuser
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"time"
@@ -95,7 +96,7 @@ func (r DynamoInboxUserRepository) FindByAddress(ctx context.Context, address st
 	}
 
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.NotFoundError(errors.New("user not found"))
 	}
 
 	iu := InboxUser{}

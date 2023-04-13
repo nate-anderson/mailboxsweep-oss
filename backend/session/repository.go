@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"net/http"
@@ -87,7 +88,7 @@ func (r DynamoSessionRepository) Get(ctx context.Context, cookieToken string) (*
 	}
 
 	if len(itemRes.Item) == 0 {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.NotFoundError(errors.New("session not found"))
 	}
 
 	item := itemRes.Item

@@ -77,7 +77,7 @@ func (s DefaultService) VerifyPayment(ctx context.Context) (*PaymentInfo, error)
 	}
 
 	if !validPaymentExists {
-		return nil, mailboxsweep.NeedsPaymentError(nil)
+		return nil, mailboxsweep.NeedsPaymentError(errors.New("no current payment"))
 	}
 
 	return &PaymentInfo{

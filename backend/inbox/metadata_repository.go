@@ -86,7 +86,7 @@ func (r DefaultMetadataRepository) Get(ctx context.Context, address string) (*Me
 	}
 
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.NotFoundError(nil)
+		return nil, mailboxsweep.NotFoundError(errors.New("no metadata found"))
 	}
 
 	m := Metadata{}
