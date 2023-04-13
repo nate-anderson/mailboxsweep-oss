@@ -10,6 +10,9 @@ import IconArrowForward from "@mui/icons-material/ArrowForward";
 import UIDemo from "../components/landing/ui-demo";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
+import EnvelopeGraphic from "../public/email-icon.svg";
+import Image from "next/image";
+import Link from "@mui/material/Link"
 
 function CTA(props: { text: string, href: string }) {
   return <Button
@@ -33,6 +36,23 @@ function CTA(props: { text: string, href: string }) {
   </Button>
 }
 
+function TextCTA(props: { text: string, href: string }) {
+  return <Link
+      href={props.href}
+      sx={{
+        textDecoration: "none",
+        color: "var(--color-primary)",
+        textTransform: "none",
+        display: "inline",
+        fontSize: "1em",
+      }}
+    >
+      {props.text}
+      &nbsp;
+      <IconArrowForward fontSize="inherit" />
+    </Link>;
+}
+
 export default function Home() {
   return (
     <>
@@ -52,6 +72,7 @@ export default function Home() {
         }}
       >
         <CssBaseline />
+        {/* Row 1 */}
         <Grid
           container
           direction="row"
@@ -138,6 +159,7 @@ export default function Home() {
           </Grid>
         </Grid>
             
+        {/* Row 2 */}
         <Grid
           container
           direction="row"
@@ -202,6 +224,104 @@ export default function Home() {
                   Customize how your inbox is organized, or use our recommended settings for easy cleanup.
                 </ListItem>
               </List>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Row 3 */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop="80px"
+        >
+          <Grid
+            container
+            item
+            xs={12}
+            sm={12}
+            md={8}
+            lg={6}
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Grid
+              item
+              container
+              xs={12}
+              sm={12}
+              md={6}
+              direction="row"
+              justifyContent={{
+                xs: "center",
+                sm: "center",
+                md: "right",
+              }}
+              alignItems="center"
+              order={{
+                xs: 1,
+                md: 0,
+              }}
+            >
+              <Typography
+                fontFamily="Roboto"
+                sx={{
+                  textAlign: {
+                    xs: "center",
+                    sm: "center",
+                    md: "right",
+                  },
+                  fontSize: "2em",
+                  lineHeight: "1.35",
+                  marginTop: 3
+                }}
+              >
+                We got sick of the badge.
+              </Typography>
+              <Typography
+                fontFamily="Roboto"
+                color="var(--color-accent)"
+                fontSize="1em"
+                sx={{
+                  marginY: 2,
+                  textAlign: {
+                    xs: "center",
+                    sm: "center",
+                    md: "right",
+                  },
+                }}
+              >
+                You'll never read those messages, why waste time hunting them down and marking them read? MailboxSweep can help you shrink the badge much faster.
+                &nbsp;
+                <TextCTA text="Get started now" href="/login" />
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              container
+              xs={12}
+              sm={12}
+              md={6}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+              order={{
+                xs: 0,
+                md: 1,
+              }}
+            >
+              <Image src={EnvelopeGraphic}
+                alt="A mobile email app icon with a badge indicating lots of unread messages"
+                priority
+                style={{
+                  width: "30vw",
+                  height: "auto",
+                  maxWidth: "220px",
+                  marginRight: "-20px",
+              }}
+              />
             </Grid>
           </Grid>
         </Grid>

@@ -13,11 +13,11 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import IconQuestions from "@mui/icons-material/Quiz";
 import IconMarkEmailUnread from "@mui/icons-material/MarkEmailUnread";
-import IconCreditCard from "@mui/icons-material/CreditCard";
+import IconTicket from "@mui/icons-material/LocalActivity";
 import IconClose from "@mui/icons-material/Close";
 import IconLogin from "@mui/icons-material/Login";
-import Button from "@mui/material/Button";
 import Link from "next/link";
+import { useScrollTrigger } from "@mui/material";
 
 const renderDrawerItem = (props: {
   text: string;
@@ -48,14 +48,14 @@ const renderDrawerItem = (props: {
 
 const drawerItems = [
     {
-        text: "Plans",
-        icon: <IconCreditCard />,
-        path: "/landing/plans",
-    },
-    {
         text: "How it Works",
         icon: <IconMarkEmailUnread />,
         path: "/landing/how",
+    },
+    {
+        text: "Plans",
+        icon: <IconTicket />,
+        path: "/landing/plans",
     },
     { text: "Common Questions", icon: <IconQuestions />, path: "/landing/plans" },
 ];
@@ -68,14 +68,19 @@ interface NavbarProps {
 export default function TopBar(props: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const scrollTrigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 0,
+  });
+  
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
         sx={{
-          backgroundColor: "var(--color-light)",
+          backgroundColor: scrollTrigger ? "var(--color-primary)" : "var(--color-light)",
         }}
-        position="static"
-        elevation={props.shadow ? undefined : 0}
+        position="fixed"
+        elevation={scrollTrigger ? 4 : 0}
       >
         <Container maxWidth={false}>
           <ToolBar
@@ -89,7 +94,7 @@ export default function TopBar(props: NavbarProps) {
               sx={{
                 fontFamily: "Lobster",
                 fontSize: "1.75em",
-                color: "var(--color-primary)",
+                color: scrollTrigger ? "white" : "var(--color-primary)",
                 marginX: "auto",
               }}
             >
@@ -97,13 +102,12 @@ export default function TopBar(props: NavbarProps) {
             </Typography>
             <IconButton
               edge="start"
-              color="inherit"
               aria-label="menu"
               onClick={() => setDrawerOpen(!drawerOpen)}
             >
               <IconMenu
                 style={{
-                    fill: "var(--color-primary)"
+                    fill: scrollTrigger ? "white" : "var(--color-primary)"
                 }}
               />
             </IconButton>
@@ -167,6 +171,7 @@ export default function TopBar(props: NavbarProps) {
           )}
         </Drawer>
       </AppBar>
+      <ToolBar />
     </Box>
   );
 }
