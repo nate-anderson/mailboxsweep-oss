@@ -66,6 +66,11 @@ var (
 		status: http.StatusBadGateway,
 		msg:    "bad gateway",
 	}
+
+	ErrInsufficientPermissions = ApplicationError{
+		status: http.StatusForbidden,
+		msg:    "insufficient permissions",
+	}
 )
 
 /*
@@ -106,4 +111,8 @@ func PlanLimitMetError(parent error) error {
 
 func BadGatewayError(parent error) error {
 	return fmt.Errorf("%w: %w", ErrBadGateway, parent)
+}
+
+func InsufficientPermissionsError(parent error) error {
+	return fmt.Errorf("%w: %w", ErrInsufficientPermissions, parent)
 }

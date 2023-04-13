@@ -16,11 +16,8 @@ func TestGmailTokenRepository(t *testing.T) {
 
 	repo := NewDynamoGmailTokenRepository(db, table)
 
-	testAddr := "user@example.dos.com"
-
 	t.Run("store", func(t *testing.T) {
 		token := GmailLoginToken{
-			Address: testAddr,
 			Token:   "a_token",
 			Cookie:  "a_cookie",
 			Expires: time.Now().Add(time.Minute).Unix(),
@@ -35,7 +32,6 @@ func TestGmailTokenRepository(t *testing.T) {
 			token, err := repo.Get(ctx, "a_token")
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, token.Token).Equals("a_token")
-			assert.That(t, token.Address).Equals(testAddr)
 			assert.That(t, token.Expires).NotEqual(0)
 			assert.That(t, token.Cookie).Equals("a_cookie")
 		})

@@ -43,7 +43,6 @@ func (r DynamoGmailTokenRepository) buildPK(token string) string {
 }
 
 type GmailLoginToken struct {
-	Address string `dynamodbav:"address"`
 	Token   string `dyamodbav:"token"`
 	Cookie  string `dynamodbav:"cookie"`
 	Expires int64  `dynamodbav:"expires_at"`

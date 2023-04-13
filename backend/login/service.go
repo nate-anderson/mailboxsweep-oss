@@ -72,7 +72,7 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 
 	switch domain {
 	case mailboxsweep.DomainGmail:
-		authURL, cookie, err := s.gmailLoginService.GetAuthURL(ctx, user.Address)
+		authURL, cookie, err := s.gmailLoginService.GetAuthURL(ctx)
 		if err != nil {
 			return res, err
 		}
@@ -96,7 +96,7 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
 	userUUID, err := s.linkService.ValidateLoginLink(ctx, token, signature)
 	if err != nil {
-		s.log.Error("magic link login failed", err)
+		s.log.Error("magic link login failed: ", err)
 		return nil, nil, err
 	}
 
@@ -112,7 +112,7 @@ func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string)
 
 	sess, err := s.sessionService.StartSession(ctx, user.Address)
 	if err != nil {
-		log.Error("failed to start session", err)
+		log.Error("failed to start session: ", err)
 		return nil, nil, err
 	}
 
@@ -124,7 +124,7 @@ func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string)
 func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRedirectData) (*inboxuser.InboxUser, *session.Session, error) {
 	addr, err := s.gmailLoginService.CompleteLogin(ctx, loginData)
 	if err != nil {
-		s.log.Error("failed to complete Gmail login", err)
+		s.log.Error("failed to complete Gmail login: ", err)
 		return nil, nil, err
 	}
 
@@ -140,24 +140,8 @@ func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRed
 
 	sess, err := s.sessionService.StartSession(ctx, user.Address)
 	if err != nil {
-		log.Error("failed to start session", err)
+		log.Error("failed to start session: ", err)
 		return nil, nil, err
-	}
-
-	// fetch user's profile data if it's incomplete
-	if !user.ProfileComplete() {
-		// the user is authenticated, authorize their context
-		authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, user.Address)
-		nameFirst, nameLast, err := s.gmailLoginService.FetchUserProfile(authedCtx)
-		if err != nil {
-			log.Error("failed to fetch user profile data from Google", err)
-			return nil, nil, err
-		}
-
-		if err = s.userService.SetName(authedCtx, nameFirst, nameLast); err != nil {
-			log.Error("failed to populate user's profile data", err)
-			return nil, nil, err
-		}
 	}
 
 	log = log.WithField("session_exp", time.Unix(sess.Expires, 0).UTC().String())

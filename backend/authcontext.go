@@ -2,6 +2,7 @@ package mailboxsweep
 
 import (
 	"context"
+	"errors"
 	"testing"
 )
 
@@ -24,7 +25,7 @@ func UserAddressFromContext(ctx context.Context) (string, error) {
 	if str, ok := userAddress.(string); ok {
 		return str, nil
 	}
-	return "", UnauthenticatedError(nil)
+	return "", UnauthenticatedError(errors.New("no session associated with request context"))
 }
 
 func AuthorizeAPIContext(ctx context.Context, addr string) context.Context {

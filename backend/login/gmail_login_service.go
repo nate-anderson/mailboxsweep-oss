@@ -9,6 +9,8 @@ import (
 	"io"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/inboxuser"
+	"mailboxsweep/pkg/slice"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -21,9 +23,10 @@ type GmailLoginService struct {
 	oauthConfig       *oauth2.Config
 	tokenRepo         GmailTokenRepository
 	credentialService inboxcredential.Service
+	userService       inboxuser.Service
 }
 
-func NewGmailLoginService(tokenRepo GmailTokenRepository, credentialService inboxcredential.Service, clientID, clientSecret, redirectURL string) *GmailLoginService {
+func NewGmailLoginService(tokenRepo GmailTokenRepository, credentialService inboxcredential.Service, userService inboxuser.Service, clientID, clientSecret, redirectURL string) *GmailLoginService {
 	conf := oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -35,6 +38,7 @@ func NewGmailLoginService(tokenRepo GmailTokenRepository, credentialService inbo
 		oauthConfig:       &conf,
 		tokenRepo:         tokenRepo,
 		credentialService: credentialService,
+		userService:       userService,
 	}
 }
 
@@ -50,7 +54,7 @@ func (s GmailLoginService) makeToken() (string, error) {
 	return strings.ToLower(base64.URLEncoding.EncodeToString(buf)), nil
 }
 
-func (s GmailLoginService) GetAuthURL(ctx context.Context, address string) (redirect string, cookie string, err error) {
+func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, cookie string, err error) {
 	stateToken, err := s.makeToken()
 	if err != nil {
 		return "", "", err
@@ -62,9 +66,8 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context, address string) (redi
 	}
 
 	token := GmailLoginToken{
-		Address: address,
-		Token:   stateToken,
-		Cookie:  cookie,
+		Token:  stateToken,
+		Cookie: cookie,
 	}
 
 	err = s.tokenRepo.Store(ctx, token)
@@ -110,52 +113,74 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 		return "", mailboxsweep.BadGatewayError(err)
 	}
 
+	client := s.oauthConfig.Client(ctx, token)
+	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.GoogleAPIScopes...), option.WithHTTPClient(client))
+	if err != nil {
+		return "", err
+	}
+
+	info, err := oauthService.Tokeninfo().Do()
+	if err != nil {
+		return "", err
+	}
+	scopes := strings.Fields(info.Scope)
+	for _, scope := range mailboxsweep.GoogleAPIScopes {
+		if !slice.Contains(scopes, scope) {
+			return "", mailboxsweep.InsufficientPermissionsError(fmt.Errorf("scope %s was not granted", scope))
+		}
+	}
+
+	profile, err := s.fetchUserProfile(ctx, token)
+	if err != nil {
+		return "", err
+	}
+
+	// store the user
+	user, err := s.userService.Store(ctx, profile.address)
+	if err != nil {
+		return "", err
+	}
+
 	// the user is authenticated, authorize their context
-	authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, known.Address)
+	authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, user.Address)
+
+	err = s.userService.SetName(authedCtx, profile.nameFirst, profile.nameLast)
+	if err != nil {
+		return "", err
+	}
 
 	// store the Gmail credentials
-	gmailCred := inboxcredential.NewGmailInboxCredential(known.Address, token.AccessToken, token.RefreshToken, token.Expiry)
+	gmailCred := inboxcredential.NewGmailInboxCredential(profile.address, token.AccessToken, token.RefreshToken, token.Expiry)
 	err = s.credentialService.StoreCredential(authedCtx, gmailCred)
 	if err != nil {
 		return "", fmt.Errorf("failed to store Gmail token: %w", err)
 	}
 
-	return known.Address, nil
+	return profile.address, nil
 }
 
-func (s GmailLoginService) FetchUserProfile(ctx context.Context) (nameFirst, nameLast string, err error) {
-	cred, err := s.credentialService.FindCredential(ctx)
-	if err != nil {
-		return "", "", err
-	}
+type googleProfile struct {
+	address   string
+	nameFirst string
+	nameLast  string
+}
 
-	cred, err = s.credentialService.DecryptCredential(ctx, cred)
-	if err != nil {
-		return "", "", err
-	}
-
-	gmailCred, ok := cred.(*inboxcredential.GmailInboxCredential)
-	if !ok {
-		return "", "", errors.New("stored credential is not for Gmail")
-	}
-
-	oauth2Token, err := gmailCred.OAuth2Token()
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create oauth2 token from Gmail credential: %w", err)
-	}
-
-	client := s.oauthConfig.Client(ctx, oauth2Token)
+func (s GmailLoginService) fetchUserProfile(ctx context.Context, token *oauth2.Token) (*googleProfile, error) {
+	client := s.oauthConfig.Client(ctx, token)
 
 	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.GoogleAPIScopes...), option.WithHTTPClient(client))
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	res, err := oauthService.Userinfo.V2.Me.Get().Do()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return res.GivenName, res.FamilyName, err
-
+	return &googleProfile{
+		address:   res.Email,
+		nameFirst: res.GivenName,
+		nameLast:  res.FamilyName,
+	}, err
 }

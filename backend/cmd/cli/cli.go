@@ -11,6 +11,7 @@ import (
 	"mailboxsweep/classification"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
 	"mailboxsweep/metering"
 	"strconv"
@@ -388,8 +389,14 @@ var gmailMessageSummary = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
+		inboxUserService, err := inboxuser.NewService(inboxUserRepo)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		redirectURL := "https://localhost:3001/login-gmail"
-		gmailLoginService := login.NewGmailLoginService(tokenRepo, credentialService, cfg.GoogleClientID, cfg.GoogleClientSecret, redirectURL)
+		gmailLoginService := login.NewGmailLoginService(tokenRepo, credentialService, inboxUserService, cfg.GoogleClientID, cfg.GoogleClientSecret, redirectURL)
 
 		config := oauth2.Config{
 			ClientID:     cfg.GoogleClientID,
@@ -408,7 +415,7 @@ var gmailMessageSummary = &cobra.Command{
 			}
 		} else if errors.Is(err, mailboxsweep.ErrNotFound) {
 
-			url, _, err := gmailLoginService.GetAuthURL(ctx, username)
+			url, _, err := gmailLoginService.GetAuthURL(ctx)
 			if err != nil {
 				log.Fatal(err)
 			}
