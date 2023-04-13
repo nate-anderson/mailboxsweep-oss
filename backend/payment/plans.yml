@@ -1,6 +1,6 @@
 BASIC:
   display_name: MailboxSweep
-  description: 'Get an organized view of your inbox, delete and mark read as many emails as you need.'
+  description: "Get an organized view of your inbox, delete and mark read as many emails as you need."
   price_in_cents: 999
   features:
     - Up to 3 inbox scans
@@ -12,8 +12,8 @@ BASIC:
   duration_days: 30
 
 DELUXE:
-  display_name: MalboxSweep Deluxe
-  description: 'More advanced tools to help you sort your inbox by the details.'
+  display_name: MailboxSweep Deluxe
+  description: "More advanced tools to help you sort your inbox by the details."
   price_in_cents: 1999
   features:
     - Up to 10 inbox scans
