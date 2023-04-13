@@ -43,25 +43,6 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		WithField("address", address).
 		WithField("initiated_by_ip", initiatedByIP)
 
-	// check if we know this user
-	user, err := s.userService.FindByAddress(ctx, address)
-	if err != nil {
-		log.Error(err)
-		// if this is an error other than "not found", fail
-		if !errors.Is(err, mailboxsweep.ErrNotFound) {
-			return res, err
-		}
-
-		// otherwise, consider this first login
-
-		// store the new user
-		user, err = s.userService.Store(ctx, address)
-		log.Info("login initiated for unknown user - creating new user")
-		if err != nil {
-			return res, err
-		}
-	}
-
 	domain, err := mailboxsweep.DomainFromEmail(address)
 	if err != nil {
 		log.Error("failed to determine domain from email", err)
@@ -70,8 +51,20 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 
 	log = log.WithField("login_domain", domain)
 
+	// check if we know this user
+	user, err := s.userService.FindByAddress(ctx, address)
+	if err != nil && !errors.Is(err, mailboxsweep.ErrNotFound) {
+		log.Errorf("non-404 user lookup error: %s", err)
+		return res, nil
+	}
+
 	switch domain {
 	case mailboxsweep.DomainGmail:
+		if user != nil {
+			// returning logins use magic link
+			err := s.linkService.CreateLoginLink(ctx, *user, initiatedByIP)
+			return res, err
+		}
 		authURL, cookie, err := s.gmailLoginService.GetAuthURL(ctx)
 		if err != nil {
 			return res, err
@@ -83,6 +76,12 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		return res, nil
 
 	default:
+		if user == nil {
+			user, err = s.userService.Store(ctx, address)
+			if err != nil {
+				return res, err
+			}
+		}
 		err := s.linkService.CreateLoginLink(ctx, *user, initiatedByIP)
 		if err != nil {
 			return res, err

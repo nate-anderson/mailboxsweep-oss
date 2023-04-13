@@ -87,3 +87,11 @@ docker run -v <full path to greenmail-standalone.jar>:/home/greenmail/greenmail-
 Using the full path of the local JAR file to get it working
 
 # I didn't actually try any of this yet ^^^
+
+## Authentication
+
+Auth uses magic links. We store user IMAP credentials securely when they're not using a supported direct login provider (just Gmail right now). For Gmail users, we store their access token and refresh token for use with the Gmail API.
+
+If a user logs in for the first time, we check their domain and redirect them to Google if applicable. Otherwise we go straight to magic link auth.
+
+Returning users always use magic links to log in so we don't have to send them through the Google auth flow multiple times.
