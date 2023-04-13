@@ -10,7 +10,6 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/payment"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 )
 
@@ -192,10 +191,25 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return mailboxsweep.PlanLimitMetError(err)
 	}
 
-	req := ClassifyQueueItem{
-		Address:     address,
-		Folders:     folders,
-		Classifiers: classifiers,
+	// make sure we can log in
+	provider, err := s.providerService.GetProvider(ctx, address)
+	if err != nil {
+		return err
+	}
+
+	cred, err := s.credentialService.FindCredential(ctx)
+	if err != nil {
+		return err
+	}
+
+	password, err := s.credentialService.DecryptCredential(ctx, cred)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.Login(ctx, address, password)
+	if err != nil {
+		return err
 	}
 
 	// store classify request
@@ -204,9 +218,15 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
+	// enqueue work
+	req := ClassifyQueueItem{
+		Address:     address,
+		Folders:     folders,
+		Classifiers: classifiers,
+	}
+
 	err = s.eventPublisher.PublishEvent(ctx, mailboxsweep.EventBody[ClassifyQueueItem]{
-		RequestID: aws.String("@TODO"),
-		Body:      req,
+		Body: req,
 	})
 	return err
 }

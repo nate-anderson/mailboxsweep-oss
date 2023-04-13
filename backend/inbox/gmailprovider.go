@@ -5,16 +5,20 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/pkg/slice"
+	"net/http"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+	googleoauth "google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
 )
 
 type GmailProvider struct {
-	client *gmail.Service
-	conf   *oauth2.Config
+	client      *gmail.Service
+	oauthConfig *oauth2.Config
 }
 
 const redirectURL = "mailboxsweep.com"
@@ -29,11 +33,11 @@ func NewGmailProvider(
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  redirectURL,
-		Scopes:       mailboxsweep.GoogleAPIScopes,
+		Scopes:       mailboxsweep.FullGoogleAPIScopes,
 	}
 
 	return &GmailProvider{
-		conf: &conf,
+		oauthConfig: &conf,
 	}
 }
 
@@ -42,6 +46,7 @@ func (p GmailProvider) Connect(_ context.Context) error {
 	return nil
 }
 
+// Login returns an InsufficientPermissionsError if there are missing required scopes
 func (p *GmailProvider) Login(ctx context.Context, username string, credential inboxcredential.Credential) (Inbox, error) {
 	gmailCred, ok := credential.(*inboxcredential.GmailInboxCredential)
 	if !ok {
@@ -53,10 +58,14 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, err
 	}
 
-	httpClient := p.conf.Client(ctx, oauthToken)
+	httpClient := p.oauthConfig.Client(ctx, oauthToken)
 
 	client, err := gmail.NewService(context.Background(), option.WithHTTPClient(httpClient))
 	if err != nil {
+		return nil, err
+	}
+
+	if err := p.verifyPermissions(ctx, oauthToken, httpClient); err != nil {
 		return nil, err
 	}
 
@@ -65,4 +74,25 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		address: username,
 		client:  client,
 	}, nil
+}
+
+func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Token, client *http.Client) error {
+	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
+	if err != nil {
+		return fmt.Errorf("failed to initiate Oauth service for Google permission check: %w", err)
+	}
+
+	info, err := oauthService.Tokeninfo().Do()
+	if err != nil {
+		return fmt.Errorf("failed to check grants for Google token: %w", err)
+	}
+
+	scopes := strings.Fields(info.Scope)
+	for _, scope := range mailboxsweep.FullGoogleAPIScopes {
+		if !slice.Contains(scopes, scope) {
+			return mailboxsweep.InsufficientPermissionsError(fmt.Errorf("required Gmail scope %s was not granted", scope))
+		}
+	}
+
+	return nil
 }

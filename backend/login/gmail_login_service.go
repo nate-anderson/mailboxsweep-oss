@@ -32,7 +32,7 @@ func NewGmailLoginService(tokenRepo GmailTokenRepository, credentialService inbo
 		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  redirectURL,
-		Scopes:       mailboxsweep.GoogleAPIScopes,
+		Scopes:       mailboxsweep.FullGoogleAPIScopes,
 	}
 	return &GmailLoginService{
 		oauthConfig:       &conf,
@@ -114,7 +114,7 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	}
 
 	client := s.oauthConfig.Client(ctx, token)
-	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.GoogleAPIScopes...), option.WithHTTPClient(client))
+	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
 	if err != nil {
 		return "", err
 	}
@@ -123,8 +123,9 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	if err != nil {
 		return "", err
 	}
+
 	scopes := strings.Fields(info.Scope)
-	for _, scope := range mailboxsweep.GoogleAPIScopes {
+	for _, scope := range mailboxsweep.BasicGoogleAPIScopes {
 		if !slice.Contains(scopes, scope) {
 			return "", mailboxsweep.InsufficientPermissionsError(fmt.Errorf("scope %s was not granted", scope))
 		}
@@ -168,7 +169,7 @@ type googleProfile struct {
 func (s GmailLoginService) fetchUserProfile(ctx context.Context, token *oauth2.Token) (*googleProfile, error) {
 	client := s.oauthConfig.Client(ctx, token)
 
-	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.GoogleAPIScopes...), option.WithHTTPClient(client))
+	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
 	if err != nil {
 		return nil, err
 	}
