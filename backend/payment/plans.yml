@@ -17,7 +17,7 @@ DELUXE:
   price_in_cents: 1999
   features:
     - Up to 10 inbox scans
-    - "Additional filters: subject keywords, body keywords, attachments"
+    - "Additional filters: subject keywords and attachments"
     - Delete unlimited messages.
     - Mark unlimited messages as read
   enabled: true

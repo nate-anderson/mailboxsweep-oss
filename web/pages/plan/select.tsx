@@ -7,138 +7,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
 import IconCardMembership from "@mui/icons-material/CardMembership";
-import Card from "@mui/material/Card";
 import { useEffect, useState } from "react";
-import Button from "@mui/material/Button";
-import IconArrowForward from "@mui/icons-material/ArrowForward";
-import currency from "currency.js";
-
-const renderPrice = (price: currency) => {
-  const cents = String(price.cents()).padStart(2, "0");
-  const commonStyles = {
-    marginBottom: 0,
-  };
-  return (
-    <div>
-      <Typography
-        display="inline"
-        sx={{
-          ...commonStyles,
-          marginRight: 0,
-          display: "inline-block",
-          fontSize: "1.5em",
-          marginY: 1,
-          fontWeight: "light",
-        }}
-      >
-        $
-      </Typography>
-      <Typography
-        display="inline"
-        sx={{
-          ...commonStyles,
-          fontSize: "2.5em",
-          marginY: 1,
-          fontWeight: "light",
-        }}
-      >
-        {price.dollars()}
-      </Typography>
-      <Typography
-        display="inline"
-        sx={{
-          ...commonStyles,
-          fontSize: "2em",
-          marginY: 1,
-          marginLeft: -0.4,
-          fontWeight: "light",
-        }}
-      >
-        .
-      </Typography>
-      <Typography
-        display="inline"
-        sx={{
-          ...commonStyles,
-          display: "inline-block",
-          fontSize: "1.5em",
-          marginY: 1,
-          fontWeight: "light",
-        }}
-      >
-        {cents}
-      </Typography>
-    </div>
-  );
-};
-
-const renderPlanCard = (plan: Plan, submit: () => void) => {
-  const price = currency(plan.priceInCents, { fromCents: true });
-  return (
-    <Card
-      key={plan.key}
-      sx={{
-        maxWidth: 500,
-        width: "auto",
-        marginX: "auto",
-        marginY: 2,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: 3,
-      }}
-    >
-      <Typography
-        variant="h5"
-        sx={{
-          color: "var(--color-accent)",
-        }}
-      >
-        {plan.displayName}
-      </Typography>
-      {renderPrice(price)}
-      <Typography
-        sx={{
-          color: "var(--color-gray)",
-          marginY: 0,
-        }}
-      >
-        for 30 days
-      </Typography>
-      <ul
-        style={{
-          maxWidth: "400px",
-          color: "var(--color-gray)",
-        }}
-      >
-        {plan.features.map((feature, i) => {
-          return <li key={i}>{feature}</li>;
-        })}
-      </ul>
-      <Button
-        size="large"
-        sx={{
-          maxWidth: "200px",
-          marginTop: 1,
-          marginBottom: 2,
-          textTransform: "none",
-        }}
-        variant="contained"
-        onClick={submit}
-        endIcon={<IconArrowForward />}
-      >
-        Confirm & Pay
-      </Button>
-      <small
-        style={{
-          color: "var(--color-gray)",
-        }}
-      >
-        Stripe checkout will open in a new tab.
-      </small>
-    </Card>
-  );
-};
+import PlanCard from "../../components/plan";
 
 export default function SelectPlan() {
   const [plans, setPlans] = useState<Plan[] | undefined>();
@@ -212,7 +82,8 @@ export default function SelectPlan() {
         </Box>
         {plans
           ?.sort((p) => p.priceInCents)
-          .map((p) => renderPlanCard(p, () => submit(p.key)))}
+          .map((p) => <PlanCard plan={p} submit={() => submit(p.key)} />) 
+          }
       </Container>
     </>
   );

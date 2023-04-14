@@ -10,9 +10,19 @@ import IconArrowForward from "@mui/icons-material/ArrowForward";
 import UIDemo from "../components/landing/ui-demo";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Avatar from '@mui/material/Avatar';
 import EnvelopeGraphic from "../public/email-icon.svg";
 import Image from "next/image";
-import Link from "@mui/material/Link"
+import Link from "@mui/material/Link";
+import PlanCard from "../components/plan";
+import { join } from "path";
+import { promises as fs } from 'fs';
+import { parse as parseYaml } from "yaml";
+import { Plan } from "../client-gen";
+import Box from "@mui/material/Box";
 
 function CTA(props: { text: string, href: string }) {
   return <Button
@@ -53,7 +63,41 @@ function TextCTA(props: { text: string, href: string }) {
     </Link>;
 }
 
-export default function Home() {
+interface IPlan {
+  display_name: string;
+  description: string;
+  price_in_cents: number;
+  features: string[];
+  enabled: boolean;
+  allowed_scans: number;
+  duration_days: number;
+}
+
+const convertPlan = (p: IPlan, key: string): Plan => {
+  return {
+    key,
+    displayName: p.display_name,
+    description: p.description,
+    features: p.features,
+    allowedScans: p.allowed_scans,
+    priceInCents: p.price_in_cents,
+    durationDays: p.duration_days,
+  }
+}
+
+interface IStaticProps {
+  plans: Record<string, IPlan>;
+}
+
+export async function getStaticProps(): Promise<{ props: IStaticProps }> {
+  const plansPath = join(process.cwd(), "plans.yml");
+  const plansData = await fs.readFile(plansPath, { encoding: "utf-8" });
+  const plans = parseYaml(plansData);
+  return { props: { plans } };
+}
+
+export default function Home(props: IStaticProps) {
+  console.log(props);
   return (
     <>
       <Head>
@@ -234,7 +278,10 @@ export default function Home() {
           direction="row"
           justifyContent="center"
           alignItems="center"
-          marginTop="80px"
+          marginTop={{
+            xs: "40px",
+            md: "60px",
+          }}
         >
           <Grid
             container
@@ -278,7 +325,7 @@ export default function Home() {
                   marginTop: 3
                 }}
               >
-                We got sick of the badge.
+                Sick of the Red Badge?
               </Typography>
               <Typography
                 fontFamily="Roboto"
@@ -293,7 +340,7 @@ export default function Home() {
                   },
                 }}
               >
-                You'll never read those messages, why waste time hunting them down and marking them read? MailboxSweep can help you shrink the badge much faster.
+                You'll never read those messages, why waste time hunting them down and marking them read? MailboxSweep can help you shrink the badge faster.
                 &nbsp;
                 <TextCTA text="Get started now" href="/login" />
               </Typography>
@@ -318,12 +365,185 @@ export default function Home() {
                 style={{
                   width: "30vw",
                   height: "auto",
-                  maxWidth: "220px",
+                  maxWidth: "180",
                   marginRight: "-20px",
               }}
               />
             </Grid>
           </Grid>
+        </Grid>
+
+        {/* Row 4 */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop={{
+            xs: "40px",
+            md: "60px",
+          }}
+        >
+          <Grid
+            item
+            xs={12}
+            display="flex"
+            justifyContent="center"
+            sx={{
+              marginBottom: 2,
+            }}
+          >
+            <Typography
+              fontSize="2em"
+            >
+              How it Works
+            </Typography>
+          </Grid>
+          <Grid
+              item
+              container
+              xs={10}
+              sm={8}
+              md={6}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <List
+                sx={{
+                  listStyleType: 'disc',
+                  fontFamily: "Roboto",
+                  marginBottom: 2,
+                }}
+              >
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{
+                        backgroundColor: "var(--color-accent)"
+                      }}
+                    >
+                      1
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    sx={{
+                      paddingLeft: 3
+                    }}
+                  >
+                    Create an account and sign into your email provider. Your information is stored with enterprise-grade encryption.
+                  </ListItemText>
+                </ListItem>
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{
+                        backgroundColor: "var(--color-accent)"
+                      }}
+                    >
+                      2
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    sx={{
+                      paddingLeft: 3
+                    }}
+                  >
+                    Choose how you want to classify your inbox messages, including by website, sender, date, and subject keywords.
+                  </ListItemText>
+                </ListItem>
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{
+                        backgroundColor: "var(--color-accent)"
+                      }}
+                    >
+                      3
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    sx={{
+                      paddingLeft: 3
+                    }}
+                  >
+                    Choose groups of messages to delete or mark read.
+                  </ListItemText>
+                </ListItem>
+              </List>
+            </Grid>
+            <CTA text="Sign in and get started" href="/login" />
+        </Grid>
+
+        {/* Row 5 */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop={{
+            xs: "40px",
+            md: "60px",
+          }}
+        >
+          <Grid
+            item
+            xs={12}
+            md={12}
+            lg={8}
+            display="flex"
+            justifyContent="center"
+            sx={{
+              marginBottom: 2,
+            }}
+          >
+            <Typography
+              fontSize="2em"
+            >
+              Plans
+            </Typography>
+          </Grid>
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+            xs={12}
+            marginTop={3}
+          >
+            {Object.entries(props.plans).filter(([key, plan]) => plan.enabled).map(([key, plan]) => {
+              return <Box key={key} marginX={1}>
+                <PlanCard plan={convertPlan(plan, key)} submit={undefined}/>
+              </Box>;
+            })}
+          </Grid>
+          <Grid
+            item
+            xs={12}
+            display="flex"
+            justifyContent="center"
+            sx={{
+              marginTop: 4,
+              marginBottom: 2,
+            }}
+          >
+            <CTA text="Get started" href="/login" />
+          </Grid>
+        </Grid>
+
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop={{
+            xs: "40px",
+            md: "60px",
+          }}
+        >
+          <small style={{
+            color: "var(--color-gray)"
+          }}>© 2023 MailboxSweep, LLC</small>
         </Grid>
       </Container>
     </>
