@@ -9,6 +9,7 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/payment"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -189,6 +190,10 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	if successfulScans >= plan.AllowedScans {
 		err = fmt.Errorf("plan limit of %d scans has been met", plan.AllowedScans)
 		return mailboxsweep.PlanLimitMetError(err)
+	}
+
+	if pmt.ValidUntil.Before(time.Now()) {
+		return mailboxsweep.NeedsPaymentError(fmt.Errorf("plan expired at %s", pmt.ValidUntil.String()))
 	}
 
 	// make sure we can log in
