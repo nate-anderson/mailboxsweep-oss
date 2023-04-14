@@ -19,8 +19,8 @@ type Service interface {
 	MarkCompletedError(ctx context.Context, err error) error
 
 	// change set has been executed, a new scan is needed to do anything else
-	MarkExecutedSuccess(ctx context.Context) error
-	MarkExecutedError(ctx context.Context, err error) error
+	MarkExecutedSuccess(ctx context.Context, count int) error
+	MarkExecutedError(ctx context.Context, count int, err error) error
 }
 
 type DefaultService struct {
@@ -190,7 +190,7 @@ func (s DefaultService) MarkCompletedError(ctx context.Context, classifyErr erro
 	return err
 }
 
-func (s DefaultService) MarkExecutedSuccess(ctx context.Context) error {
+func (s DefaultService) MarkExecutedSuccess(ctx context.Context, count int) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -225,11 +225,11 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context) error {
 		return errors.New("no completed requests found")
 	}
 
-	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, nil)
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, nil)
 	return err
 }
 
-func (s DefaultService) MarkExecutedError(ctx context.Context, executeError error) error {
+func (s DefaultService) MarkExecutedError(ctx context.Context, count int, executeError error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -269,6 +269,6 @@ func (s DefaultService) MarkExecutedError(ctx context.Context, executeError erro
 	}
 
 	errMsg := executeError.Error()
-	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, &errMsg)
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, &errMsg)
 	return err
 }

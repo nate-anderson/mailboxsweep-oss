@@ -138,25 +138,32 @@ func TestClassifyRequestRepository(t *testing.T) {
 		t.Run("mark executed", func(t *testing.T) {
 			requestedAt := 10000001
 
+			var (
+				successCount = 10
+				failureCount = 20
+			)
+
 			t.Run("success", func(t *testing.T) {
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), nil)
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), successCount, nil)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
 				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
 				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
 				assert.That(t, req.Inbox).Equals(testAddress)
 				assert.That(t, req.Error).Equals(nil)
+				assert.That(t, *req.Count).Equals(successCount)
 			})
 
 			t.Run("error", func(t *testing.T) {
 				errDetails := "something horrible happened"
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), &errDetails)
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), failureCount, &errDetails)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
 				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
 				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
 				assert.That(t, req.Inbox).Equals(testAddress)
 				assert.That(t, *req.Error).Equals(errDetails)
+				assert.That(t, *req.Count).Equals(failureCount)
 			})
 		})
 	})

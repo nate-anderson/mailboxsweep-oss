@@ -58,6 +58,7 @@ type testRequest struct {
 	completed *int64
 	executed  *int64
 	err       error
+	count     int
 }
 
 type testRequestRecorder struct {
@@ -163,7 +164,7 @@ func (r *testRequestRecorder) MarkCompletedError(ctx context.Context, classifyEr
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context) error {
+func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -176,6 +177,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context) error {
 		if l.completed != nil {
 			updated := l
 			updated.executed = aws.Int64(time.Now().Unix())
+			updated.count = count
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -184,7 +186,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context) error {
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, classifyErr error) error {
+func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, classifyErr error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -198,6 +200,7 @@ func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, classifyErr
 			updated := l
 			updated.executed = aws.Int64(time.Now().Unix())
 			updated.err = classifyErr
+			updated.count = count
 			list[i] = updated
 			r.requests[addr] = list
 			return nil

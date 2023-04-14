@@ -184,14 +184,16 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		return err
 	}
 
+	var msgChangeCount int
+
 	defer func() {
 		if err == nil {
-			updateErr := s.requestService.MarkExecutedSuccess(ctx)
+			updateErr := s.requestService.MarkExecutedSuccess(ctx, msgChangeCount)
 			if updateErr != nil {
 				log.Println("failed to update request: ", updateErr)
 			}
 		} else {
-			updateErr := s.requestService.MarkExecutedError(ctx, err)
+			updateErr := s.requestService.MarkExecutedError(ctx, msgChangeCount, err)
 			if updateErr != nil {
 				log.Println("failed to update request: ", updateErr)
 			}
@@ -281,6 +283,8 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		} else {
 			return fmt.Errorf("unknown operation '%s'", operation)
 		}
+
+		msgChangeCount = len(uids)
 	}
 
 	err = s.updateInboxMetadata(ctx, diff, changeSet.Operation)
