@@ -10,7 +10,7 @@ import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import IconEnvelope from "@mui/icons-material/Email";
 import { useEffect, useState } from "react";
-import { ApiError } from "../../client-gen";
+import { ApiError, GetCredentialResponse } from "../../client-gen";
 import { parseISO, format } from "date-fns";
 import { displayFormat } from "../../dates";
 import Dialog from "@mui/material/Dialog";
@@ -21,11 +21,12 @@ import MUIButton from "@mui/material/Button";
 import IconHelp from "@mui/icons-material/HelpOutline";
 import Link from "next/link";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
+import Alert from "@mui/material/Alert";
 
-const renderPasswordOnly = (
+function PasswordOnlyInput(props: {
   password: string,
   setPassword: (value: string) => void
-) => {
+}) {
   return (
     <Grid item xs={12} sm={12}>
       <TextField
@@ -34,23 +35,23 @@ const renderPasswordOnly = (
         autoComplete="none"
         required
         fullWidth
-        value={password}
+        value={props.password}
         onChange={(e) => {
-          setPassword(e.target.value);
+          props.setPassword(e.target.value);
         }}
       ></TextField>
     </Grid>
   );
 };
 
-const renderPasswordAndIMAP = (
+function PasswordAndIMAPServerInputs (props: {
   password: string,
   setPassword: (value: string) => void,
   host: string,
   setHost: (value: string) => void,
   port: number | undefined,
   setPort: (port: number) => void
-) => {
+}) {
   return (
     <>
       <Grid item xs={12} sm={12}>
@@ -60,9 +61,9 @@ const renderPasswordAndIMAP = (
           autoComplete="none"
           required
           fullWidth
-          value={password}
+          value={props.password}
           onChange={(e) => {
-            setPassword(e.target.value);
+            props.setPassword(e.target.value);
           }}
         ></TextField>
       </Grid>
@@ -74,9 +75,9 @@ const renderPasswordAndIMAP = (
           autoComplete="none"
           required
           fullWidth
-          value={host}
+          value={props.host}
           onChange={(e) => {
-            setHost(e.target.value);
+            props.setHost(e.target.value);
           }}
         ></TextField>
       </Grid>
@@ -87,9 +88,9 @@ const renderPasswordAndIMAP = (
           autoComplete="none"
           required
           fullWidth
-          value={port}
+          value={props.port}
           onChange={(e) => {
-            setPort(Number(e.target.value));
+            props.setPort(Number(e.target.value));
           }}
         ></TextField>
       </Grid>
@@ -97,14 +98,25 @@ const renderPasswordAndIMAP = (
   );
 };
 
+const displayCredentialType = (credType: GetCredentialResponse.type | undefined): string => {
+  switch (credType) {
+    case GetCredentialResponse.type.GMAIL:
+      return "Gmail";
+    case GetCredentialResponse.type.IMAP:
+      return "IMAP";
+    default:
+      return "unknown";
+  }
+}
+
 export default function Login() {
-  const [address, changeAddress] = useState("");
-  const [password, changePassword] = useState("");
-  const [submitButtonEnabled, changeSubmitButtonEnabled] = useState(false);
-  const [created, changeCreated] = useState<Date>();
-  const [expires, changeExpires] = useState<Date>();
-  const [credentialSet, changeCredentialSet] = useState(false);
-  const [errorSnackbar, changeError] = useSnackbar("error");
+  const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitButtonEnabled, setSubmitButtonEnabled] = useState(false);
+  const [created, setCreated] = useState<Date>();
+  const [expires, setExpires] = useState<Date>();
+  const [credentialSet, setCredentialSet] = useState(false);
+  const [errorSnackbar, setError] = useSnackbar("error");
   const [successSnackbar, showSuccess] = useConstantSnackbar(
     "Inbox credential updated!",
     "success"
@@ -116,27 +128,30 @@ export default function Login() {
   const [imapHost, setImapHost] = useState("");
   const [imapPort, setImapPort] = useState<number>(993);
 
-  const resetFilledInput = () => changePassword("********");
+  const resetFilledInput = () => setPassword("********");
+
+  const [credentialType, setCredentialType] = useState<GetCredentialResponse.type | undefined>();
 
   const API = useAPIClient();
 
   useEffect(() => {
     API.getInboxCredential()
       .then((res) => {
-        changeAddress(res.address);
+        setAddress(res.address);
         // 2022-12-29T23:15:17-08:00
         const createdDate = parseISO(res.created);
         if (isNaN(createdDate.valueOf())) {
-          return changeError("Invalid created date.");
+          return setError("Invalid created date.");
         }
-        changeCreated(createdDate);
+        setCreated(createdDate);
 
         const expiresDate = parseISO(res.expires);
         if (isNaN(expiresDate.valueOf())) {
-          return changeError("Invalid expires date.");
+          return setError("Invalid expires date.");
         }
-        changeExpires(expiresDate);
-        changeCredentialSet(true);
+        setExpires(expiresDate);
+        setCredentialSet(true);
+        setCredentialType(res.type);
         resetFilledInput();
       })
       .catch((error) => {
@@ -145,7 +160,7 @@ export default function Login() {
           if (e.status == 404) {
             API.getUserData()
               .then((res) => {
-                changeAddress(res.address);
+                setAddress(res.address);
               })
               .catch((err) => {
                 console.error({ getUserDataError: err });
@@ -159,7 +174,7 @@ export default function Login() {
   }, []);
 
   const submitCredential = () => {
-    changeSubmitButtonEnabled(false);
+    setSubmitButtonEnabled(false);
     if (showImapServerForm) {
       API.storeImapServerAndCredentials({
         password,
@@ -172,7 +187,7 @@ export default function Login() {
         .catch((err) => {
           if (err instanceof ApiError) {
             const e = err as ApiError;
-            changeError(e.message);
+            setError(e.message);
           }
         });
       return;
@@ -189,7 +204,7 @@ export default function Login() {
           const e = err as ApiError;
           switch (e.status) {
             case 502:
-              changeError(
+              setError(
                 "We couldn't log into your email provider with this password. Please try again."
               );
               break;
@@ -198,24 +213,24 @@ export default function Login() {
               setShowImapServerForm(true);
               break;
             default:
-              changeError("Something went wrong: " + e.body);
+              setError("Something went wrong: " + e.body);
           }
         }
       });
   };
 
   const updatePassword = (password: string) => {
-    changePassword(password);
-    changeSubmitButtonEnabled(password !== "");
+    setPassword(password);
+    setSubmitButtonEnabled(password !== "");
   };
 
   const updateHost = (host: string) => {
-    changeSubmitButtonEnabled(host !== "");
+    setSubmitButtonEnabled(host !== "");
     setImapHost(host);
   };
 
   const updatePort = (port: number) => {
-    changeSubmitButtonEnabled(port !== 0);
+    setSubmitButtonEnabled(port !== 0);
     setImapPort(port);
   };
 
@@ -295,7 +310,7 @@ export default function Login() {
               }}
               align="left"
             >
-              Last updated: {format(created!, displayFormat)}
+              Last updated on {format(created!, displayFormat)}
             </Typography>
             <Typography
               sx={{
@@ -305,14 +320,15 @@ export default function Login() {
               }}
               align="left"
             >
-              Will be deleted at {format(expires!, displayFormat)}
+              Will be deleted on {format(expires!, displayFormat)}
             </Typography>
           </Box>
         ) : (
           <></>
         )}
 
-        <Box
+        {credentialType === GetCredentialResponse.type.IMAP
+          ? <Box
           component="form"
           sx={{
             marginY: 3,
@@ -332,15 +348,19 @@ export default function Login() {
               ></TextField>
             </Grid>
             {showImapServerForm
-              ? renderPasswordAndIMAP(
-                  password,
-                  updatePassword,
-                  imapHost,
-                  updateHost,
-                  imapPort,
-                  updatePort
-                )
-              : renderPasswordOnly(password, updatePassword)}
+              ? <PasswordAndIMAPServerInputs
+                  password={password}
+                  setPassword={updatePassword}
+                  host={imapHost}
+                  setHost={updateHost}
+                  port={imapPort}
+                  setPort={updatePort}
+                />
+              : <PasswordOnlyInput
+                password={password}
+                setPassword={updatePassword}
+              />
+            }
 
             <Grid
               item
@@ -368,6 +388,17 @@ export default function Login() {
             </Grid>
           </Grid>
         </Box>
+          : <Alert
+            severity="info"
+            sx={{
+              marginY: 3,
+              maxWidth: 600,
+              width: "auto",
+              marginX: "auto",
+            }}
+          >Access to your inbox <b>{address}</b> is securely configured through {displayCredentialType(credentialType)}.</Alert>
+        }
+        
       </Container>
     </>
   );

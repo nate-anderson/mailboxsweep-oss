@@ -60,8 +60,12 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 		return
 	}
 
-	// This endpoint is only called for IMAP providers, because we get the Gmail credentials
-	// when the user links their Google account, so it is safe to treat this as an IMAP credential
+	if p, ok := provider.(*inbox.IMAPProvider); !ok {
+		err = fmt.Errorf("cannot set credential manually for %T", *p)
+		c.respondError(w, err, withOverrideStatusCode(http.StatusUnprocessableEntity))
+		return
+	}
+
 	credential := inboxcredential.NewIMAPInboxCredential(address, reqBody.Password)
 
 	_, err = provider.Login(ctx, address, credential)
@@ -95,10 +99,21 @@ func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *htt
 		return
 	}
 
+	var credentialType GetCredentialResponseType = "unknown"
+	switch cred.(type) {
+	case *inboxcredential.GmailInboxCredential:
+		credentialType = Gmail
+	case *inboxcredential.IMAPInboxCredential:
+		credentialType = Imap
+	default:
+		c.log.Warnf("unknown credential type encountered in GetInboxCredential: %+v (%t)", cred, cred)
+	}
+
 	res := GetCredentialResponse{
 		Address: cred.Address(),
 		Created: cred.Created().Format(time.RFC3339),
 		Expires: cred.Expires().Format(time.RFC3339),
+		Type:    credentialType,
 	}
 	c.respond(w, http.StatusOK, res)
 }
