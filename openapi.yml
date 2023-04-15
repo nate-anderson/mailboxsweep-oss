@@ -194,6 +194,7 @@ components:
         - address
         - created
         - expires
+        - type
       properties:
         address:
           type: string
@@ -201,6 +202,11 @@ components:
           type: string
         expires:
           type: string
+        type:
+          type: string
+          enum:
+            - gmail
+            - imap
 
     InboxMetadataResponse:
       type: object
