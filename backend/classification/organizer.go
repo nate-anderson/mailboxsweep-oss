@@ -51,6 +51,24 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 	m := make(chan inbox.Message)
 	e := make(chan error)
 	wg := sync.WaitGroup{}
+
+	go func() {
+		for {
+			select {
+			case msg := <-m:
+				o.organizeMessage(msg, root)
+
+			case err = <-e:
+				if err != nil {
+					log.Println("Error reading from message stream: ", err)
+				} else {
+					wg.Done()
+					return
+				}
+			}
+		}
+	}()
+
 	for _, name := range o.folders {
 		wg.Add(1)
 		f, err := o.inbox.Folder(name)
@@ -58,23 +76,6 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 			return nil, err
 		}
 		selectedFolderValidityKeys[name] = validityKeys[name]
-
-		go func() {
-			for {
-				select {
-				case msg := <-m:
-					o.organizeMessage(msg, root)
-
-				case err = <-e:
-					if err != nil {
-						log.Println("Error reading from message stream: ", err)
-					} else {
-						wg.Done()
-						return
-					}
-				}
-			}
-		}()
 
 		msgCount := f.Count()
 		if msgCount == 0 {

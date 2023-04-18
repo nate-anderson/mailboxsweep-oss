@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"sync"
 
 	"time"
 
@@ -80,6 +81,11 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 	callCost := 5
 	limiter := rate.NewLimiter(250, callCost)
 
+	concurrencyLimit := 50
+	workers := make(chan bool, concurrencyLimit)
+
+	wg := sync.WaitGroup{}
+
 	for i < end {
 		err := limiter.WaitN(ctx, callCost)
 		if err != nil {
@@ -98,7 +104,6 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 			if errors.As(err, &apiErr) {
 				// cool off
 				if apiErr.Code == http.StatusForbidden {
-					log.Println("Got limit error from Google: cooling off")
 					time.Sleep(time.Second * 10)
 					continue
 				}
@@ -108,17 +113,20 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 
 		nextPageToken = res.NextPageToken
 
-		concurrencyLimit := 10
-		workers := make(chan bool, concurrencyLimit)
-
+		wg.Add(len(res.Messages))
 		for _, msg := range res.Messages {
 			workers <- true
 			i++
-			go func() {
+			go func(msg gmail.Message) {
 				defer func() {
+					wg.Done()
 					<-workers
 				}()
 				err := limiter.WaitN(ctx, callCost)
+				if err != nil {
+					e <- err
+					return
+				}
 				msgRes, err := f.client.Users.
 					Messages.
 					Get(f.address, msg.Id).
@@ -150,15 +158,13 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 					SendDate:  sendDate,
 					Read:      !includes(msgRes.LabelIds, "UNREAD"),
 				}
-			}()
-
-			if i >= end {
-				e <- nil
-				return
-			}
+			}(*msg)
 		}
 	}
 
+	wg.Wait()
+	// send completion signal
+	e <- nil
 }
 
 func getHeader(header string, list []*gmail.MessagePartHeader) string {
