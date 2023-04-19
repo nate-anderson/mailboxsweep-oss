@@ -134,8 +134,10 @@ func TestClassifyRequestService(t *testing.T) {
 	})
 
 	t.Run("mark executed - success", func(t *testing.T) {
+		operation := "DELETE"
+
 		t.Run("unauthorized, failure", func(t *testing.T) {
-			err := service.MarkExecutedSuccess(ctx, 20)
+			err := service.MarkExecutedSuccess(ctx, operation, 20)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
@@ -149,7 +151,7 @@ func TestClassifyRequestService(t *testing.T) {
 		count := 30
 
 		t.Run("authorized, no completed requests, failure", func(t *testing.T) {
-			err := service.MarkExecutedSuccess(authedCtx2, count)
+			err := service.MarkExecutedSuccess(authedCtx2, operation, count)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatString(t, err.Error()).Contains("no completed requests found")
 		})
@@ -159,7 +161,7 @@ func TestClassifyRequestService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("success", func(t *testing.T) {
-			err = service.MarkExecutedSuccess(authedCtx2, count)
+			err = service.MarkExecutedSuccess(authedCtx2, operation, count)
 			assert.ThatError(t, err).IsNil()
 
 			retrieved, err := service.FindCompletedRequests(authedCtx2)
@@ -168,15 +170,17 @@ func TestClassifyRequestService(t *testing.T) {
 			assert.That(t, retrieved[0].ExecutedAtUnix).NotEqual(nil)
 			assert.That(t, *retrieved[0].ExecutedAtUnix).NotEqual(0)
 			assert.That(t, *retrieved[0].Count).Equals(count)
+			assert.That(t, *retrieved[0].Operation).Equals(operation)
 		})
 	})
 
 	t.Run("mark executed - error", func(t *testing.T) {
 		testErr := errors.New("bungled")
 		count := 35
+		operation := "MARK_READ"
 
 		t.Run("unauthorized, failure", func(t *testing.T) {
-			err := service.MarkExecutedError(ctx, count, testErr)
+			err := service.MarkExecutedError(ctx, operation, count, testErr)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
@@ -188,7 +192,7 @@ func TestClassifyRequestService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("authorized, no completed requests, failure", func(t *testing.T) {
-			err := service.MarkExecutedError(authedCtx2, count, testErr)
+			err := service.MarkExecutedError(authedCtx2, operation, count, testErr)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatString(t, err.Error()).Contains("no completed requests found")
 		})
@@ -198,7 +202,7 @@ func TestClassifyRequestService(t *testing.T) {
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("success", func(t *testing.T) {
-			err = service.MarkExecutedError(authedCtx2, count, testErr)
+			err = service.MarkExecutedError(authedCtx2, operation, count, testErr)
 			assert.ThatError(t, err).IsNil()
 
 			retrieved, err := service.FindCompletedRequests(authedCtx2)
@@ -208,6 +212,7 @@ func TestClassifyRequestService(t *testing.T) {
 			assert.That(t, *retrieved[0].ExecutedAtUnix).NotEqual(0)
 			assert.ThatString(t, *retrieved[0].Error).Contains(testErr.Error())
 			assert.That(t, *retrieved[0].Count).Equals(count)
+			assert.That(t, *retrieved[0].Operation).Equals(operation)
 		})
 	})
 }

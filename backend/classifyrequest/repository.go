@@ -17,7 +17,7 @@ type ClassifyRequestRepository interface {
 	Store(ctx context.Context, req ClassifyRequest) error
 	List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error)
 	MarkCompleted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
-	MarkExecuted(ctx context.Context, inbox string, startedAt int64, count int, errDetails *string) (*ClassifyRequest, error)
+	MarkExecuted(ctx context.Context, inbox string, startedAt int64, operation string, count int, errDetails *string) (*ClassifyRequest, error)
 }
 
 type DynamoRequestRepository struct {
@@ -158,7 +158,7 @@ func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string
 	return &c, err
 }
 
-func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string, startedAt int64, count int, errDetails *string) (*ClassifyRequest, error) {
+func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string, startedAt int64, operation string, count int, errDetails *string) (*ClassifyRequest, error) {
 	key := r.buildKey(inbox, startedAt)
 	executed := time.Now().Unix()
 	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
@@ -172,13 +172,14 @@ func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string,
 	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		Key:                 key,
 		TableName:           &r.tableName,
-		UpdateExpression:    aws.String("SET #executed = :executed, #error = :err_details, #count = :count"),
+		UpdateExpression:    aws.String("SET #executed = :executed, #error = :err_details, #count = :count, #operation = :operation"),
 		ConditionExpression: aws.String("#sk = :sk"),
 		ExpressionAttributeNames: map[string]string{
-			"#executed": "executed_at_unix",
-			"#error":    "error",
-			"#sk":       mailboxsweep.DynamoSK,
-			"#count":    "count",
+			"#executed":  "executed_at_unix",
+			"#error":     "error",
+			"#sk":        mailboxsweep.DynamoSK,
+			"#count":     "count",
+			"#operation": "operation",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":executed": &types.AttributeValueMemberN{
@@ -190,6 +191,9 @@ func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string,
 			},
 			":count": &types.AttributeValueMemberN{
 				Value: strconv.Itoa(count),
+			},
+			":operation": &types.AttributeValueMemberS{
+				Value: operation,
 			},
 		},
 		ReturnValues: types.ReturnValueAllNew,

@@ -188,12 +188,12 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 
 	defer func() {
 		if err == nil {
-			updateErr := s.requestService.MarkExecutedSuccess(ctx, msgChangeCount)
+			updateErr := s.requestService.MarkExecutedSuccess(ctx, string(operation), msgChangeCount)
 			if updateErr != nil {
 				log.Println("failed to update request: ", updateErr)
 			}
 		} else {
-			updateErr := s.requestService.MarkExecutedError(ctx, msgChangeCount, err)
+			updateErr := s.requestService.MarkExecutedError(ctx, string(operation), msgChangeCount, err)
 			if updateErr != nil {
 				log.Println("failed to update request: ", updateErr)
 			}

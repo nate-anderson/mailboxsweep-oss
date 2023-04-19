@@ -59,6 +59,7 @@ type testRequest struct {
 	executed  *int64
 	err       error
 	count     int
+	operation *string
 }
 
 type testRequestRecorder struct {
@@ -164,7 +165,7 @@ func (r *testRequestRecorder) MarkCompletedError(ctx context.Context, classifyEr
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int) error {
+func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, operation string, count int) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -178,6 +179,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int
 			updated := l
 			updated.executed = aws.Int64(time.Now().Unix())
 			updated.count = count
+			updated.operation = &operation
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -186,7 +188,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, classifyErr error) error {
+func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, operation string, count int, classifyErr error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -201,6 +203,7 @@ func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, 
 			updated.executed = aws.Int64(time.Now().Unix())
 			updated.err = classifyErr
 			updated.count = count
+			updated.operation = &operation
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -530,6 +533,7 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, numErrs).Equals(1)
 			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
 			assert.ThatError(t, r.err).IsNil()
+			assert.That(t, r.operation).Equals(nil)
 
 			// metadata is updated with unread count
 			meta, err := inboxMetadataService.Get(authedCtx)

@@ -144,7 +144,8 @@ func TestClassifyRequestRepository(t *testing.T) {
 			)
 
 			t.Run("success", func(t *testing.T) {
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), successCount, nil)
+				operation := "MARK_READ"
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), operation, successCount, nil)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
 				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
@@ -152,11 +153,13 @@ func TestClassifyRequestRepository(t *testing.T) {
 				assert.That(t, req.Inbox).Equals(testAddress)
 				assert.That(t, req.Error).Equals(nil)
 				assert.That(t, *req.Count).Equals(successCount)
+				assert.That(t, *req.Operation).Equals(operation)
 			})
 
 			t.Run("error", func(t *testing.T) {
 				errDetails := "something horrible happened"
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), failureCount, &errDetails)
+				operation := "DELETE"
+				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), operation, failureCount, &errDetails)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
 				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
@@ -164,6 +167,7 @@ func TestClassifyRequestRepository(t *testing.T) {
 				assert.That(t, req.Inbox).Equals(testAddress)
 				assert.That(t, *req.Error).Equals(errDetails)
 				assert.That(t, *req.Count).Equals(failureCount)
+				assert.That(t, *req.Operation).Equals(operation)
 			})
 		})
 	})
