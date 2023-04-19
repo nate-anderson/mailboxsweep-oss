@@ -2,6 +2,7 @@ package changeset
 
 import (
 	"context"
+	"log"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/classification"
@@ -82,7 +83,7 @@ func (r testRepo) FindByInboxAndOperation(ctx context.Context, inbox string, ope
 	return nil, ErrInvalidOperation
 }
 
-func (r *testRepo) MarkExecuted(ctx context.Context, inbox string, operation UpdateOperation) error {
+func (r *testRepo) Archive(ctx context.Context, inbox string, operation UpdateOperation) error {
 	if r.inbox != inbox {
 		return mailboxsweep.ErrNotFound
 	}
@@ -220,6 +221,27 @@ func TestChangeSetService(t *testing.T) {
 
 			assert.ThatSlice(t, repo.markReadPaths.Slice()).HasLength(1)
 			assert.That(t, repo.deletePaths.Has("809,11")).Equals(true)
+		})
+	})
+
+	t.Run("archive", func(t *testing.T) {
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			err := service.Archive(ctx, MarkRead)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+
+			cs, err := service.FindByOperation(authedCtx, MarkRead, true)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, cs == nil).Equals(false)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			err := service.Archive(authedCtx, MarkRead)
+			assert.ThatError(t, err).IsNil()
+
+			cs, err := service.FindByOperation(authedCtx, MarkRead, true)
+			log.Fatalf("got CS %+v", cs)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+			assert.That(t, cs == nil).Equals(true)
 		})
 	})
 }
