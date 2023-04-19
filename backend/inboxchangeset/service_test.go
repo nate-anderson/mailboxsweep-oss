@@ -431,6 +431,12 @@ func TestInboxChangesetService(t *testing.T) {
 				assert.That(t, meta.UnreadCount).Equals(numMessages - len(expectedMarkReadUIDs))
 			})
 		})
+
+		t.Run("changeset is no longer visible to user (archived)", func(t *testing.T) {
+			cs, err := changeSetService.FindByOperation(authedCtx, changeset.MarkRead, true)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+			assert.That(t, cs == nil).Equals(true)
+		})
 	})
 
 	t.Run("Execute: delete", func(t *testing.T) {
@@ -482,6 +488,12 @@ func TestInboxChangesetService(t *testing.T) {
 			t.Run("unread count is updated", func(t *testing.T) {
 				assert.That(t, meta.UnreadCount).Equals(0)
 			})
+		})
+
+		t.Run("changeset is no longer visible to user (archived)", func(t *testing.T) {
+			cs, err := changeSetService.FindByOperation(authedCtx, changeset.Delete, true)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+			assert.That(t, cs == nil).Equals(true)
 		})
 	})
 

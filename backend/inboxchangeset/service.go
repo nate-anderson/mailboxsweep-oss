@@ -288,6 +288,15 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 	}
 
 	err = s.updateInboxMetadata(ctx, diff, changeSet.Operation)
+	if err != nil {
+		return err
+	}
+
+	err = s.changeSetService.Archive(ctx, changeSet.Operation)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
