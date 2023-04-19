@@ -7,13 +7,16 @@ import (
 	"mailboxsweep/classification"
 	"mailboxsweep/pkg/set"
 	"testing"
+	"time"
 )
 
 type testRepo struct {
-	inbox         string
-	deletePaths   set.Set[string]
-	markReadPaths set.Set[string]
-	t             *testing.T
+	inbox            string
+	deletePaths      set.Set[string]
+	markReadPaths    set.Set[string]
+	deleteExecuted   time.Time
+	markReadExecuted time.Time
+	t                *testing.T
 }
 
 func (r testRepo) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
@@ -77,6 +80,20 @@ func (r testRepo) FindByInboxAndOperation(ctx context.Context, inbox string, ope
 	}
 
 	return nil, ErrInvalidOperation
+}
+
+func (r *testRepo) MarkExecuted(ctx context.Context, inbox string, operation UpdateOperation) error {
+	if r.inbox != inbox {
+		return mailboxsweep.ErrNotFound
+	}
+
+	if operation == MarkRead {
+		r.markReadExecuted = time.Now()
+	} else if operation == Delete {
+		r.deleteExecuted = time.Now()
+	}
+
+	return nil
 }
 
 func (r *testRepo) Reset() {

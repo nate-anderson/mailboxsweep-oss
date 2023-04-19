@@ -58,26 +58,18 @@ func NewDynamoChangesetRepository(
 	}, nil
 }
 
-func (d DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, inbox string, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
-	res, err := d.db.Query(ctx, &dynamodb.QueryInput{
-		TableName:              &d.tableName,
-		KeyConditionExpression: aws.String("#pk = :email"),
-		ExpressionAttributeNames: map[string]string{
-			"#pk": mailboxsweep.DynamoPK,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":email": &types.AttributeValueMemberS{
-				Value: d.formatPK(inbox, operation),
-			},
-		},
-		ConsistentRead: &consistentRead,
-	})
+func (r DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, inbox string, operation UpdateOperation, consistentRead bool) (*ChangeSet, error) {
+	items, err := r.findDynamoItemsByInboxAndOperation(ctx, inbox, operation, consistentRead)
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
+		return nil, err
 	}
 
-	results := make([]changeSetDocument, len(res.Items))
-	err = attributevalue.UnmarshalListOfMaps(res.Items, &results)
+	if len(items) == 0 {
+		return nil, mailboxsweep.NotFoundError(errors.New("no changeset documents found for inbox"))
+	}
+
+	results := make([]changeSetDocument, len(items))
+	err = attributevalue.UnmarshalListOfMaps(items, &results)
 	if err != nil {
 		return nil, err
 	}
@@ -93,32 +85,53 @@ func (d DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, 
 	return &cs, nil
 }
 
-func (d DynamoChangesetRepository) formatPK(inbox string, operation UpdateOperation) string {
+func (r DynamoChangesetRepository) findDynamoItemsByInboxAndOperation(ctx context.Context, inbox string, operation UpdateOperation, consistentRead bool) ([]map[string]types.AttributeValue, error) {
+	res, err := r.db.Query(ctx, &dynamodb.QueryInput{
+		TableName:              &r.tableName,
+		KeyConditionExpression: aws.String("#pk = :email"),
+		ExpressionAttributeNames: map[string]string{
+			"#pk": mailboxsweep.DynamoPK,
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":email": &types.AttributeValueMemberS{
+				Value: r.formatPK(inbox, operation),
+			},
+		},
+		ConsistentRead: &consistentRead,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+
+	return res.Items, nil
+}
+
+func (r DynamoChangesetRepository) formatPK(inbox string, operation UpdateOperation) string {
 	return fmt.Sprintf("CHANGESET#%s#%s", inbox, operation)
 }
 
-func (d DynamoChangesetRepository) formatSK(partitionID uint64) string {
+func (r DynamoChangesetRepository) formatSK(partitionID uint64) string {
 	return fmt.Sprintf("PAGE#%d", partitionID)
 }
 
-func (d DynamoChangesetRepository) formatLSI1(operation UpdateOperation) string {
+func (r DynamoChangesetRepository) formatLSI1(operation UpdateOperation) string {
 	return fmt.Sprintf("OPERATION#%s", operation)
 }
 
-func (d DynamoChangesetRepository) partitionID(path string) (uint64, error) {
+func (r DynamoChangesetRepository) partitionID(path string) (uint64, error) {
 	hexVal := md5.Sum([]byte(path))
 	hexStr := hex.EncodeToString(hexVal[:4])
 	dec, err := strconv.ParseUint(hexStr, 16, 64)
 	if err != nil {
 		return 0, err
 	}
-	return dec % d.pageIDHashMod, nil
+	return dec % r.pageIDHashMod, nil
 }
 
-func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string]ChangeSet, error) {
+func (r DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string]ChangeSet, error) {
 	partitionMap := make(map[uint64][]string)
 	for _, path := range changeSet.Paths {
-		partitionID, err := d.partitionID(path)
+		partitionID, err := r.partitionID(path)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +140,7 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 
 	res := make(map[string]ChangeSet)
 	for partitionID, paths := range partitionMap {
-		sk := d.formatSK(partitionID)
+		sk := r.formatSK(partitionID)
 		c := changeSet
 		c.Paths = paths
 		res[sk] = c
@@ -136,16 +149,16 @@ func (d DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 }
 
 // Append to a changeset, splitting it into pages using the hash function
-func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
+func (r DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
-	partitionMap, err := d.partitionSet(changeSet)
+	partitionMap, err := r.partitionSet(changeSet)
 	if err != nil {
 		return 0, err
 	}
 
-	pk := d.formatPK(changeSet.Inbox, changeSet.Operation)
+	pk := r.formatPK(changeSet.Inbox, changeSet.Operation)
 
 	// do this serially because
 	// a) it requires less provisioned throughput, and
@@ -153,8 +166,8 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 	// if performance is an issue, consider a Transaction
 	// or doing this concurrently in an errgroup
 	for sk, set := range partitionMap {
-		_, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-			TableName: &d.tableName,
+		_, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &r.tableName,
 			Key: map[string]types.AttributeValue{
 				mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 					Value: pk,
@@ -200,7 +213,7 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 					Value: strconv.FormatInt(expires, 10),
 				},
 				":lsi1": &types.AttributeValueMemberS{
-					Value: d.formatLSI1(changeSet.Operation),
+					Value: r.formatLSI1(changeSet.Operation),
 				},
 				":operation": &types.AttributeValueMemberS{
 					Value: string(changeSet.Operation),
@@ -218,19 +231,19 @@ func (d DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 	return len(changeSet.Paths), nil
 }
 
-func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
+func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
 	now := time.Now()
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
 	// track diff
 	oldPaths := make([]string, 0, len(changeSet.Paths))
 
-	partitionMap, err := d.partitionSet(changeSet)
+	partitionMap, err := r.partitionSet(changeSet)
 	if err != nil {
 		return 0, err
 	}
 
-	pk := d.formatPK(changeSet.Inbox, changeSet.Operation)
+	pk := r.formatPK(changeSet.Inbox, changeSet.Operation)
 
 	// do this serially because
 	// a) it requires less provisioned throughput, and
@@ -238,8 +251,8 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 	// if performance is an issue, consider a Transaction
 	// or doing this concurrently in an errgroup
 	for sk, set := range partitionMap {
-		res, err := d.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-			TableName: &d.tableName,
+		res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &r.tableName,
 			Key: map[string]types.AttributeValue{
 				mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
 					Value: pk,
@@ -306,4 +319,52 @@ func (d DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 		}
 	}
 	return diff, nil
+}
+
+func (r DynamoChangesetRepository) buildExecutedChangesetPK(inbox string, operation UpdateOperation, executedAt time.Time) string {
+	return fmt.Sprintf("EXECUTED_CHANGESET#%s#%s#%d", inbox, operation, executedAt.Unix())
+}
+
+// move changeset to new primary keys so they are still in our records but no longer shown to users
+func (r DynamoChangesetRepository) MarkExecuted(ctx context.Context, inbox string, operation UpdateOperation) error {
+	items, err := r.findDynamoItemsByInboxAndOperation(ctx, inbox, operation, true)
+	if err != nil {
+		return fmt.Errorf("failed to find existing changeset to mark read: %w", err)
+	}
+
+	executedAt := time.Now()
+
+	// do this serially for simplicity
+	// it's slow, but it's the last step, the user should still be happy!
+	for _, item := range items {
+		// copy the data to the new key
+		oldPK := item[mailboxsweep.DynamoPK]
+		sk := item[mailboxsweep.DynamoSK]
+		updatedKey := r.buildExecutedChangesetPK(inbox, operation, executedAt)
+		item[mailboxsweep.DynamoPK] = &types.AttributeValueMemberS{
+			Value: updatedKey,
+		}
+
+		_, err := r.db.PutItem(ctx, &dynamodb.PutItemInput{
+			TableName: &r.tableName,
+			Item:      item,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to copy changeset to executed-version key: %w", err)
+		}
+
+		// delete the original
+		_, err = r.db.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+			TableName: &r.tableName,
+			Key: map[string]types.AttributeValue{
+				mailboxsweep.DynamoPK: oldPK,
+				mailboxsweep.DynamoSK: sk,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete original changeset document %s: %w", sk, err)
+		}
+	}
+
+	return nil
 }

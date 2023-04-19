@@ -127,4 +127,13 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		}
 	})
 
+	t.Run("mark executed", func(t *testing.T) {
+		err := repo.MarkExecuted(ctx, inbox, Delete)
+		assert.ThatError(t, err).IsNil()
+
+		cs, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, true)
+		assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+		assert.That(t, cs == nil).Equals(true)
+	})
+
 }
