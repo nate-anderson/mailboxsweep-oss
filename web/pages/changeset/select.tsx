@@ -239,10 +239,7 @@ export default function Edit() {
       .catch((err) => {
         if (err instanceof ApiError) {
           const apiError = err as ApiError;
-          // if no changeset is found, just let the user start creating one
-          if (apiError.status != 404) {
-            setError(apiError.message);
-          }
+          setError(apiError.message);
         }
       });
 
@@ -261,7 +258,10 @@ export default function Edit() {
       .catch((err) => {
         if (err instanceof ApiError) {
           const apiError = err as ApiError;
-          setError(apiError.message);
+          // if no changeset is found, just let the user start creating one
+          if (apiError.status !== 404) {
+            setError(apiError.message);
+          }
         }
       });
   
