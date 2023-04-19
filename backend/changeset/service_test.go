@@ -2,7 +2,7 @@ package changeset
 
 import (
 	"context"
-	"log"
+	"errors"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/classification"
@@ -65,6 +65,9 @@ func (r testRepo) FindByInboxAndOperation(ctx context.Context, inbox string, ope
 		return nil, mailboxsweep.ErrNotFound
 	}
 	if operation == Delete {
+		if r.deletePaths.Len() == 0 {
+			return nil, mailboxsweep.NotFoundError(errors.New("no delete paths"))
+		}
 		return &ChangeSet{
 			Inbox:     inbox,
 			Operation: operation,
@@ -73,6 +76,9 @@ func (r testRepo) FindByInboxAndOperation(ctx context.Context, inbox string, ope
 	}
 
 	if operation == MarkRead {
+		if r.markReadPaths.Len() == 0 {
+			return nil, mailboxsweep.NotFoundError(errors.New("no mark read paths"))
+		}
 		return &ChangeSet{
 			Inbox:     inbox,
 			Operation: MarkRead,
@@ -90,8 +96,10 @@ func (r *testRepo) Archive(ctx context.Context, inbox string, operation UpdateOp
 
 	if operation == MarkRead {
 		r.markReadExecuted = time.Now()
+		r.markReadPaths = set.NewSet[string]()
 	} else if operation == Delete {
 		r.deleteExecuted = time.Now()
+		r.deletePaths = set.NewSet[string]()
 	}
 
 	return nil
@@ -239,7 +247,6 @@ func TestChangeSetService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 
 			cs, err := service.FindByOperation(authedCtx, MarkRead, true)
-			log.Fatalf("got CS %+v", cs)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 			assert.That(t, cs == nil).Equals(true)
 		})
