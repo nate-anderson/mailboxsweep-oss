@@ -326,7 +326,7 @@ func (r DynamoChangesetRepository) buildExecutedChangesetPK(inbox string, operat
 }
 
 // move changeset to new primary keys so they are still in our records but no longer shown to users
-func (r DynamoChangesetRepository) MarkExecuted(ctx context.Context, inbox string, operation UpdateOperation) error {
+func (r DynamoChangesetRepository) Archive(ctx context.Context, inbox string, operation UpdateOperation) error {
 	items, err := r.findDynamoItemsByInboxAndOperation(ctx, inbox, operation, true)
 	if err != nil {
 		return fmt.Errorf("failed to find existing changeset to mark read: %w", err)

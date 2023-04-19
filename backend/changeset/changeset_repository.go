@@ -13,5 +13,5 @@ type ChangeSetRepository interface {
 	// should return the number of items removed by the operation
 	Remove(ctx context.Context, changeset ChangeSet) (int, error)
 	// Mark the changeset as executed. It will no longer be presented to the user.
-	MarkExecuted(ctx context.Context, inbox string, operation UpdateOperation) error
+	Archive(ctx context.Context, inbox string, operation UpdateOperation) error
 }
