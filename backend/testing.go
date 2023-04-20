@@ -118,27 +118,18 @@ type testConfig struct {
 
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
-	conf := viper.New()
+	viper.SetConfigType("env")
+	viper.BindEnv("TEST_ADDRESS", "TEST_PASSWORD", "TEST_IMAP_HOST", "TEST_IMAP_PORT", "TEST_SMTP_HOST")
 
-	conf.SetConfigType("env")
-	conf.AutomaticEnv()
+	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
-		log.Println("Found test.env file, loading!")
-		conf.SetConfigFile("test.env")
-		if err := conf.ReadInConfig(); err != nil {
+		viper.SetConfigFile("test.env")
+		if err := viper.ReadInConfig(); err != nil {
 			return tc, err
 		}
 	}
 
-	// pull from ENV
-	// https://github.com/spf13/viper/issues/188#issuecomment-399518663
-	for _, key := range conf.AllKeys() {
-		val := conf.Get(key)
-		log.Printf("KEY: %s VAL %s\n", key, val)
-		conf.Set(key, val)
-	}
-
-	if err := conf.Unmarshal(&tc); err != nil {
+	if err := viper.Unmarshal(&tc); err != nil {
 		return tc, err
 	}
 
