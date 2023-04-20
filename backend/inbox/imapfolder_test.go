@@ -28,7 +28,7 @@ func TestIMAPFolder(t *testing.T) {
 	sender := mailboxsweep.NewTestSMTPSender(testConf)
 
 	testConf.Password = testConf.Password[0:3] + "******"
-	fmt.Println(testConf)
+	fmt.Printf("%+v", testConf)
 
 	n := 5
 	for i := 0; i < n; i++ {
