@@ -124,6 +124,7 @@ func GetTestConfig() (testConfig, error) {
 	viper.BindEnv("TEST_IMAP_HOST")
 	viper.BindEnv("TEST_IMAP_PORT")
 	viper.BindEnv("TEST_SMTP_HOST")
+	viper.BindEnv("TEST_SMTP_PORT")
 
 	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
