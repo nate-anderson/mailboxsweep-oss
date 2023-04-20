@@ -119,7 +119,11 @@ type testConfig struct {
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
 	viper.SetConfigType("env")
-	viper.BindEnv("TEST_ADDRESS", "TEST_PASSWORD", "TEST_IMAP_HOST", "TEST_IMAP_PORT", "TEST_SMTP_HOST")
+	viper.BindEnv("TEST_ADDRESS")
+	viper.BindEnv("TEST_PASSWORD")
+	viper.BindEnv("TEST_IMAP_HOST")
+	viper.BindEnv("TEST_IMAP_PORT")
+	viper.BindEnv("TEST_SMTP_HOST")
 
 	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
