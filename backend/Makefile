@@ -1,10 +1,10 @@
 .PHONY: up
 up:
-	docker-compose -f ./.docker-dev/docker-compose.yml up -d
+	docker compose -f ./.docker-dev/docker-compose.yml up -d
 
 .PHONY: down
 down:
-	docker-compose -f ./.docker-dev/docker-compose.yml down
+	docker compose -f ./.docker-dev/docker-compose.yml down
 
 .PHONY: install_openapi_gen
 install_openapi_gen:
