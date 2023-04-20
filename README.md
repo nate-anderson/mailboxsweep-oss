@@ -1,5 +1,7 @@
 # Mailboxsweep
 
+[![Build and test Go package](https://github.com/nate-anderson/mailboxsweep/actions/workflows/ci.yml/badge.svg)](https://github.com/nate-anderson/mailboxsweep/actions/workflows/ci.yml)
+
 ## Running locally
 
 Run locally with HTTPS using `local-ssl-proxy`:
