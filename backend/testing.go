@@ -134,6 +134,7 @@ func GetTestConfig() (testConfig, error) {
 	// https://github.com/spf13/viper/issues/188#issuecomment-399518663
 	for _, key := range conf.AllKeys() {
 		val := conf.Get(key)
+		log.Printf("KEY: %s VAL %s\n", key, val)
 		conf.Set(key, val)
 	}
 
