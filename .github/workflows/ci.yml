@@ -59,6 +59,8 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: backend
 
       - name: Test
         run: cd backend && go test ./... -timeout=3m
