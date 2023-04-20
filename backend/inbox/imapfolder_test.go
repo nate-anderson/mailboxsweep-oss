@@ -33,7 +33,7 @@ func TestIMAPFolder(t *testing.T) {
 		msg := fmt.Sprintf("MSG %d", i)
 		err := sender.Send(testConf.Address, testConf.Address, subj, msg)
 		if err != nil {
-			testConf.Password = testConf.Password[0:3] + "******"
+			// testConf.Password = testConf.Password[0:3] + "******"
 			t.Errorf("failed to send test email with testConf %+v: %s", testConf, err)
 		}
 	}
