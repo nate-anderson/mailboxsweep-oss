@@ -27,13 +27,15 @@ func TestIMAPFolder(t *testing.T) {
 
 	sender := mailboxsweep.NewTestSMTPSender(testConf)
 
+	testConf.Password = testConf.Password[0:3] + "******"
+	fmt.Println(testConf)
+
 	n := 5
 	for i := 0; i < n; i++ {
 		subj := fmt.Sprintf("SUBJ %d", i)
 		msg := fmt.Sprintf("MSG %d", i)
 		err := sender.Send(testConf.Address, testConf.Address, subj, msg)
 		if err != nil {
-			// testConf.Password = testConf.Password[0:3] + "******"
 			t.Errorf("failed to send test email with testConf %+v: %s", testConf, err)
 		}
 	}
