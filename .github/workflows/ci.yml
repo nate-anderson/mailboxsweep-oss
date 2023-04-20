@@ -6,7 +6,7 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    container: golang:1.20-buster
+    # container: golang:1.20-buster
 
     # services:
     #   localstack:
@@ -18,6 +18,10 @@ jobs:
     #       - "localstack:/tmp/localstack"
 
     steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "^1.20.0"
+
       - id: go-cache-paths
         name: pre-cache
         run: |
