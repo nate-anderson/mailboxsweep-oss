@@ -92,7 +92,7 @@ jobs:
           REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: server_${{ steps.commit.outputs.short }}
         run: |
-          make build_docker_server
+          cd backend && make build_docker_server
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Build, tag, push image (worker)
@@ -101,5 +101,5 @@ jobs:
           REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: worker_${{ steps.commit.outputs.short }}
         run: |
-          make build_docker_worker
+          cd backend && make build_docker_worker
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
