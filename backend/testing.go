@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/spf13/viper"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -108,33 +109,34 @@ func (s testSMTPSender) Send(to, from, subj, body string) error {
 }
 
 type testConfig struct {
-	Address  string `mapstructure:"TEST_ADDRESS"`
-	Password string `mapstructure:"TEST_PASSWORD"`
-	IMAPHost string `mapstructure:"TEST_IMAP_HOST"`
-	IMAPPort int    `mapstructure:"TEST_IMAP_PORT"`
-	SMTPHost string `mapstructure:"TEST_SMTP_HOST"`
-	SMTPPort int    `mapstructure:"TEST_SMTP_PORT"`
+	Address  string `fig:"TEST_ADDRESS"`
+	Password string `fig:"TEST_PASSWORD"`
+	IMAPHost string `fig:"TEST_IMAP_HOST"`
+	IMAPPort int    `fig:"TEST_IMAP_PORT"`
+	SMTPHost string `fig:"TEST_SMTP_HOST"`
+	SMTPPort int    `fig:"TEST_SMTP_PORT"`
 }
 
 func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
-	viper.SetConfigType("env")
-	viper.BindEnv("TEST_ADDRESS")
-	viper.BindEnv("TEST_PASSWORD")
-	viper.BindEnv("TEST_IMAP_HOST")
-	viper.BindEnv("TEST_IMAP_PORT")
-	viper.BindEnv("TEST_SMTP_HOST")
-	viper.BindEnv("TEST_SMTP_PORT")
+	var conf fig.Config
 
 	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
-		viper.SetConfigFile("test.env")
-		if err := viper.ReadInConfig(); err != nil {
-			return tc, err
+		driver, err := fig.NewEnvironmentDriver("test.env")
+		if err != nil {
+			panic(err)
 		}
+		conf = fig.New(driver)
+	} else {
+		driver, err := fig.NewEnvironmentDriver()
+		if err != nil {
+			panic(err)
+		}
+		conf = fig.New(driver)
 	}
 
-	if err := viper.Unmarshal(&tc); err != nil {
+	if err := conf.Unmarshal(&tc); err != nil {
 		return tc, err
 	}
 
