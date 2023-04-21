@@ -16,7 +16,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/google/uuid v1.3.0
 	github.com/mcnijman/go-emailaddress v1.1.0
-	github.com/nate-anderson/fig/v2 v2.0.0
+	github.com/nate-anderson/fig/v2 v2.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stripe/stripe-go/v74 v74.3.0

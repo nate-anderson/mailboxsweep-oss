@@ -142,6 +142,8 @@ github.com/mcnijman/go-emailaddress v1.1.0 h1:7/Uxgn9pXwXmvXsFSgORo6XoRTrttj7AGm
 github.com/mcnijman/go-emailaddress v1.1.0/go.mod h1:m+aauxGmv31sB5zZ1I8ICcMoa9ZHOA9RiurCijfvkhI=
 github.com/nate-anderson/fig/v2 v2.0.0 h1:86RGnLP3zObI8StBR6jBgiPZej/9mGgzB2tcCgDtVO8=
 github.com/nate-anderson/fig/v2 v2.0.0/go.mod h1:10W4r7m1WUG6/ctCVrfejUoSR+IoEEtHjWCJnll1ZkU=
+github.com/nate-anderson/fig/v2 v2.0.1 h1:nqPXXUdTTR1gHx/7H376qxUEUosjhirsVmvg8R9oXR4=
+github.com/nate-anderson/fig/v2 v2.0.1/go.mod h1:10W4r7m1WUG6/ctCVrfejUoSR+IoEEtHjWCJnll1ZkU=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
