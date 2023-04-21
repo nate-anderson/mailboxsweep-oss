@@ -88,8 +88,7 @@ jobs:
           ECR_REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: server_${{ steps.commit.outputs.short }}
         run: |
-          cd backend && make build_docker_server
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          cd backend && make build_docker_server && docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Build, tag, push image (worker)
         env:
@@ -97,5 +96,4 @@ jobs:
           ECR_REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: worker_${{ steps.commit.outputs.short }}
         run: |
-          cd backend && make build_docker_worker
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          cd backend && make build_docker_worker && docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
