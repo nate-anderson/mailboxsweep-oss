@@ -7,8 +7,8 @@ import (
 	"mailboxsweep/imapserver"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 /*
@@ -17,25 +17,24 @@ NOT seeds used for testing
 */
 
 type seedCmdConfig struct {
-	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
-	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
-	DynamoDBTable  string  `mapstructure:"DYNAMODB_TABLE"`
+	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
+	DynamoDBTable  string  `fig:"DYNAMODB_TABLE"`
 }
 
 func main() {
 	log := logrus.New()
 
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	envDriver, err := fig.NewEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	conf := fig.New(envDriver)
+
 	cfg := seedCmdConfig{}
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := conf.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
 

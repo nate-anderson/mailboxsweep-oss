@@ -10,30 +10,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/google/uuid"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type redriveConfig struct {
-	SQSHost   *string `mapstructure:"SQS_HOST"`
-	SQSPort   int     `mapstructure:"SQS_PORT"`
-	SQSRegion string  `mapstructure:"SQS_REGION"`
-	QueueURL  string  `mapstructure:"SQS_QUEUE_URL"`
-	DLQURL    string  `mapstructure:"SQS_DLQ_URL"`
+	SQSHost   *string `fig:"SQS_HOST"`
+	SQSPort   int     `fig:"SQS_PORT"`
+	SQSRegion string  `fig:"SQS_REGION"`
+	QueueURL  string  `fig:"SQS_QUEUE_URL"`
+	DLQURL    string  `fig:"SQS_DLQ_URL"`
 }
 
 func main() {
-
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	envDriver, err := fig.NewEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
+	conf := fig.New(envDriver)
 
 	cfg := redriveConfig{}
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := conf.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
 

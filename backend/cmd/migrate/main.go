@@ -12,42 +12,40 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/spf13/viper"
+	"github.com/nate-anderson/fig/v2"
 )
 
 type migrateConfig struct {
-	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
-	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
-	DynamoDBTable  string  `mapstructure:"DYNAMODB_TABLE"`
+	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
+	DynamoDBTable  string  `fig:"DYNAMODB_TABLE"`
 
-	S3Host   *string `mapstructure:"S3_HOST"`
-	S3Port   int     `mapstructure:"S3_PORT"`
-	S3Region string  `mapstructure:"S3_REGION"`
-	S3Bucket string  `mapstructure:"S3_BUCKET"`
+	S3Host   *string `fig:"S3_HOST"`
+	S3Port   int     `fig:"S3_PORT"`
+	S3Region string  `fig:"S3_REGION"`
+	S3Bucket string  `fig:"S3_BUCKET"`
 
-	SQSHost   *string `mapstructure:"SQS_HOST"`
-	SQSPort   int     `mapstructure:"SQS_PORT"`
-	SQSRegion string  `mapstructure:"SQS_REGION"`
-	SQSQueue  string  `mapstructure:"SQS_QUEUE"`
-	SQSDLQ    string  `mapstructure:"SQS_DLQ"`
+	SQSHost   *string `fig:"SQS_HOST"`
+	SQSPort   int     `fig:"SQS_PORT"`
+	SQSRegion string  `fig:"SQS_REGION"`
+	SQSQueue  string  `fig:"SQS_QUEUE"`
+	SQSDLQ    string  `fig:"SQS_DLQ"`
 
-	Env string `mapstructure:"ENV"`
+	Env string `fig:"ENV"`
 }
 
 func main() {
 	cmd := os.Args[1]
 
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	envDriver, err := fig.NewEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
+	conf := fig.New(envDriver)
 
 	cfg := migrateConfig{}
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := conf.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
 

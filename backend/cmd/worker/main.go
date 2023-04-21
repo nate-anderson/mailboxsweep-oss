@@ -17,65 +17,63 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
 )
 
 type workerConfig struct {
-	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
-	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
+	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
 
-	S3Host   *string `mapstructure:"S3_HOST"`
-	S3Port   int     `mapstructure:"S3_PORT"`
-	S3Region string  `mapstructure:"S3_REGION"`
+	S3Host   *string `fig:"S3_HOST"`
+	S3Port   int     `fig:"S3_PORT"`
+	S3Region string  `fig:"S3_REGION"`
 
-	SQSHost   *string `mapstructure:"SQS_HOST"`
-	SQSPort   int     `mapstructure:"SQS_PORT"`
-	SQSRegion string  `mapstructure:"SQS_REGION"`
+	SQSHost   *string `fig:"SQS_HOST"`
+	SQSPort   int     `fig:"SQS_PORT"`
+	SQSRegion string  `fig:"SQS_REGION"`
 
-	S3Bucket              string `mapstructure:"S3_BUCKET"`
-	DynamoDBTable         string `mapstructure:"DYNAMODB_TABLE"`
-	SQSQueueURL           string `mapstructure:"SQS_QUEUE_URL"`
-	SQSDeadLetterQueueURL string `mapstructure:"SQS_DLQ_URL"`
+	S3Bucket              string `fig:"S3_BUCKET"`
+	DynamoDBTable         string `fig:"DYNAMODB_TABLE"`
+	SQSQueueURL           string `fig:"SQS_QUEUE_URL"`
+	SQSDeadLetterQueueURL string `fig:"SQS_DLQ_URL"`
 
-	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
+	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
 	// How long must a user wait before submitting a new classification request, when the previous one hasn't finished?
 	// 3 hours?
-	MinutesBetweenOpenRequests int `mapstructure:"MINUTES_BETWEEN_OPEN_REQUESTS"`
+	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS"`
 	// How long must a user wait after a completed request to submit a new one?
-	HoursBetweenClosedRequests int `mapstructure:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
 
 	// How long is a payment good for access to the servuce?
-	PaymentDurationDays int `mapstructure:"PAYMENT_ACCESS_DURATION_DAYS"`
+	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS"`
 
-	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
-	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
-	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+	StripeAPIKey                         string `fig:"STRIPE_API_KEY"`
+	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
+	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 
-	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
+	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE"`
 
-	InboxMetadataTTLMinutes int `mapstructure:"INBOX_METADATA_TTL_MINUTES"`
+	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES"`
 
-	GoogleClientID     string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
 }
 
 func main() {
 	log := logrus.New()
 
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	envDriver, err := fig.NewEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
+	conf := fig.New(envDriver)
 
 	cfg := workerConfig{}
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := conf.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
 

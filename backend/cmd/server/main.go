@@ -28,85 +28,84 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
 )
 
 type serverConfig struct {
-	HTTPPort     int    `mapstructure:"HTTP_PORT"`
-	Env          string `mapstructure:"ENV"`
-	LoginBaseURL string `mapstructure:"BASE_URL"`
+	HTTPPort     int    `fig:"HTTP_PORT"`
+	Env          string `fig:"ENV"`
+	LoginBaseURL string `fig:"BASE_URL"`
 
-	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
-	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
+	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
 
-	S3Host   *string `mapstructure:"S3_HOST"`
-	S3Port   int     `mapstructure:"S3_PORT"`
-	S3Region string  `mapstructure:"S3_REGION"`
+	S3Host   *string `fig:"S3_HOST"`
+	S3Port   int     `fig:"S3_PORT"`
+	S3Region string  `fig:"S3_REGION"`
 
-	SQSHost     *string `mapstructure:"SQS_HOST"`
-	SQSPort     int     `mapstructure:"SQS_PORT"`
-	SQSRegion   string  `mapstructure:"SQS_REGION"`
-	SQSQueueURL string  `mapstructure:"SQS_QUEUE_URL"`
+	SQSHost     *string `fig:"SQS_HOST"`
+	SQSPort     int     `fig:"SQS_PORT"`
+	SQSRegion   string  `fig:"SQS_REGION"`
+	SQSQueueURL string  `fig:"SQS_QUEUE_URL"`
 
-	DynamoDBTable             string `mapstructure:"DYNAMODB_TABLE"`
-	S3Bucket                  string `mapstructure:"S3_BUCKET"`
-	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
+	DynamoDBTable             string `fig:"DYNAMODB_TABLE"`
+	S3Bucket                  string `fig:"S3_BUCKET"`
+	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
-	LoginLinkDurationMinutes int    `mapstructure:"LOGIN_LINK_DURATION_MINUTES"`
-	LoginTokenLength         int    `mapstructure:"LOGIN_TOKEN_LENGTH"`
-	SessionKeyLength         int    `mapstructure:"SESSION_KEY_LENGTH"`
-	SessionDurationMinutes   int    `mapstructure:"SESSION_DURATION_MINUTES"`
-	CookieDomain             string `mapstructure:"COOKIE_DOMAIN"`
-	CookiePath               string `mapstructure:"COOKIE_PATH"`
+	LoginLinkDurationMinutes int    `fig:"LOGIN_LINK_DURATION_MINUTES"`
+	LoginTokenLength         int    `fig:"LOGIN_TOKEN_LENGTH"`
+	SessionKeyLength         int    `fig:"SESSION_KEY_LENGTH"`
+	SessionDurationMinutes   int    `fig:"SESSION_DURATION_MINUTES"`
+	CookieDomain             string `fig:"COOKIE_DOMAIN"`
+	CookiePath               string `fig:"COOKIE_PATH"`
 
 	// How long must a user wait before submitting a new classification request, when the previous one hasn't finished?
 	// 3 hours?
-	MinutesBetweenOpenRequests int `mapstructure:"MINUTES_BETWEEN_OPEN_REQUESTS"`
+	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS"`
 	// How long must a user wait after a completed request to submit a new one?
-	HoursBetweenClosedRequests int `mapstructure:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
 
 	// Used to split changesets up among documents
-	ChangeSetPageIDHashMod uint64 `mapstructure:"CHANGESET_PAGE_ID_HASH_MOD"`
+	ChangeSetPageIDHashMod uint64 `fig:"CHANGESET_PAGE_ID_HASH_MOD"`
 
-	DevMode bool `mapstructure:"DEV_MODE"`
+	DevMode bool `fig:"DEV_MODE"`
 
 	// how long should inbox metadata (folders and message counts) be cached?
-	InboxMetadataTTLMinutes int `mapstructure:"INBOX_METADATA_TTL_MINUTES"`
+	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES"`
 
 	// How long is a payment good for access to the servuce?
-	PaymentDurationDays int `mapstructure:"PAYMENT_ACCESS_DURATION_DAYS"`
+	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS"`
 
-	StripeAPIKey                         string `mapstructure:"STRIPE_API_KEY"`
-	StripeCheckoutSessionDurationMinutes int    `mapstructure:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
-	StripePaymentConfirmationURL         string `mapstructure:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+	StripeAPIKey                         string `fig:"STRIPE_API_KEY"`
+	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
+	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL"`
 
-	CORSAllowedOrigin string `mapstructure:"CORS_ALLOWED_ORIGIN"`
+	CORSAllowedOrigin string `fig:"CORS_ALLOWED_ORIGIN"`
 
-	SigningKeyFilePath string `mapstructure:"SIGNING_KEY_FILE_PATH"`
+	SigningKeyFilePath string `fig:"SIGNING_KEY_FILE_PATH"`
 
-	ClassificationPageSize int `mapstructure:"CLASSIFICATION_PAGE_SIZE"`
+	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE"`
 
-	GoogleClientID        string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret    string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
-	GoogleAuthRedirectURL string `mapstructure:"GOOGLE_OAUTH_REDIRECT_URL"`
+	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL"`
 }
 
 func main() {
 	log := logrus.New()
 
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	envDriver, err := fig.NewEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	conf := fig.New(envDriver)
+
 	cfg := serverConfig{}
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := conf.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
 

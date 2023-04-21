@@ -18,8 +18,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/nate-anderson/fig/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -330,16 +330,16 @@ var deleteCmd = &cobra.Command{
 }
 
 type cmdConfig struct {
-	GoogleClientID        string `mapstructure:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret    string `mapstructure:"GOOGLE_OAUTH_CLIENT_SECRET"`
-	GoogleAuthRedirectURL string `mapstructure:"GOOGLE_OAUTH_REDIRECT_URL"`
+	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID"`
+	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL"`
 
-	DynamoDBHost   *string `mapstructure:"DYNAMODB_HOST"`
-	DynamoDBPort   int     `mapstructure:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `mapstructure:"DYNAMODB_REGION"`
-	DynamoDBTable  string  `mapstructure:"DYNAMODB_TABLE"`
+	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
+	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
+	DynamoDBTable  string  `fig:"DYNAMODB_TABLE"`
 
-	CredentialCipherKeyBase64 string `mapstructure:"CREDENTIAL_CIPHER_KEY_BASE64"`
+	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 }
 
 var cfg cmdConfig
@@ -348,15 +348,13 @@ var gmailMessageSummary = &cobra.Command{
 	Use:   "gmail-summary",
 	Short: "Summarize gmail messages",
 	Run: func(cmd *cobra.Command, args []string) {
-		viper.SetConfigType("env")
-		viper.SetConfigFile(".env")
-		viper.AutomaticEnv()
-		err := viper.ReadInConfig()
+		envDriver, err := fig.NewEnvironmentDriver(".env")
 		if err != nil {
 			log.Fatal(err)
 		}
+		conf := fig.New(envDriver)
 
-		if err := viper.Unmarshal(&cfg); err != nil {
+		if err := conf.Unmarshal(&cfg); err != nil {
 			log.Fatal(err)
 		}
 

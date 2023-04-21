@@ -20,7 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/nate-anderson/fig/v2"
-	"github.com/spf13/viper"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
@@ -121,7 +120,6 @@ func GetTestConfig() (testConfig, error) {
 	tc := testConfig{}
 	var conf fig.Config
 
-	viper.AutomaticEnv()
 	if _, err := os.Stat("test.env"); err == nil {
 		driver, err := fig.NewEnvironmentDriver("test.env")
 		if err != nil {
