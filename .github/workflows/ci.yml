@@ -6,7 +6,6 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    # container: golang:1.20-buster
 
     services:
       localstack:
@@ -53,9 +52,6 @@ jobs:
       - name: Generate server code
         run: cd backend && make http_scaffold
 
-      - name: Build
-        run: cd backend && go build .
-
       # - name: Lint
       #   uses: golangci/golangci-lint-action@v3
       #   with:
@@ -88,8 +84,8 @@ jobs:
 
       - name: Build, tag, push image (server)
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: mailboxsweep-repo-prod
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: server_${{ steps.commit.outputs.short }}
         run: |
           cd backend && make build_docker_server
@@ -97,8 +93,8 @@ jobs:
 
       - name: Build, tag, push image (worker)
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: mailboxsweep-repo-prod
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: mailboxsweep-repo-prod
           IMAGE_TAG: worker_${{ steps.commit.outputs.short }}
         run: |
           cd backend && make build_docker_worker
