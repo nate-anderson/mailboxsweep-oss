@@ -71,15 +71,31 @@ jobs:
           DYNAMODB_HOST: localstack
           S3_HOST: localstack
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, push image
+      - name: Build, tag, push image (server)
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: mcp
-          IMAGE_TAG: mcp_${{ steps.commit.outputs.short }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: mailboxsweep-repo-prod
+          IMAGE_TAG: server_${{ steps.commit.outputs.short }}
         run: |
           make build_docker_server
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Build, tag, push image (worker)
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: mailboxsweep-repo-prod
+          IMAGE_TAG: worker_${{ steps.commit.outputs.short }}
+        run: |
+          make build_docker_worker
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
