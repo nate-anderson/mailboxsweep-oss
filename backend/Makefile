@@ -54,3 +54,11 @@ migrate: migrate_db migrate_s3 migrate_sqs
 	
 .PHONY: seed
 seed: go run ./cmd/seed
+
+.PHONY: build_docker_server
+build_docker_server:
+	docker build -f ./Dockerfile.server .
+
+.PHONY: build_docker_worker
+build_docker_worker:
+	docker build -f ./Dockerfile.worker .

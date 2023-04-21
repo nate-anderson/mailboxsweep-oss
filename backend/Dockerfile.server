@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+
+# Mailboxsweep HTTP API Server Image
+
+FROM golang:1.20
+
+WORKDIR /opt/build
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . ./
+
+RUN mkdir -p /opt/mailboxsweep
+RUN GOOS=linux GOARCH=amd64 go build -o /opt/mailboxsweep/server ./cmd/server
+
+EXPOSE 8000
+
+CMD ["/opt/mailboxsweep/server"]
