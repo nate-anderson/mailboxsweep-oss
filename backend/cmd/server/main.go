@@ -69,7 +69,7 @@ type serverConfig struct {
 	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
 
 	// Used to split changesets up among documents
-	ChangeSetPageIDHashMod uint64 `fig:"CHANGESET_PAGE_ID_HASH_MOD"`
+	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD"`
 
 	DevMode bool `fig:"DEV_MODE"`
 
@@ -260,7 +260,7 @@ func main() {
 		log.Fatal("cookie domain and path are not configured")
 	}
 
-	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, cfg.ChangeSetPageIDHashMod)
+	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, uint64(cfg.ChangeSetPageIDHashMod))
 	if err != nil {
 		log.Fatal(err)
 	}

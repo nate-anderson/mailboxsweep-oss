@@ -25,7 +25,6 @@ export interface LeafProps {
 
 export default function Leaf(props: LeafProps) {
   const toggleSelected = (selected: boolean) => {
-    console.log("toggling", selected);
     if (!props.classification) {
       throw new Error("classification tree is undefined in leaf");
     }

@@ -20,7 +20,6 @@ export default function Login() {
 
     API.submitLoginToken(loginToken, signature)
       .then((res) => {
-        console.log({ loginSuccess: res });
         if (res.redirectToSignup) {
           router.push("/complete-profile");
         } else {

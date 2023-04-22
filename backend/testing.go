@@ -182,6 +182,8 @@ func SetupTestDynamoClient() *dynamodb.Client {
 }
 
 func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func() error) {
+	t.Helper()
+
 	tok, err := randToken(4)
 	if err != nil {
 		panic(fmt.Errorf("failed to generate table name: %w", err))

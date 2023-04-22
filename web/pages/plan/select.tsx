@@ -82,7 +82,7 @@ export default function SelectPlan() {
         </Box>
         {plans
           ?.sort((p) => p.priceInCents)
-          .map((p) => <PlanCard plan={p} submit={() => submit(p.key)} />) 
+          .map((p) => <PlanCard key={p.key} plan={p} submit={() => submit(p.key)} />) 
           }
       </Container>
     </>

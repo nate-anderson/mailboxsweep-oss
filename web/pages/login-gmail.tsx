@@ -25,7 +25,6 @@ export default function Login() {
 
     API.submitGmailStateToken(stateToken, authCode)
       .then((res) => {
-        console.log({ loginSuccess: res });
         if (res.redirectToSignup) {
           router.push("/complete-profile");
         } else {
