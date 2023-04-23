@@ -90,7 +90,7 @@ jobs:
           IMAGE_TAG: server_${{ github.sha }}
         run: |
           docker build -f Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --all-tags
 
       - name: Build, tag, push image (worker)
         working-directory: backend
@@ -100,4 +100,4 @@ jobs:
           IMAGE_TAG: worker_${{ github.sha }}
         run: |
           docker build -f Dockerfile.worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --all-tags
