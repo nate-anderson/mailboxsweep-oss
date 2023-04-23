@@ -160,7 +160,7 @@ func (f IMAPFolder) Name() string {
 	return f.name
 }
 
-func (f IMAPFolder) MarkRead(uids []string) error {
+func (f *IMAPFolder) MarkRead(uids []string) error {
 	readOnly := f.mailbox.ReadOnly
 	set := imap.SeqSet{}
 	for _, uid := range uids {

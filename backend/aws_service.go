@@ -38,7 +38,7 @@ func ConnectAWSService[
 	}
 
 	endpoint := fmt.Sprintf("http://%s:%d", *cfg.ServiceHost, cfg.ServicePort)
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		return aws.Endpoint{
 			PartitionID:   "aws",
 			URL:           endpoint,
@@ -50,7 +50,7 @@ func ConnectAWSService[
 	awsCfg, err := config.LoadDefaultConfig(
 		context.Background(),
 		config.WithRegion(cfg.ServiceRegion),
-		config.WithEndpointResolver(customResolver),
+		config.WithEndpointResolverWithOptions(customResolver),
 	)
 
 	if err != nil {

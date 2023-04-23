@@ -59,7 +59,7 @@ func (i *IMAPInbox) Folder(mailbox string) (Folder, error) {
 		return nil, err
 	}
 
-	return IMAPFolder{
+	return &IMAPFolder{
 		name:    mailbox,
 		client:  i.client,
 		mailbox: mbox,

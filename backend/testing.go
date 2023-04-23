@@ -162,7 +162,7 @@ func SetupTestDynamoClient() *dynamodb.Client {
 	endpoint := fmt.Sprintf("http://%s:%d", host, port)
 	region := "us-west-2"
 
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		return aws.Endpoint{
 			PartitionID:   "aws",
 			URL:           endpoint,
@@ -173,7 +173,7 @@ func SetupTestDynamoClient() *dynamodb.Client {
 	awsCfg, err := config.LoadDefaultConfig(
 		context.Background(),
 		config.WithRegion(region),
-		config.WithEndpointResolver(customResolver),
+		config.WithEndpointResolverWithOptions(customResolver),
 	)
 
 	if err != nil {
