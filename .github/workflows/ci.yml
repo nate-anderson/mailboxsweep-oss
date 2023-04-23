@@ -148,6 +148,10 @@ jobs:
         working-directory: web
         run: npm install
 
+      - name: Generate API client
+        working-directory: web
+        run: npm run openapi
+
       # - name: Lint
       #   working-directory: web
       #   run: npm run lint
