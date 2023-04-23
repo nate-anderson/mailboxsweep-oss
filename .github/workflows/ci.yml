@@ -135,7 +135,7 @@ jobs:
           # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
           node-version: "18.16.0"
           cache: "npm"
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: ./web/package-lock.json
 
       - name: Install dependencies
         run: npm install
