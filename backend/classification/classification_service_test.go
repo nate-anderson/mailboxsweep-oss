@@ -447,7 +447,8 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
 		})
 
-		userService.StorePayment(ctx, inboxuser.Payment{})
+		err = userService.StorePayment(authedCtx, inboxuser.Payment{})
+		assert.ThatError(t, err).IsNil()
 
 		t.Run("upstream error, failure stored in request", func(t *testing.T) {
 			/*

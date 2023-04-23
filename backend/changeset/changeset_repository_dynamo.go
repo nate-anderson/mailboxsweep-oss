@@ -39,8 +39,6 @@ type changeSetDocument struct {
 
 	// unix timestamp (seconds)
 	TTL int64 `dynamodbav:"expires_at"`
-
-	lsi1 string `dynamodbav:"lsi1sk"`
 }
 
 func NewDynamoChangesetRepository(

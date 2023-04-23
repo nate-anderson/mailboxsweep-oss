@@ -35,7 +35,6 @@ type cartStatus string
 var (
 	complete cartStatus = "COMPLETE"
 	open     cartStatus = "OPEN"
-	errored  cartStatus = "ERRORED"
 )
 
 func NewCartRepository(db *dynamodb.Client, table string) *CartRepository {

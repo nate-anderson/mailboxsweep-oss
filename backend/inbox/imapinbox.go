@@ -86,7 +86,10 @@ func (i IMAPInbox) ValidityKeys() (map[string]uint32, error) {
 	}
 
 	if selected != nil {
-		i.client.Select(selected.Name, selected.ReadOnly)
+		_, err = i.client.Select(selected.Name, selected.ReadOnly)
+		if err != nil {
+			return nil, fmt.Errorf("failed to select folder %s: %w", selected.Name, err)
+		}
 	}
 	return keys, nil
 }

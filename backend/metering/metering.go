@@ -74,7 +74,9 @@ func (c *Conn) Read(b []byte) (n int, err error) {
 		return n, err
 	}
 
-	go c.incrementBytesTransferred(n)
+	if err = c.incrementBytesTransferred(n); err != nil {
+		return n, err
+	}
 
 	if c.quota == 0 {
 		return n, err
@@ -93,7 +95,9 @@ func (c *Conn) Write(b []byte) (n int, err error) {
 		return n, err
 	}
 
-	go c.incrementBytesTransferred(n)
+	if err = c.incrementBytesTransferred(n); err != nil {
+		return n, err
+	}
 
 	if c.quota == 0 {
 		return n, err
