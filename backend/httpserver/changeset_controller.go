@@ -117,10 +117,15 @@ func (c ChangeSetController) GetChangeset(w http.ResponseWriter, req *http.Reque
 	for _, path := range cs.Paths {
 		paths = append(paths, classification.ParsePath(path))
 	}
+	apiOperation, err := operationToAPI(cs.Operation)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
 	res := ChangeSetResponse{
 		Address: addr,
 		ChangeSet: ChangeSet{
-			Operation: params.Operation,
+			Operation: apiOperation,
 			Paths:     paths,
 		},
 		Size: size,

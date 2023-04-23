@@ -18,8 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const perSecondPrefixRateLimit = float32(3600)
-
 type S3ClassificationRepository struct {
 	client     *s3.Client
 	bucketName string
@@ -87,11 +85,6 @@ func (r S3ClassificationRepository) FetchLeaf(ctx context.Context, inbox string,
 	return &cl, nil
 }
 
-type pathLeafTuple struct {
-	path string
-	leaf Classification
-}
-
 func (r S3ClassificationRepository) summaryPath(inbox string, page int) string {
 	return filepath.Join(r.summaryDirPath(inbox), strconv.Itoa(page))
 }
@@ -102,10 +95,6 @@ func (r S3ClassificationRepository) summaryDirPath(inbox string) string {
 
 func (r S3ClassificationRepository) leafPath(inbox string, path string) string {
 	return filepath.Join(inbox, path)
-}
-
-func (r S3ClassificationRepository) leavesPrefix(inbox string) string {
-	return fmt.Sprintf("%s/", inbox)
 }
 
 /*

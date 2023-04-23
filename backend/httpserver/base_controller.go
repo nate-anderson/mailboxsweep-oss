@@ -15,12 +15,6 @@ type baseController struct {
 	logger *logrus.Logger
 }
 
-func newBaseController(logger *logrus.Logger) *baseController {
-	return &baseController{
-		logger: logger,
-	}
-}
-
 func (r baseController) respond(w http.ResponseWriter, status int, body any) {
 	w.Header().Add("Content-Type", contentType)
 	w.WriteHeader(status)

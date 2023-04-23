@@ -45,9 +45,7 @@ func (c UserController) SetConsentedAgreements(w http.ResponseWriter, req *http.
 		return
 	}
 
-	resBody := SetUserAgreementsResponse{
-		Agreements: reqBody.Agreements,
-	}
+	resBody := SetUserAgreementsResponse(reqBody)
 
 	c.respond(w, http.StatusOK, resBody)
 }

@@ -75,12 +75,12 @@ func (s DefaultService) RecordRequest(ctx context.Context) error {
 		}
 	}
 
-	timeSinceLastComplete := time.Now().Sub(lastCompleteRequest)
+	timeSinceLastComplete := time.Since(lastCompleteRequest)
 	if timeSinceLastComplete < s.timeBetweenClosedRequests {
 		return fmt.Errorf("cannot submit another request until %s after last completed request (%s)", s.timeBetweenClosedRequests.String(), lastCompleteRequest.Format(time.Stamp))
 	}
 
-	timeSinceLastIncomplete := time.Now().Sub(lastStartedRequest)
+	timeSinceLastIncomplete := time.Since(lastStartedRequest)
 	if timeSinceLastIncomplete < s.timeBetweenOpenRequests {
 		return fmt.Errorf("cannot submit another request: a request has been open for less than %s", s.timeBetweenOpenRequests.String())
 	}

@@ -87,8 +87,6 @@ func (c CredentialController) StoreInboxCredential(w http.ResponseWriter, req *h
 	c.respond(w, http.StatusOK, res)
 }
 
-const testHeaderCredentialAddress = "X-Test-Address"
-
 func (c CredentialController) GetInboxCredential(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
