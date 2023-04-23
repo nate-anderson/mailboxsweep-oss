@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build-backend:
-    name: Build and test backend
+    name: Build, lint and test backend
     runs-on: ubuntu-latest
 
     services:
@@ -55,10 +55,10 @@ jobs:
         working-directory: backend
         run: make http_scaffold
 
-      # - name: Lint
-      #   uses: golangci/golangci-lint-action@v3
-      #   with:
-      #     working-directory: backend
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: backend
 
       - name: Test
         working-directory: backend
