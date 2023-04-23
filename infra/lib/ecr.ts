@@ -4,16 +4,17 @@ import { Construct } from 'constructs';
 import { InfraStackProps } from './infra-stack';
 
 export class RepositoryStack extends cdk.Stack {
-    public repoArn: string;
-    public repo: ECR.Repository;
+    public serverRepoArn: string;
+    public serverRepo: ECR.Repository;
+    public workerRepoArn: string;
+    public workerRepo: ECR.Repository;
 
     constructor(scope: Construct, id: string, props: InfraStackProps) {
-        
         super(scope, id, props);
-        const repoName = `mailboxsweep-repo-${props.environmentName}`;
 
-        const repo = new ECR.Repository(this, repoName, {
-            repositoryName: repoName,
+        const serverRepoName = `mailboxsweep-server`;
+        const serverRepo = new ECR.Repository(this, serverRepoName, {
+            repositoryName: serverRepoName,
             lifecycleRules: [
                 {
                     description: "Retain last 5 versions",
@@ -23,9 +24,24 @@ export class RepositoryStack extends cdk.Stack {
                 }
             ],
             removalPolicy: cdk.RemovalPolicy.RETAIN,
-            imageTagMutability: ECR.TagMutability.IMMUTABLE,
         });
-        this.repo = repo;
-        this.repoArn = repo.repositoryArn;
+        this.serverRepo = serverRepo;
+        this.serverRepoArn = serverRepo.repositoryArn;
+
+        const workerRepoName = `mailboxsweep-worker`;
+        const workerRepo = new ECR.Repository(this, workerRepoName, {
+            repositoryName: workerRepoName,
+            lifecycleRules: [
+                {
+                    description: "Retain last 5 versions",
+                    maxImageCount: 5,
+                    tagStatus: ECR.TagStatus.ANY,
+                    rulePriority: 1,
+                }
+            ],
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+        });
+        this.workerRepo = serverRepo;
+        this.workerRepoArn = serverRepo.repositoryArn;
     }
 }

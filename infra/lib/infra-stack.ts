@@ -20,6 +20,6 @@ export class InfraStack extends cdk.Stack {
 
     const table = new TableStack(this, `app-table-${props.environmentName}`, props);
     
-    const imageRepository = new RepositoryStack(this, `app-repository-${props.environmentName}`, props);
+    const ecrRepos = new RepositoryStack(this, `ecr-repos`, props);
   }
 }

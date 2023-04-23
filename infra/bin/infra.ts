@@ -3,9 +3,21 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { InfraStack } from '../lib/infra-stack';
 
+const environments = ["staging", "prod"];
+
+const { MAILBOXSWEEP_ENV } = process.env;
+
+if (!MAILBOXSWEEP_ENV) {
+  throw new Error("env.MAILBOXSWEEP_ENV was not defined")
+}
+
+if (!environments.includes(MAILBOXSWEEP_ENV)) {
+  throw new Error(`env.MAILBOXSWEEP_ENV must be one of (${environments.join(", ")})`)
+}
+
 const app = new cdk.App();
 new InfraStack(app, 'InfraStack', {
-  environmentName: "prod", 
+  environmentName: MAILBOXSWEEP_ENV, 
   env: {
     region: "us-west-2",
     account: "968574982400",
