@@ -113,7 +113,6 @@ func (o Organizer) Organize(ctx context.Context) (*Classification, error) {
 
 func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassification) {
 	node := root
-	path := []string{}
 	for _, classifier := range o.classifiers {
 		label := classifier.Classify(message)
 		key := classifier.Key(message)
@@ -124,7 +123,6 @@ func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassificati
 		} else {
 		}
 		node.Children.Set(key, child)
-		path = append(path, label)
 		node = child
 		node.Count++
 		if !message.Read {

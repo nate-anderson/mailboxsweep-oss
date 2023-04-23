@@ -72,11 +72,6 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if updateFunc == nil {
-		c.respondError(w, fmt.Errorf("no update function selected"))
-		return
-	}
-
 	path := classification.Path(reqBody.Path)
 	result, err := updateFunc(ctx, path)
 	if err != nil {

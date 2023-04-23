@@ -72,7 +72,6 @@ func (r DynamoRequestRepository) Store(ctx context.Context, req ClassifyRequest)
 
 func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error) {
 	pk := r.formatPK(inbox)
-	var startKey map[string]types.AttributeValue
 	var requests []ClassifyRequest
 	input := &dynamodb.QueryInput{
 		TableName:              &r.tableName,
@@ -85,8 +84,7 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 				Value: pk,
 			},
 		},
-		ExclusiveStartKey: startKey,
-		ConsistentRead:    &consistentRead,
+		ConsistentRead: &consistentRead,
 	}
 	if onlyIncomplete {
 		input.FilterExpression = aws.String("#completed_at_unix = :null OR attribute_not_exists(#completed_at_unix)")
@@ -109,7 +107,7 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 		}
 
 		if len(queryRes.LastEvaluatedKey) > 0 {
-			startKey = queryRes.LastEvaluatedKey
+			input.ExclusiveStartKey = queryRes.LastEvaluatedKey
 		} else {
 			break
 		}

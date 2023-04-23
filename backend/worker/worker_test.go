@@ -124,6 +124,7 @@ func TestWorker(t *testing.T) {
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
 	userService, err := inboxuser.NewService(userRepo)
+	assert.ThatError(t, err).IsNil()
 
 	// store user
 	testAddress := "classifyuser@example.org"
