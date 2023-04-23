@@ -83,7 +83,6 @@ var (
 	PrivacyPolicy        Agreement = "PRIVACY_POLICY"
 	PersonalInbox        Agreement = "PERSONAL_INBOX"
 	BackupResponsibility Agreement = "BACKUP_RESPONSIBILITY"
-	NecessaryCookies     Agreement = "COOKIES_NECESSARY"
 	Marketing            Agreement = "MARKETING"
 )
 
@@ -91,14 +90,12 @@ var requiredAgreements = []Agreement{
 	PrivacyPolicy,
 	PersonalInbox,
 	BackupResponsibility,
-	NecessaryCookies,
 }
 
 var allAgreements = []Agreement{
 	PrivacyPolicy,
 	PersonalInbox,
 	BackupResponsibility,
-	NecessaryCookies,
 	Marketing,
 }
 
@@ -110,8 +107,6 @@ func ParseAgreement(str string) (Agreement, error) {
 		return PersonalInbox, nil
 	case BackupResponsibility:
 		return BackupResponsibility, nil
-	case NecessaryCookies:
-		return NecessaryCookies, nil
 	case Marketing:
 		return Marketing, nil
 	default:

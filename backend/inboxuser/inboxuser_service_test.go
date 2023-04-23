@@ -43,7 +43,7 @@ func TestInboxUserService(t *testing.T) {
 	})
 
 	t.Run("user agreement", func(t *testing.T) {
-		agreements := []Agreement{PersonalInbox, NecessaryCookies}
+		agreements := []Agreement{PersonalInbox, BackupResponsibility}
 		t.Run("consent", func(t *testing.T) {
 			err := service.Consent(authedCtx, agreements)
 			assert.ThatError(t, err).IsNil()
