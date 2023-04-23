@@ -186,7 +186,9 @@ func TestClassifyRequestService(t *testing.T) {
 
 		// store one incomplete
 		testAddr2 := "nobody2@nowhere.com"
-		userService.Store(ctx, testAddr2)
+		_, err = userService.Store(ctx, testAddr2)
+		assert.ThatError(t, err).IsNil()
+
 		authedCtx2 := mailboxsweep.AuthorizeAPIContext(ctx, testAddr2)
 		err := service.RecordRequest(authedCtx2)
 		assert.ThatError(t, err).IsNil()

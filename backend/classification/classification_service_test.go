@@ -364,6 +364,7 @@ func TestClassificationService(t *testing.T) {
 				ExternalID:    "12345",
 				Timestamp:     time.Now().Add(time.Hour * -24),
 			})
+			assert.ThatError(t, err).IsNil()
 
 			// store some extra completed requests
 			plan, err := paymentService.PlanDetails(inboxuser.Basic)

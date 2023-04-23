@@ -61,16 +61,16 @@ func (s testImapServerService) FindByUserAddress(ctx context.Context) (*imapserv
 func TestInboxChangesetService(t *testing.T) {
 	db := mailboxsweep.SetupTestDynamoClient()
 	ctx := context.Background()
-	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
-	defer teardown()
+	table, teardownTable := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
+	defer teardownTable()
 
 	changeSetRepo, err := changeset.NewDynamoChangesetRepository(db, table, 13)
 	assert.ThatError(t, err).IsNil()
 
 	changeSetService := changeset.NewDefaultService(changeSetRepo)
 
-	s3Client, bucketName, teardown := mailboxsweep.SetupTestBucket(ctx, t)
-	defer teardown()
+	s3Client, bucketName, teardownBucket := mailboxsweep.SetupTestBucket(ctx, t)
+	defer teardownBucket()
 
 	var (
 		testAddress = "inboxchangeset@mailboxsweep.com"
@@ -167,6 +167,7 @@ func TestInboxChangesetService(t *testing.T) {
 
 	// seed the user
 	_, err = userService.Store(ctx, testAddress)
+	assert.ThatError(t, err).IsNil()
 
 	// seed a classification request
 	err = classifyRequestService.RecordRequest(authedCtx)
