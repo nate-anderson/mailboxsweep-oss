@@ -66,7 +66,6 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 		Status:  "OK",
 		Message: &msg,
 	})
-	return
 }
 
 func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter, req *http.Request, params GetClassificationSummaryParams) {

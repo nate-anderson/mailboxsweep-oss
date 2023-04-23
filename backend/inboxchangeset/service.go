@@ -247,8 +247,8 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		}
 
 		for _, m := range leaf.Messages {
-			if _, ok := folderUIDs[m.Folder]; ok {
-				folderUIDs[m.Folder] = append(folderUIDs[m.Folder], m.UID)
+			if existing, ok := folderUIDs[m.Folder]; ok {
+				folderUIDs[m.Folder] = append(existing, m.UID)
 			} else {
 				folderUIDs[m.Folder] = []string{m.UID}
 			}

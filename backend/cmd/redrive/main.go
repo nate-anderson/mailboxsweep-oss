@@ -54,6 +54,9 @@ func main() {
 
 	for {
 		retrieveID, err := uuid.NewUUID()
+		if err != nil {
+			panic(err)
+		}
 
 		batch, err := sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 			QueueUrl:                &cfg.DLQURL,
