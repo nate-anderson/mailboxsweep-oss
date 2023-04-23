@@ -5,8 +5,10 @@ import { InfraStackProps } from './infra-stack';
 
 export class RepositoryStack extends cdk.Stack {
     public repoArn: string;
+    public repo: ECR.Repository;
 
     constructor(scope: Construct, id: string, props: InfraStackProps) {
+        
         super(scope, id, props);
         const repoName = `mailboxsweep-repo-${props.environmentName}`;
 
@@ -23,7 +25,7 @@ export class RepositoryStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.RETAIN,
             imageTagMutability: ECR.TagMutability.IMMUTABLE,
         });
-
+        this.repo = repo;
         this.repoArn = repo.repositoryArn;
     }
 }
