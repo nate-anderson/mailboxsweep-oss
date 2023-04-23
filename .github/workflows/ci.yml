@@ -78,26 +78,40 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+  build-push-server-image:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
       - name: Login to ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, push image (server)
-        working-directory: backend
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: mailboxsweep-repo-prod
-          IMAGE_TAG: server_${{ github.sha }}
-        run: |
-          docker build -f Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
+        - name: Build, tag, push image (server)
+          working-directory: backend
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: mailboxsweep-server
+            IMAGE_TAG: server_${{ github.sha }}
+          run: |
+            docker build -f Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --all-tags
+
+  build-push-worker-image:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Login to ECR
+            id: login-ecr
+            uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, push image (worker)
-        working-directory: backend
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: mailboxsweep-repo-prod
-          IMAGE_TAG: worker_${{ github.sha }}
-        run: |
-          docker build -f Dockerfile.worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
+          working-directory: backend
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: mailboxsweep-worker
+            IMAGE_TAG: worker_${{ github.sha }}
+          run: |
+            docker build -f Dockerfile.worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest .
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --all-tags
