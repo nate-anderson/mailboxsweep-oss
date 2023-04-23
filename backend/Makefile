@@ -57,8 +57,8 @@ seed: go run ./cmd/seed
 
 .PHONY: build_docker_server
 build_docker_server:
-	docker build -f ./Dockerfile.server .
+	cd .. && docker build -f ./backend/Dockerfile.server .
 
 .PHONY: build_docker_worker
 build_docker_worker:
-	docker build -f ./Dockerfile.worker .
+	cd .. && docker build -f ./backend/Dockerfile.worker .

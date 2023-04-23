@@ -1,16 +1,19 @@
 # syntax=docker/dockerfile:1
 
 # Mailboxsweep HTTP API Server Image
+# MUST run in the context of the root of the repository
+# so the OpenAPI spec can be copied
 
 FROM golang:1.20
 
 WORKDIR /opt/build
 
-COPY go.mod go.sum ./
+COPY ./backend/go.mod ./backend/go.sum ./
 
 RUN go mod download
 
-COPY . ./
+COPY ./backend ./
+COPY ./openapi.yml ./
 
 RUN make install_openapi_generator
 
