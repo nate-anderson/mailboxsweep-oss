@@ -33,7 +33,7 @@ func randToken(l int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func() error) {
+func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, func()) {
 	var host string
 	// default to localhost if environment doesn't specify otherwise
 	if host = os.Getenv("S3_HOST"); host == "" {
@@ -77,11 +77,13 @@ func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 		}
 	}
 
-	teardown := func() error {
+	teardown := func() {
 		_, err := client.DeleteBucket(ctx, &s3.DeleteBucketInput{
 			Bucket: &bucket,
 		})
-		return err
+		if err != nil {
+			log.Printf("error tearing down test bucket %s: %s", bucket, err)
+		}
 	}
 
 	return client, bucket, teardown
@@ -181,7 +183,7 @@ func SetupTestDynamoClient() *dynamodb.Client {
 	return dynamodb.NewFromConfig(awsCfg)
 }
 
-func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func() error) {
+func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Client) (table string, teardown func()) {
 	t.Helper()
 
 	tok, err := randToken(4)
@@ -197,10 +199,12 @@ func SetupDynamoTestTable(ctx context.Context, t *testing.T, client *dynamodb.Cl
 		panic(err)
 	}
 
-	return table, func() error {
+	return table, func() {
 		_, err := client.DeleteTable(ctx, &dynamodb.DeleteTableInput{
 			TableName: &table,
 		})
-		return err
+		if err != nil {
+			log.Printf("error tearing down test table %s: %s\n", table, err)
+		}
 	}
 }
