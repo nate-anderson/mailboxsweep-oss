@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
 import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
+import * as AppCache from "../../../lib/cache";
 
 export default function ConfirmMarkRead() {
     const api = useAPIClient();
@@ -40,6 +41,7 @@ export default function ConfirmMarkRead() {
         })
         .then((res) => {
             showSuccessSnackbar(true);
+            AppCache.clearAll();
         })
         .catch((err) => {
             setError(err as string);

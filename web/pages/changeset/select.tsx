@@ -9,7 +9,9 @@ import { useSnackbar } from "../../components/snackbar";
 import {
   ApiError,
   ChangeSetRequest,
+  ChangeSetResponse,
   Classification,
+  ClassificationResponse,
   UpdateOperation,
 } from "../../client-gen";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
@@ -27,6 +29,7 @@ import Button from "@mui/material/Button";
 import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
+import * as AppCache from "../../lib/cache";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -178,13 +181,18 @@ export default function Edit() {
   const API = useAPIClient();
 
   const addLeaf = async (path: string[]) => {
+    const operation = isDeleteMode
+    ? UpdateOperation.DELETE
+    : UpdateOperation.MARK_READ;
+
     const res = await API.updateChangeSet({
-      operation: isDeleteMode
-        ? UpdateOperation.DELETE
-        : UpdateOperation.MARK_READ,
+      operation,
       path,
       addOrRemove: ChangeSetRequest.addOrRemove.ADD,
     });
+
+    AppCache.invalidate(`changeset_${operation}`);
+
     if (isDeleteMode) {
       setDeleteSelection((sel) => {
         res.updatedPaths.forEach((path) => sel.add(path));
@@ -208,13 +216,17 @@ export default function Edit() {
   };
 
   const removeLeaf = async (path: string[]) => {
+    const operation = isDeleteMode
+    ? UpdateOperation.DELETE
+    : UpdateOperation.MARK_READ;
+    
     const res = await API.updateChangeSet({
-      operation: isDeleteMode
-        ? UpdateOperation.DELETE
-        : UpdateOperation.MARK_READ,
+      operation,
       path,
       addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
     });
+
+    AppCache.invalidate(`changeset_${operation}`);
 
     if (isDeleteMode) {
       setDeleteSelection((sel) => {
@@ -246,7 +258,10 @@ export default function Edit() {
       }
     }
 
-    API.getClassificationSummary(requestPage)
+    AppCache.asyncCache<ClassificationResponse>(
+      () => API.getClassificationSummary(requestPage),
+      `classification_summary_${requestPage}`
+    )
       .then((data) => {
         setClassificationRoot(new ClassificationTree(data.classification));
         setTotalPages(data.pageCount);
@@ -258,8 +273,10 @@ export default function Edit() {
         }
       });
 
-    API.getChangeset(
-      isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ
+    const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
+    AppCache.asyncCache<ChangeSetResponse>(
+      () => API.getChangeset(updateOperation),
+      `changeset_${updateOperation}`
     )
       .then((data) => {
         if (isDeleteMode) {
