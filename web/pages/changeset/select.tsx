@@ -68,7 +68,8 @@ function ToggleModeSwitch(props: {
           />
           <Switch
             onChange={(_, v) => props.setIsDeleteMode(v)}
-            value={props.isDeleteMode}
+            
+            checked={props.isDeleteMode}
             color={props.isDeleteMode ? "error" : "primary"}
             sx={{ marginLeft: 0 }}
           />
@@ -231,6 +232,20 @@ export default function Edit() {
   };
 
   useEffect(() => {
+    if (!router.isReady) return;
+    const query = router.query;
+    const mode = query["mode"];
+    if (typeof mode === "string") {
+      if (mode === "delete") {
+        setIsDeleteMode(true);
+        router.push({
+            query: {},
+          },
+          undefined,
+        );
+      }
+    }
+
     API.getClassificationSummary(requestPage)
       .then((data) => {
         setClassificationRoot(new ClassificationTree(data.classification));
@@ -266,7 +281,7 @@ export default function Edit() {
       });
   
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestPage, isDeleteMode]);
+  }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
 
   const selectedClassification = classificationRoot
     ? classificationRoot.jumpToPath(currentPath)

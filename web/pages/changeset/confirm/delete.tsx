@@ -72,7 +72,7 @@ export default function ConfirmDelete() {
                         fontWeight: 100,
                     }}
                 >
-                    Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount}</b> messages
+                    Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages
                 </Typography>
                 <Typography
                     align="center"
@@ -85,6 +85,7 @@ export default function ConfirmDelete() {
                     These messages will be permanently deleted from your inbox. <b style={{color: "var(--color-danger)"}}>This cannot be undone.</b>
                 </Typography>
                 <ConfirmBar
+                    deleteMode={true}
                     confirmButtonEnabled={isConfirmed}
                     onCheckEnabled={setIsConfirmed}
                     label="I'm sure I want to make this change"

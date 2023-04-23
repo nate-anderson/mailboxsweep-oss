@@ -6,8 +6,10 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconArrowBack from "@mui/icons-material/ArrowBack";
 import IconCheck from "@mui/icons-material/Check";
+import Link from "next/link";
 
 interface ConfirmBarProps {
+    deleteMode: boolean;
     label: string;
     confirmButtonEnabled: boolean;
     onCheckEnabled: (enabled: boolean) => void;
@@ -39,13 +41,17 @@ export default function ConfirmBar(props: ConfirmBarProps) {
                     marginBottom: 1,
                 }}
             >
-                <Button
-                    variant="contained"
-                    startIcon={<IconArrowBack />}
-                    sx={{
-                        backgroundColor: "var(--color-accent)"
-                    }}
-                >Back</Button>
+                <Link passHref href={`/changeset/select?mode=${props.deleteMode ? "delete" : "mark_read"}`}>
+                    <Button
+                        variant="contained"
+                        startIcon={<IconArrowBack />}
+                        sx={{
+                            backgroundColor: "var(--color-accent)"
+                        }}
+                    >
+                        Back
+                    </Button>
+                </Link>
                 <Button
                     disabled={!props.confirmButtonEnabled}
                     sx={{

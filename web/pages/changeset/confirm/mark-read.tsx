@@ -71,7 +71,7 @@ export default function ConfirmMarkRead() {
                         fontWeight: 100,
                     }}
                 >
-                    Marking <b style={{color: "var(--color-accent)"}}>{selectedCount}</b> messages read
+                    Marking <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages read
                 </Typography>
                 <Typography
                     align="center"
@@ -84,6 +84,7 @@ export default function ConfirmMarkRead() {
                     These messages will be marked as read and remain in your inbox, no longer being counted in your unread messages. This will not delete any information, <b style={{color: "var(--color-red)"}}>but it cannot be undone.</b>
                 </Typography>
                 <ConfirmBar
+                    deleteMode={false}
                     confirmButtonEnabled={isConfirmed}
                     onCheckEnabled={setIsConfirmed}
                     label="I'm sure I want to make this change"
