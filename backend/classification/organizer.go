@@ -120,7 +120,6 @@ func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassificati
 		child, ok := node.Children.Get(key)
 		if !ok {
 			child = NewSafeClassification(dimension, label, classifier.Info().TypeKey)
-		} else {
 		}
 		node.Children.Set(key, child)
 		node = child
