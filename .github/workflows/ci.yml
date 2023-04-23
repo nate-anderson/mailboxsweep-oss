@@ -145,6 +145,10 @@ jobs:
         working-directory: web
         run: npm install
 
+      # - name: Lint
+      #   working-directory: web
+      #   run: npm run lint
+
       - name: Build
         working-directory: web
-        run: next build
+        run: npm run build
