@@ -12,6 +12,10 @@ RUN go mod download
 
 COPY . ./
 
+RUN make install_openapi_generator
+
+RUN oapi-codegen -generate chi-server,types -config http_codegen.yml openapi.yml
+
 RUN mkdir -p /opt/mailboxsweep
 RUN GOOS=linux GOARCH=amd64 go build -o /opt/mailboxsweep/worker ./cmd/worker
 

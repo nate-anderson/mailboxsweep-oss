@@ -48,10 +48,12 @@ jobs:
       #   run: cd backend && make up
 
       - name: Install server generator
-        run: cd backend && make install_openapi_generator
+        working-directory: backend
+        run: make install_openapi_generator
 
       - name: Generate server code
-        run: cd backend && make http_scaffold
+        working-directory: backend
+        run: make http_scaffold
 
       # - name: Lint
       #   uses: golangci/golangci-lint-action@v3
@@ -59,7 +61,8 @@ jobs:
       #     working-directory: backend
 
       - name: Test
-        run: cd backend && go test ./... -timeout=3m
+        working-directory: backend
+        run: go test ./... -timeout=3m
         env:
           AWS_ACCESS_KEY_ID: test_none
           AWS_SECRET_ACCESS_KEY: test_none
