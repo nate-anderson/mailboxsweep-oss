@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nate-anderson/fig/v2"
@@ -85,7 +87,8 @@ type serverConfig struct {
 
 	CORSAllowedOrigin string `fig:"CORS_ALLOWED_ORIGIN"`
 
-	SigningKeyFilePath string `fig:"SIGNING_KEY_FILE_PATH"`
+	SigningKeyFilePath string  `fig:"SIGNING_KEY_FILE_PATH"`
+	SigningKey         *string `fig:"SIGNING_KEY"`
 
 	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE"`
 
@@ -102,7 +105,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	conf := fig.New(envDriver)
+	paramstoreClient, err := mailboxsweep.ConnectAWSService(
+		mailboxsweep.AWSServiceConfig{
+			ServiceRegion: "us-west-2",
+		},
+		ssm.NewFromConfig,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ssmDriver := mailboxsweep.NewSSMConfigDriver(paramstoreClient)
+
+	// default to env then paramstore
+	conf := fig.New(envDriver, ssmDriver)
 
 	cfg := serverConfig{}
 	if err := conf.Unmarshal(&cfg); err != nil {
@@ -241,13 +257,22 @@ func main() {
 	}
 	loginLinkDurationMinutes := time.Minute * time.Duration(cfg.LoginLinkDurationMinutes)
 
-	signingKeyFile, err := os.Open(cfg.SigningKeyFilePath)
-	if err != nil {
-		log.Fatalf("failed to open signing key file %s: %s", cfg.SigningKeyFilePath, err)
-	}
-	cert, err := login.ReadCert(signingKeyFile)
-	if err != nil {
-		log.Fatalf("failed to read signing cert: %s", err)
+	var cert *rsa.PrivateKey
+	if cfg.SigningKey != nil {
+		cert, err = login.ReadCert(strings.NewReader(*cfg.SigningKey))
+		if err != nil {
+			log.Fatalf("failed to instantiate signing key from configured data; %s", err)
+		}
+	} else {
+		log.Printf("No signing key configured, looking for a key at '%s'\n", cfg.SigningKeyFilePath)
+		signingKeyFile, err := os.Open(cfg.SigningKeyFilePath)
+		if err != nil {
+			log.Fatalf("failed to open signing key file %s: %s", cfg.SigningKeyFilePath, err)
+		}
+		cert, err = login.ReadCert(signingKeyFile)
+		if err != nil {
+			log.Fatalf("failed to read signing cert: %s", err)
+		}
 	}
 
 	gmailTokenRepository := login.NewDynamoGmailTokenRepository(db, cfg.DynamoDBTable)

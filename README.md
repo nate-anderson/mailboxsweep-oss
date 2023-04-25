@@ -97,3 +97,19 @@ Auth uses magic links. We store user IMAP credentials securely when they're not 
 If a user logs in for the first time, we check their domain and redirect them to Google if applicable. Otherwise we go straight to magic link auth.
 
 Returning users always use magic links to log in so we don't have to send them through the Google auth flow multiple times.
+
+# Generating RSA signing certificate
+
+Login links include an RSA signature for extra security. This requires a `.pem` key, which can be generated using:
+
+- `ssh-keygen -t rsa -m PEM`
+
+# Configuration (SSM)
+
+All non-sensitive config is handled via environment variables. Sensitive configuration should
+be stored as secure strings in SSM ParamStore. The SSM param store driver will check the `ENV`
+environment variable and prefix SSM API calls accordingly:
+
+`prod` => `/mailboxsweep/PROD_`
+`staging` => `/mailboxsweep/STAGING_`
+anything else => no prefix
