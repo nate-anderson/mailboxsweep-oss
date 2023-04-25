@@ -25,20 +25,20 @@ import (
 type workerConfig struct {
 	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION" default:"us-west-2"`
 
 	S3Host   *string `fig:"S3_HOST"`
 	S3Port   int     `fig:"S3_PORT"`
-	S3Region string  `fig:"S3_REGION"`
+	S3Region string  `fig:"S3_REGION" default:"us-west-2"`
 
 	SQSHost   *string `fig:"SQS_HOST"`
 	SQSPort   int     `fig:"SQS_PORT"`
-	SQSRegion string  `fig:"SQS_REGION"`
+	SQSRegion string  `fig:"SQS_REGION" default:"us-west-2"`
 
-	S3Bucket              string `fig:"S3_BUCKET"`
-	DynamoDBTable         string `fig:"DYNAMODB_TABLE"`
-	SQSQueueURL           string `fig:"SQS_QUEUE_URL"`
-	SQSDeadLetterQueueURL string `fig:"SQS_DLQ_URL"`
+	S3Bucket              string `fig:"S3_BUCKET" required:"true"`
+	DynamoDBTable         string `fig:"DYNAMODB_TABLE" required:"true"`
+	SQSQueueURL           string `fig:"SQS_QUEUE_URL" required:"true"`
+	SQSDeadLetterQueueURL string `fig:"SQS_DLQ_URL" required:"true"`
 
 	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
@@ -51,16 +51,16 @@ type workerConfig struct {
 	// How long is a payment good for access to the servuce?
 	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS"`
 
-	StripeAPIKey                         string `fig:"STRIPE_API_KEY"`
-	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
-	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+	StripeAPIKey                         string `fig:"STRIPE_API_KEY" required:"true"`
+	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES" required:"true"`
+	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL" required:"true"`
 
-	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE"`
+	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
 
-	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES"`
+	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES" default:"120"`
 
-	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
+	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
+	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
 }
 
 func main() {

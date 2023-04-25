@@ -36,65 +36,65 @@ import (
 )
 
 type serverConfig struct {
-	HTTPPort     int    `fig:"HTTP_PORT"`
-	Env          string `fig:"ENV"`
-	LoginBaseURL string `fig:"BASE_URL"`
+	HTTPPort     int    `fig:"HTTP_PORT" required:"true"`
+	Env          string `fig:"ENV" default:"prod"`
+	LoginBaseURL string `fig:"BASE_URL" default:"https://localhost:3001/login-token"`
 
 	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
-	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
+	DynamoDBRegion string  `fig:"DYNAMODB_REGION" default:"us-west-2"`
 
 	S3Host   *string `fig:"S3_HOST"`
 	S3Port   int     `fig:"S3_PORT"`
-	S3Region string  `fig:"S3_REGION"`
+	S3Region string  `fig:"S3_REGION" default:"us-west-2"`
 
 	SQSHost     *string `fig:"SQS_HOST"`
 	SQSPort     int     `fig:"SQS_PORT"`
-	SQSRegion   string  `fig:"SQS_REGION"`
-	SQSQueueURL string  `fig:"SQS_QUEUE_URL"`
+	SQSRegion   string  `fig:"SQS_REGION" default:"us-west-2"`
+	SQSQueueURL string  `fig:"SQS_QUEUE_URL" required:"true"`
 
-	DynamoDBTable             string `fig:"DYNAMODB_TABLE"`
-	S3Bucket                  string `fig:"S3_BUCKET"`
-	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
+	DynamoDBTable             string `fig:"DYNAMODB_TABLE" required:"true"`
+	S3Bucket                  string `fig:"S3_BUCKET" required:"true"`
+	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64" required:"true"`
 
-	LoginLinkDurationMinutes int    `fig:"LOGIN_LINK_DURATION_MINUTES"`
-	LoginTokenLength         int    `fig:"LOGIN_TOKEN_LENGTH"`
-	SessionKeyLength         int    `fig:"SESSION_KEY_LENGTH"`
-	SessionDurationMinutes   int    `fig:"SESSION_DURATION_MINUTES"`
-	CookieDomain             string `fig:"COOKIE_DOMAIN"`
-	CookiePath               string `fig:"COOKIE_PATH"`
+	LoginLinkDurationMinutes int    `fig:"LOGIN_LINK_DURATION_MINUTES" default:"10"`
+	LoginTokenLength         int    `fig:"LOGIN_TOKEN_LENGTH" default:"30"`
+	SessionKeyLength         int    `fig:"SESSION_KEY_LENGTH" default:"30"`
+	SessionDurationMinutes   int    `fig:"SESSION_DURATION_MINUTES" default:"120"`
+	CookieDomain             string `fig:"COOKIE_DOMAIN" required:"true"`
+	CookiePath               string `fig:"COOKIE_PATH" required:"true"`
 
 	// How long must a user wait before submitting a new classification request, when the previous one hasn't finished?
 	// 3 hours?
-	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS"`
+	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS" required:"true"`
 	// How long must a user wait after a completed request to submit a new one?
-	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS" required:"true"`
 
 	// Used to split changesets up among documents
-	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD"`
+	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
 
-	DevMode bool `fig:"DEV_MODE"`
+	DevMode bool `fig:"DEV_MODE" default:"false"`
 
 	// how long should inbox metadata (folders and message counts) be cached?
-	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES"`
+	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES" default:"120"`
 
 	// How long is a payment good for access to the servuce?
-	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS"`
+	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS" required:"true"`
 
-	StripeAPIKey                         string `fig:"STRIPE_API_KEY"`
-	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES"`
-	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL"`
+	StripeAPIKey                         string `fig:"STRIPE_API_KEY" required:"true"`
+	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES" required:"true"`
+	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL" required:"true"`
 
-	CORSAllowedOrigin string `fig:"CORS_ALLOWED_ORIGIN"`
+	CORSAllowedOrigin string `fig:"CORS_ALLOWED_ORIGIN" required:"true"`
 
 	SigningKeyFilePath string  `fig:"SIGNING_KEY_FILE_PATH"`
 	SigningKey         *string `fig:"SIGNING_KEY"`
 
-	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE"`
+	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
 
-	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID"`
-	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
-	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL"`
+	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
+	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
+	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL" required:"true"`
 }
 
 func main() {
