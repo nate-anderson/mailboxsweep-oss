@@ -9,8 +9,8 @@ import { InfraStackProps } from './infra-stack';
  * to be classified when resources are ready
  */
 export class ClassificationQueueStack extends cdk.Stack {
-    public readonly queueArn: string;
-    public readonly dlqArn: string;
+    public readonly queue: SQS.Queue;
+    public readonly dlq: SQS.Queue;
 
     constructor(scope: Construct, id: string, props: InfraStackProps) {
       super(scope, id, props);
@@ -20,7 +20,7 @@ export class ClassificationQueueStack extends cdk.Stack {
         queueName: dlqName,
         fifo: true,
       });
-      this.dlqArn = dlq.queueArn;
+      this.dlq = dlq;
 
       const queueName = `classify_queue_${props.environmentName}.fifo`;
       const queue = new SQS.Queue(this, queueName, {
@@ -31,6 +31,6 @@ export class ClassificationQueueStack extends cdk.Stack {
           maxReceiveCount: 3,
         },
       })
-      this.queueArn = queue.queueArn;
+      this.queue = queue;
     }
   }

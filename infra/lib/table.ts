@@ -4,15 +4,14 @@ import { Construct } from 'constructs';
 import { InfraStackProps } from './infra-stack';
 
 export class TableStack extends cdk.Stack {
-    public readonly tableName: string;
-    public readonly tableArn: string;
+    public readonly table: DynamoDB.Table;
 
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
-        this.tableName = `mailboxsweep_table_${props.environmentName}`;
-        const table = new DynamoDB.Table(this, this.tableName, {
-            tableName: this.tableName,
+        const tableName = `mailboxsweep_table_${props.environmentName}`;
+        const table = new DynamoDB.Table(this, tableName, {
+            tableName: tableName,
             billingMode: DynamoDB.BillingMode.PROVISIONED,
             pointInTimeRecovery: true,
             partitionKey: {
@@ -26,7 +25,7 @@ export class TableStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.RETAIN,
             timeToLiveAttribute: "expires_at",
         });
-        this.tableArn = table.tableArn;
+        this.table = table;
 
         table.addGlobalSecondaryIndex({
             indexName: "GSI1",

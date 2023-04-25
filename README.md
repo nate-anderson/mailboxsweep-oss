@@ -104,7 +104,7 @@ Login links include an RSA signature for extra security. This requires a `.pem` 
 
 - `ssh-keygen -t rsa -m PEM`
 
-# Configuration (SSM)
+## Configuration (SSM)
 
 All non-sensitive config is handled via environment variables. Sensitive configuration should
 be stored as secure strings in SSM ParamStore. The SSM param store driver will check the `ENV`
@@ -113,3 +113,9 @@ environment variable and prefix SSM API calls accordingly:
 `prod` => `/mailboxsweep/PROD_`
 `staging` => `/mailboxsweep/STAGING_`
 anything else => no prefix
+
+## Deploying Infrastructure Changes
+
+The `infra` directory is an AWS CDK project (Typescript) defining the project's infrastructure on AWS.
+
+`MAILBOXSWEEP_ENV=prod AWS_PROFILE=mailboxsweep cdk deploy InfraStack/mailboxsweep-prod`
