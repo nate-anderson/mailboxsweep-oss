@@ -162,9 +162,9 @@ jobs:
         working-directory: web
         run: npm run openapi
 
-      # - name: Lint
-      #   working-directory: web
-      #   run: npm run lint
+      - name: Lint
+        working-directory: web
+        run: npm run lint
 
       - name: Build
         working-directory: web

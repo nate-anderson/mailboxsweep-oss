@@ -13,7 +13,7 @@ import ConfirmBar from "../../../components/changeset/confirm-bar";
 import * as AppCache from "../../../lib/cache";
 
 export default function ConfirmDelete() {
-    const api = useAPIClient();
+    const API = useAPIClient();
     const [ deleteChangeset, setDeleteChangeset ] = useState<ChangeSet | undefined>();
     const [ selectedCount, setSelectedCount ] = useState<number>(0);
     const [ error, setError ] = useState<string | undefined>();
@@ -24,7 +24,7 @@ export default function ConfirmDelete() {
 
 
     useEffect(() => {
-        api.getChangeset(UpdateOperation.DELETE)
+        API.getChangeset(UpdateOperation.DELETE)
         .then((res) => {
             setDeleteChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -33,10 +33,10 @@ export default function ConfirmDelete() {
             setError(err);
             showErrorSnackbar(true);
         });
-    }, []);
+    }, [API, showErrorSnackbar]);
 
     const submit = () => {
-        api.commitChangeset({
+        API.commitChangeset({
             confirm: isConfirmed,
             operation: UpdateOperation.DELETE,
         })

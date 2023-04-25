@@ -39,7 +39,7 @@ export default function CompleteProfile() {
         }
       })
       .catch(console.error);
-  }, []);
+  }, [API]);
 
   const submitProfileData = (nameFirst: string, nameLast: string) => {
     API.updateUserName({

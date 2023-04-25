@@ -81,7 +81,7 @@ export default function Configure() {
       .catch((err) => {
         setError(err);
       });
-  }, []);
+  }, [API]);
 
   const submit = () => {
     API.startClassify({

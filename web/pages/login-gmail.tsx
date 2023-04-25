@@ -32,7 +32,7 @@ export default function Login() {
         }
       })
       .catch(console.error);
-  }, [router.isReady, router.query, router]);
+  }, [router.isReady, router.query, router, API]);
 
   return (
     <Container component="main">

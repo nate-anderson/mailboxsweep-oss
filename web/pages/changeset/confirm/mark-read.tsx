@@ -13,7 +13,7 @@ import ConfirmBar from "../../../components/changeset/confirm-bar";
 import * as AppCache from "../../../lib/cache";
 
 export default function ConfirmMarkRead() {
-    const api = useAPIClient();
+    const API = useAPIClient();
     const [ markReadChangeset, setMarkReadChangeset ] = useState<ChangeSet | undefined>();
     const [ selectedCount, setSelectedCount ] = useState<number>(0);
     const [ error, setError ] = useState<string | undefined>();
@@ -23,7 +23,7 @@ export default function ConfirmMarkRead() {
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
     useEffect(() => {
-        api.getChangeset(UpdateOperation.MARK_READ)
+        API.getChangeset(UpdateOperation.MARK_READ)
         .then((res) => {
             setMarkReadChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -32,10 +32,10 @@ export default function ConfirmMarkRead() {
             setError(err);
             showErrorSnackbar(true);
         });
-    }, [])
+    }, [API, showErrorSnackbar])
     
     const submit = () => {
-        api.commitChangeset({
+        API.commitChangeset({
             confirm: isConfirmed,
             operation: UpdateOperation.MARK_READ,
         })
