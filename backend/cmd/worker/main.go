@@ -66,7 +66,7 @@ type workerConfig struct {
 func main() {
 	log := logrus.New()
 
-	envDriver, err := fig.NewEnvironmentDriver(".env")
+	envDriver, err := fig.NewOptionalFileEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
