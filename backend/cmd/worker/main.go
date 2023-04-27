@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
@@ -70,7 +71,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	conf := fig.New(envDriver)
+
+	paramstoreClient, err := mailboxsweep.ConnectAWSService(
+		mailboxsweep.AWSServiceConfig{
+			ServiceRegion: "us-west-2",
+		},
+		ssm.NewFromConfig,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ssmDriver := mailboxsweep.NewSSMConfigDriver(paramstoreClient)
+
+	conf := fig.New(envDriver, ssmDriver)
 
 	cfg := workerConfig{}
 	if err := conf.Unmarshal(&cfg); err != nil {
