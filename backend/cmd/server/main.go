@@ -302,6 +302,7 @@ func main() {
 		credentialService,
 		classifyRequestService,
 		metadataService,
+		log,
 	)
 
 	controller := httpserver.NewController(

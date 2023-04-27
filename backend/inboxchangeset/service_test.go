@@ -128,6 +128,7 @@ func TestInboxChangesetService(t *testing.T) {
 		credentialReadService,
 		classifyRequestService,
 		metadataService,
+		logrus.New(),
 	)
 
 	// seed messages

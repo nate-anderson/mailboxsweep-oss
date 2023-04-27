@@ -62,6 +62,10 @@ func NewService(
 // Runs from the context of a job worker
 // also updates the unread count because the IMAP response doesn't contain it
 func (s DefaultService) Classify(ctx context.Context, folders []string, classifiers []Classifier) error {
+	log := s.logger.
+		WithField("service", "classification.Service").
+		WithField("method", "classify")
+
 	var err error
 	var addr string
 	defer func() {
@@ -72,14 +76,15 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 			recordErr = s.classifyRequestService.MarkCompletedSuccess(ctx)
 		}
 		if recordErr != nil {
-			s.logger.
+			log.
 				WithError(recordErr).
-				WithField("address", addr).
 				Errorf(
 					"failed to store result of Classify action: record error: '%s' (original error %v)",
 					recordErr,
 					err,
 				)
+		} else {
+			log.Info("completed classification")
 		}
 	}()
 
@@ -87,6 +92,8 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	if err != nil {
 		return err
 	}
+	log = log.WithField("address", addr)
+	log.Info("beginning classification")
 
 	_, err = s.paymentService.VerifyPayment(ctx)
 	if err != nil {
@@ -150,6 +157,9 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 		return err
 	}
 
+	log := s.logger.WithField("address", address).
+		WithField("method", "EnqueueClassify")
+
 	// validate classifiers and input values
 	for _, scl := range classifiers {
 		_, err := scl.Classifier()
@@ -157,6 +167,14 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 			return err
 		}
 	}
+	log = log.WithField("num_classifiers", len(classifiers))
+	defer func() {
+		if err != nil {
+			log.
+				WithError(err).
+				Errorf("EnqueueClassify failed")
+		}
+	}()
 
 	// make sure user has paid
 	pmt, err := s.paymentService.VerifyPayment(ctx)
@@ -174,6 +192,10 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	if err != nil {
 		return err
 	}
+	log = log.
+		WithField("completed_scans", len(completedScans)).
+		WithField("plan", plan.DisplayName).
+		WithField("payment_exp", pmt.ValidUntil)
 
 	planStartedTimestamp := pmt.StartedAt.Unix()
 	successfulScans := 0

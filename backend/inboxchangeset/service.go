@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
@@ -12,6 +11,7 @@ import (
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/constraints"
 )
 
@@ -41,6 +41,7 @@ type DefaultService struct {
 	credentialService     inboxcredential.CredentialReadService
 	requestService        classifyrequest.Service
 	metadataService       inbox.MetadataService
+	logger                *logrus.Logger
 }
 
 func NewService(
@@ -50,6 +51,7 @@ func NewService(
 	credentialService inboxcredential.CredentialReadService,
 	requestService classifyrequest.Service,
 	metadataService inbox.MetadataService,
+	logger *logrus.Logger,
 ) *DefaultService {
 	return &DefaultService{
 		changeSetService:      changeSetService,
@@ -58,6 +60,7 @@ func NewService(
 		credentialService:     credentialService,
 		requestService:        requestService,
 		metadataService:       metadataService,
+		logger:                logger,
 	}
 }
 
@@ -184,24 +187,31 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		return err
 	}
 
+	log := s.logger.
+		WithField("method", "CommitChanges").
+		WithField("address", address).
+		WithField("operation", string(operation))
+
 	var msgChangeCount int
 
 	defer func() {
 		if err == nil {
 			updateErr := s.requestService.MarkExecutedSuccess(ctx, string(operation), msgChangeCount)
 			if updateErr != nil {
-				log.Println("failed to update request: ", updateErr)
+				log.Error("failed to update request: ", updateErr)
+			} else {
+				log.Info("success")
 			}
 		} else {
 			updateErr := s.requestService.MarkExecutedError(ctx, string(operation), msgChangeCount, err)
 			if updateErr != nil {
-				log.Println("failed to update request: ", updateErr)
+				log.Error("failed to update request: ", updateErr)
 			}
 
 			// if something has gone wrong, invalidate inbox metadata
 			invalidateErr := s.metadataService.Invalidate(ctx)
 			if invalidateErr != nil {
-				log.Println("failed to invalidate metadata after an error occurred: ", invalidateErr)
+				log.Error("failed to invalidate metadata after an error occurred: ", invalidateErr)
 			}
 		}
 	}()
