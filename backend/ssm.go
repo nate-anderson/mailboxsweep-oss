@@ -40,14 +40,15 @@ func getSSMPrefix(environment string) string {
 }
 
 func (s SSMConfigDriver) Get(key string) (string, error) {
+	prefixedKey := s.prefix + key
 	// use background context because config is only loaded at app startup,
 	// there is not really a useful context to associate with this call
 	result, err := s.ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
-		Name:           &key,
+		Name:           &prefixedKey,
 		WithDecryption: ptr(true),
 	})
 	if err != nil {
-		log.Printf("error SSM driver: key %s %v %T", key, err, err)
+		log.Printf("error SSM driver: key %s %v %T", prefixedKey, err, err)
 		var notFound *types.ParameterNotFound
 		if errors.As(err, &notFound) {
 			return "", fig.ErrConfigNotFound
