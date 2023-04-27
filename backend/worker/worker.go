@@ -57,7 +57,7 @@ func (w Worker) Work() error {
 		batch, err := w.queue.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 			QueueUrl:                &w.queueURL,
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
-			WaitTimeSeconds:         30,
+			WaitTimeSeconds:         20,
 		})
 		if err != nil {
 			w.log.

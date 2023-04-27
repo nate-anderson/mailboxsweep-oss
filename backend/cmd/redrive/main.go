@@ -61,7 +61,7 @@ func main() {
 		batch, err := sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 			QueueUrl:                &cfg.DLQURL,
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
-			WaitTimeSeconds:         30,
+			WaitTimeSeconds:         20,
 		})
 		if err != nil {
 			panic(err)

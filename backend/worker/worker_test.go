@@ -279,7 +279,7 @@ func TestWorker(t *testing.T) {
 		batch, err := client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 			QueueUrl:                dlqURL,
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
-			WaitTimeSeconds:         30,
+			WaitTimeSeconds:         20,
 		})
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, len(batch.Messages)).Equals(1)
