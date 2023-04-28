@@ -87,7 +87,7 @@ var authPathPrefix = "/login"
 
 func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if strings.HasPrefix(req.URL.Path, authPathPrefix) {
+		if strings.HasPrefix(req.URL.Path, authPathPrefix) || req.URL.Path == "/healthcheck" {
 			next.ServeHTTP(w, req)
 			return
 		}
