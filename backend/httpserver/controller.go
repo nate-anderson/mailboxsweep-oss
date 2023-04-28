@@ -11,6 +11,7 @@ import (
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/login"
 	"mailboxsweep/payment"
+	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
@@ -59,4 +60,8 @@ func NewController(
 		UserController:           userController,
 		PaymentController:        paymentController,
 	}
+}
+
+func (c Controller) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
