@@ -1,5 +1,4 @@
 export async function asyncCache<T>(getter: () => Promise<T>, key: string): Promise<T> {
-    console.log("Checking cache key", key);
     const cached = localStorage.getItem(key);
     if (cached) {
         return JSON.parse(cached) as T;

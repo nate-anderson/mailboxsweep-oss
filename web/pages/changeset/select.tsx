@@ -62,8 +62,8 @@ function ToggleModeSwitch(props: {
           onClick={() => props.onClickSubmit(props.isDeleteMode)}
         >
           {props.isDeleteMode
-            ? `Delete ${props.numSelected}`
-            : `Mark ${props.numSelected} read`}
+            ? `Delete ${props.numSelected.toLocaleString()}`
+            : `Mark ${props.numSelected.toLocaleString()} read`}
         </Button>
         <Stack direction="row" alignItems="center">
           <IconMarkRead
@@ -152,7 +152,7 @@ function List(props: ListProps) {
   );
 }
 
-export default function Edit() {
+export default function Select() {
   const [classificationRoot, setClassificationRoot] = useState<
     ClassificationTree | undefined
   >();
@@ -258,44 +258,76 @@ export default function Edit() {
       }
     }
 
-    AppCache.asyncCache<ClassificationResponse>(
-      () => API.getClassificationSummary(requestPage),
-      `classification_summary_${requestPage}`
-    )
-      .then((data) => {
-        setClassificationRoot(new ClassificationTree(data.classification));
-        setTotalPages(data.pageCount);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError) {
-          const apiError = err as ApiError;
-          setError(apiError.message);
-        }
-      });
-
     const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
-    AppCache.asyncCache<ChangeSetResponse>(
-      () => API.getChangeset(updateOperation),
-      `changeset_${updateOperation}`
-    )
-      .then((data) => {
-        if (isDeleteMode) {
-          setDeleteSelection(new Selection(data.changeSet.paths));
-          setDeleteCount(data.size);
-        } else {
-          setMarkReadSelection(new Selection(data.changeSet.paths));
-          setMarkReadCount(data.size);
-        }
-      })
-      .catch((err) => {
-        if (err instanceof ApiError) {
-          const apiError = err as ApiError;
-          // if no changeset is found, just let the user start creating one
-          if (apiError.status !== 404) {
-            setError(apiError.message);
-          }
-        }
-      });
+    Promise.all([
+      AppCache.asyncCache<ClassificationResponse>(
+        () => API.getClassificationSummary(requestPage),
+        `classification_summary_${requestPage}`
+      ),
+      AppCache.asyncCache<ChangeSetResponse>(
+        () => API.getChangeset(updateOperation),
+        `changeset_${updateOperation}`
+      )
+    ]).then(([classificationRes, changesetRes]) => {
+      setClassificationRoot(new ClassificationTree(classificationRes.classification));
+      setTotalPages(classificationRes.pageCount);
+
+      if (isDeleteMode) {
+        setDeleteSelection(new Selection(changesetRes.changeSet.paths));
+        setDeleteCount(changesetRes.size);
+      } else {
+        setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
+        setMarkReadCount(changesetRes.size);
+      }
+    }).catch(([classificationErr, changesetErr]) => {
+      if (classificationErr instanceof ApiError) {
+        const apiError = classificationErr as ApiError;
+        setError(apiError.message);
+      }
+
+      if (changesetErr instanceof ApiError) {
+        const apiError = changesetErr as ApiError;
+        setError(apiError.message);
+      }
+    });
+
+    // AppCache.asyncCache<ClassificationResponse>(
+    //   () => API.getClassificationSummary(requestPage),
+    //   `classification_summary_${requestPage}`
+    // )
+    //   .then((data) => {
+    //     setClassificationRoot(new ClassificationTree(data.classification));
+    //     setTotalPages(data.pageCount);
+    //   })
+    //   .catch((err) => {
+    //     if (err instanceof ApiError) {
+    //       const apiError = err as ApiError;
+    //       setError(apiError.message);
+    //     }
+    //   });
+
+    // AppCache.asyncCache<ChangeSetResponse>(
+    //   () => API.getChangeset(updateOperation),
+    //   `changeset_${updateOperation}`
+    // )
+    //   .then((data) => {
+    //     if (isDeleteMode) {
+    //       setDeleteSelection(new Selection(data.changeSet.paths));
+    //       setDeleteCount(data.size);
+    //     } else {
+    //       setMarkReadSelection(new Selection(data.changeSet.paths));
+    //       setMarkReadCount(data.size);
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     if (err instanceof ApiError) {
+    //       const apiError = err as ApiError;
+    //       // if no changeset is found, just let the user start creating one
+    //       if (apiError.status !== 404) {
+    //         setError(apiError.message);
+    //       }
+    //     }
+    //   });
   
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
