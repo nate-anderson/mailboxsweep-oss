@@ -2,7 +2,7 @@ import { NextRouter, useRouter } from "next/router";
 import { Mailboxsweep, DefaultService, ApiError } from "./client-gen";
 
 export const API = new Mailboxsweep({
-  BASE: "https://localhost:8081",
+  BASE: `https://${process.env.MAILBOXSWEEP_API_HOST}:${process.env.MAILBOXSWEEP_API_PORT}`,
   WITH_CREDENTIALS: true,
 }).default;
 
