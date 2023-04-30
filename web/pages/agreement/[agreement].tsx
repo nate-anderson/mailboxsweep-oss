@@ -14,6 +14,7 @@ import Button from "../../components/button";
 import { parseISO, format, formatISO } from "date-fns";
 import { displayFormat } from "../../dates";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
+import PrivatePage from "../../auth";
 
 const renderAgreedAt = (agr?: UserAgreement) => {
   if (!agr?.agreedAt) {
@@ -117,73 +118,72 @@ export default function Agreement() {
   };
 
   return (
-    <>
-      <Navbar />
-
-      {successSnackbar}
-
-      {errorSnackbar}
-
-      <Container component="main">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 6,
-            marginX: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconGrading />
-          </Avatar>
-          <Typography
-            align="center"
+    <PrivatePage>
+      <>
+        <Navbar />
+        {successSnackbar}
+        {errorSnackbar}
+        <Container component="main">
+          <CssBaseline />
+          <Box
             sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
+              marginTop: 6,
+              marginX: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            {agreement?.name}
-          </Typography>
-          <Typography
-            align="center"
-            sx={{
-              color: "var(--color-black)",
-              marginY: 2,
-            }}
-          >
-            {agreement?.description}
-          </Typography>
-          <Typography
-            align="center"
-            sx={{
-              color: "var(--color-accent)",
-              marginY: 1,
-            }}
-          >
-            Updated {agreement?.agreementUpdatedAt}
-          </Typography>
-          <Paper variant="outlined">
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconGrading />
+            </Avatar>
             <Typography
+              align="center"
               sx={{
-                margin: 1,
-                padding: 1,
-                fontFamily: "monospace",
-                fontSize: "12px",
-                lineHeight: "1.75em",
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
               }}
             >
-              {agreement?.body}
+              {agreement?.name}
             </Typography>
-          </Paper>
-          {agreement?.agreedAt
-            ? renderAgreedAt(agreement)
-            : renderAgreementForm(submitAgreement, agreement)}
-        </Box>
-      </Container>
-    </>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                marginY: 2,
+              }}
+            >
+              {agreement?.description}
+            </Typography>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-accent)",
+                marginY: 1,
+              }}
+            >
+              Updated {agreement?.agreementUpdatedAt}
+            </Typography>
+            <Paper variant="outlined">
+              <Typography
+                sx={{
+                  margin: 1,
+                  padding: 1,
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  lineHeight: "1.75em",
+                }}
+              >
+                {agreement?.body}
+              </Typography>
+            </Paper>
+            {agreement?.agreedAt
+              ? renderAgreedAt(agreement)
+              : renderAgreementForm(submitAgreement, agreement)}
+          </Box>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

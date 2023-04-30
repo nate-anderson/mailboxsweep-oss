@@ -11,6 +11,7 @@ import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Button from "../components/button";
 import { useSnackbar, useConstantSnackbar } from "../components/snackbar";
+import PrivatePage from "../auth";
 
 export default function CompleteProfile() {
   const [nameFirst, changeNameFirst] = useState("");
@@ -56,98 +57,100 @@ export default function CompleteProfile() {
   };
 
   return (
-    <>
-      <Navbar page="My Profile" />
-      {successSnackbar}
-      {errorSnackbar}
-      <Container component="main">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 6,
-            maxWidth: 600,
-            width: "auto",
-            marginX: "auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconAccountCircle />
-          </Avatar>
-          <Typography
-            align="center"
-            sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
-            }}
-          >
-            Complete your profile
-          </Typography>
+    <PrivatePage>
+      <>
+        <Navbar page="My Profile" />
+        {successSnackbar}
+        {errorSnackbar}
+        <Container component="main">
+          <CssBaseline />
           <Box
-            component="form"
             sx={{
-              mt: 3,
-              mx: 3,
+              marginTop: 6,
+              maxWidth: 600,
+              width: "auto",
+              marginX: "auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
-                {/* Read-only */}
-                <TextField
-                  label="Email"
-                  fullWidth
-                  disabled
-                  value={address}
-                ></TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  autoFocus={nameFirst === ""}
-                  label="First Name"
-                  required
-                  fullWidth
-                  value={nameFirst}
-                  onChange={(e) => {
-                    changeNameFirst(e.target.value);
-                    setSaveButtonEnabled(e.target.value !== "");
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconAccountCircle />
+            </Avatar>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
+              }}
+            >
+              Complete your profile
+            </Typography>
+            <Box
+              component="form"
+              sx={{
+                mt: 3,
+                mx: 3,
+              }}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={12}>
+                  {/* Read-only */}
+                  <TextField
+                    label="Email"
+                    fullWidth
+                    disabled
+                    value={address}
+                  ></TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    autoFocus={nameFirst === ""}
+                    label="First Name"
+                    required
+                    fullWidth
+                    value={nameFirst}
+                    onChange={(e) => {
+                      changeNameFirst(e.target.value);
+                      setSaveButtonEnabled(e.target.value !== "");
+                    }}
+                  ></TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Last Name"
+                    required
+                    fullWidth
+                    value={nameLast}
+                    onChange={(e) => {
+                      changeNameLast(e.target.value);
+                      setSaveButtonEnabled(e.target.value !== "");
+                    }}
+                  ></TextField>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={12}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "right",
                   }}
-                ></TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Last Name"
-                  required
-                  fullWidth
-                  value={nameLast}
-                  onChange={(e) => {
-                    changeNameLast(e.target.value);
-                    setSaveButtonEnabled(e.target.value !== "");
-                  }}
-                ></TextField>
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                sm={12}
-                sx={{
-                  display: "flex",
-                  justifyContent: "right",
-                }}
-              >
-                <Button
-                  disabled={!saveButtonEnabled}
-                  onClick={() => submitProfileData(nameFirst, nameLast)}
                 >
-                  Save
-                </Button>
+                  <Button
+                    disabled={!saveButtonEnabled}
+                    onClick={() => submitProfileData(nameFirst, nameLast)}
+                  >
+                    Save
+                  </Button>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           </Box>
-        </Box>
-      </Container>
-    </>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

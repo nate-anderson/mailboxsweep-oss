@@ -8,8 +8,6 @@ export const API = new Mailboxsweep({
 
 API.commitChangeset
 
-interface APIClient extends DefaultService {};
-
 function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => Promise<ResponseT>): (req: RequestT) => Promise<ResponseT> {
   const wrapped = async (req: RequestT): Promise<ResponseT> => {
     try {
@@ -33,7 +31,7 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
  * fails with a 401
  * @returns APIClient
  */
-export function useAPIClient(): APIClient {
+export function useAPIClient(): DefaultService {
   const router = useRouter();
   const patchedClient: Record<string, any> = {};
   Object.entries(API).forEach(([key, method]) => {

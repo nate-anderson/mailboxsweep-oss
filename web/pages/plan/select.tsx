@@ -9,6 +9,7 @@ import Avatar from "@mui/material/Avatar";
 import IconCardMembership from "@mui/icons-material/CardMembership";
 import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";
+import PrivatePage from "../../auth";
 
 export default function SelectPlan() {
   const [plans, setPlans] = useState<Plan[] | undefined>();
@@ -39,52 +40,54 @@ export default function SelectPlan() {
   };
 
   return (
-    <>
-      <Navbar />
-      <Container
-        component="main"
-        sx={{
-          marginBottom: 7,
-        }}
-      >
-        <CssBaseline />
-        <Box
+    <PrivatePage>
+      <>
+        <Navbar />
+        <Container
+          component="main"
           sx={{
-            marginTop: 6,
-            marginX: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            marginBottom: 7,
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconCardMembership />
-          </Avatar>
-          <Typography
-            align="center"
+          <CssBaseline />
+          <Box
             sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
+              marginTop: 6,
+              marginX: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            Choose a Plan
-          </Typography>
-          <Typography
-            align="center"
-            sx={{
-              marginY: 2,
-              color: "var(--color-gray)",
-            }}
-          >
-            Choose the best option to get your inbox back to clean.
-          </Typography>
-        </Box>
-        {plans
-          ?.sort((p) => p.priceInCents)
-          .map((p) => <PlanCard key={p.key} plan={p} submit={() => submit(p.key)} />) 
-          }
-      </Container>
-    </>
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconCardMembership />
+            </Avatar>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
+              }}
+            >
+              Choose a Plan
+            </Typography>
+            <Typography
+              align="center"
+              sx={{
+                marginY: 2,
+                color: "var(--color-gray)",
+              }}
+            >
+              Choose the best option to get your inbox back to clean.
+            </Typography>
+          </Box>
+          {plans
+            ?.sort((p) => p.priceInCents)
+            .map((p) => <PlanCard key={p.key} plan={p} submit={() => submit(p.key)} />) 
+            }
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

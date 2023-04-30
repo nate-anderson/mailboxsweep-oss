@@ -21,6 +21,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import currency from "currency.js";
 import TableBody from "@mui/material/TableBody";
+import PrivatePage from "../../auth";
 
 const renderPlan = (
   ready: boolean,
@@ -178,37 +179,39 @@ export default function ShowPlan() {
   }, []);
 
   return (
-    <>
-      <Navbar />
-      <Container component="main">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginY: 6,
-            maxWidth: 600,
-            width: "auto",
-            marginX: "auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconFactCheck />
-          </Avatar>
-          <Typography
-            align="center"
+    <PrivatePage>
+      <>
+        <Navbar />
+        <Container component="main">
+          <CssBaseline />
+          <Box
             sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
+              marginY: 6,
+              maxWidth: 600,
+              width: "auto",
+              marginX: "auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            Your Plan & Payment
-          </Typography>
-          {renderPlan(ready, plan, validUntil, subscribedAt)}
-        </Box>
-      </Container>
-    </>
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconFactCheck />
+            </Avatar>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
+              }}
+            >
+              Your Plan & Payment
+            </Typography>
+            {renderPlan(ready, plan, validUntil, subscribedAt)}
+          </Box>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

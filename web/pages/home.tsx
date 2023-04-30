@@ -14,6 +14,7 @@ import { useSnackbar } from "../components/snackbar";
 import Link from "next/link";
 import Button from "@mui/material/Button";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
+import PrivatePage from "../auth";
 
 function ActionLink(props: {
   color: string;
@@ -206,104 +207,106 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-      <Navbar page="Home" />
-      <Container component="main">
-        {errorSnackbar}
-        <CssBaseline />
+    <PrivatePage>
+      <>
+        <Navbar page="Home" />
+        <Container component="main">
+          {errorSnackbar}
+          <CssBaseline />
 
-        {renderClassificationStatus(classificationStatus)}
+          {renderClassificationStatus(classificationStatus)}
 
-        <Card
-          sx={{
-            maxWidth: 600,
-            width: "auto",
-            marginTop: 3,
-            marginX: "auto",
-          }}
-        >
-          <CardContent>
-            <Typography
-              sx={{
-                color: "var(--color-gray)",
-              }}
-            >
-              Your inbox
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: "1.4em",
-              }}
-            >
-              {address}
-            </Typography>
-            <Typography
-              display={allMessagesCount > 0 ? "block" : "none"}
-              sx={{
-                marginTop: 1,
-                color: "var(--color-gray)",
-              }}
-            >
-              {allMessagesCount.toLocaleString()} Messages
-            </Typography>
-            <Typography
-              display={unreadMessagesCount > 0 ? "block" : "none"}
-              sx={{
-                color: "var(--color-accent)",
-              }}
-            >
-              {unreadMessagesCount.toLocaleString()} Unread
-            </Typography>
-          </CardContent>
+          <Card
+            sx={{
+              maxWidth: 600,
+              width: "auto",
+              marginTop: 3,
+              marginX: "auto",
+            }}
+          >
+            <CardContent>
+              <Typography
+                sx={{
+                  color: "var(--color-gray)",
+                }}
+              >
+                Your inbox
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "1.4em",
+                }}
+              >
+                {address}
+              </Typography>
+              <Typography
+                display={allMessagesCount > 0 ? "block" : "none"}
+                sx={{
+                  marginTop: 1,
+                  color: "var(--color-gray)",
+                }}
+              >
+                {allMessagesCount.toLocaleString()} Messages
+              </Typography>
+              <Typography
+                display={unreadMessagesCount > 0 ? "block" : "none"}
+                sx={{
+                  color: "var(--color-accent)",
+                }}
+              >
+                {unreadMessagesCount.toLocaleString()} Unread
+              </Typography>
+            </CardContent>
 
-          {/* If scan is complete, link to scan inside the inbox
-                    card with a big "Continue ->" button or similar */}
-        </Card>
+            {/* If scan is complete, link to scan inside the inbox
+                      card with a big "Continue ->" button or similar */}
+          </Card>
 
-        <Card
-          sx={{
-            marginTop: 3,
-            maxWidth: 600,
-            marginX: "auto",
-          }}
-        >
-          <CardContent>
-            <Typography
-              sx={{
-                color: "var(--color-gray)",
-              }}
-            >
-              Your plan
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: "1.6em",
-                color: "var(--color-primary)",
-              }}
-            >
-              Mailboxsweep
-            </Typography>
-            <Typography
-              sx={{
-                marginTop: 1,
-                color: "var(--color-gray)",
-              }}
-            >
-              Expires 12/15/2023
-            </Typography>
-            <Typography
-              sx={{
-                color: "var(--color-accent)",
-              }}
-            >
-              120k messages deleted
-            </Typography>
-          </CardContent>
+          <Card
+            sx={{
+              marginTop: 3,
+              maxWidth: 600,
+              marginX: "auto",
+            }}
+          >
+            <CardContent>
+              <Typography
+                sx={{
+                  color: "var(--color-gray)",
+                }}
+              >
+                Your plan
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "1.6em",
+                  color: "var(--color-primary)",
+                }}
+              >
+                Mailboxsweep
+              </Typography>
+              <Typography
+                sx={{
+                  marginTop: 1,
+                  color: "var(--color-gray)",
+                }}
+              >
+                Expires 12/15/2023
+              </Typography>
+              <Typography
+                sx={{
+                  color: "var(--color-accent)",
+                }}
+              >
+                120k messages deleted
+              </Typography>
+            </CardContent>
 
-          {/* If scan is complete, link to scan inside the inbox
-                    card with a big "Continue ->" button or similar */}
-        </Card>
-      </Container>
-    </>
+            {/* If scan is complete, link to scan inside the inbox
+                      card with a big "Continue ->" button or similar */}
+          </Card>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

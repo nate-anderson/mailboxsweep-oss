@@ -30,6 +30,7 @@ import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
 import * as AppCache from "../../lib/cache";
+import PrivatePage from "../../auth";
 
 /*
 Todo: render tree items differently if they have been selected for
@@ -290,45 +291,6 @@ export default function Select() {
         setError(apiError.message);
       }
     });
-
-    // AppCache.asyncCache<ClassificationResponse>(
-    //   () => API.getClassificationSummary(requestPage),
-    //   `classification_summary_${requestPage}`
-    // )
-    //   .then((data) => {
-    //     setClassificationRoot(new ClassificationTree(data.classification));
-    //     setTotalPages(data.pageCount);
-    //   })
-    //   .catch((err) => {
-    //     if (err instanceof ApiError) {
-    //       const apiError = err as ApiError;
-    //       setError(apiError.message);
-    //     }
-    //   });
-
-    // AppCache.asyncCache<ChangeSetResponse>(
-    //   () => API.getChangeset(updateOperation),
-    //   `changeset_${updateOperation}`
-    // )
-    //   .then((data) => {
-    //     if (isDeleteMode) {
-    //       setDeleteSelection(new Selection(data.changeSet.paths));
-    //       setDeleteCount(data.size);
-    //     } else {
-    //       setMarkReadSelection(new Selection(data.changeSet.paths));
-    //       setMarkReadCount(data.size);
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     if (err instanceof ApiError) {
-    //       const apiError = err as ApiError;
-    //       // if no changeset is found, just let the user start creating one
-    //       if (apiError.status !== 404) {
-    //         setError(apiError.message);
-    //       }
-    //     }
-    //   });
-  
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
 
@@ -347,109 +309,111 @@ export default function Select() {
   }
 
   return (
-    <>
-      <Navbar />
-      <Container disableGutters>
-        <CssBaseline />
-        {errorSnackbar}
-        <Box
-          sx={{
-            marginTop: 2,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+    <PrivatePage>
+      <>
+        <Navbar />
+        <Container disableGutters>
+          <CssBaseline />
+          {errorSnackbar}
           <Box
             sx={{
-              maxWidth: 600,
-              width: "100%",
+              marginTop: 2,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Crumbs
-              currentPath={currentPath}
-              onClickBack={() => {
-                setSlideBackward(true);
-                setCurrentPath(currentPath.slice(0, -1));
-              }}
-              title={selectedClassification?.label}
-              typeKey={selectedClassification?.typeKey}
-            />
-            {currentPath.length == 0 ? (
-              <Typography
-                align="center"
-                sx={{
-                  marginY: 1,
-                  marginX: 1,
-                  color: "var(--color-gray)",
-                  maxWidth: 600,
-                }}
-              >
-                Select a category to update all messages in that group, or
-                expand the category to make specific selections.
-              </Typography>
-            ) : undefined}
-          </Box>
-          <Box
-            sx={{
-              marginBottom: 2,
-              maxWidth: 600,
-              width: "auto",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <List
-              selected={selectedClassification}
-              appendSelectedLeaf={addLeaf}
-              removeSelectedLeaf={removeLeaf}
-              navigate={navigateDownward}
-              slideBackward={slideBackward}
-              setSlideBackward={setSlideBackward}
-              pathPrefix={currentPath}
-              classificationTree={classificationRoot}
-              selectedNodes={getSelection()}
-            />
-
             <Box
-              display="flex"
-              justifyContent="center"
               sx={{
-                width: "90vw",
-                maxWidth: "600px",
-                marginBottom: 6,
+                maxWidth: 600,
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
               }}
             >
-              {currentPath.length <= 0 ? (
-                <Pagination
-                  size="small"
-                  page={requestPage + 1}
-                  count={totalPages}
-                  onChange={(_, page) => setRequestPage(page - 1)}
+              <Crumbs
+                currentPath={currentPath}
+                onClickBack={() => {
+                  setSlideBackward(true);
+                  setCurrentPath(currentPath.slice(0, -1));
+                }}
+                title={selectedClassification?.label}
+                typeKey={selectedClassification?.typeKey}
+              />
+              {currentPath.length == 0 ? (
+                <Typography
+                  align="center"
                   sx={{
-                    marginY: 3,
-                    // hack to make it fit on small phone screens
-                    marginX: -1,
+                    marginY: 1,
+                    marginX: 1,
+                    color: "var(--color-gray)",
+                    maxWidth: 600,
                   }}
-                />
-              ) : (
-                <></>
-              )}
+                >
+                  Select a category to update all messages in that group, or
+                  expand the category to make specific selections.
+                </Typography>
+              ) : undefined}
+            </Box>
+            <Box
+              sx={{
+                marginBottom: 2,
+                maxWidth: 600,
+                width: "auto",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <List
+                selected={selectedClassification}
+                appendSelectedLeaf={addLeaf}
+                removeSelectedLeaf={removeLeaf}
+                navigate={navigateDownward}
+                slideBackward={slideBackward}
+                setSlideBackward={setSlideBackward}
+                pathPrefix={currentPath}
+                classificationTree={classificationRoot}
+                selectedNodes={getSelection()}
+              />
+
+              <Box
+                display="flex"
+                justifyContent="center"
+                sx={{
+                  width: "90vw",
+                  maxWidth: "600px",
+                  marginBottom: 6,
+                }}
+              >
+                {currentPath.length <= 0 ? (
+                  <Pagination
+                    size="small"
+                    page={requestPage + 1}
+                    count={totalPages}
+                    onChange={(_, page) => setRequestPage(page - 1)}
+                    sx={{
+                      marginY: 3,
+                      // hack to make it fit on small phone screens
+                      marginX: -1,
+                    }}
+                  />
+                ) : (
+                  <></>
+                )}
+              </Box>
             </Box>
           </Box>
-        </Box>
-      </Container>
+        </Container>
 
-      <ToggleModeSwitch
-        onClickSubmit={navigateOnSubmit}
-        isDeleteMode={isDeleteMode}
-        setIsDeleteMode={debouncedSetIsDeleteMode}
-        numSelected={isDeleteMode ? deleteCount : markReadCount}
-      />
-    </>
+        <ToggleModeSwitch
+          onClickSubmit={navigateOnSubmit}
+          isDeleteMode={isDeleteMode}
+          setIsDeleteMode={debouncedSetIsDeleteMode}
+          numSelected={isDeleteMode ? deleteCount : markReadCount}
+        />
+      </>
+    </PrivatePage>
   );
 }

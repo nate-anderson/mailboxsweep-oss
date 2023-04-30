@@ -17,6 +17,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Link from "next/link";
 import IconCheckBoxOutlineBlank from "@mui/icons-material/CheckBoxOutlineBlank";
 import IconCheckBox from "@mui/icons-material/CheckBox";
+import PrivatePage from "../../auth";
 
 const renderAgreementListItem = (agr: UserAgreement) => (
   <Link
@@ -66,43 +67,45 @@ export default function Agreements() {
   }, []);
 
   return (
-    <>
-      <Navbar />
-      <Container component="main">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 6,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconGrading />
-          </Avatar>
-          <Typography
-            align="center"
+    <PrivatePage>
+      <>
+        <Navbar />
+        <Container component="main">
+          <CssBaseline />
+          <Box
             sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
+              marginTop: 6,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            Agreements
-          </Typography>
-        </Box>
-        <Card
-          sx={{
-            maxWidth: 600,
-            width: "auto",
-            marginTop: 3,
-            marginX: "auto",
-          }}
-        >
-          <List>{agreements?.map(renderAgreementListItem)}</List>
-        </Card>
-      </Container>
-    </>
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconGrading />
+            </Avatar>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
+              }}
+            >
+              Agreements
+            </Typography>
+          </Box>
+          <Card
+            sx={{
+              maxWidth: 600,
+              width: "auto",
+              marginTop: 3,
+              marginX: "auto",
+            }}
+          >
+            <List>{agreements?.map(renderAgreementListItem)}</List>
+          </Card>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

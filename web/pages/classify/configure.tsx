@@ -14,6 +14,7 @@ import type {} from "@mui/x-date-pickers/themeAugmentation";
 import SelectedClassifierList from "../../components/classifier-inputs/list";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import { useRouter } from "next/router";
+import PrivatePage from "../../auth";
 
 const year = getYear(new Date());
 
@@ -101,71 +102,73 @@ export default function Configure() {
   };
 
   return (
-    <>
-      <Navbar />
-      <Container component="main">
-        <CssBaseline />
-        {successSnackbar}
-        {errorSnackbar}
-        <Box
-          sx={{
-            marginTop: 3,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Typography
-            align="center"
+    <PrivatePage>
+      <>
+        <Navbar />
+        <Container component="main">
+          <CssBaseline />
+          {successSnackbar}
+          {errorSnackbar}
+          <Box
             sx={{
-              color: "var(--color-accent)",
-              fontSize: "2em",
-              fontWeight: 100,
+              marginTop: 3,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            Let's organize your inbox.
-          </Typography>
-          <Typography
-            align="center"
-            sx={{
-              color: "var(--color-black)",
-              marginTop: 2,
-              marginBottom: 1,
-              maxWidth: 600,
-              marginX: 2,
-            }}
-          >
-            We'll put all your messages into groups based on who sent them, when
-            they were sent, and what's inside. The recommended settings are
-            below, but we'll organize your inbox however you like.
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            maxWidth: 600,
-            width: "auto",
-            marginTop: 3,
-            marginX: "auto",
-          }}
-        >
-          <SelectedClassifierList
-            setSelectedClassifiers={setSelectedClassifiers}
-            classifiers={selectedClassifiers}
-            expandedIndex={expandedIndex}
-            setExpandedIndex={setExpandedIndex}
-          />
-          <Box display="flex" justifyContent="right">
-            <Button
-              onClick={submit}
+            <Typography
+              align="center"
               sx={{
-                marginBottom: 3,
+                color: "var(--color-accent)",
+                fontSize: "2em",
+                fontWeight: 100,
               }}
             >
-              Submit
-            </Button>
+              Let's organize your inbox.
+            </Typography>
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-black)",
+                marginTop: 2,
+                marginBottom: 1,
+                maxWidth: 600,
+                marginX: 2,
+              }}
+            >
+              We'll put all your messages into groups based on who sent them, when
+              they were sent, and what's inside. The recommended settings are
+              below, but we'll organize your inbox however you like.
+            </Typography>
           </Box>
-        </Box>
-      </Container>
-    </>
+          <Box
+            sx={{
+              maxWidth: 600,
+              width: "auto",
+              marginTop: 3,
+              marginX: "auto",
+            }}
+          >
+            <SelectedClassifierList
+              setSelectedClassifiers={setSelectedClassifiers}
+              classifiers={selectedClassifiers}
+              expandedIndex={expandedIndex}
+              setExpandedIndex={setExpandedIndex}
+            />
+            <Box display="flex" justifyContent="right">
+              <Button
+                onClick={submit}
+                sx={{
+                  marginBottom: 3,
+                }}
+              >
+                Submit
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

@@ -22,6 +22,7 @@ import IconHelp from "@mui/icons-material/HelpOutline";
 import Link from "next/link";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import Alert from "@mui/material/Alert";
+import PrivatePage from "../../auth";
 
 function PasswordOnlyInput(props: {
   password: string,
@@ -235,171 +236,173 @@ export default function Login() {
   };
 
   return (
-    <>
-      <Navbar page="Email Account" />
-      {successSnackbar}
-      {errorSnackbar}
-      <Container component="main">
-        <Dialog
-          open={showUnknownServerDialog}
-          aria-labelledby="login-email-modal-title"
-          aria-describedby="login-email-modal-text"
-          onClose={() => setShowUnknownServerDialog(false)}
-        >
-          <DialogTitle>We need a bit more info.</DialogTitle>
-          <DialogContent>
-            We don't recognize your email provider - but that's okay! As long as
-            your email provider supports IMAP (and most do!) we can continue. If
-            you need help locating your email provider's IMAP settings,{" "}
-            <a>click here. @TODO</a>
-          </DialogContent>
-          <DialogActions>
-            <MUIButton onClick={() => setShowUnknownServerDialog(false)}>
-              Continue
-            </MUIButton>
-          </DialogActions>
-        </Dialog>
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 6,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-            <IconEnvelope />
-          </Avatar>
-          <Typography
-            align="center"
-            sx={{
-              color: "var(--color-black)",
-              fontSize: "2em",
-              fontWeight: 100,
-            }}
+    <PrivatePage>
+      <>
+        <Navbar page="Email Account" />
+        {successSnackbar}
+        {errorSnackbar}
+        <Container component="main">
+          <Dialog
+            open={showUnknownServerDialog}
+            aria-labelledby="login-email-modal-title"
+            aria-describedby="login-email-modal-text"
+            onClose={() => setShowUnknownServerDialog(false)}
           >
-            Inbox Credentials
-          </Typography>
-          <Typography
-            align="center"
-            sx={{
-              marginY: 2,
-              color: "var(--color-gray)",
-              maxWidth: 600,
-            }}
-          >
-            Your credentials are stored with enterprise-grade AES-256 encryption
-            and deleted after 30 days.
-          </Typography>
-        </Box>
-
-        {credentialSet ? (
+            <DialogTitle>We need a bit more info.</DialogTitle>
+            <DialogContent>
+              We don't recognize your email provider - but that's okay! As long as
+              your email provider supports IMAP (and most do!) we can continue. If
+              you need help locating your email provider's IMAP settings,{" "}
+              <a>click here. @TODO</a>
+            </DialogContent>
+            <DialogActions>
+              <MUIButton onClick={() => setShowUnknownServerDialog(false)}>
+                Continue
+              </MUIButton>
+            </DialogActions>
+          </Dialog>
+          <CssBaseline />
           <Box
             sx={{
-              maxWidth: 600,
-              width: "auto",
-              marginX: "auto",
+              marginTop: 6,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
+            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+              <IconEnvelope />
+            </Avatar>
             <Typography
+              align="center"
               sx={{
-                color: "var(--color-accent)",
-                marginY: 1,
-                fontSize: 14,
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
               }}
-              align="left"
             >
-              Last updated on {format(created!, displayFormat)}
+              Inbox Credentials
             </Typography>
             <Typography
+              align="center"
               sx={{
-                color: "var(--color-accent)",
-                marginY: 1,
-                fontSize: 14,
+                marginY: 2,
+                color: "var(--color-gray)",
+                maxWidth: 600,
               }}
-              align="left"
             >
-              Will be deleted on {format(expires!, displayFormat)}
+              Your credentials are stored with enterprise-grade AES-256 encryption
+              and deleted after 30 days.
             </Typography>
           </Box>
-        ) : (
-          <></>
-        )}
 
-        {credentialType === GetCredentialResponse.type.IMAP
-          ? <Box
-          component="form"
-          sx={{
-            marginY: 3,
-            maxWidth: 600,
-            width: "auto",
-            marginX: "auto",
-          }}
-        >
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
-              {/* Read-only */}
-              <TextField
-                label="Email"
-                fullWidth
-                disabled
-                value={address}
-              ></TextField>
-            </Grid>
-            {showImapServerForm
-              ? <PasswordAndIMAPServerInputs
-                  password={password}
-                  setPassword={updatePassword}
-                  host={imapHost}
-                  setHost={updateHost}
-                  port={imapPort}
-                  setPort={updatePort}
-                />
-              : <PasswordOnlyInput
-                password={password}
-                setPassword={updatePassword}
-              />
-            }
-
-            <Grid
-              item
-              xs={12}
-              sm={12}
+          {credentialSet ? (
+            <Box
               sx={{
-                display: "flex",
-                justifyContent: showImapServerForm ? "space-between" : "right",
+                maxWidth: 600,
+                width: "auto",
+                marginX: "auto",
               }}
             >
-              {showImapServerForm ? (
-                <Link href="#">
-                  <MUIButton endIcon={<IconHelp />}>Help</MUIButton>
-                </Link>
-              ) : (
-                <></>
-              )}
-
-              <Button
-                disabled={!submitButtonEnabled}
-                onClick={submitCredential}
+              <Typography
+                sx={{
+                  color: "var(--color-accent)",
+                  marginY: 1,
+                  fontSize: 14,
+                }}
+                align="left"
               >
-                Save
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
-          : <Alert
-            severity="info"
+                Last updated on {format(created!, displayFormat)}
+              </Typography>
+              <Typography
+                sx={{
+                  color: "var(--color-accent)",
+                  marginY: 1,
+                  fontSize: 14,
+                }}
+                align="left"
+              >
+                Will be deleted on {format(expires!, displayFormat)}
+              </Typography>
+            </Box>
+          ) : (
+            <></>
+          )}
+
+          {credentialType === GetCredentialResponse.type.IMAP
+            ? <Box
+            component="form"
             sx={{
               marginY: 3,
               maxWidth: 600,
               width: "auto",
               marginX: "auto",
             }}
-          >Access to your inbox <b>{address}</b> is securely configured through {displayCredentialType(credentialType)}.</Alert>
-        }
-        
-      </Container>
-    </>
+          >
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={12}>
+                {/* Read-only */}
+                <TextField
+                  label="Email"
+                  fullWidth
+                  disabled
+                  value={address}
+                ></TextField>
+              </Grid>
+              {showImapServerForm
+                ? <PasswordAndIMAPServerInputs
+                    password={password}
+                    setPassword={updatePassword}
+                    host={imapHost}
+                    setHost={updateHost}
+                    port={imapPort}
+                    setPort={updatePort}
+                  />
+                : <PasswordOnlyInput
+                  password={password}
+                  setPassword={updatePassword}
+                />
+              }
+
+              <Grid
+                item
+                xs={12}
+                sm={12}
+                sx={{
+                  display: "flex",
+                  justifyContent: showImapServerForm ? "space-between" : "right",
+                }}
+              >
+                {showImapServerForm ? (
+                  <Link href="#">
+                    <MUIButton endIcon={<IconHelp />}>Help</MUIButton>
+                  </Link>
+                ) : (
+                  <></>
+                )}
+
+                <Button
+                  disabled={!submitButtonEnabled}
+                  onClick={submitCredential}
+                >
+                  Save
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+            : <Alert
+              severity="info"
+              sx={{
+                marginY: 3,
+                maxWidth: 600,
+                width: "auto",
+                marginX: "auto",
+              }}
+            >Access to your inbox <b>{address}</b> is securely configured through {displayCredentialType(credentialType)}.</Alert>
+          }
+          
+        </Container>
+      </>
+    </PrivatePage>
   );
 }

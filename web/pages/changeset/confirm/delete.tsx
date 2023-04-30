@@ -11,6 +11,7 @@ import Avatar from "@mui/material/Avatar";
 import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
 import * as AppCache from "../../../lib/cache";
+import PrivatePage from "../../../auth";
 
 export default function ConfirmDelete() {
     const API = useAPIClient();
@@ -49,51 +50,53 @@ export default function ConfirmDelete() {
         })
     }
 
-    return <>
-        <Navbar />
-        <Container component="main">
-            <CssBaseline />
-            {errorSnackbar}
-            {successSnackbar}
-            <Box
-                sx={{
-                    marginTop: 4,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}
-                >
-                <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-                    <IconCheckBox />
-                </Avatar>
-                <Typography
-                    align="center"
+    return <PrivatePage>
+        <>
+            <Navbar />
+            <Container component="main">
+                <CssBaseline />
+                {errorSnackbar}
+                {successSnackbar}
+                <Box
                     sx={{
-                        color: "var(--color-black)",
-                        fontSize: "1.75em",
-                        fontWeight: 100,
+                        marginTop: 4,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
                     }}
-                >
-                    Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages
-                </Typography>
-                <Typography
-                    align="center"
-                    sx={{
-                        marginY: 2,
-                        color: "var(--color-gray)",
-                        maxWidth: 600,
-                    }}
-                >
-                    These messages will be permanently deleted from your inbox. <b style={{color: "var(--color-danger)"}}>This cannot be undone.</b>
-                </Typography>
-                <ConfirmBar
-                    deleteMode={true}
-                    confirmButtonEnabled={isConfirmed}
-                    onCheckEnabled={setIsConfirmed}
-                    label="I'm sure I want to make this change"
-                    onSubmit={submit}
-                />
-            </Box>
-        </Container>
-    </>
+                    >
+                    <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+                        <IconCheckBox />
+                    </Avatar>
+                    <Typography
+                        align="center"
+                        sx={{
+                            color: "var(--color-black)",
+                            fontSize: "1.75em",
+                            fontWeight: 100,
+                        }}
+                    >
+                        Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages
+                    </Typography>
+                    <Typography
+                        align="center"
+                        sx={{
+                            marginY: 2,
+                            color: "var(--color-gray)",
+                            maxWidth: 600,
+                        }}
+                    >
+                        These messages will be permanently deleted from your inbox. <b style={{color: "var(--color-danger)"}}>This cannot be undone.</b>
+                    </Typography>
+                    <ConfirmBar
+                        deleteMode={true}
+                        confirmButtonEnabled={isConfirmed}
+                        onCheckEnabled={setIsConfirmed}
+                        label="I'm sure I want to make this change"
+                        onSubmit={submit}
+                    />
+                </Box>
+            </Container>
+        </>
+    </PrivatePage>
 }
