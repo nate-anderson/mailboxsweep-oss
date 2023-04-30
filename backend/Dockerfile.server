@@ -23,5 +23,7 @@ RUN mkdir -p /opt/mailboxsweep
 RUN GOOS=linux GOARCH=amd64 go build -o /opt/mailboxsweep/server ./cmd/server
 
 EXPOSE 8000
+EXPOSE 8080
+EXPOSE 80
 
 CMD ["/opt/mailboxsweep/server"]
