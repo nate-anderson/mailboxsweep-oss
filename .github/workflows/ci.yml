@@ -176,8 +176,7 @@ jobs:
 
       - name: Generate Report
         uses: actions/upload-artifact@v2
-        working-directory: web
         with:
           name: web.zip
-          path: out.zip
+          path: web/out.zip
           retention-days: 2
