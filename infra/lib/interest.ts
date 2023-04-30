@@ -18,10 +18,10 @@ export class InterestStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
-        const bucketName = `mailboxsweep-interest-${props.environmentName}-bucket`;
+        const bucketName = `mailboxsweep-interest-bucket`;
         const siteBucket = new S3.Bucket(this, bucketName, {
             bucketName: bucketName,
-            publicReadAccess: true,
+            // publicReadAccess: true,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             // just a static site that is in VCS, blow it up
             autoDeleteObjects: true,
@@ -36,16 +36,16 @@ export class InterestStack extends cdk.Stack {
             hostedZone: zone,
             region: "us-east-1",  //standard for acm certs
         });
-        
+    
 
-        const deploymentName = `mailboxsweep_interest_${props.environmentName}_bdpl`;
+        const deploymentName = `mailboxsweep_interest_bdpl`;
         const deployment = new S3Deployment.BucketDeployment(this, deploymentName, {
             destinationBucket: siteBucket,
             sources: [S3Deployment.Source.asset(resolve(__dirname, "../../interest"))]
         })
         const originAccessIdentity = new CloudFront.OriginAccessIdentity(this, 'OriginAccessIdentity');
 
-        const distName = `mailboxsweep_interest_dist_${props.environmentName}_dist`;
+        const distName = `mailboxsweep_interest_dist`;
         const siteDistribution = new CloudFront.Distribution(this, distName, {
             certificate: siteCert,
             defaultRootObject: "index.html",
@@ -64,10 +64,12 @@ export class InterestStack extends cdk.Stack {
                 compress: true,
                 allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
                 viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      }
+            },
         });
         
-        const recordName = `mailboxsweep_interest_arecord_${props.environmentName}`;
+        siteBucket.grantRead(originAccessIdentity);
+
+        const recordName = `mailboxsweep_interest_arecord`;
         new route53.ARecord(this, recordName, {
             target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(siteDistribution)),
             zone,
