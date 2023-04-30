@@ -138,7 +138,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
 
   build-web:
-    name: Build web frontend
+    name: Build and upload web frontend artifacts
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
@@ -169,3 +169,15 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build
+
+      - name: Compress static build
+        working-directory: web
+        run: zip -r out.zip ./out
+
+      - name: Generate Report
+        uses: actions/upload-artifact@v2
+        working-directory: web
+        with:
+          name: web.zip
+          path: out.zip
+          retention-days: 2

@@ -53,10 +53,10 @@ export class InterestStack extends cdk.Stack {
             minimumProtocolVersion: CloudFront.SecurityPolicyProtocol.TLS_V1_2_2021,
             errorResponses:[
                 {
-                httpStatus: 403,
-                responseHttpStatus: 403,
-                responsePagePath: '/error.html',
-                ttl: cdk.Duration.minutes(30),
+                    httpStatus: 403,
+                    responseHttpStatus: 403,
+                    responsePagePath: '/error.html',
+                    ttl: cdk.Duration.minutes(30),
                 }
             ],
             defaultBehavior: {
