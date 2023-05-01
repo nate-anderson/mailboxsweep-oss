@@ -181,4 +181,4 @@ jobs:
         working-directory: web
         env:
           BUCKET: com.mailboxsweep.staging.web
-        run: aws s3 sync ./out s3://${{  }}
+        run: aws s3 sync ./out s3://$BUCKET
