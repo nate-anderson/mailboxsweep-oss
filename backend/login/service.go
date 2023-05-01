@@ -5,7 +5,10 @@ import (
 	"errors"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
+	"mailboxsweep/pkg/slice"
 	"mailboxsweep/session"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -38,6 +41,15 @@ type LoginInitResult struct {
 
 func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP string) (LoginInitResult, error) {
 	var res LoginInitResult
+
+	// Temporary login block for Staging environment
+	if os.Getenv("ENV") == "staging" {
+		allowedAddressesStr := os.Getenv("STAGING_ALLOWED_USERS")
+		allowdAddresses := strings.Split(allowedAddressesStr, ",")
+		if !slice.Contains(allowdAddresses, address) {
+			return res, mailboxsweep.UnauthenticatedError(errors.New("user is not in test user list"))
+		}
+	}
 
 	log := s.log.
 		WithField("address", address).
