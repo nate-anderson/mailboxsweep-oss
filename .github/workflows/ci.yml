@@ -180,7 +180,7 @@ jobs:
       - name: enable globstar for rename
         run: shopt -s globstar
 
-      - name: Rename foo.html to foo for
+      - name: Rename foo.html to foo for S3/CloudFront routing
         working-directory: web
         run: npm run strip-dot-html
 
