@@ -16,6 +16,6 @@ export class InfraStack extends cdk.Stack {
     
     const ecrRepos = new RepositoryStack(this, `ecr-repos`, props);
 
-    const frontendBucket = new FrontendBucketStack(this, `frontend-bucket`, props);
+    const frontendBuckets = new FrontendBucketStack(this, `frontend-buckets`, props);
   }
 }

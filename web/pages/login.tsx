@@ -38,6 +38,20 @@ const submitLogin = async (
   }
 };
 
+function StagingWarning(props: { environment: string | undefined }) {
+  if (props.environment === "prod") {
+    return <></>;
+  }
+
+  return <Typography
+    align="center"
+    color="red"
+    marginBottom={4}
+  >
+    This is the Mailboxsweep {props.environment?.toUpperCase()} environment, only accessible to approved test users.
+  </Typography>
+}
+
 export default function Login() {
   const router = useRouter();
   const [email, changeEmail] = useState("");
@@ -88,6 +102,7 @@ export default function Login() {
         >
           Log in or sign up
         </Typography>
+        <StagingWarning environment={process.env.MAILBOXSWEEP_API_HOST}/>
         <TextField
           label="Email"
           value={email}

@@ -2,15 +2,18 @@ import * as cdk from 'aws-cdk-lib';
 import * as S3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 import { InfraStackProps } from './infra-stack';
+import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 
 export default class FrontendBucketStack extends cdk.Stack {
-    public bucket: S3.Bucket;
+    public buildBucket: S3.Bucket;
+    public siteBucket: S3.Bucket;
+    public siteOriginAccessIdentity: CloudFront.OriginAccessIdentity;
 
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
-        const staticSiteBucket = new S3.Bucket(this, `static-site-bucket`, {
-            bucketName: `com.mailboxsweep.${props.environmentName}.web`,
+        const buildBuckets = new S3.Bucket(this, `static-builds-bucket`, {
+            bucketName: `com.mailboxsweep.builds.${props.environmentName}.web`,
             enforceSSL: true,
             removalPolicy: cdk.RemovalPolicy.RETAIN,
             versioned: true,
@@ -25,6 +28,21 @@ export default class FrontendBucketStack extends cdk.Stack {
             ]
         });
 
-        this.bucket = staticSiteBucket;
+        this.buildBucket = buildBuckets;
+
+        const siteBucket = new S3.Bucket(this, `web-bucket`, {
+            bucketName: `com.mailboxsweep.${props.environmentName}.web`,
+            enforceSSL: true,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            websiteIndexDocument: "index.html",
+            websiteErrorDocument: "404.html"
+        })
+
+        this.siteBucket = siteBucket;
+
+        const siteOriginAccessIdentity = new CloudFront.OriginAccessIdentity(this, `site-${props.environmentName}-origin`);
+        siteBucket.grantRead(siteOriginAccessIdentity);
+
+        this.siteOriginAccessIdentity = siteOriginAccessIdentity;
     }
 }

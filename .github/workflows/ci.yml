@@ -166,10 +166,6 @@ jobs:
         working-directory: web
         run: npm run lint
 
-      - name: Build
-        working-directory: web
-        run: npm run build
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -177,8 +173,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+      - name: Build (staging)
+        working-directory: web
+        run: npm run build:staging
+
+      - name: Compress staging build
+        working-directory: web
+        run: zip -r staging.zip ./out
+
       - name: Push to S3 (staging)
         working-directory: web
         env:
-          BUCKET: com.mailboxsweep.staging.web
-        run: aws s3 sync ./out s3://$BUCKET
+          BUCKET: com.mailboxsweep.builds.staging.web
+        run: aws s3 put-object staging.zip s3://$BUCKET
+
+      # - name: Build (prod)
+      #   working-directory: web
+      #   run: npm run build:prod
+
+      # - name: Compress prod build
+      #   working-directory: web
+      #   run: zip -r prod.zip ./out
+
+      # - name: Push to S3 (prod)
+      #   working-directory: web
+      #   env:
+      #     BUCKET: com.mailboxsweep.builds.prod.web
+      #   run: aws s3 put-object prod.zip s3://$BUCKET
