@@ -179,7 +179,7 @@ jobs:
 
       - name: Rename foo.html to foo for
         working-directory: web/out
-        run: for f in **/*.html; do mv -- "$f" "${f%.html}"; done
+        run: npm run strip-dot-html
 
       - name: Compress staging build
         working-directory: web

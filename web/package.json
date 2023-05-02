@@ -7,6 +7,7 @@
     "build": "next build",
     "build:prod": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.mailboxsweep.com next build",
     "build:staging": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.staging.mailboxsweep.com next build",
+    "strip-dot-html": "for f in **/*.html; do mv -- \"$f\" \"${f%.html}\"; done",
     "start": "next start",
     "lint": "next lint",
     "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep",
