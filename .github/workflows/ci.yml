@@ -177,8 +177,11 @@ jobs:
         working-directory: web
         run: npm run build:staging
 
+      - name: enable globstar for rename
+        run: shopt -s globstar
+
       - name: Rename foo.html to foo for
-        working-directory: web/out
+        working-directory: web
         run: npm run strip-dot-html
 
       - name: Compress staging build
