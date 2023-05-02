@@ -185,7 +185,7 @@ jobs:
         working-directory: web
         env:
           BUCKET: com.mailboxsweep.builds.staging.web
-        run: aws s3 put-object staging.zip s3://$BUCKET
+        run: aws s3 cp staging.zip s3://$BUCKET
 
       # - name: Build (prod)
       #   working-directory: web
