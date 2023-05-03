@@ -177,13 +177,6 @@ jobs:
         working-directory: web
         run: npm run build:staging
 
-      - name: enable globstar for rename
-        run: shopt -s globstar
-
-      - name: Rename foo.html to foo for S3/CloudFront routing
-        working-directory: web
-        run: npm run strip-dot-html
-
       - name: Compress staging build
         working-directory: web
         run: cd out && zip -r ../staging.zip .
