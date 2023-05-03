@@ -102,7 +102,7 @@ export default function Login() {
         >
           Log in or sign up
         </Typography>
-        <StagingWarning environment={process.env.MAILBOXSWEEP_API_HOST}/>
+        <StagingWarning environment={process.env.ENV}/>
         <TextField
           label="Email"
           value={email}
