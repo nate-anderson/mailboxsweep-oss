@@ -177,6 +177,10 @@ jobs:
         working-directory: web
         run: npm run build:staging
 
+      - name: Rename .html files for CloudFront issues
+        working-directory: web
+        run: chmod +x rename.sh && ./rename.sh
+
       - name: Compress staging build
         working-directory: web
         run: cd out && zip -r ../staging.zip .
