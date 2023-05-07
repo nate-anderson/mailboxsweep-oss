@@ -20,6 +20,26 @@ const Resources: any = {
             dns:{
                 fullyQualifiedDomainName: "api.staging.mailboxsweep.com",
             },
+        },
+        web: {
+            dns: {
+                fullyQualifiedDomainName: "staging.mailboxsweep.com"
+            },
+            cdn: {
+                originAccessId: "EUE0OFO2HUPQ4"
+            }
+        }
+    },
+    prod: {
+        api: {
+            dns:{
+                fullyQualifiedDomainName: "api.mailboxsweep.com",
+            },
+        },
+        web: {
+            dns: {
+                fullyQualifiedDomainName: "mailboxsweep.com"
+            }
         }
     }
 };

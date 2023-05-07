@@ -18,6 +18,10 @@ import * as LoadBalancingV2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as AWSLogs from "aws-cdk-lib/aws-logs";
 import * as IAM from "aws-cdk-lib/aws-iam";
 import Resources from "../lib/resources";
+import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
+import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
+import { join } from 'path';
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
@@ -56,6 +60,12 @@ export class AppStack extends cdk.Stack {
             bucketName: `com.mailboxsweep.${props.environmentName}.classification`,
             encryption: S3.BucketEncryption.S3_MANAGED,
             removalPolicy: cdk.RemovalPolicy.RETAIN,
+            lifecycleRules: [
+                {
+                    id: "ttl",
+                    expiration: cdk.Duration.days(30),
+                }
+            ]
         });
 
         const vpc = new Vpc(this, `vpc-${props.environmentName}`, {});
@@ -117,6 +127,7 @@ export class AppStack extends cdk.Stack {
             // Generic app config
             ENV: props.environmentName,
             HTTP_PORT: Port.HTTP.toString(),
+            STAGING_ALLOWED_USERS: "nathanid95@gmail.com,camerah91@gmail.com,citrusnewsletter@gmail.com",
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
@@ -264,42 +275,6 @@ export class AppStack extends cdk.Stack {
         });
         securityGroup.addIngressRule(EC2.Peer.ipv4('0.0.0.0/0'), EC2.Port.tcp(Port.HTTP));
 
-        // const serverService = new ECS.Ec2Service(this, `server-service`, {
-        //     taskDefinition: serverTaskDefinition,
-        //     cluster,
-        //     desiredCount: 1,
-        //     assignPublicIp: false,
-        //     securityGroups: [securityGroup],
-        // });
-
-        // serverService.autoScaleTaskCount({ maxCapacity: 3, minCapacity: 1})
-        //     .scaleOnCpuUtilization('CpuScaling', {
-        //         targetUtilizationPercent: 80,
-        //         scaleInCooldown: cdk.Duration.seconds(60),
-        //         scaleOutCooldown: cdk.Duration.seconds(60),
-        //     });
-
-        // const elb = new LoadBalancingV2.NetworkLoadBalancer(this, `server-lb`, {
-        //     vpc,
-        //     internetFacing: true,
-        // });
-        // const listener = elb.addListener(`api`, {
-        //     protocol: LoadBalancingV2.Protocol.TLS,
-        //     certificates: [cert],
-        //     port: Port.HTTPS,
-        //     defaultTargetGroups: [new LoadBalancingV2.NetworkTargetGroup(this, `api-target`, {
-        //         vpc,
-        //         port: Port.HTTP,
-        //         preserveClientIp: true,
-        //         protocol: LoadBalancingV2.Protocol.TCP,
-        //         targets: [serverService],
-        //         healthCheck: {
-        //             path: "/healthcheck",
-        //             port: Port.HTTP.toString(),
-        //             protocol: LoadBalancingV2.Protocol.HTTP,
-        //         }
-        //     })]
-        // });
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {
             cluster,
@@ -330,6 +305,65 @@ export class AppStack extends cdk.Stack {
             zone: hostedZone,
             recordName: domain,
             target: route53.RecordTarget.fromAlias(new Route53Targets.LoadBalancerTarget(loadBalancedAPIService.loadBalancer)),
-        })
+        });
+
+        const cloudFrontCert = new CertMan.DnsValidatedCertificate(this, "web-cert", {
+            domainName: Resources[props.environmentName].web.dns.fullyQualifiedDomainName,
+            hostedZone: hostedZone,
+            region: "us-east-1",  //standard for acm certs
+        });
+
+        // frontend
+        const staticSiteBucket = S3.Bucket.fromBucketName(this, `static-site-bucket`, `com.mailboxsweep.${props.environmentName}.web`);
+        const buildBucket = S3.Bucket.fromBucketName(this, `builds-bucket`, `com.mailboxsweep.builds.${props.environmentName}.web`)
+        
+        const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
+        
+        const rewriteURIFunc = new CloudFront.Function(this, `url-rewrite`, {
+            code: CloudFront.FunctionCode.fromFile({
+                filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
+            }),
+            functionName: "static-site-url-rewrite",
+            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting"
+        });;
+
+        const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
+            certificate: cloudFrontCert,
+            defaultRootObject: "index.html",
+            domainNames: [Resources[props.environmentName].web.dns.fullyQualifiedDomainName],
+            minimumProtocolVersion: CloudFront.SecurityPolicyProtocol.TLS_V1_2_2021,
+            defaultBehavior: {
+                origin: new CFOrigins.S3Origin(staticSiteBucket, { originAccessIdentity }),
+                compress: true,
+                allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+                viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                functionAssociations: [{
+                    function: rewriteURIFunc,
+                    eventType: CloudFront.FunctionEventType.VIEWER_REQUEST,
+                }],
+            },
+            errorResponses:[
+                {
+                    httpStatus: 404,
+                    responseHttpStatus: 404,
+                    responsePagePath: '/404.html',
+                    ttl: cdk.Duration.minutes(30),
+                }
+            ],
+        });
+
+        new Route53.ARecord(this, `site-record`, {
+            target: Route53.RecordTarget.fromAlias(new Route53Targets.CloudFrontTarget(siteDistribution)),
+            zone: hostedZone,
+            recordName: Resources[props.environmentName].web.dns.fullyQualifiedDomainName,
+        });
+
+        new S3Deployment.BucketDeployment(this, `deployment`, {
+            sources: [S3Deployment.Source.bucket(buildBucket, `${props.environmentName}.zip`)],
+            destinationBucket: staticSiteBucket,
+            prune: true,
+            distribution: siteDistribution,
+            destinationKeyPrefix: "/",
+        });
     }
 }
