@@ -318,14 +318,6 @@ export class AppStack extends cdk.Stack {
         const buildBucket = S3.Bucket.fromBucketName(this, `builds-bucket`, `com.mailboxsweep.builds.${props.environmentName}.web`)
         
         const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
-        
-        const rewriteURIFunc = new CloudFront.Function(this, `url-rewrite`, {
-            code: CloudFront.FunctionCode.fromFile({
-                filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
-            }),
-            functionName: "static-site-url-rewrite",
-            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting"
-        });;
 
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
             certificate: cloudFrontCert,
@@ -337,10 +329,6 @@ export class AppStack extends cdk.Stack {
                 compress: true,
                 allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
                 viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                functionAssociations: [{
-                    function: rewriteURIFunc,
-                    eventType: CloudFront.FunctionEventType.VIEWER_REQUEST,
-                }],
             },
             errorResponses:[
                 {

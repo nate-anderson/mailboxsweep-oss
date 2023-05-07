@@ -1,8 +1,4 @@
 *.js
-
-# Allow function files for Cloudformation stacks
-!functions/**/*.js
-
 !jest.config.js
 *.d.ts
 node_modules
