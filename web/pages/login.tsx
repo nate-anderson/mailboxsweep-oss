@@ -48,7 +48,7 @@ function StagingWarning(props: { environment: string | undefined }) {
     color="red"
     marginBottom={4}
   >
-    This is the Mailboxsweep {props.environment?.toUpperCase()} environment, only accessible to approved test users.
+    This is the MailboxSweep {props.environment?.toUpperCase()} environment, only accessible to approved test users.
   </Typography>
 }
 

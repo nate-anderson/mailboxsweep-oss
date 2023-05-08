@@ -33,10 +33,14 @@ export default class FrontendBucketStack extends cdk.Stack {
         const siteBucket = new S3.Bucket(this, `web-bucket`, {
             bucketName: `com.mailboxsweep.${props.environmentName}.web`,
             enforceSSL: true,
+            // yes, this is a public static site and no sensitive information should be in this bucket
+            // but access should be limited to be only through CloudFront to prevent excessive downloads
+            // racking up our bill
+            publicReadAccess: false,
             removalPolicy: cdk.RemovalPolicy.RETAIN,
             websiteIndexDocument: "index.html",
             websiteErrorDocument: "404.html"
-        })
+        });
 
         this.siteBucket = siteBucket;
 
