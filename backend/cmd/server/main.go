@@ -243,9 +243,7 @@ func main() {
 	sessionDuration := time.Minute * time.Duration(cfg.SessionDurationMinutes)
 	sessionService := session.NewService(sessionRepo, cfg.SessionKeyLength, sessionDuration)
 
-	var loginSender login.Sender
-
-	loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
+	loginSender := login.NewLogSender(log, cfg.LoginBaseURL)
 
 	if cfg.LoginLinkDurationMinutes == 0 {
 		log.Fatal("LOGIN_LINK_DURATION_MINUTES must be set and > 0")
