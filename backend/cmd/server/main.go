@@ -245,9 +245,7 @@ func main() {
 
 	var loginSender login.Sender
 
-	if cfg.Env == "dev" {
-		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
-	}
+	loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
 
 	if cfg.LoginLinkDurationMinutes == 0 {
 		log.Fatal("LOGIN_LINK_DURATION_MINUTES must be set and > 0")
