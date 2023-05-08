@@ -12,6 +12,7 @@ import (
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/pkg/slice"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -66,8 +67,9 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, coo
 	}
 
 	token := GmailLoginToken{
-		Token:  stateToken,
-		Cookie: cookie,
+		Token:   stateToken,
+		Cookie:  cookie,
+		Expires: time.Now().Add(time.Minute * 15).Unix(),
 	}
 
 	err = s.tokenRepo.Store(ctx, token)
