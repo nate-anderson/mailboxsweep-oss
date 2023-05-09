@@ -39,8 +39,10 @@ func (p StripeProcessor) InitiateCheckout(amount int64, email, name, description
 	sess, err := p.client.CheckoutSessions.New(&stripe.CheckoutSessionParams{
 		AllowPromotionCodes: ptr(false),
 		SuccessURL:          &p.successURL,
+		// NV does not charge sales tax for digital products
+		// https://tax.nv.gov/FAQs/Sales_Tax_Information___FAQs/
 		AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{
-			Enabled: ptr(true),
+			Enabled: ptr(false),
 		},
 		Currency:      ptr("usd"),
 		CustomerEmail: &email,
