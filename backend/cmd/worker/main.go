@@ -47,7 +47,7 @@ type workerConfig struct {
 	// 3 hours?
 	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS"`
 	// How long must a user wait after a completed request to submit a new one?
-	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
+	MinutesBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS"`
 
 	// How long is a payment good for access to the servuce?
 	PaymentDurationDays int `fig:"PAYMENT_ACCESS_DURATION_DAYS"`
@@ -132,7 +132,7 @@ func main() {
 	}
 
 	timeBetweenOpenRequests := time.Minute * time.Duration(cfg.MinutesBetweenOpenRequests)
-	timeBetweenClosedRequests := time.Hour * time.Duration(cfg.HoursBetweenClosedRequests)
+	timeBetweenClosedRequests := time.Minute * time.Duration(cfg.MinutesBetweenClosedRequests)
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, cfg.DynamoDBTable)
 	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, timeBetweenOpenRequests, timeBetweenClosedRequests)
 

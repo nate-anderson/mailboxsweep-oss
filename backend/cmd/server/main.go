@@ -68,7 +68,7 @@ type serverConfig struct {
 	// 3 hours?
 	MinutesBetweenOpenRequests int `fig:"MINUTES_BETWEEN_OPEN_REQUESTS" required:"true"`
 	// How long must a user wait after a completed request to submit a new one?
-	HoursBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS" required:"true"`
+	MinutesBetweenClosedRequests int `fig:"MINUTES_BETWEEN_CLOSED_REQUESTS" required:"true"`
 
 	// Used to split changesets up among documents
 	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
@@ -196,7 +196,7 @@ func main() {
 	}
 
 	timeBetweenOpenRequests := time.Minute * time.Duration(cfg.MinutesBetweenOpenRequests)
-	timeBetweenClosedRequests := time.Hour * time.Duration(cfg.HoursBetweenClosedRequests)
+	timeBetweenClosedRequests := time.Minute * time.Duration(cfg.MinutesBetweenClosedRequests)
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, cfg.DynamoDBTable)
 	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, timeBetweenOpenRequests, timeBetweenClosedRequests)
 
