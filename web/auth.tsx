@@ -20,7 +20,6 @@ export default function PrivatePage(props: { children: JSX.Element }) {
   const [ canRender, setCanRender ] = useState(false);
   useEffect(() => {
     const cookie = getCookie(isLoggedInCookie);
-    console.log({ cookie });
     if (cookie === 'true') {
       setCanRender(true);
       return;
