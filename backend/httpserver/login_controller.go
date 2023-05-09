@@ -101,10 +101,10 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 		resBody.RedirectToSignup = true
 	}
 
-	sessionCookie := session.AuthCookie(c.isDev)
+	sessionCookie := session.AuthCookie(c.isDev, c.cookieDomain)
 	http.SetCookie(w, sessionCookie)
 
-	isLoggedInCookie := session.IsLoggedInCookie()
+	isLoggedInCookie := session.IsLoggedInCookie(c.cookieDomain)
 	http.SetCookie(w, isLoggedInCookie)
 
 	c.respond(w, http.StatusOK, resBody)
@@ -142,10 +142,10 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 		RedirectToSignup: false,
 	}
 
-	sessionCookie := sess.AuthCookie(c.isDev)
+	sessionCookie := sess.AuthCookie(c.isDev, c.cookieDomain)
 	http.SetCookie(w, sessionCookie)
 
-	isLoggedInCookie := sess.IsLoggedInCookie()
+	isLoggedInCookie := sess.IsLoggedInCookie(c.cookieDomain)
 	http.SetCookie(w, isLoggedInCookie)
 
 	c.respond(w, http.StatusOK, resBody)
