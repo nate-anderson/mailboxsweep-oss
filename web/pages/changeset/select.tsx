@@ -260,19 +260,24 @@ export default function Select() {
     }
 
     const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
-    Promise.all([
-      AppCache.asyncCache<ClassificationResponse>(
-        () => API.getClassificationSummary(requestPage),
-        `classification_summary_${requestPage}`
-      ),
-      AppCache.asyncCache<ChangeSetResponse>(
-        () => API.getChangeset(updateOperation),
-        `changeset_${updateOperation}`
-      )
-    ]).then(([classificationRes, changesetRes]) => {
+
+    AppCache.asyncCache<ClassificationResponse>(
+      () => API.getClassificationSummary(requestPage),
+      `classification_summary_${requestPage}`
+    ).then((classificationRes) => {
       setClassificationRoot(new ClassificationTree(classificationRes.classification));
       setTotalPages(classificationRes.pageCount);
+    }).catch((error) => {
+      if (error instanceof ApiError) {
+        const apiError = error as ApiError;
+        setError(apiError.message);
+      }
+    });
 
+    AppCache.asyncCache<ChangeSetResponse>(
+      () => API.getChangeset(updateOperation),
+      `changeset_${updateOperation}`
+    ).then((changesetRes) => {
       if (isDeleteMode) {
         setDeleteSelection(new Selection(changesetRes.changeSet.paths));
         setDeleteCount(changesetRes.size);
@@ -280,17 +285,15 @@ export default function Select() {
         setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
         setMarkReadCount(changesetRes.size);
       }
-    }).catch(([classificationErr, changesetErr]) => {
-      if (classificationErr instanceof ApiError) {
-        const apiError = classificationErr as ApiError;
-        setError(apiError.message);
+    }).catch((error) => {
+      if (error instanceof ApiError) {
+        const apiError = error as ApiError;
+        // 404 means no selection has been stored 
+        if (apiError.status !== 404) {
+          setError(apiError.message);
+        }
       }
-
-      if (changesetErr instanceof ApiError) {
-        const apiError = changesetErr as ApiError;
-        setError(apiError.message);
-      }
-    });
+    })
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
 
