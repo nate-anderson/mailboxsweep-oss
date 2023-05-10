@@ -1,4 +1,4 @@
 name: mailboxsweep_login_link
 subject: Log in to Mailboxsweep
-html: <h1>Hello! Please click here to sign into MailboxSweep. {{signin_link}}</h1>
+html: <h1>Hello!</h1> <p>Please <a href="{{signin_link}}">click here</a> to sign into MailboxSweep.</p>
 plaintext: Hello! Please click here to sign into MailboxSweep. {{signin_link}}

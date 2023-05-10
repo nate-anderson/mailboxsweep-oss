@@ -267,7 +267,7 @@ func main() {
 			log.Fatalf("failed to initialize SES client: %s", err)
 		}
 		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress)
-		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName)
+		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName, cfg.LoginBaseURL)
 	}
 
 	if cfg.LoginLinkDurationMinutes == 0 {
