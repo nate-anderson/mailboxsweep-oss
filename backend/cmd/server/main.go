@@ -9,6 +9,7 @@ import (
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
+	"mailboxsweep/email"
 	"mailboxsweep/httpserver"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/go-chi/chi/v5"
@@ -52,6 +54,10 @@ type serverConfig struct {
 	SQSPort     int     `fig:"SQS_PORT"`
 	SQSRegion   string  `fig:"SQS_REGION" default:"us-west-2"`
 	SQSQueueURL string  `fig:"SQS_QUEUE_URL" required:"true"`
+
+	SESHost   *string `fig:"SES_HOST"`
+	SESPort   int     `fig:"SES_PORT"`
+	SESRegion string  `fig:"SES_REGION" default:"us-west-2"`
 
 	DynamoDBTable             string `fig:"DYNAMODB_TABLE" required:"true"`
 	S3Bucket                  string `fig:"S3_BUCKET" required:"true"`
@@ -95,6 +101,10 @@ type serverConfig struct {
 	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
 	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL" required:"true"`
+
+	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
+
+	SESLoginEmailTemplateName string `fig:"SES_LOGIN_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
 }
 
 func main() {
@@ -243,7 +253,22 @@ func main() {
 	sessionDuration := time.Minute * time.Duration(cfg.SessionDurationMinutes)
 	sessionService := session.NewService(sessionRepo, cfg.SessionKeyLength, sessionDuration)
 
-	loginSender := login.NewLogSender(log, cfg.LoginBaseURL)
+	var loginSender login.Sender
+	var emailSender email.Sender
+	if cfg.Env == "localhost" {
+		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
+	} else {
+		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
+			ServiceHost:   cfg.SQSHost,
+			ServicePort:   cfg.SQSPort,
+			ServiceRegion: cfg.SQSRegion,
+		}, sesv2.NewFromConfig)
+		if err != nil {
+			log.Fatalf("failed to initialize SES client: %s", err)
+		}
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress)
+		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName)
+	}
 
 	if cfg.LoginLinkDurationMinutes == 0 {
 		log.Fatal("LOGIN_LINK_DURATION_MINUTES must be set and > 0")

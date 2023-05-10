@@ -36,6 +36,10 @@ type workerConfig struct {
 	SQSPort   int     `fig:"SQS_PORT"`
 	SQSRegion string  `fig:"SQS_REGION" default:"us-west-2"`
 
+	SESHost   *string `fig:"SES_HOST"`
+	SESPort   int     `fig:"SES_PORT"`
+	SESRegion string  `fig:"SES_REGION" default:"us-west-2"`
+
 	S3Bucket              string `fig:"S3_BUCKET" required:"true"`
 	DynamoDBTable         string `fig:"DYNAMODB_TABLE" required:"true"`
 	SQSQueueURL           string `fig:"SQS_QUEUE_URL" required:"true"`
@@ -62,6 +66,8 @@ type workerConfig struct {
 
 	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
+
+	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
 }
 
 func main() {
