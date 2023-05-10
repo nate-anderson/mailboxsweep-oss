@@ -29,6 +29,9 @@ func (s SESSender) Send(ctx context.Context, address, template string, data map[
 	dataStr := string(dataJSON)
 
 	_, err = s.client.SendEmail(ctx, &sesv2.SendEmailInput{
+		Destination: &types.Destination{
+			ToAddresses: []string{address},
+		},
 		ReplyToAddresses: []string{s.replyToAddress},
 		FromEmailAddress: &s.replyToAddress,
 		Content: &types.EmailContent{
