@@ -2,7 +2,7 @@ import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useAPIClient } from "../../../client";
 import Navbar from "../../../components/navbar";
-import { ChangeSet, UpdateOperation } from "../../../client-gen";
+import { ChangeSet, ChangeSetResponse, UpdateOperation } from "../../../client-gen";
 import { useEffect, useState } from "react";
 import { useConstantSnackbar } from "../../../components/snackbar";
 import Box from "@mui/material/Box";
@@ -25,7 +25,10 @@ export default function ConfirmDelete() {
 
 
     useEffect(() => {
-        API.getChangeset(UpdateOperation.DELETE)
+        AppCache.asyncCache<ChangeSetResponse>(
+            () => API.getChangeset(UpdateOperation.DELETE),
+            `changeset_${UpdateOperation.MARK_READ}`,
+        )
         .then((res) => {
             setDeleteChangeset(res.changeSet);
             setSelectedCount(res.size);

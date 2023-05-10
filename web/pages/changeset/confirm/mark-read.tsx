@@ -2,7 +2,7 @@ import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useAPIClient } from "../../../client";
 import Navbar from "../../../components/navbar";
-import { ChangeSet, UpdateOperation } from "../../../client-gen";
+import { ChangeSet, ChangeSetResponse, UpdateOperation } from "../../../client-gen";
 import { useEffect, useState } from "react";
 import { useConstantSnackbar } from "../../../components/snackbar";
 import Box from "@mui/material/Box";
@@ -24,7 +24,10 @@ export default function ConfirmMarkRead() {
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
     useEffect(() => {
-        API.getChangeset(UpdateOperation.MARK_READ)
+        AppCache.asyncCache<ChangeSetResponse>(
+            () => API.getChangeset(UpdateOperation.MARK_READ),
+            `changeset_${UpdateOperation.MARK_READ}`
+        )
         .then((res) => {
             setMarkReadChangeset(res.changeSet);
             setSelectedCount(res.size);
