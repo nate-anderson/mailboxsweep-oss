@@ -74,7 +74,7 @@ type pathChangeResult struct {
 Note that the four methods returning *ChangeResult may return a partial result with an error
 */
 
-type updateFunc func(ctx context.Context, paths []classification.Path) (int, error)
+type updateFunc func(ctx context.Context, paths []classification.Path) ([]classification.Path, error)
 
 func (s DefaultService) applyToManyPaths(ctx context.Context, paths []classification.Path, fn updateFunc, increment, useUnreadCount bool) (*ChangeResult, error) {
 	var (
@@ -110,19 +110,23 @@ func (s DefaultService) applyToManyPaths(ctx context.Context, paths []classifica
 		}
 	}()
 
+	// store leaf message counts
+	counts := make(map[string]int)
+	pathsToProcess := []classification.Path{}
+
 	for {
 		select {
 		case err := <-errChan:
 			cancel()
 			return nil, err
 		case res := <-workChan:
-			result.Paths = append(result.Paths, res.path)
+			pathsToProcess = append(pathsToProcess, res.path)
 			if increment {
-				result.MsgCountDiff += res.diff
+				counts[res.path.String()] = res.diff
 			} else {
-				result.MsgCountDiff -= res.diff
+				counts[res.path.String()] = res.diff * -1
 			}
-			if len(result.Paths) == len(paths) {
+			if len(pathsToProcess) == len(paths) {
 				goto Apply
 			}
 
@@ -130,9 +134,18 @@ func (s DefaultService) applyToManyPaths(ctx context.Context, paths []classifica
 	}
 
 Apply:
-	_, err := fn(groupCtx, result.Paths)
+	diffPaths, err := fn(groupCtx, pathsToProcess)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, p := range diffPaths {
+		diffCount, ok := counts[p.String()]
+		if !ok {
+			return nil, fmt.Errorf("path %s was found in applied diff but not stored in cached counts", p.String())
+		}
+		result.MsgCountDiff += diffCount
+		result.Paths = append(result.Paths, p)
 	}
 
 	return &result, nil

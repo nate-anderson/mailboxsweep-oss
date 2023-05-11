@@ -35,13 +35,16 @@ func TestDynamoChangesetRepository(t *testing.T) {
 				Paths:     upsertPaths,
 				Operation: Delete,
 			}
-			n, err := repo.Append(ctx, cs)
+			added, err := repo.Append(ctx, cs)
 			assert.
 				ThatError(t, err).
 				IsNil()
 			assert.
-				That(t, n).
+				That(t, len(added)).
 				Equals(len(upsertPaths))
+			assert.
+				ThatSlice(t, added).
+				ContainsAll(upsertPaths)
 		})
 
 		t.Run("append to existing page", func(t *testing.T) {
@@ -50,13 +53,16 @@ func TestDynamoChangesetRepository(t *testing.T) {
 				Paths:     []string{appendUID},
 				Operation: Delete,
 			}
-			n, err := repo.Append(ctx, cs)
+			added, err := repo.Append(ctx, cs)
 			assert.
 				ThatError(t, err).
 				IsNil()
 			assert.
-				That(t, n).
+				That(t, len(added)).
 				Equals(1)
+			assert.
+				ThatSlice(t, added).
+				ContainsAll(cs.Paths)
 
 			retrieved, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, false)
 			assert.ThatError(t, err).IsNil()
@@ -109,9 +115,10 @@ func TestDynamoChangesetRepository(t *testing.T) {
 			Paths:     evenUIDs,
 			Operation: Delete,
 		}
-		numDeleted, err := repo.Remove(ctx, delSet)
+		deletedPaths, err := repo.Remove(ctx, delSet)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, numDeleted).Equals(len(evenUIDs) * -1)
+		assert.That(t, len(deletedPaths)).Equals(len(evenUIDs))
+		assert.ThatSlice(t, deletedPaths).ContainsAll(evenUIDs)
 
 		p, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, false)
 		assert.ThatError(t, err).IsNil()

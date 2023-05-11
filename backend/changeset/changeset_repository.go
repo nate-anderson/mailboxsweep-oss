@@ -9,9 +9,9 @@ type ChangeSetRepository interface {
 	// create a deletion set for this inbox/folder pair if none exists
 	// else update the messages in the deletion set
 	// should return the number of items added by the operation
-	Append(ctx context.Context, changeSet ChangeSet) (int, error)
+	Append(ctx context.Context, changeSet ChangeSet) ([]string, error)
 	// should return the number of items removed by the operation
-	Remove(ctx context.Context, changeset ChangeSet) (int, error)
+	Remove(ctx context.Context, changeset ChangeSet) ([]string, error)
 	// Mark the changeset as executed. It will no longer be presented to the user.
 	Archive(ctx context.Context, inbox string, operation UpdateOperation) error
 }

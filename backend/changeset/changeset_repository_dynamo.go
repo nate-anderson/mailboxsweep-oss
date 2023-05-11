@@ -147,13 +147,18 @@ func (r DynamoChangesetRepository) partitionSet(changeSet ChangeSet) (map[string
 }
 
 // Append to a changeset, splitting it into pages using the hash function
-func (r DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
+// Changesets are a "set", so this function returns a list of leaf paths that were newly added to the set
+// excluding any that were already in it
+func (r DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeSet) ([]string, error) {
 	now := time.Now()
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
+	// track diff
+	oldPaths := make([]string, 0, len(changeSet.Paths))
+
 	partitionMap, err := r.partitionSet(changeSet)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	pk := r.formatPK(changeSet.Inbox, changeSet.Operation)
@@ -164,7 +169,7 @@ func (r DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 	// if performance is an issue, consider a Transaction
 	// or doing this concurrently in an errgroup
 	for sk, set := range partitionMap {
-		_, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 			TableName: &r.tableName,
 			Key: map[string]types.AttributeValue{
 				mailboxsweep.DynamoPK: &types.AttributeValueMemberS{
@@ -222,14 +227,33 @@ func (r DynamoChangesetRepository) Append(ctx context.Context, changeSet ChangeS
 			ReturnValues: types.ReturnValueUpdatedOld,
 		})
 		if err != nil {
-			return 0, fmt.Errorf("UpdateItem failed: %w", err)
+			return nil, fmt.Errorf("UpdateItem failed: %w", err)
 		}
+
+		oldList := []string{}
+		if err = attributevalue.Unmarshal(res.Attributes["paths"], &oldList); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
+		}
+		oldPaths = append(oldPaths, oldList...)
 	}
 
-	return len(changeSet.Paths), nil
+	presentInOld := make(map[string]bool)
+	for _, old := range oldPaths {
+		presentInOld[old] = true
+	}
+
+	allAddedPaths := []string{}
+
+	for _, added := range changeSet.Paths {
+		// if path was not already present in the changeset, it was added
+		if _, ok := presentInOld[added]; !ok {
+			allAddedPaths = append(allAddedPaths, added)
+		}
+	}
+	return allAddedPaths, nil
 }
 
-func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
+func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeSet) ([]string, error) {
 	now := time.Now()
 	expires := now.Add(mailboxsweep.DynamoUserDataTTL).Unix()
 
@@ -238,7 +262,7 @@ func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 
 	partitionMap, err := r.partitionSet(changeSet)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	pk := r.formatPK(changeSet.Inbox, changeSet.Operation)
@@ -296,12 +320,12 @@ func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 			ReturnValues: types.ReturnValueUpdatedOld,
 		})
 		if err != nil {
-			return 0, fmt.Errorf("UpdateItem failed: %w", err)
+			return nil, fmt.Errorf("UpdateItem failed: %w", err)
 		}
 
 		oldList := []string{}
 		if err = attributevalue.Unmarshal(res.Attributes["paths"], &oldList); err != nil {
-			return 0, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
+			return nil, fmt.Errorf("failed to unmarshal pre-update values to calculate diff: %w", err)
 		}
 		oldPaths = append(oldPaths, oldList...)
 	}
@@ -310,13 +334,14 @@ func (r DynamoChangesetRepository) Remove(ctx context.Context, changeSet ChangeS
 	for _, old := range oldPaths {
 		presentInOld[old] = true
 	}
-	diff := 0
+
+	allRemovedPaths := []string{}
 	for _, removed := range changeSet.Paths {
 		if _, ok := presentInOld[removed]; ok {
-			diff--
+			allRemovedPaths = append(allRemovedPaths, removed)
 		}
 	}
-	return diff, nil
+	return allRemovedPaths, nil
 }
 
 func (r DynamoChangesetRepository) buildExecutedChangesetPK(inbox string, operation UpdateOperation, executedAt time.Time) string {

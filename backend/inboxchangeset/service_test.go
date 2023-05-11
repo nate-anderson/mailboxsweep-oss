@@ -205,28 +205,39 @@ func TestInboxChangesetService(t *testing.T) {
 			},
 		}
 
-		for _, p := range paths {
-			markReadRes, err := service.AddPathForMarkRead(authedCtx, p)
-			assert.ThatError(t, err).IsNil()
-			assert.That(t, len(markReadRes.Paths)).Equals(1)
-			assert.ThatSlice(t, markReadRes.Paths[0]).Equals(p)
-		}
-
-		markReadSet, markReadCount, err := service.FindByOperation(authedCtx, changeset.MarkRead)
-		assert.ThatError(t, err).IsNil()
-		assert.That(t, markReadCount).Equals(7)
-		assert.ThatSlice(t, markReadSet.Paths).HasLength(2)
-		for _, pathStr := range markReadSet.Paths {
-			p := classification.ParsePath(pathStr)
-			assert.ThatSlice(t, p).HasLength(3)
-			found := false
-			for _, seedPath := range paths {
-				if slicesAreEqual(seedPath, p) {
-					found = true
-				}
+		t.Run("add", func(t *testing.T) {
+			for _, p := range paths {
+				markReadRes, err := service.AddPathForMarkRead(authedCtx, p)
+				assert.ThatError(t, err).IsNil()
+				assert.That(t, len(markReadRes.Paths)).Equals(1)
+				assert.ThatSlice(t, markReadRes.Paths[0]).Equals(p)
 			}
-			assert.That(t, found).Equals(true)
-		}
+		})
+
+		t.Run("result is stored", func(t *testing.T) {
+			markReadSet, markReadCount, err := service.FindByOperation(authedCtx, changeset.MarkRead)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, markReadCount).Equals(7)
+			assert.ThatSlice(t, markReadSet.Paths).HasLength(2)
+			for _, pathStr := range markReadSet.Paths {
+				p := classification.ParsePath(pathStr)
+				assert.ThatSlice(t, p).HasLength(3)
+				found := false
+				for _, seedPath := range paths {
+					if slicesAreEqual(seedPath, p) {
+						found = true
+					}
+				}
+				assert.That(t, found).Equals(true)
+			}
+		})
+
+		t.Run("adding a path twice is a no-op", func(t *testing.T) {
+			markReadRes, err := service.AddPathForMarkRead(authedCtx, paths[0])
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, markReadRes.MsgCountDiff).Equals(0)
+			assert.That(t, len(markReadRes.Paths)).Equals(0)
+		})
 	})
 
 	t.Run("remove for mark read", func(t *testing.T) {
@@ -282,6 +293,13 @@ func TestInboxChangesetService(t *testing.T) {
 				assert.That(t, found).Equals(true)
 			}
 		})
+
+		t.Run("removing a path twice is a no-op", func(t *testing.T) {
+			res, err := service.RemovePathForMarkRead(authedCtx, path)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, res.MsgCountDiff).Equals(0)
+			assert.That(t, len(res.Paths)).Equals(0)
+		})
 	})
 
 	t.Run("add for delete", func(t *testing.T) {
@@ -298,29 +316,39 @@ func TestInboxChangesetService(t *testing.T) {
 			},
 		}
 
-		for _, p := range paths {
-			deletePaths, err := service.AddPathForDelete(authedCtx, p)
-			assert.ThatError(t, err).IsNil()
-			assert.That(t, len(deletePaths.Paths)).Equals(1)
-			assert.ThatSlice(t, deletePaths.Paths[0]).Equals(p)
-		}
-
-		// changesets are stored
-		deleteSet, deleteCount, err := service.FindByOperation(authedCtx, changeset.Delete)
-		assert.ThatError(t, err).IsNil()
-		assert.That(t, deleteCount).Equals(7)
-		assert.ThatSlice(t, deleteSet.Paths).HasLength(2)
-		for _, pathStr := range deleteSet.Paths {
-			p := classification.ParsePath(pathStr)
-			assert.ThatSlice(t, p).HasLength(3)
-			found := false
-			for _, seedPath := range paths {
-				if slicesAreEqual(seedPath, p) {
-					found = true
-				}
+		t.Run("add", func(t *testing.T) {
+			for _, p := range paths {
+				deletePaths, err := service.AddPathForDelete(authedCtx, p)
+				assert.ThatError(t, err).IsNil()
+				assert.That(t, len(deletePaths.Paths)).Equals(1)
+				assert.ThatSlice(t, deletePaths.Paths[0]).Equals(p)
 			}
-			assert.That(t, found).Equals(true)
-		}
+		})
+
+		t.Run("result is stored", func(t *testing.T) {
+			deleteSet, deleteCount, err := service.FindByOperation(authedCtx, changeset.Delete)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, deleteCount).Equals(7)
+			assert.ThatSlice(t, deleteSet.Paths).HasLength(2)
+			for _, pathStr := range deleteSet.Paths {
+				p := classification.ParsePath(pathStr)
+				assert.ThatSlice(t, p).HasLength(3)
+				found := false
+				for _, seedPath := range paths {
+					if slicesAreEqual(seedPath, p) {
+						found = true
+					}
+				}
+				assert.That(t, found).Equals(true)
+			}
+		})
+
+		t.Run("adding twice is a no-op", func(t *testing.T) {
+			deleteRes, err := service.AddPathForDelete(authedCtx, paths[0])
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, deleteRes.MsgCountDiff).Equals(0)
+			assert.That(t, len(deleteRes.Paths)).Equals(0)
+		})
 	})
 
 	t.Run("remove for delete", func(t *testing.T) {
@@ -375,6 +403,13 @@ func TestInboxChangesetService(t *testing.T) {
 				}
 				assert.That(t, found).Equals(true)
 			}
+		})
+
+		t.Run("removing a path twice is a no-op", func(t *testing.T) {
+			res, err := service.RemovePathForDelete(authedCtx, path)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, res.MsgCountDiff).Equals(0)
+			assert.That(t, len(res.Paths)).Equals(0)
 		})
 	})
 

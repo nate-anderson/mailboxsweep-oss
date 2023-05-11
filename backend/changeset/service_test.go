@@ -20,40 +20,40 @@ type testRepo struct {
 	t                *testing.T
 }
 
-func (r testRepo) Append(ctx context.Context, changeSet ChangeSet) (int, error) {
+func (r testRepo) Append(ctx context.Context, changeSet ChangeSet) ([]string, error) {
 	r.inbox = changeSet.Inbox
 
-	diff := 0
+	diff := []string{}
 	if changeSet.Operation == Delete {
 		for _, path := range changeSet.Paths {
 			if r.deletePaths.Add(path) {
-				diff++
+				diff = append(diff, path)
 			}
 		}
 	} else if changeSet.Operation == MarkRead {
 		for _, path := range changeSet.Paths {
 			if r.markReadPaths.Add(path) {
-				diff++
+				diff = append(diff, path)
 			}
 		}
 	}
 	return diff, nil
 }
 
-func (r testRepo) Remove(ctx context.Context, changeSet ChangeSet) (int, error) {
+func (r testRepo) Remove(ctx context.Context, changeSet ChangeSet) ([]string, error) {
 	r.inbox = changeSet.Inbox
 
-	diff := 0
+	diff := []string{}
 	if changeSet.Operation == Delete {
 		for _, path := range changeSet.Paths {
 			if r.deletePaths.Remove(path) {
-				diff++
+				diff = append(diff, path)
 			}
 		}
 	} else if changeSet.Operation == MarkRead {
 		for _, path := range changeSet.Paths {
 			if r.markReadPaths.Remove(path) {
-				diff++
+				diff = append(diff, path)
 			}
 		}
 	}
@@ -129,17 +129,33 @@ func TestChangeSetService(t *testing.T) {
 		deletePaths := []classification.Path{{"domain=mail.google.com", "sender=admin@mail.google.com", "before_2020_01_01=true"}}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.MarkForDelete(ctx, deletePaths)
+			paths, err := service.MarkForDelete(ctx, deletePaths)
 			assert.ThatError(t, err).IsNotNil()
-			assert.That(t, n).Equals(0)
+			assert.That(t, len(paths)).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.MarkForDelete(authedCtx, deletePaths)
+			paths, err := service.MarkForDelete(authedCtx, deletePaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(deletePaths))
+			assert.That(t, len(paths)).Equals(len(deletePaths))
 
-			assert.ThatSlice(t, repo.deletePaths.Slice()).HasLength(n)
+			rawDeletePaths := make([]string, len(deletePaths))
+			for i, p := range deletePaths {
+				rawDeletePaths[i] = p.String()
+			}
+			rawResultPaths := make([]string, len(paths))
+			for i, p := range paths {
+				rawResultPaths[i] = p.String()
+			}
+			assert.ThatSlice(t, rawDeletePaths).ContainsAll(rawResultPaths)
+
+			assert.ThatSlice(t, repo.deletePaths.Slice()).HasLength(len(paths))
+		})
+
+		t.Run("adding the same path twice is a no-op", func(t *testing.T) {
+			paths, err := service.MarkForDelete(authedCtx, deletePaths)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, len(paths)).Equals(0)
 		})
 	})
 
@@ -148,18 +164,34 @@ func TestChangeSetService(t *testing.T) {
 		markReadPaths := []classification.Path{{"domain=mail.google.com", "sender=welcome@mail.google.com", "before_2019_01_01=false"}}
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.MarkForMarkRead(ctx, markReadPaths)
+			paths, err := service.MarkForMarkRead(ctx, markReadPaths)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
-			assert.That(t, n).Equals(0)
+			assert.That(t, len(paths)).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.MarkForMarkRead(authedCtx, markReadPaths)
+			paths, err := service.MarkForMarkRead(authedCtx, markReadPaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(markReadPaths))
+			assert.That(t, len(paths)).Equals(len(markReadPaths))
 
-			assert.ThatSlice(t, repo.markReadPaths.Slice()).HasLength(n)
+			rawMarkRead := make([]string, len(markReadPaths))
+			for i, p := range markReadPaths {
+				rawMarkRead[i] = p.String()
+			}
+			rawResultPaths := make([]string, len(paths))
+			for i, p := range paths {
+				rawResultPaths[i] = p.String()
+			}
+			assert.ThatSlice(t, rawMarkRead).ContainsAll(rawResultPaths)
+
+			assert.ThatSlice(t, repo.markReadPaths.Slice()).HasLength(len(paths))
+		})
+
+		t.Run("adding the same path twice is a no-op", func(t *testing.T) {
+			paths, err := service.MarkForMarkRead(authedCtx, markReadPaths)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, len(paths)).Equals(0)
 		})
 	})
 
@@ -194,15 +226,15 @@ func TestChangeSetService(t *testing.T) {
 		repo.markReadPaths.Add("12,34")
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.MarkForDelete(ctx, deletePaths)
+			paths, err := service.MarkForDelete(ctx, deletePaths)
 			assert.ThatError(t, err).IsNotNil()
-			assert.That(t, n).Equals(0)
+			assert.That(t, len(paths)).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.UnmarkForDelete(authedCtx, deletePaths)
+			paths, err := service.UnmarkForDelete(authedCtx, deletePaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(deletePaths))
+			assert.That(t, len(paths)).Equals(len(deletePaths))
 
 			assert.ThatSlice(t, repo.deletePaths.Slice()).HasLength(1)
 			assert.ThatSlice(t, repo.markReadPaths.Slice()).HasLength(1)
@@ -216,16 +248,16 @@ func TestChangeSetService(t *testing.T) {
 		repo.deletePaths.Add("809,11")
 
 		t.Run("unauthenticated, failure", func(t *testing.T) {
-			n, err := service.UnmarkForMarkRead(ctx, markReadPaths)
+			paths, err := service.UnmarkForMarkRead(ctx, markReadPaths)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
-			assert.That(t, n).Equals(0)
+			assert.That(t, len(paths)).Equals(0)
 		})
 
 		t.Run("authenticated, success", func(t *testing.T) {
-			n, err := service.UnmarkForMarkRead(authedCtx, markReadPaths)
+			paths, err := service.UnmarkForMarkRead(authedCtx, markReadPaths)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, n).Equals(len(markReadPaths))
+			assert.That(t, len(paths)).Equals(len(markReadPaths))
 
 			assert.ThatSlice(t, repo.markReadPaths.Slice()).HasLength(1)
 			assert.That(t, repo.deletePaths.Has("809,11")).Equals(true)
