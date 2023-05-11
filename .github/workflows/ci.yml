@@ -79,6 +79,11 @@ jobs:
           DYNAMODB_HOST: localhost
           S3_HOST: localhost
 
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/golang@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   build-push-server-image:
     name: Build and push server image to ECR
     timeout-minutes: 10
