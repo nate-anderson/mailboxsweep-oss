@@ -70,6 +70,9 @@ func (s DefaultService) MarkForMarkRead(ctx context.Context, paths []classificat
 	}
 
 	rawPaths, err := s.repo.Append(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
 
 	addedPaths := make([]classification.Path, len(rawPaths))
 	for i, raw := range rawPaths {
