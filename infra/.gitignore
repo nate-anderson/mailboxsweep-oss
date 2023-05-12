@@ -3,6 +3,9 @@
 *.d.ts
 node_modules
 
+# Allow function files for Cloudformation stacks
+!functions/**/*.js
+
 # CDK asset staging directory
 .cdk.staging
 cdk.out

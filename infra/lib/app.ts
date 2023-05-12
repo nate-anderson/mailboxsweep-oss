@@ -21,6 +21,7 @@ import Resources from "../lib/resources";
 import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
+import { CloudwatchDashboard } from './cloudwatch-dashboard';
 import { join } from 'path';
 
 type AppProps = InfraStackProps & {
@@ -123,6 +124,8 @@ export class AppStack extends cdk.Stack {
         serverTaskDefinition.taskRole.attachInlinePolicy(readSSMPolicy);
         serverTaskDefinition.taskRole.attachInlinePolicy(serverWriteQueuePolicy);
 
+        const webUrl = Resources[props.environmentName].web.dns.fullyQualifiedDomainName;
+
         const appConfig: Record<string, string> = {
             // Generic app config
             ENV: props.environmentName,
@@ -132,12 +135,12 @@ export class AppStack extends cdk.Stack {
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
             CLASSIFICATION_PAGE_SIZE: "30",
-            CORS_ALLOWED_ORIGIN: `https://${domain}`,
+            CORS_ALLOWED_ORIGIN: `https://${webUrl}`,
             MINUTES_BETWEEN_OPEN_REQUESTS: "120",
-            MINUTES_BETWEEN_CLOSED_REQUESTS: "60",
+            MINUTES_BETWEEN_CLOSED_REQUESTS: "10",
 
             // Login
-            BASE_URL: `https://${domain}/login-token`,
+            BASE_URL: `https://${webUrl}/login-token`,
 
             // DB
             DYNAMODB_REGION: "us-west-2",
@@ -154,8 +157,11 @@ export class AppStack extends cdk.Stack {
             SQS_DLQ: queues.dlq.queueName,
             SQS_REGION: "us-west-2",
 
+            SES_REGION: "us-west-2",
+            SES_LOGIN_EMAIL_TEMPLATE_NAME: "mailboxsweep_login_link",
+
             // Sessions & cookies
-            COOKIE_DOMAIN: domain,
+            COOKIE_DOMAIN: webUrl,
             SESSION_KEY_LENGTH: "30",
             COOKIE_PATH: "/",
             LOGIN_LINK_DURATION_MINUTES: "10",
@@ -163,10 +169,10 @@ export class AppStack extends cdk.Stack {
 
             // Stripe
             PAYMENT_ACCESS_DURATION_DAYS: "30",
-            STRIPE_PAYMENT_CONFIRMATION_URL: "https://mailboxsweep.com/plan/payment-success?checkoutSessionId={CHECKOUT_SESSION_ID}",
+            STRIPE_PAYMENT_CONFIRMATION_URL: `https://${webUrl}/plan/payment-success?checkoutSessionId={CHECKOUT_SESSION_ID}`,
             STRIPE_CHECKOUT_SESSION_DURATION_MINUTES: "30",
 
-            GOOGLE_OAUTH_REDIRECT_URL: `https://${domain}/login-gmail`
+            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login-gmail`
 
             // Secrets that need to come from SSM
             // GOOGLE_OAUTH_CLIENT_ID
@@ -179,7 +185,10 @@ export class AppStack extends cdk.Stack {
         const serverContainer = serverTaskDefinition.addContainer('ServerContainer', {
             image: ContainerImage.fromEcrRepository(serverRepo, latestTag),
             containerName: 'mailboxsweep-server',
-            environment: appConfig,
+            environment: {
+                ...appConfig,
+                FORCE_BUILD_REFRESH: "e",
+            },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-server",
@@ -196,12 +205,32 @@ export class AppStack extends cdk.Stack {
             },
         });
 
+        // server must be able to read and serve classification trees
+        bucket.grantRead(serverTaskDefinition.taskRole);
+
         // const serverServiceId = `server-service-${props.environmentName}`;
         // const serverService = new ECS.Ec2Service(this, serverServiceId, {
         //     cluster,
         //     taskDefinition: serverTaskDefinition,
         //     desiredCount: 2,
         // })
+
+        // write to DLQ
+        const sendEmailPolicy = new IAM.Policy(this, `taskdef-ses-send`, {
+            policyName: "send-email",
+            statements: [
+                new IAM.PolicyStatement({
+                    effect: IAM.Effect.ALLOW,
+                    actions: [
+                        "ses:SendEmail",
+                        "ses:SendRawEmail",
+                        "ses:SendTemplatedEmail",
+                    ],
+                    resources: ['*'],
+                })
+            ]
+        });
+        serverTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
 
         const workerTaskId = `worker-task-${props.environmentName}`
         const workerTaskDefinition = new ECS.TaskDefinition(this, workerTaskId, {
@@ -213,6 +242,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
+                FORCE_BUILD_REFRESH: "e",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -267,6 +297,7 @@ export class AppStack extends cdk.Stack {
         });
         workerTaskDefinition.taskRole.attachInlinePolicy(readQueuePolicy);
         workerTaskDefinition.taskRole.attachInlinePolicy(writeDLQPolicy);
+        workerTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
  
         const cert = CertMan.Certificate.fromCertificateArn(this, `api-cert-${props.environmentName}`, Resources.global.api.cert.arn);
 
@@ -299,7 +330,11 @@ export class AppStack extends cdk.Stack {
             unhealthyThresholdCount: 2,
         });
         
+        tableStack.table.grantReadWriteData(serverTaskDefinition.taskRole);
+        tableStack.table.grantReadWriteData(workerTaskDefinition.taskRole);
 
+        bucket.grantPut(workerTaskDefinition.taskRole);
+        
 
         new Route53.ARecord(this, `api-a-record`, {
             zone: hostedZone,
@@ -308,7 +343,7 @@ export class AppStack extends cdk.Stack {
         });
 
         const cloudFrontCert = new CertMan.DnsValidatedCertificate(this, "web-cert", {
-            domainName: Resources[props.environmentName].web.dns.fullyQualifiedDomainName,
+            domainName: webUrl,
             hostedZone: hostedZone,
             region: "us-east-1",  //standard for acm certs
         });
@@ -319,16 +354,34 @@ export class AppStack extends cdk.Stack {
         
         const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
 
+        // rewrite request URIs so that `login` becomes `/login/index.html`
+        const rewriteURIFunc = new CloudFront.Function(this, `url-rewrite`, {
+            code: CloudFront.FunctionCode.fromFile({
+                filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
+            }),
+            functionName: "static-site-url-rewrite",
+            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting"
+        });;
+
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
             certificate: cloudFrontCert,
             defaultRootObject: "index.html",
-            domainNames: [Resources[props.environmentName].web.dns.fullyQualifiedDomainName],
+            domainNames: [webUrl],
             minimumProtocolVersion: CloudFront.SecurityPolicyProtocol.TLS_V1_2_2021,
             defaultBehavior: {
-                origin: new CFOrigins.S3Origin(staticSiteBucket, { originAccessIdentity }),
+                // origin: new CFOrigins.HttpOrigin(staticSiteBucket.bucketWebsiteDomainName),
+                origin: new CFOrigins.S3Origin(staticSiteBucket, {
+                    originAccessIdentity,
+                }),
                 compress: true,
                 allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
                 viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                functionAssociations: [
+                    {
+                        function: rewriteURIFunc,
+                        eventType: CloudFront.FunctionEventType.VIEWER_REQUEST,
+                    }
+                ]
             },
             errorResponses:[
                 {
@@ -343,7 +396,7 @@ export class AppStack extends cdk.Stack {
         new Route53.ARecord(this, `site-record`, {
             target: Route53.RecordTarget.fromAlias(new Route53Targets.CloudFrontTarget(siteDistribution)),
             zone: hostedZone,
-            recordName: Resources[props.environmentName].web.dns.fullyQualifiedDomainName,
+            recordName: webUrl,
         });
 
         new S3Deployment.BucketDeployment(this, `deployment`, {
@@ -352,6 +405,13 @@ export class AppStack extends cdk.Stack {
             prune: true,
             distribution: siteDistribution,
             destinationKeyPrefix: "/",
+        });
+
+        new CloudwatchDashboard(this, `dashboard`, {
+            ...props,
+            table: tableStack.table,
+            queue: queues.queue,
+            dlq: queues.dlq,
         });
     }
 }
