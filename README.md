@@ -119,3 +119,15 @@ anything else => no prefix
 The `infra` directory is an AWS CDK project (Typescript) defining the project's infrastructure on AWS.
 
 `MAILBOXSWEEP_ENV=prod AWS_PROFILE=mailboxsweep cdk deploy InfraStack/mailboxsweep-prod`
+
+## Deploying the frontend
+
+```bash
+cd web
+npm run build:staging
+npm run robots:staging
+cd out
+aws s3 sync . s3://com.mailboxsweep.staging.web --delete
+```
+
+This should be automated in CD once branch protection is figured out.
