@@ -184,6 +184,10 @@ jobs:
         working-directory: web
         run: npm run build:staging
 
+      - name: Robots.txt (staging)
+        working-directory: web
+        run: npm run robots:staging
+
       - name: Compress staging build
         working-directory: web
         run: cd out && zip -r ../staging.zip .

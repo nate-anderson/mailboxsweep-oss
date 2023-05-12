@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /home
+Disallow: /email/
+Disallow: /agreement/
+Disallow: /changeset/
+Disallow: /classify/
+Disallow: /plan/
+Disallow: /complete-profile
+Disallow: /login-gmail
+Disallow: /login-token
