@@ -1,5 +1,5 @@
 import Image from "next/image";
-import LogoSvg from "../public/Logo_with_text.svg";
+import LogoSvg from "../public/Logo_with_text_vec.svg";
 
 export default function ImageLogo() {
   return (
