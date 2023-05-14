@@ -51,7 +51,7 @@ func New(title, description string, widgets ...Widget) *Dashboard {
 }
 
 func endpoint(widget Widget) string {
-	replace := regexp.MustCompile("(\\.|\\?|\\*|\\s)+")
+	replace := regexp.MustCompile(`(\.|\?|\*|\s)+`)
 	return strings.ToLower(replace.ReplaceAllString(widget.Title(), "_"))
 }
 

@@ -20,10 +20,6 @@ type StyledWidget interface {
 	CSS() string
 }
 
-func wrapHTML(name, html string) string {
-	return fmt.Sprintf("{{template \"%s\"}}\n%s", name, html)
-}
-
 type renderWidgetData struct {
 	Endpoint string
 	Request  url.Values
