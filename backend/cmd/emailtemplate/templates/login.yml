@@ -1,4 +1,39 @@
 name: mailboxsweep_login_link
 subject: Log in to Mailboxsweep
-html: <h1>Hello!</h1> <p>Please <a href="{{signin_link}}">click here</a> to sign into MailboxSweep.</p>
+html: >
+  <!DOCTYPE html>
+  <html>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+    <body style="background-color: #F6EEE3;">
+      <div style="display:flex; width:100%; color:#fa782d; justify-content:center; font-size:1.75em; font-family:Lobster,sans-serif; padding-top:8px; padding-bottom:8px;">MailboxSweep</div>
+        
+        <div style="margin-top: 30px; display: flex; width: 100%; text-align: center;">
+            <img style="width: 160px; display: block; margin: auto;" src="https://staging.mailboxsweep.com/_next/static/media/Mascot.5373643e.svg">
+        </div>
+        
+        <div style="display: flex; width: 100%; text-align: center;">
+            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;">Click below to log into MailboxSweep.</h2>
+        </div>
+        
+        <div style="display: flex; width: 100%; text-align: center;">
+            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em; display: block; margin: auto" href="{{signin_link}}">Log in</a>
+        </div>
+        
+        <div style="display: flex; width: 100%; text-align: center; font-family: Roboto, sans-serif;">
+            <small style="text-align: center;color: #2b4162; margin-top: 30px;">Didn't request this link? Don't worry, your account is still secure. If this happens more than once, you can let support know by emailing <a href="mailto:support@mailboxsweep.com">support@mailboxsweep.com</a>.</small>
+        </div>
+        
+        <hr style="border-top: 0.5px solid #2b4162; margin-top: 20px;" />
+        <div style="display: flex; width: 100%; text-align: center;">
+            <small style="font-family: Roboto, sans-serif;">&copy; 2023 MailboxSweep, LLC</small>
+        </div>
+      </body>
+    </html>
+
 plaintext: Hello! Please click here to sign into MailboxSweep. {{signin_link}}
