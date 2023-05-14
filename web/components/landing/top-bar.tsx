@@ -6,32 +6,48 @@ import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import IconMenu from "@mui/icons-material/Menu";
 import Drawer from "@mui/material/Drawer";
-import { useState } from "react";
+import { MutableRefObject, useState } from "react";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import IconQuestions from "@mui/icons-material/Quiz";
-import IconMarkEmailUnread from "@mui/icons-material/MarkEmailUnread";
-import IconTicket from "@mui/icons-material/LocalActivity";
 import IconClose from "@mui/icons-material/Close";
 import IconLogin from "@mui/icons-material/Login";
 import Link from "next/link";
 import { useScrollTrigger } from "@mui/material";
 
-const renderDrawerItem = (props: {
+type Action =  {
+  path?: string;
+  scrollRef?: MutableRefObject<HTMLElement | null>;
+};
+
+const smoothScrollToRef = (ref: MutableRefObject<HTMLElement | null>, margin: number = 0) => {
+  const dims = ref.current!.getBoundingClientRect();
+  const top = dims.top + window.pageYOffset - margin;
+  window.scrollTo({ behavior: "smooth", top });
+}
+
+function DrawerItem(props: {
   text: string;
   icon: any;
-  path: string;
+  action: Action;
   selected: boolean;
-}) => (
-  <Link
-    key={props.text}
-    href={props.path}
-    passHref
-    style={{ textDecoration: "none", color: "black" }}
-  >
-    <ListItem
+  closeDrawer: () => void;
+  currentlyScrolledRef?: MutableRefObject<HTMLElement | null>;
+  setCurrentlyScrolledRef?: (ref: MutableRefObject<HTMLElement | null>) => void;
+}) {
+  return <ListItem
+      key={props.text}
+      onClick={
+          props.action.scrollRef
+            ? () => {
+              smoothScrollToRef(props.action.scrollRef!, 100);
+              props.setCurrentlyScrolledRef!(props.action.scrollRef!);
+              props.closeDrawer();
+            }
+            : () => { window.location.href = props.action.path ?? "" }
+      }
+      style={{ textDecoration: "none", color: "black" }}
       sx={{
         marginTop: 0,
         marginRight: 5,
@@ -42,32 +58,28 @@ const renderDrawerItem = (props: {
         <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
         <ListItemText>{props.text}</ListItemText>
       </ListItemButton>
-    </ListItem>
-  </Link>
-);
+    </ListItem>;
+};
 
-const drawerItems = [
-    {
-        text: "How it Works",
-        icon: <IconMarkEmailUnread />,
-        path: "/landing/how",
-    },
-    {
-        text: "Plans",
-        icon: <IconTicket />,
-        path: "/landing/plans",
-    },
-    { text: "Common Questions", icon: <IconQuestions />, path: "/landing/plans" },
-];
+interface DrawerItem {
+  text: string;
+  icon: JSX.Element;
+  // either link to another page, or scroll to a ref
+  action: Action;
+}
 
 interface NavbarProps {
   page?: string;
   shadow: boolean;
+  drawerItems: DrawerItem[];
 }
 
 export default function TopBar(props: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const [ currentlyScrolledRef, setCurrentlyScrolledRef ] = useState<MutableRefObject<HTMLElement | null>>(); 
+
+  // decides the color/transparency of the top bar based on scroll position
   const scrollTrigger = useScrollTrigger({
     disableHysteresis: true,
     threshold: 0,
@@ -163,11 +175,17 @@ export default function TopBar(props: NavbarProps) {
             </ListItem>
            
           </Link>
-          {drawerItems.map((item) =>
-            renderDrawerItem({
-              ...item,
-              selected: props.page === item.text,
-            })
+          {props.drawerItems.map((item) =>
+            <DrawerItem
+              key={item.text}
+              text={item.text}
+              action={item.action}
+              icon={item.icon}
+              selected={false}
+              closeDrawer={() => setDrawerOpen(false)}
+              currentlyScrolledRef={currentlyScrolledRef}
+              setCurrentlyScrolledRef={setCurrentlyScrolledRef}
+            />
           )}
         </Drawer>
       </AppBar>

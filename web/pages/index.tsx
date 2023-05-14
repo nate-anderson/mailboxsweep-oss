@@ -11,7 +11,6 @@ import UIDemo from "../components/landing/ui-demo";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
 import EnvelopeGraphic from "../public/email-icon.svg";
@@ -23,6 +22,11 @@ import { promises as fs } from 'fs';
 import { parse as parseYaml } from "yaml";
 import { Plan } from "../client-gen";
 import Box from "@mui/material/Box";
+import IconQuestions from "@mui/icons-material/Quiz";
+import IconMarkEmailUnread from "@mui/icons-material/MarkEmailUnread";
+import IconTicket from "@mui/icons-material/LocalActivity";
+import { useRef } from "react";
+import Alert from "@mui/material/Alert";
 
 function CTA(props: { text: string, href: string }) {
   return <Button
@@ -63,6 +67,19 @@ function TextCTA(props: { text: string, href: string }) {
     </Link>;
 }
 
+function StagingWarning(props: { environment: string | undefined }) {
+  if (props.environment === "prod") {
+    return <></>;
+  }
+
+  return <Alert
+    variant="outlined"
+    severity="warning"
+  >
+    You are on {props.environment}.mailboxsweep.com, the <b>invite-only, pre-launch test site</b> for MailboxSweep. Please visit <a href="https://mailboxsweep.com">MailboxSweep.com</a> to sign up for our newsletter and we'll alert you when you can sign up!
+  </Alert>
+}
+
 interface IPlan {
   display_name: string;
   description: string;
@@ -97,16 +114,41 @@ export async function getStaticProps(): Promise<{ props: IStaticProps }> {
 }
 
 export default function Home(props: IStaticProps) {
-  console.log(props);
+  const howItWorksRef = useRef<HTMLElement | null>(null);
+  const plansRef = useRef<HTMLElement | null>(null);
+
+  const drawerItems = [
+    {
+        text: "How it Works",
+        icon: <IconMarkEmailUnread />,
+        action: {
+          scrollRef: howItWorksRef,
+        }
+    },
+    {
+        text: "Plans",
+        icon: <IconTicket />,
+        action: {
+          scrollRef: plansRef,
+        }
+    },
+    {
+        text: "Common Questions",
+        icon: <IconQuestions />,
+        action: {
+          path: "/landing/faq"
+        },
+    }
+  ];
+
   return (
     <>
       <Head>
         <title>MailboxSweep cleans your inbox.</title>
         <meta name="description" content="Free up storage and declutter your digital life." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
-      <TopBar shadow={false}/>
+      <TopBar shadow={false} drawerItems={drawerItems}/>
       <Container
         component="main"
         maxWidth={false}
@@ -190,6 +232,7 @@ export default function Home(props: IStaticProps) {
               </Typography>
             </Grid>
           </Grid>
+          <StagingWarning environment={process.env.ENV} />
           <Grid
             item
             xs={12}
@@ -365,7 +408,7 @@ export default function Home(props: IStaticProps) {
                 style={{
                   width: "30vw",
                   height: "auto",
-                  maxWidth: "180",
+                  maxWidth: "180px",
                   marginRight: "-20px",
               }}
               />
@@ -394,6 +437,7 @@ export default function Home(props: IStaticProps) {
             }}
           >
             <Typography
+              ref={howItWorksRef}
               fontSize="2em"
             >
               How it Works
@@ -402,7 +446,7 @@ export default function Home(props: IStaticProps) {
           <Grid
               item
               container
-              xs={10}
+              xs={12}
               sm={8}
               md={6}
               direction="row"
@@ -428,7 +472,7 @@ export default function Home(props: IStaticProps) {
                   </ListItemAvatar>
                   <ListItemText
                     sx={{
-                      paddingLeft: 3
+                      paddingLeft: 1
                     }}
                   >
                     Create an account and sign into your email provider. Your information is stored with enterprise-grade encryption.
@@ -446,7 +490,7 @@ export default function Home(props: IStaticProps) {
                   </ListItemAvatar>
                   <ListItemText
                     sx={{
-                      paddingLeft: 3
+                      paddingLeft: 1
                     }}
                   >
                     Choose how you want to classify your inbox messages, including by website, sender, date, and subject keywords.
@@ -464,7 +508,7 @@ export default function Home(props: IStaticProps) {
                   </ListItemAvatar>
                   <ListItemText
                     sx={{
-                      paddingLeft: 3
+                      paddingLeft: 1
                     }}
                   >
                     Choose groups of messages to delete or mark read.
@@ -472,7 +516,17 @@ export default function Home(props: IStaticProps) {
                 </ListItem>
               </List>
             </Grid>
+            <Grid
+              item
+              xs={12}
+              display="flex"
+              justifyContent="center"
+              sx={{
+                marginBottom: 2
+              }}
+            >
             <CTA text="Sign in and get started" href="/login" />
+          </Grid>
         </Grid>
 
         {/* Row 5 */}
@@ -499,12 +553,14 @@ export default function Home(props: IStaticProps) {
           >
             <Typography
               fontSize="2em"
+              ref={plansRef}
             >
               Plans
             </Typography>
           </Grid>
           <Grid
             container
+            item
             direction="row"
             justifyContent="center"
             alignItems="center"
