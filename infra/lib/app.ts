@@ -373,6 +373,10 @@ export class AppStack extends cdk.Stack {
                 origin: new CFOrigins.S3Origin(staticSiteBucket, {
                     originAccessIdentity,
                 }),
+                cachePolicy: new CloudFront.CachePolicy(this, "cache-policy", {
+                    minTtl: cdk.Duration.minutes(30),
+                    maxTtl: cdk.Duration.minutes(60),
+                }),
                 compress: true,
                 allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
                 viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
