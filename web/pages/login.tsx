@@ -12,6 +12,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import { useConstantSnackbar } from "../components/snackbar";
 import ImageLogo from "../components/image-logo";
+import Alert from "@mui/material/Alert";
 
 const submitLogin = async (
   address: string,
@@ -43,13 +44,14 @@ function StagingWarning(props: { environment: string | undefined }) {
     return <></>;
   }
 
-  return <Typography
-    align="center"
-    color="red"
-    marginBottom={4}
+  return <Alert
+    severity="warning"
+    sx={{
+      marginBottom: 4
+    }}
   >
-    This is the MailboxSweep {props.environment?.toUpperCase()} environment, only accessible to approved test users.
-  </Typography>
+    This is the MailboxSweep <b>{props.environment}</b> test site, only available to approved test users. Please visit <a href="https://mailboxsweep.com">MailboxSweep.com</a> to sign up for our mailing list.
+  </Alert>
 }
 
 export default function Login() {
