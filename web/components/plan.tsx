@@ -87,6 +87,7 @@ export default function PlanCard(props: IPlanCardProps) {
     >
       <Typography
         variant="h5"
+        align="center"
         sx={{
           color: "var(--color-accent)",
         }}
