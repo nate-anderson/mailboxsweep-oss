@@ -103,6 +103,7 @@ type serverConfig struct {
 	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL" required:"true"`
 
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
+	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
 	SESLoginEmailTemplateName string `fig:"SES_LOGIN_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
 }
@@ -266,7 +267,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to initialize SES client: %s", err)
 		}
-		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress)
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
 		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName, cfg.LoginBaseURL)
 	}
 
