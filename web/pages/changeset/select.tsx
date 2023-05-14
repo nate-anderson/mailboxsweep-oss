@@ -32,14 +32,6 @@ import { useRouter } from "next/router";
 import * as AppCache from "../../lib/cache";
 import PrivatePage from "../../auth";
 
-/*
-Todo: render tree items differently if they have been selected for
-mark-read or deletion.
-
-Store the selected leaf keys in browser storage so they persist
-when paginating, and when a user leaves and returns to the site
-*/
-
 function ToggleModeSwitch(props: {
   isDeleteMode: boolean;
   setIsDeleteMode: (v: boolean) => void;

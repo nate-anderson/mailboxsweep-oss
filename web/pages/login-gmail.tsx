@@ -5,11 +5,7 @@ import Container from "@mui/material/Container";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-
-/**
- * Implement this
- * I did nothing but copy the file
- */
+import * as AppCache from "../lib/cache";
 
 export default function Login() {
   const router = useRouter();
@@ -31,7 +27,9 @@ export default function Login() {
           router.push("/home");
         }
       })
-      .catch(console.error);
+      .catch(console.error)
+      // login attempt will always clear local cache
+      .finally(AppCache.clearAll);
   }, [router.isReady, router.query, router, API]);
 
   return (
