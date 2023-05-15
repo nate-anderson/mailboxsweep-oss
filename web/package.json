@@ -31,7 +31,7 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "sharp": "^0.32.1",
-    "typescript": "4.9.4"
+    "typescript": "5.0.4"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.1",
