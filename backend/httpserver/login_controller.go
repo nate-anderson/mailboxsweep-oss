@@ -160,5 +160,4 @@ func (c LoginController) Logout(w http.ResponseWriter, req *http.Request) {
 
 	http.SetCookie(w, clearSessionCookie)
 	http.SetCookie(w, clearLoggedInCookie)
-	return
 }
