@@ -17,13 +17,17 @@ import IconCreditCard from "@mui/icons-material/CreditCard";
 import IconClose from "@mui/icons-material/Close";
 import IconHome from "@mui/icons-material/Home";
 import Link from "next/link";
+import IconLogout from "@mui/icons-material/Logout";
+import { useAPIClient } from "../client";
+import { useRouter } from "next/router";
 
 const renderDrawerItem = (props: {
   text: string;
   icon: any;
-  path: string;
+  path?: string;
+  action?: () => void;
   selected: boolean;
-}) => (
+}) => props.path ? (
   <Link
     key={props.text}
     href={props.path}
@@ -43,22 +47,35 @@ const renderDrawerItem = (props: {
       </ListItemButton>
     </ListItem>
   </Link>
+)
+: (
+  <Link
+    href="#"
+    key={props.text}
+    onClick={props.action}
+    style={{ textDecoration: "none", color: "black" }}
+  >
+    <ListItem
+      sx={{
+        marginTop: 0,
+        marginRight: 5,
+        color: "inherit",
+      }}
+    >
+      <ListItemButton selected={props.selected}>
+        <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
+        <ListItemText>{props.text}</ListItemText>
+      </ListItemButton>
+    </ListItem>
+  </Link>
 );
 
-const drawerItems = [
-  { text: "Home", icon: <IconHome />, path: "/home" },
-  {
-    text: "My Profile",
-    icon: <IconAccountCircle />,
-    path: "/complete-profile",
-  },
-  {
-    text: "Email Account",
-    icon: <IconEnvelope />,
-    path: "/email-account/login",
-  },
-  { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
-];
+interface DrawerItem {
+  text: string;
+  icon: JSX.Element;
+  path?: string;
+  action?: () => void;
+}
 
 interface NavbarProps {
   page?: string;
@@ -66,6 +83,29 @@ interface NavbarProps {
 
 export default function Navbar(props: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const API = useAPIClient();
+  const router = useRouter();
+
+  const drawerItems: DrawerItem[] = [
+    { text: "Home", icon: <IconHome />, path: "/home" },
+    {
+      text: "My Profile",
+      icon: <IconAccountCircle />,
+      path: "/complete-profile",
+    },
+    {
+      text: "Email Account",
+      icon: <IconEnvelope />,
+      path: "/email-account/login",
+    },
+    { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
+    { text: "Logout", icon: <IconLogout />, action: () => {
+        API.logout()
+          .then(() => router.push("/"))
+          .catch((err) => console.log(err))
+      }
+    }
+  ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>

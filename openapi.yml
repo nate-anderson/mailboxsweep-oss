@@ -961,6 +961,18 @@ paths:
             type: string
           required: true
 
+  /logout:
+    get:
+      operationId: logout
+      description: Log out
+      responses:
+        "200":
+          description: Success
+        "500":
+          description: Internal server error
+        "401":
+          description: Unauthorized
+
   /healthcheck:
     get:
       operationId: healthCheck

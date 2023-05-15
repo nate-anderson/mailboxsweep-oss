@@ -7,6 +7,7 @@ import (
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/pkg/slice"
 	"mailboxsweep/session"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -158,4 +159,9 @@ func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRed
 	log = log.WithField("session_exp", time.Unix(sess.Expires, 0).UTC().String())
 	log.Info("Gmail login completed, session started")
 	return user, sess, nil
+}
+
+// Generates a cookie to overwrite the session cookie and log the user out
+func (s Service) GenerateEndSessionCookie(ctx context.Context, domain string) (*http.Cookie, *http.Cookie, error) {
+	return s.sessionService.GenerateEndSessionCookie(ctx, domain)
 }

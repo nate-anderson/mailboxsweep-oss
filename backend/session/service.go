@@ -17,6 +17,7 @@ type Service interface {
 	StartSession(ctx context.Context, userAddress string) (*Session, error)
 	// lookup session and return authorized context
 	Authorize(ctx context.Context, cookieValue string) (context.Context, error)
+	GenerateEndSessionCookie(ctx context.Context, domain string) (session *http.Cookie, isLoggedIn *http.Cookie, err error)
 }
 
 type DefaultService struct {
@@ -109,4 +110,31 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, req.WithContext(authed))
 	})
+}
+
+func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, domain string) (*http.Cookie, *http.Cookie, error) {
+	_, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	c := &http.Cookie{
+		Name:     sessionAuthCookie,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		Domain:   domain,
+	}
+
+	l := &http.Cookie{
+		Name:  isLoggedInCookie,
+		Value: "",
+		Path:  "/",
+		// allow the client to see this cookie so it knows its authenticated
+		HttpOnly: false,
+		Secure:   true,
+		Domain:   domain,
+	}
+	return c, l, nil
 }

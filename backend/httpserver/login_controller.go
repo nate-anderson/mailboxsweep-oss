@@ -150,3 +150,15 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 
 	c.respond(w, http.StatusOK, resBody)
 }
+
+func (c LoginController) Logout(w http.ResponseWriter, req *http.Request) {
+	clearSessionCookie, clearLoggedInCookie, err := c.service.GenerateEndSessionCookie(req.Context(), c.cookieDomain)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	http.SetCookie(w, clearSessionCookie)
+	http.SetCookie(w, clearLoggedInCookie)
+	return
+}
