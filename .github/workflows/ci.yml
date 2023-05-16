@@ -91,7 +91,7 @@ jobs:
           IMAGE_TAG: server_${{ github.sha }}
         run: |
           docker build -f ./backend/Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest -t mailboxsweep-server .
-          docker tag mailboxsweep-server:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag mailboxsweep-server:latest-staging $ECR_REGISTRY/$ECR_REPOSITORY:latest-staging
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
 
   build-push-worker-image:
@@ -120,7 +120,7 @@ jobs:
           IMAGE_TAG: worker_${{ github.sha }}
         run: |
           docker build -f ./backend/Dockerfile.worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest -t mailboxsweep-worker .
-          docker tag mailboxsweep-worker:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag mailboxsweep-worker:latest-staging $ECR_REGISTRY/$ECR_REPOSITORY:latest-staging
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
 
   # deploy-infrastructure:
