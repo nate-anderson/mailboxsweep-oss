@@ -12,6 +12,8 @@ type ChangeSetRepository interface {
 	Append(ctx context.Context, changeSet ChangeSet) ([]string, error)
 	// should return the number of items removed by the operation
 	Remove(ctx context.Context, changeset ChangeSet) ([]string, error)
+	// Clear the selection
+	ClearByOperation(ctx context.Context, inbox string, operation UpdateOperation) error
 	// Mark the changeset as executed. It will no longer be presented to the user.
 	Archive(ctx context.Context, inbox string, operation UpdateOperation) error
 }

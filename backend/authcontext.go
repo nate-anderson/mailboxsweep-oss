@@ -16,8 +16,9 @@ const (
 )
 
 const (
-	EnvironmentAPI string = "api"
-	EnvironmentJob string = "job"
+	EnvironmentAPI        string = "api"
+	EnvironmentJob        string = "job"
+	EnvironmentAdminPanel string = "admin_panel"
 )
 
 func UserAddressFromContext(ctx context.Context) (string, error) {
@@ -37,6 +38,12 @@ func AuthorizeAPIContext(ctx context.Context, addr string) context.Context {
 func AuthorizeJobContext(ctx context.Context, addr string) context.Context {
 	authed := context.WithValue(ctx, UserKey, addr)
 	labeled := context.WithValue(authed, EnvironmentKey, EnvironmentJob)
+	return labeled
+}
+
+func AuthorizeAdminContext(ctx context.Context, addr string) context.Context {
+	authed := context.WithValue(ctx, UserKey, addr)
+	labeled := context.WithValue(authed, EnvironmentKey, EnvironmentAdminPanel)
 	return labeled
 }
 
