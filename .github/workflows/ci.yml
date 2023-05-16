@@ -181,6 +181,11 @@ jobs:
           BUCKET: com.mailboxsweep.staging.web
         run: aws s3 sync . s3://$BUCKET --delete
 
+      - name: Invalidate CloudFront distribution
+        env:
+          DISTRIBUTION: E3JTIEV47ZF6OL
+        run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
+
       # - name: Build (prod)
       #   working-directory: web
       #   run: npm run build:prod
