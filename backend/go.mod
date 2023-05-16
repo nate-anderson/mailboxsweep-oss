@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.3
 	github.com/aws/smithy-go v1.13.5
 	github.com/emersion/go-imap v1.2.1
-	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
 	github.com/mcnijman/go-emailaddress v1.1.0
 	github.com/nate-anderson/fig/v2 v2.2.2
