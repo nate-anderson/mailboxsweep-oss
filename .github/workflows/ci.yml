@@ -123,8 +123,9 @@ jobs:
           docker tag mailboxsweep-worker:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
 
-  deploy-infrastructure:
-    name: Deploy CDK staging stack
+  # deploy-infrastructure:
+  #   name: Deploy CDK staging stack
+  #   @TODO
 
   build-web:
     name: Build and upload web frontend artifacts
