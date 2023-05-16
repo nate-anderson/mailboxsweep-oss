@@ -160,6 +160,27 @@ func (c ChangeSetController) CommitChangeset(w http.ResponseWriter, req *http.Re
 	c.respond(w, http.StatusOK, resBody)
 }
 
+func (c ChangeSetController) ClearChangeset(w http.ResponseWriter, req *http.Request, params ClearChangesetParams) {
+	ctx := req.Context()
+
+	operation, err := apiToOperation(params.Operation)
+	if err != nil {
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
+	err = c.changeSetService.ClearSelection(ctx, operation)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	resBody := StatusResponse{
+		Status: "SUCCESS",
+	}
+	c.respond(w, http.StatusOK, resBody)
+}
+
 func operationToAPI(operation changeset.UpdateOperation) (UpdateOperation, error) {
 	switch operation {
 	case changeset.Delete:

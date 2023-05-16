@@ -30,6 +30,8 @@ type Service interface {
 
 	FindByOperation(ctx context.Context, operation changeset.UpdateOperation) (changeSet *changeset.ChangeSet, size int, err error)
 
+	ClearSelection(ctx context.Context, operation changeset.UpdateOperation) error
+
 	// do the deletes
 	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 }
@@ -359,6 +361,10 @@ func (s DefaultService) FindByOperation(ctx context.Context, operation changeset
 	}
 
 	return changeSet, n, nil
+}
+
+func (s DefaultService) ClearSelection(ctx context.Context, operation changeset.UpdateOperation) error {
+	return s.changeSetService.ClearSelection(ctx, operation)
 }
 
 func max[T constraints.Ordered](a, b T) T {

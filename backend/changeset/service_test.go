@@ -3,6 +3,7 @@ package changeset
 import (
 	"context"
 	"errors"
+	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/classification"
@@ -109,6 +110,22 @@ func (r *testRepo) Reset() {
 	r.inbox = ""
 	r.deletePaths = set.NewSet[string]()
 	r.markReadPaths = set.NewSet[string]()
+}
+
+func (r *testRepo) ClearByOperation(ctx context.Context, inbox string, operation UpdateOperation) error {
+	if r.inbox != inbox {
+		return fmt.Errorf("wrong test inbox: configured = %s, got %s", r.inbox, inbox)
+	}
+
+	if operation == MarkRead {
+		r.markReadPaths = set.NewSet[string]()
+	} else if operation == Delete {
+		r.deletePaths = set.NewSet[string]()
+	} else {
+		return fmt.Errorf("unknown operation %s", operation)
+	}
+
+	return nil
 }
 
 func TestChangeSetService(t *testing.T) {

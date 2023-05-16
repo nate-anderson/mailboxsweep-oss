@@ -143,4 +143,34 @@ func TestDynamoChangesetRepository(t *testing.T) {
 		assert.That(t, cs == nil).Equals(true)
 	})
 
+	t.Run("clear by operation", func(t *testing.T) {
+		cs := ChangeSet{
+			Inbox:     inbox,
+			Paths:     upsertPaths,
+			Operation: Delete,
+		}
+		added, err := repo.Append(ctx, cs)
+		assert.
+			ThatError(t, err).
+			IsNil()
+		assert.
+			That(t, len(added)).
+			Equals(len(upsertPaths))
+		assert.
+			ThatSlice(t, added).
+			ContainsAll(upsertPaths)
+
+		err = repo.ClearByOperation(ctx, inbox, Delete)
+		assert.ThatError(t, err).IsNil()
+
+		set, err := repo.FindByInboxAndOperation(ctx, inbox, Delete, false)
+		assert.
+			ThatError(t, err).
+			Is(mailboxsweep.ErrNotFound)
+
+		assert.
+			That(t, set == nil).
+			Equals(true)
+	})
+
 }

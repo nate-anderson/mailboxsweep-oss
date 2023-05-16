@@ -391,3 +391,45 @@ func (r DynamoChangesetRepository) Archive(ctx context.Context, inbox string, op
 
 	return nil
 }
+
+func (r DynamoChangesetRepository) ClearByOperation(ctx context.Context, inbox string, operation UpdateOperation) error {
+	// find changeset docs
+	items, err := r.findDynamoItemsByInboxAndOperation(ctx, inbox, operation, true)
+	if err != nil {
+		return fmt.Errorf("failed to find a %s changeset for this inbox: %w", operation, err)
+	}
+
+	if len(items) == 0 {
+		return mailboxsweep.NotFoundError(fmt.Errorf("no %s operation found", operation))
+	}
+
+	const batchLimit = 25
+
+	deleteRequests := []types.WriteRequest{}
+	for i, item := range items {
+		deleteRequests = append(deleteRequests, types.WriteRequest{
+			DeleteRequest: &types.DeleteRequest{
+				Key: map[string]types.AttributeValue{
+					mailboxsweep.DynamoPK: item[mailboxsweep.DynamoPK],
+					mailboxsweep.DynamoSK: item[mailboxsweep.DynamoSK],
+				},
+			},
+		})
+		if len(deleteRequests) == batchLimit || i == len(items)-1 {
+			// delete them
+
+			_, err := r.db.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
+				RequestItems: map[string][]types.WriteRequest{
+					r.tableName: deleteRequests,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			deleteRequests = []types.WriteRequest{}
+		}
+	}
+
+	return nil
+}
