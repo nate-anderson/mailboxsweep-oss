@@ -717,6 +717,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChangeSetResponse"
 
+    delete:
+      operationId: clearChangeset
+      description: Delete any current selection for the given update operation
+      parameters:
+        - in: query
+          name: operation
+          schema:
+            $ref: "#/components/schemas/UpdateOperation"
+          required: true
+          description: Clear changeset for either mark-read or delete
+      responses:
+        "200":
+          description: Success, cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
   /inbox/changeset/commit:
     post:
       operationId: commitChangeset
