@@ -208,6 +208,7 @@ func TestWorker(t *testing.T) {
 		inboxMetadataService,
 		log,
 		eventPublisher,
+		5,
 	)
 
 	wrk := NewWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService)

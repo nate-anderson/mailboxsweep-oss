@@ -45,9 +45,11 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 			SendDate: sendDate,
 		})
 		c1.Count = 1
+		c1.SubjectPreviews = []string{"left child subject"}
 
 		c2 := NewClassification("none3", "level 2 right", "LEVEL_2")
-		c2.Messages = append(c2.Messages, inbox.Message{UID: "3"})
+		c2.Messages = append(c2.Messages, inbox.Message{UID: "3", Subject: "right child subject"})
+		c2.SubjectPreviews = append(c2.SubjectPreviews, "right child subject")
 		c2.Count = 1
 
 		c.Children["left"] = c1
@@ -114,15 +116,20 @@ func TestClassificationRepositoryImplementations(t *testing.T) {
 				SoThat(repoType + " message ID is correct").
 				Equals("2")
 
-			assert.
-				That(t, msg.Subject).
-				SoThat(repoType + " message subject is correct").
-				Equals("left child subject")
+			// assert.
+			// 	That(t, msg.Subject).
+			// 	SoThat(repoType + " message subject is correct").
+			// 	Equals("left child subject")
 
 			assert.
 				That(t, msg.Sender).
 				SoThat(repoType + " message sender address is correct").
 				Equals(testSender)
+
+			assert.
+				ThatSlice(t, classification.SubjectPreviews).
+				SoThat(repoType + " message subject previews are correct").
+				Contains("left child subject")
 		})
 
 		t.Run("get leaves of path", func(t *testing.T) {

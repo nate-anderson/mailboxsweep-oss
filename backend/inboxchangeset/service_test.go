@@ -119,6 +119,7 @@ func TestInboxChangesetService(t *testing.T) {
 		metadataService,
 		logrus.New(),
 		publisher,
+		5,
 	)
 
 	service := NewService(

@@ -14,18 +14,20 @@ import (
 // example: { "sender": "nate@gmail.com" }, { "sender_domain" : "costco.com" }
 
 type Organizer struct {
-	inbox       inbox.Inbox
-	repo        ClassificationRepository
-	folders     []string
-	classifiers []Classifier
+	inbox              inbox.Inbox
+	repo               ClassificationRepository
+	folders            []string
+	classifiers        []Classifier
+	numSubjectPreviews int
 }
 
-func NewOrganizer(inbox inbox.Inbox, repo ClassificationRepository, folders []string, classifiers []Classifier) *Organizer {
+func NewOrganizer(inbox inbox.Inbox, repo ClassificationRepository, folders []string, classifiers []Classifier, numSubjectPreviews int) *Organizer {
 	return &Organizer{
-		inbox:       inbox,
-		repo:        repo,
-		folders:     folders,
-		classifiers: classifiers,
+		inbox:              inbox,
+		repo:               repo,
+		folders:            folders,
+		classifiers:        classifiers,
+		numSubjectPreviews: numSubjectPreviews,
 	}
 }
 
@@ -128,8 +130,11 @@ func (o Organizer) organizeMessage(message inbox.Message, root *SafeClassificati
 			node.UnreadCount++
 		}
 	}
+	// append message to leaf node
 	node.Messages = append(node.Messages, message)
-	// only append to leaf node
+	if len(node.SubjectPreviews) < o.numSubjectPreviews {
+		node.SubjectPreviews = append(node.SubjectPreviews, message.Subject)
+	}
 	root.Count++
 	if !message.Read {
 		root.UnreadCount++

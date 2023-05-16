@@ -33,6 +33,7 @@ type DefaultService struct {
 	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
 	inboxMetadataService   inbox.MetadataService
+	numSubjectPreviews     int
 }
 
 func NewService(
@@ -45,6 +46,7 @@ func NewService(
 	inboxMetadataService inbox.MetadataService,
 	logger *logrus.Logger,
 	pub mailboxsweep.EventPublisher[ClassifyQueueItem],
+	numSubjectPreviews int,
 ) *DefaultService {
 	return &DefaultService{
 		credentialService,
@@ -56,6 +58,7 @@ func NewService(
 		logger,
 		pub,
 		inboxMetadataService,
+		numSubjectPreviews,
 	}
 }
 
@@ -126,7 +129,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers)
+	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers, s.numSubjectPreviews)
 
 	classificationRoot, err := organizer.Organize(ctx)
 	if err != nil {

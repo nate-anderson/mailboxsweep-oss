@@ -5,7 +5,7 @@ import "time"
 type Message struct {
 	UID     string `json:"uid"`
 	Folder  string `json:"folder"`
-	Subject string `json:"subject"`
+	Subject string `json:"-"`
 	Sender  Sender `json:"sender"`
 	// message ID being replied to
 	InReplyTo string    `json:"inReplyTo,omitempty"`

@@ -233,7 +233,7 @@ var classifyMessagesCmd = &cobra.Command{
 		organizer := classification.NewOrganizer(mailbox, repo, []string{folderName}, []classification.Classifier{
 			classification.NewSenderDomainClassifier(),
 			classification.NewSenderUsernameClassifier(),
-		})
+		}, 5)
 
 		_, err = organizer.Organize(context.Background())
 		if err != nil {

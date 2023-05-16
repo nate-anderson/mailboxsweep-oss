@@ -281,6 +281,7 @@ func TestClassificationService(t *testing.T) {
 		inboxMetadataService,
 		logrus.New(),
 		publisher,
+		5,
 	)
 
 	authedCtx := mailboxsweep.AuthorizeTestContext(ctx, testAddress, t)

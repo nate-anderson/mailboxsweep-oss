@@ -14,9 +14,11 @@ import (
 // Classifications act as a tree. Only leaf nodes should have messages
 // this is the DTO type used for writing files and API responses
 type Classification struct {
-	Dimension   string                    `json:"dimension"`
-	TypeKey     string                    `json:"typeKey"`
-	Label       string                    `json:"label"`
+	Dimension       string   `json:"dimension"`
+	TypeKey         string   `json:"typeKey"`
+	Label           string   `json:"label"`
+	SubjectPreviews []string `json:"subjectPreviews"`
+	// @TODO: why can't this just be a list of UIDs?
 	Messages    []inbox.Message           `json:"messages,omitempty"`
 	Count       uint                      `json:"count"`
 	UnreadCount uint                      `json:"unreadCount"`
@@ -160,13 +162,14 @@ func (c *Classification) TreeString() string {
 // one or more goroutines, and need to safely update the classification
 // tree
 type SafeClassification struct {
-	Dimension   string
-	TypeKey     string
-	Label       string
-	Messages    []inbox.Message
-	Count       uint
-	UnreadCount uint
-	Children    syncmap.Map[string, *SafeClassification]
+	Dimension       string
+	TypeKey         string
+	Label           string
+	SubjectPreviews []string
+	Messages        []inbox.Message
+	Count           uint
+	UnreadCount     uint
+	Children        syncmap.Map[string, *SafeClassification]
 }
 
 func NewSafeClassification(dimension, label, typeKey string) *SafeClassification {
@@ -189,13 +192,14 @@ func (sc *SafeClassification) Classification() Classification {
 	}
 
 	return Classification{
-		Dimension:   sc.Dimension,
-		Label:       sc.Label,
-		TypeKey:     sc.TypeKey,
-		Messages:    sc.Messages,
-		Count:       sc.Count,
-		UnreadCount: sc.UnreadCount,
-		Children:    dtoChildren,
+		Dimension:       sc.Dimension,
+		Label:           sc.Label,
+		TypeKey:         sc.TypeKey,
+		Messages:        sc.Messages,
+		SubjectPreviews: sc.SubjectPreviews,
+		Count:           sc.Count,
+		UnreadCount:     sc.UnreadCount,
+		Children:        dtoChildren,
 	}
 }
 

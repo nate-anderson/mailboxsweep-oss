@@ -60,7 +60,8 @@ type workerConfig struct {
 	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES" required:"true"`
 	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL" required:"true"`
 
-	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
+	ClassificationPageSize        int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
+	ClassificationSubjectPreviews int `fig:"CLASSIFICATION_SUBJECT_PREVIEWS" default:"5"`
 
 	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES" default:"120"`
 
@@ -205,6 +206,7 @@ func main() {
 		metadataService,
 		log,
 		pub,
+		cfg.ClassificationSubjectPreviews,
 	)
 
 	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)

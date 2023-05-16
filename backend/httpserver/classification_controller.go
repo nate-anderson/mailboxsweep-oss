@@ -8,8 +8,6 @@ import (
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -88,17 +86,10 @@ func (c ClassificationController) GetClassificationSummary(w http.ResponseWriter
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c ClassificationController) GetClassificationLeaf(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) GetClassificationLeaf(w http.ResponseWriter, req *http.Request, params GetClassificationLeafParams) {
 	ctx := req.Context()
 
-	pathStr := req.URL.Query().Get("path")
-	decodedPath, err := url.QueryUnescape(pathStr)
-	if err != nil {
-		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
-		return
-	}
-
-	path := strings.Split(decodedPath, "/")
+	path := classification.ParsePath(params.Path)
 	if len(path) < 1 {
 		c.respondError(w, errors.New("path cannot be empty"), withOverrideStatusCode(http.StatusBadRequest))
 		return
@@ -232,12 +223,16 @@ func convertClassification(cl classification.Classification) Classification {
 	}
 
 	res := Classification{
-		Label:       cl.Label,
-		Dimension:   cl.Dimension,
-		TypeKey:     typeKey,
-		Count:       int(cl.Count),
-		UnreadCount: int(cl.UnreadCount),
-		Children:    children,
+		Label:           cl.Label,
+		Dimension:       cl.Dimension,
+		TypeKey:         typeKey,
+		Count:           int(cl.Count),
+		UnreadCount:     int(cl.UnreadCount),
+		SubjectPreviews: cl.SubjectPreviews,
+		Children:        children,
+	}
+	if res.SubjectPreviews == nil {
+		res.SubjectPreviews = []string{}
 	}
 	return res
 }

@@ -97,6 +97,8 @@ type serverConfig struct {
 	SigningKey         *string `fig:"SIGNING_KEY"`
 
 	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
+	// how many subject previews should be stored in a classification leaf node?
+	ClassificationSubjectPreviews int `fig:"CLASSIFICATION_SUBJECT_PREVIEWS" default:"5"`
 
 	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
@@ -243,6 +245,7 @@ func main() {
 		metadataService,
 		log,
 		publisher,
+		cfg.ClassificationSubjectPreviews,
 	)
 
 	loginRepo := login.NewDynamoLinkRepository(db, cfg.DynamoDBTable)
@@ -256,7 +259,7 @@ func main() {
 
 	var loginSender login.Sender
 	var emailSender email.Sender
-	if cfg.Env == "localhost" {
+	if cfg.Env == "dev" {
 		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
 	} else {
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
