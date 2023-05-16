@@ -32,6 +32,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.19.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.9 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.19 // indirect
@@ -48,6 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.4 // indirect
+	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
