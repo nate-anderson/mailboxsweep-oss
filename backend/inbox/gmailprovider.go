@@ -88,10 +88,11 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
 		var apiErr *googleapi.Error
+		// @TODO: remove debug logging here
 		if errors.As(err, &apiErr) {
 			log.Printf("It's an apiErr! %+v", apiErr)
 		} else {
-			log.Printf("It's not an apiErr! %+v", err)
+			log.Printf("It's not an apiErr! %+v (%T)", err, err)
 		}
 		return fmt.Errorf("failed to check grants for Google token: %w", err)
 	}
