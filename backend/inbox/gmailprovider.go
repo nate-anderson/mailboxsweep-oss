@@ -2,7 +2,9 @@ package inbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
@@ -12,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/googleapi"
 	googleoauth "google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
 )
@@ -84,6 +87,12 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
+		var apiErr *googleapi.Error
+		if errors.As(err, &apiErr) {
+			log.Printf("It's an apiErr! %+v", apiErr)
+		} else {
+			log.Printf("It's not an apiErr! %+v", err)
+		}
 		return fmt.Errorf("failed to check grants for Google token: %w", err)
 	}
 
