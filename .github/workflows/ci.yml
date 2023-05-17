@@ -87,10 +87,10 @@ jobs:
       - name: Build, tag, push image (server)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: mailboxsweep-server
+          ECR_REPOSITORY: mailboxsweep-server-staging
           IMAGE_TAG: server_${{ github.sha }}
         run: |
-          docker build -f ./backend/Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest-staging -t mailboxsweep-server .
+          docker build -f ./backend/Dockerfile.server -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest -t mailboxsweep-server .
           docker tag mailboxsweep-server:latest-staging $ECR_REGISTRY/$ECR_REPOSITORY:latest-staging
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
 
@@ -116,7 +116,7 @@ jobs:
       - name: Build, tag, push image (worker)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: mailboxsweep-worker
+          ECR_REPOSITORY: mailboxsweep-worker-staging
           IMAGE_TAG: worker_${{ github.sha }}
         run: |
           docker build -f ./backend/Dockerfile.worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t latest-staging -t mailboxsweep-worker .
