@@ -9,12 +9,12 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/googleapi"
 	googleoauth "google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
 )
@@ -79,6 +79,8 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 	}, nil
 }
 
+const gmailTokenGrantExpiredErr = "invalid_grant"
+
 func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Token, client *http.Client) error {
 	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
 	if err != nil {
@@ -87,12 +89,16 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
-		var apiErr *googleapi.Error
+		var urlErr *url.Error
 		// @TODO: remove debug logging here
-		if errors.As(err, &apiErr) {
-			log.Printf("It's an apiErr! %+v", apiErr)
+		if errors.As(err, &urlErr) {
+			if urlErr.Error() == gmailTokenGrantExpiredErr {
+				log.Println("it's a urlErr with the .Error() value we want!")
+			} else {
+				log.Printf("It's a urlErr! %+v", urlErr)
+			}
 		} else {
-			log.Printf("It's not an apiErr! %+v (%T)", err, err)
+			log.Printf("It's not a urlErr! %+v (%T)", err, err)
 		}
 		return fmt.Errorf("failed to check grants for Google token: %w", err)
 	}
