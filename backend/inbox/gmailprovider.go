@@ -2,7 +2,6 @@ package inbox
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"mailboxsweep"
@@ -14,7 +13,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/googleapi"
 	googleoauth "google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
 )
@@ -79,6 +77,26 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 	}, nil
 }
 
+type statusInter interface {
+	Status() int
+}
+
+type statusStringer interface {
+	Status() string
+}
+
+type statusCoder interface {
+	StatusCode() int
+}
+
+type coder interface {
+	Code() int
+}
+
+type errorCoder interface {
+	ErrorCode() int
+}
+
 func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Token, client *http.Client) error {
 	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
 	if err != nil {
@@ -87,9 +105,17 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
-		var apiErr *googleapi.Error
-		if errors.As(err, &apiErr) {
-			log.Printf("it's an API err! %+v", apiErr)
+		switch e := err.(type) {
+		case statusInter:
+			log.Printf("Status(): %d", e.Status())
+		case statusStringer:
+			log.Printf("Status() (string): %s", e.Status())
+		case statusCoder:
+			log.Printf("StatusCode(): %d", e.StatusCode())
+		case coder:
+			log.Printf("Code(): %d", e.Code())
+		case errorCoder:
+			log.Printf("ErrorCode(): %d", e.ErrorCode())
 		}
 		return fmt.Errorf("failed to check grants for Google token: %w", err)
 	}
