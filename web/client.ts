@@ -26,11 +26,12 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
             router.push("/login/gmail/reauth");
             return null as ResponseT;
         }
-        
+
         if (e.status === 401) {
           router.push("/login?prompt=1");
           return null as ResponseT;
         }
+        throw error;
       }
       return null as ResponseT;
     }
