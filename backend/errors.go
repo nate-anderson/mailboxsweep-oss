@@ -23,8 +23,7 @@ type ApplicationError struct {
 // by providing a well-defined string key
 type ApplicationKeyError struct {
 	ApplicationError
-	key  string
-	data any
+	key string
 }
 
 func (e ApplicationKeyError) Key() string {
