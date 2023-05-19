@@ -1,8 +1,8 @@
-import { API } from "../client";
+import { API } from "../../client";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import TextField from "@mui/material/TextField";
-import Button from "../components/button";
+import Button from "../../components/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -10,8 +10,8 @@ import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import { useConstantSnackbar } from "../components/snackbar";
-import ImageLogo from "../components/image-logo";
+import { useConstantSnackbar } from "../../components/snackbar";
+import ImageLogo from "../../components/image-logo";
 import Alert from "@mui/material/Alert";
 
 const submitLogin = async (

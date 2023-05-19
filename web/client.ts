@@ -18,7 +18,15 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
         const e = error as ApiError;
         if (e.status === 401) {
           router.push("/login?prompt=1");
+          return null as ResponseT;
         }
+        const body = JSON.parse(e.body);
+        switch (body.code) {
+          case "google_reauthentication_required":
+            router.push("/login/gmail/reauth");
+            return null as ResponseT;
+        }
+
       }
       return null as ResponseT;
     }

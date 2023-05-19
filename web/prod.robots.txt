@@ -6,5 +6,5 @@ Disallow: /changeset/
 Disallow: /classify/
 Disallow: /plan/
 Disallow: /complete-profile
-Disallow: /login-gmail
-Disallow: /login-token
+Disallow: /login/gmain
+Disallow: /login/token

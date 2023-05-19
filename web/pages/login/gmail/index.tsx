@@ -1,11 +1,11 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useAPIClient } from "../client";
+import { useAPIClient } from "../../../client";
 import Container from "@mui/material/Container";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import * as AppCache from "../lib/cache";
+import * as AppCache from "../../../lib/cache";
 
 export default function Login() {
   const router = useRouter();
@@ -16,10 +16,10 @@ export default function Login() {
     if (!router.isReady) return;
     const query = router.query;
 
-    const loginToken = query["token"] as string;
-    const signature = query["sig"] as string;
+    const stateToken = query["state"] as string;
+    const authCode = query["code"] as string;
 
-    API.submitLoginToken(loginToken, signature)
+    API.submitGmailStateToken(stateToken, authCode)
       .then((res) => {
         if (res.redirectToSignup) {
           router.push("/complete-profile");
