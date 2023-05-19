@@ -22,6 +22,8 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
         switch (body.code) {
           case "google_reauthentication_required":
             window.location.href = "/login/gmail/reauth";
+          default:
+            console.log("unknown body code ", body.code);
             
         }
 
