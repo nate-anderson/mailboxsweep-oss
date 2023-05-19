@@ -24,6 +24,7 @@ type Controller struct {
 	*LoginController
 	*UserController
 	*PaymentController
+	*GmailReauthController
 }
 
 func NewController(
@@ -33,6 +34,7 @@ func NewController(
 	classificationService classification.Service,
 	metadataService inbox.MetadataService,
 	providerService inbox.ProviderService,
+	gmailLoginService *login.GmailLoginService,
 	loginService *login.Service,
 	changesetService changeset.Service,
 	inboxChangesetService inboxchangeset.Service,
@@ -50,6 +52,7 @@ func NewController(
 	changeSetController := NewChangeSetController(changesetService, inboxChangesetService, log)
 	userController := NewUserController(inboxUserService, log)
 	paymentController := NewPaymentController(paymentService, log)
+	gmailReauthController := NewGmailReauthController(gmailLoginService, cookieDomain, cookiePath, log)
 
 	return &Controller{
 		CredentialController:     credentialController,
@@ -59,6 +62,7 @@ func NewController(
 		ChangeSetController:      changeSetController,
 		UserController:           userController,
 		PaymentController:        paymentController,
+		GmailReauthController:    gmailReauthController,
 	}
 }
 

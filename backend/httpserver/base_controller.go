@@ -26,7 +26,7 @@ func (r baseController) respond(w http.ResponseWriter, status int, body any) {
 
 type errorResponse struct {
 	Error string `json:"error"`
-	Key   string `json:"code"`
+	Key   string `json:"code,omitempty"`
 }
 
 type respondErrorOptions struct {

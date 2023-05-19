@@ -337,6 +337,7 @@ func main() {
 		classificationService,
 		metadataService,
 		providerService,
+		gmailLoginService,
 		loginService,
 		changesetService,
 		inboxChangesetService,
