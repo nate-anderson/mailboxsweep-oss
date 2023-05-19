@@ -2,14 +2,11 @@ package inbox
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -87,16 +84,9 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) {
-			log.Println("URL ERR: ")
-			log.Printf("OP: %s", urlErr.Op)
-			log.Printf("URL: %s", urlErr.URL)
-			log.Printf("Error: %s", urlErr.Err)
-			log.Printf("Temp?: %t", urlErr.Temporary())
-			log.Printf("Error(): %s", urlErr.Error())
+		if strings.Contains(err.Error(), `invalid_grant`) {
+			return mailboxsweep.GoogleReauthenticationRequiredError(err)
 		}
-		return fmt.Errorf("failed to check grants for Google token: %w", err)
 	}
 
 	scopes := strings.Fields(info.Scope)

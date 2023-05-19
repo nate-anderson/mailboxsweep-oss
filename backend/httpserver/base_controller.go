@@ -26,10 +26,16 @@ func (r baseController) respond(w http.ResponseWriter, status int, body any) {
 
 type errorResponse struct {
 	Error string `json:"error"`
+	Key   string `json:"code"`
 }
 
 type respondErrorOptions struct {
 	code int
+}
+
+type errorWithKey interface {
+	error
+	Key() string
 }
 
 type respondErrorOptFunc func(o *respondErrorOptions)
@@ -62,6 +68,12 @@ func (r baseController) respondError(w http.ResponseWriter, err error, opts ...r
 	res := errorResponse{
 		Error: err.Error(),
 	}
+
+	var errWithKey errorWithKey
+	if errors.As(err, &errWithKey) {
+		res.Key = errWithKey.Key()
+	}
+
 	if writeErr := json.NewEncoder(w).Encode(res); writeErr != nil {
 		r.logger.Errorf("error writting error to response: %s", err)
 		return
