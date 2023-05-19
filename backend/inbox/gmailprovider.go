@@ -83,7 +83,7 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
 		if strings.Contains(err.Error(), `invalid_grant`) {
-			return mailboxsweep.GoogleReauthenticationRequiredError(err)
+			return mailboxsweep.GoogleReauthenticationRequiredError()
 		}
 		return err
 	}
