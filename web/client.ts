@@ -1,19 +1,17 @@
-import { NextRouter, useRouter } from "next/router";
-import { Mailboxsweep, DefaultService, ApiError } from "./client-gen";
+import { Mailboxsweep, DefaultService, ApiError, BaseHttpRequest, OpenAPIConfig, CancelablePromise } from "./client-gen";
+import { ApiRequestOptions } from "./client-gen/core/ApiRequestOptions";
+import { request as __request} from "./client-gen/core/request"
 
-export const API = new Mailboxsweep({
-  BASE: `https://${process.env.MAILBOXSWEEP_API_HOST}:${process.env.MAILBOXSWEEP_API_PORT}`,
-  WITH_CREDENTIALS: true,
-}).default;
+class HTTPRequestWithErrorHandling extends BaseHttpRequest {
+  constructor(config: OpenAPIConfig) {
+    super(config);
+  }
 
-API.commitChangeset
-
-function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => Promise<ResponseT>): (req: RequestT) => Promise<ResponseT> {
-  const wrapped = async (req: RequestT): Promise<ResponseT> => {
+  public override async request<T>(options: ApiRequestOptions): CancelablePromise<T> {
     try {
-      const result = await func(req);
+      const result = await __request<T>(this.config, options);
       return result;
-    } catch (error) {
+    } catch(error) {
       if (error instanceof ApiError) {
         const e = error as ApiError;
         console.log({ debugError: e });
@@ -23,21 +21,25 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
         console.log({debugBody: body});
         switch (body.code) {
           case "google_reauthentication_required":
-            router.push("/login/gmail/reauth");
-            return null as ResponseT;
+            window.location.href = "/login/gmail/reauth";
+            
         }
 
         if (e.status === 401) {
-          router.push("/login?prompt=1");
-          return null as ResponseT;
+          window.location.href = "/login?prompt=1";
         }
-        throw error;
       }
-      return null as ResponseT;
+
+      throw error;
     }
-  };
-  return wrapped;
+  }
 }
+
+export const API = new Mailboxsweep({
+  BASE: `https://${process.env.MAILBOXSWEEP_API_HOST}:${process.env.MAILBOXSWEEP_API_PORT}`,
+  WITH_CREDENTIALS: true,
+}, HTTPRequestWithErrorHandling).default;
+
 
 /**
  * Hook to get a wrapped API client that will redirect to login if an API request
@@ -45,12 +47,5 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
  * @returns APIClient
  */
 export function useAPIClient(): DefaultService {
-  const router = useRouter();
-  const patchedClient: Record<string, any> = {};
-  Object.entries(API).forEach(([key, method]) => {
-    if (typeof method === 'function') {
-      patchedClient[key] = wrap(router, method);
-    }
-  })
   return API;
 }

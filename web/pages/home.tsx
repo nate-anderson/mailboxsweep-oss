@@ -203,8 +203,7 @@ export default function Home() {
           setErrorMessage(e.message);
         }
       });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [API, setErrorMessage]);
 
   return (
     <PrivatePage>
