@@ -16,10 +16,9 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
     } catch (error) {
       if (error instanceof ApiError) {
         const e = error as ApiError;
-        if (e.status === 401) {
-          router.push("/login?prompt=1");
-          return null as ResponseT;
-        }
+        console.log({ debugError: e });
+        // if error has a well-defined error code, that will be more useful than
+        // the status code. try that first.
         const body = JSON.parse(e.body);
         console.log({debugBody: body});
         switch (body.code) {
@@ -27,7 +26,11 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
             router.push("/login/gmail/reauth");
             return null as ResponseT;
         }
-
+        
+        if (e.status === 401) {
+          router.push("/login?prompt=1");
+          return null as ResponseT;
+        }
       }
       return null as ResponseT;
     }
