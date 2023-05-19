@@ -10,7 +10,7 @@ html: >
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
 
-    <body style="background-color: #F6EEE3;">
+    <body>
       <table width="100%" border="0" cellspacing="0" cellpadding="10">
         <tr>
           <td align="center">
