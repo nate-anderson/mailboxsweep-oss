@@ -18,6 +18,17 @@ type ApplicationError struct {
 	msg    string
 }
 
+// Errors with a key help the client distinquish detailed errors
+// by providing a well-defined string key
+type ApplicationKeyError struct {
+	ApplicationError
+	key string
+}
+
+func (e ApplicationKeyError) Key() string {
+	return e.key
+}
+
 func (e ApplicationError) Error() string {
 	return e.msg
 }
@@ -37,9 +48,12 @@ var (
 		msg:    "unauthenticated",
 	}
 
-	ErrNoStoredCredential = ApplicationError{
-		status: http.StatusNotFound,
-		msg:    "no credential stored for inbox",
+	ErrNoStoredCredential = ApplicationKeyError{
+		ApplicationError: ApplicationError{
+			status: http.StatusNotFound,
+			msg:    "no credential stored for inbox",
+		},
+		key: "email_login_required",
 	}
 
 	ErrBadInboxCredential = ApplicationError{
@@ -70,6 +84,14 @@ var (
 	ErrInsufficientPermissions = ApplicationError{
 		status: http.StatusForbidden,
 		msg:    "insufficient permissions",
+	}
+
+	ErrGoogleReauthenticationRequired = ApplicationKeyError{
+		ApplicationError: ApplicationError{
+			status: http.StatusUnauthorized,
+			msg:    "reauthentication required",
+		},
+		key: "google_reauthentication_required",
 	}
 )
 
@@ -115,4 +137,8 @@ func BadGatewayError(parent error) error {
 
 func InsufficientPermissionsError(parent error) error {
 	return fmt.Errorf("%w: %w", ErrInsufficientPermissions, parent)
+}
+
+func GoogleReauthenticationRequiredError(parent error) error {
+	return fmt.Errorf("%w: %w", ErrGoogleReauthenticationRequired, parent)
 }
