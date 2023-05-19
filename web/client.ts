@@ -21,6 +21,7 @@ function wrap<RequestT, ResponseT>(router: NextRouter, func: (req: RequestT) => 
           return null as ResponseT;
         }
         const body = JSON.parse(e.body);
+        console.log({debugBody: body});
         switch (body.code) {
           case "google_reauthentication_required":
             router.push("/login/gmail/reauth");
