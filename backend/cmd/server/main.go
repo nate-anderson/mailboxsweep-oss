@@ -40,7 +40,7 @@ import (
 type serverConfig struct {
 	HTTPPort     int    `fig:"HTTP_PORT" required:"true"`
 	Env          string `fig:"ENV" default:"prod"`
-	LoginBaseURL string `fig:"BASE_URL" default:"https://localhost:3001/login-token"`
+	LoginBaseURL string `fig:"BASE_URL" default:"https://localhost:3001/login/token"`
 
 	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
