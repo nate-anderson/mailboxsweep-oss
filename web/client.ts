@@ -14,17 +14,14 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
     } catch(error) {
       if (error instanceof ApiError) {
         const e = error as ApiError;
-        console.log({ debugError: e });
         // if error has a well-defined error code, that will be more useful than
         // the status code. try that first.
-        const body = JSON.parse(e.body);
-        console.log({debugBody: body});
-        switch (body.code) {
+        switch (e.body.code) {
           case "google_reauthentication_required":
             window.location.href = "/login/gmail/reauth";
+            return null as T;
           default:
-            console.log("unknown body code ", body.code);
-            
+            console.log("unknown body code ", e.body.code);
         }
 
         if (e.status === 401) {
