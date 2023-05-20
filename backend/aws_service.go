@@ -6,12 +6,14 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 )
 
 type AWSServiceConfig struct {
 	ServiceHost   *string
 	ServicePort   int
 	ServiceRegion string
+	Environment   string
 }
 
 // Generic function for instantiating AWS clients
@@ -30,6 +32,9 @@ func ConnectAWSService[
 			context.Background(),
 			config.WithRegion(cfg.ServiceRegion),
 		)
+		if cfg.Environment == "prod" || cfg.Environment == "staging" {
+			awsv2.AWSV2Instrumentor(&awsCfg.APIOptions)
+		}
 		if err != nil {
 			return nil, err
 		}

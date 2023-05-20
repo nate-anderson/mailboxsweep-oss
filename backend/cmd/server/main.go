@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nate-anderson/fig/v2"
@@ -138,11 +139,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// use JSON logging when deployed to AWS
+	if cfg.Env == "prod" || cfg.Env == "staging" {
+		log.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC3339,
+		})
+	}
+
 	db, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.DynamoDBHost,
 			ServicePort:   cfg.DynamoDBPort,
 			ServiceRegion: cfg.DynamoDBRegion,
+			Environment:   cfg.Env,
 		},
 		dynamodb.NewFromConfig,
 	)
@@ -166,6 +175,7 @@ func main() {
 			ServiceHost:   cfg.S3Host,
 			ServicePort:   cfg.S3Port,
 			ServiceRegion: cfg.S3Region,
+			Environment:   cfg.Env,
 		},
 		s3.NewFromConfig,
 		func(o *s3.Options) {
@@ -193,6 +203,7 @@ func main() {
 			ServiceHost:   cfg.SQSHost,
 			ServicePort:   cfg.SQSPort,
 			ServiceRegion: cfg.SQSRegion,
+			Environment:   cfg.Env,
 		},
 		sqs.NewFromConfig,
 	)
@@ -266,6 +277,7 @@ func main() {
 			ServiceHost:   cfg.SQSHost,
 			ServicePort:   cfg.SQSPort,
 			ServiceRegion: cfg.SQSRegion,
+			Environment:   cfg.Env,
 		}, sesv2.NewFromConfig)
 		if err != nil {
 			log.Fatalf("failed to initialize SES client: %s", err)
@@ -379,6 +391,10 @@ func main() {
 			loggingMiddleware,
 		},
 	})
+
+	if cfg.Env == "prod" || cfg.Env == "staging" {
+		srv = xray.Handler(xray.NewDynamicSegmentNamer("MailboxSweep", "api.*.mailboxsweep.com"), srv)
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 
