@@ -29,9 +29,6 @@ type AppProps = InfraStackProps & {
     clusterInstanceType: string;
 };
 
-const baseUrl = "mailboxsweep.com";
-const latestTag = 'latest';
-
 const Port = {
     HTTPS: 443,
     HTTP: 80
@@ -44,10 +41,10 @@ export class AppStack extends cdk.Stack {
         const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
         const queues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
 
-        const serverRepoName = `mailboxsweep-server`;
+        const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = ECR.Repository.fromRepositoryName(this, serverRepoName, serverRepoName);
 
-        const workerRepoName = `mailboxsweep-worker`;
+        const workerRepoName = `mailboxsweep-worker-${props.environmentName}`;
         const workerRepo = ECR.Repository.fromRepositoryName(this, workerRepoName, workerRepoName);
 
         const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, `hosted-zone`, {
@@ -140,7 +137,7 @@ export class AppStack extends cdk.Stack {
             MINUTES_BETWEEN_CLOSED_REQUESTS: "10",
 
             // Login
-            BASE_URL: `https://${webUrl}/login-token`,
+            BASE_URL: `https://${webUrl}/login/token`,
 
             // DB
             DYNAMODB_REGION: "us-west-2",
@@ -172,7 +169,7 @@ export class AppStack extends cdk.Stack {
             STRIPE_PAYMENT_CONFIRMATION_URL: `https://${webUrl}/plan/payment-success?checkoutSessionId={CHECKOUT_SESSION_ID}`,
             STRIPE_CHECKOUT_SESSION_DURATION_MINUTES: "30",
 
-            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login-gmail`
+            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`
 
             // Secrets that need to come from SSM
             // GOOGLE_OAUTH_CLIENT_ID
@@ -182,17 +179,25 @@ export class AppStack extends cdk.Stack {
             // SIGNING_KEY
         };
 
+        // environment-specific "latest" tag for ECR images
+        const latestTag = `latest`;
+        const serverLogGroup = new AWSLogs.LogGroup(this, `server-logs`, {
+            logGroupName: `mailboxsweep-server-${props.environmentName}`,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            retention: AWSLogs.RetentionDays.ONE_YEAR,
+        });
+
         const serverContainer = serverTaskDefinition.addContainer('ServerContainer', {
             image: ContainerImage.fromEcrRepository(serverRepo, latestTag),
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "e",
+                FORCE_BUILD_REFRESH: "t",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-server",
-                logRetention: AWSLogs.RetentionDays.ONE_YEAR,
+                logGroup: serverLogGroup,
             }),
             portMappings: [
                 {
@@ -232,9 +237,15 @@ export class AppStack extends cdk.Stack {
         });
         serverTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
 
-        const workerTaskId = `worker-task-${props.environmentName}`
+        const workerTaskId = `worker-task`;
         const workerTaskDefinition = new ECS.TaskDefinition(this, workerTaskId, {
             compatibility: ECS.Compatibility.EC2,
+        });
+
+        const workerLogGroup = new AWSLogs.LogGroup(this, `worker-logs`, {
+            logGroupName: `mailboxsweep-worker-${props.environmentName}`,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            retention: AWSLogs.RetentionDays.ONE_YEAR,
         });
 
         workerTaskDefinition.addContainer('WorkerContainer', {
@@ -242,17 +253,17 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "e",
+                FORCE_BUILD_REFRESH: "t",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-worker",
-                logRetention: AWSLogs.RetentionDays.ONE_YEAR,
+                logGroup: workerLogGroup,
             })
         });
         workerTaskDefinition.taskRole.attachInlinePolicy(readSSMPolicy);
 
-        const workerServiceId = `worker-service-${props.environmentName}`;
+        const workerServiceId = `worker-service`;
         const workerService = new ECS.Ec2Service(this, workerServiceId, {
             cluster,
             taskDefinition: workerTaskDefinition,
@@ -411,11 +422,13 @@ export class AppStack extends cdk.Stack {
             destinationKeyPrefix: "/",
         });
 
-        new CloudwatchDashboard(this, `dashboard`, {
+        const dashboard = new CloudwatchDashboard(this, `dashboard`, {
             ...props,
             table: tableStack.table,
             queue: queues.queue,
             dlq: queues.dlq,
+            serverLogGroup: serverLogGroup,
+            workerLogGroup: workerLogGroup,
         });
     }
 }
