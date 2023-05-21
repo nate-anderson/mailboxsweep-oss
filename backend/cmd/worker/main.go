@@ -5,6 +5,7 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
+	"mailboxsweep/email"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/nate-anderson/fig/v2"
@@ -24,6 +26,7 @@ import (
 )
 
 type workerConfig struct {
+	Env            string  `fig:"ENV" default:"prod"`
 	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
 	DynamoDBRegion string  `fig:"DYNAMODB_REGION" default:"us-west-2"`
@@ -69,6 +72,9 @@ type workerConfig struct {
 	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
 
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
+	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
+
+	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
 }
 
 func main() {
@@ -211,6 +217,22 @@ func main() {
 
 	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)
 
+	var emailSender email.Sender
+	if cfg.Env == "staging" || cfg.Env == "prod" {
+		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
+			ServiceHost:   cfg.SQSHost,
+			ServicePort:   cfg.SQSPort,
+			ServiceRegion: cfg.SQSRegion,
+			Environment:   cfg.Env,
+		}, sesv2.NewFromConfig)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
+	}
+
 	w := worker.NewWorker(
 		log,
 		queue,
@@ -218,6 +240,9 @@ func main() {
 		dlqPub,
 		cfg.SQSDeadLetterQueueURL,
 		service,
+		emailSender,
+		cfg.SESClassifyCompleteEmailTemplateName,
+		userService,
 	)
 
 	log.Fatal(w.Work())

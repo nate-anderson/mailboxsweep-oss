@@ -156,6 +156,7 @@ export class AppStack extends cdk.Stack {
 
             SES_REGION: "us-west-2",
             SES_LOGIN_EMAIL_TEMPLATE_NAME: "mailboxsweep_login_link",
+            SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME: "mailboxsweep_classify_complete",
 
             // Sessions & cookies
             COOKIE_DOMAIN: webUrl,

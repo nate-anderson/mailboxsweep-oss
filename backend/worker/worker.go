@@ -3,8 +3,11 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classification"
+	"mailboxsweep/email"
+	"mailboxsweep/inboxuser"
 	"strings"
 	"time"
 
@@ -23,6 +26,10 @@ type Worker struct {
 	dlqPub  mailboxsweep.EventPublisher[classification.ClassifyQueueItem]
 	dlqURL  string
 	service classification.Service
+
+	emailSender              email.Sender
+	classifyCompleteTemplate string
+	inboxUserService         inboxuser.Service
 }
 
 func NewWorker(
@@ -32,6 +39,9 @@ func NewWorker(
 	dlqPub mailboxsweep.EventPublisher[classification.ClassifyQueueItem],
 	dlqURL string,
 	service classification.Service,
+	emailSender email.Sender,
+	classifyCompleteTemplate string,
+	inboxUserService inboxuser.Service,
 ) *Worker {
 	return &Worker{
 		log,
@@ -40,6 +50,9 @@ func NewWorker(
 		dlqPub,
 		dlqURL,
 		service,
+		emailSender,
+		classifyCompleteTemplate,
+		inboxUserService,
 	}
 }
 
@@ -127,19 +140,41 @@ func (w Worker) Work() error {
 						w.log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
 					}
 				}
-			} else {
+				continue
+			}
+
+			_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+				QueueUrl:      &w.queueURL,
+				ReceiptHandle: m.ReceiptHandle,
+			})
+			if err != nil {
 				w.log.
 					WithField("address", body.Address).
-					WithField("execution_time_seconds", end.Sub(start).Seconds()).
-					Info("classify complete")
-				_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
-					QueueUrl:      &w.queueURL,
-					ReceiptHandle: m.ReceiptHandle,
-				})
-				if err != nil {
+					Errorf("failed to delete message after classify: %s", err.Error())
+			}
+			w.log.
+				WithField("address", body.Address).
+				WithField("execution_time_seconds", end.Sub(start).Seconds()).
+				Info("classify complete")
+
+			var greeting string
+			user, err := w.inboxUserService.FindByAddress(ctx, body.Address)
+			// this user must exist, this failure can only be temporary
+			// default to the generic greeting
+			if err != nil {
+				greeting = "Hi there!"
+			} else if user.NameFirst != "" {
+				greeting = fmt.Sprintf("Hi, %s,", user.NameFirst)
+			}
+
+			if w.emailSender != nil {
+				if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
+					"greeting": greeting,
+				}); err != nil {
 					w.log.
 						WithField("address", body.Address).
-						Errorf("failed to delete message after classify: %s", err.Error())
+						WithError(err).
+						Error("failed to send notification email for classification completion")
 				}
 			}
 		}

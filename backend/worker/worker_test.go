@@ -9,6 +9,7 @@ import (
 	"mailboxsweep/assert"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
+	"mailboxsweep/email"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxtesting"
@@ -211,7 +212,9 @@ func TestWorker(t *testing.T) {
 		5,
 	)
 
-	wrk := NewWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService)
+	emailSender := email.TestSender{}
+	completeTemplate := "test_complete_template"
+	wrk := NewWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService, &emailSender, completeTemplate, userService)
 
 	go func() {
 		err = wrk.Work()

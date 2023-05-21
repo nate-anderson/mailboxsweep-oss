@@ -1,0 +1,58 @@
+name: mailboxsweep_classify_complete
+subject: We've organized your inbox
+html: >
+  <!DOCTYPE html>
+  <html>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <body>
+      <table width="100%" border="0" cellspacing="0" cellpadding="10">
+        <tr>
+          <td align="center">
+            <img  style="width: 190px; display: block; padding-top:8px; padding-bottom:8px;" src="https://staging.mailboxsweep.com/Logo_text.png">
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <img style="width: 160px; display: block;" src="https://staging.mailboxsweep.com/Mascot.png">
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;">Your inbox is organized and ready for cleanup</h2>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{signin_link}}">Get started</a>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <small style="text-align: center;color: #2b4162; font-family: Roboto, sans-serif;">Didn't request this link? Don't worry, your account is still secure. If this happens more than once, you can let support know by emailing <a href="mailto:support@mailboxsweep.com">support@mailboxsweep.com</a>.</small>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <hr style="border-top: 0.5px solid #2b4162;" />
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <small style="font-family: Roboto, sans-serif;">&copy; 2023 MailboxSweep, LLC</small>
+          </td>
+        </tr>
+
+      </table>
+    </body>
+  </html>
