@@ -37,6 +37,12 @@ html: >
 
         <tr>
           <td align="center">
+            <small style="margin-top: 20px; color: #2795f5; font-family: Roboto, sans-serif; font-weight: bold; font-size: 0.7em;" href="{{signin_link}}">This link will expire at {{expiry_time}}.</small>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
             <small style="text-align: center;color: #2b4162; font-family: Roboto, sans-serif;">Didn't request this link? Don't worry, your account is still secure. If this happens more than once, you can let support know by emailing <a href="mailto:support@mailboxsweep.com">support@mailboxsweep.com</a>.</small>
           </td>
         </tr>

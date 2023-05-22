@@ -4,6 +4,7 @@ import (
 	"context"
 	"mailboxsweep/email"
 	"net/url"
+	"time"
 )
 
 type EmailSender struct {
@@ -26,8 +27,13 @@ func (s EmailSender) Send(ctx context.Context, req SendRequest) error {
 	}
 	u.RawQuery = query.Encode()
 
+	pst, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return err
+	}
 	tmplData := map[string]string{
 		"signin_link": u.String(),
+		"expiry_time": req.Expires.In(pst).Format("3:04 PM MST on Monday, Jan 2, 2006"),
 	}
 
 	err = s.client.Send(ctx, req.Address, s.templateName, tmplData)
