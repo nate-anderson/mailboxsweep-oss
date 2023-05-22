@@ -12,12 +12,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.17
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.3
 	github.com/aws/smithy-go v1.13.5
+	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/emersion/go-imap v1.2.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
 	github.com/mcnijman/go-emailaddress v1.1.0
 	github.com/nate-anderson/fig/v2 v2.2.2
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 	github.com/stripe/stripe-go/v74 v74.3.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
@@ -49,7 +50,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
-	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
