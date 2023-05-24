@@ -12,6 +12,10 @@ export class ClassificationQueueStack extends cdk.Stack {
     public readonly queue: SQS.Queue;
     public readonly dlq: SQS.Queue;
 
+    // queue used for 24-hour cooloff when reading from IMAP inboxes with transfer quotas
+    public readonly imapCooloffQueue: SQS.Queue;
+    public readonly imapCooloffDlq: SQS.Queue;
+
     constructor(scope: Construct, id: string, props: InfraStackProps) {
       super(scope, id, props);
   
@@ -32,5 +36,23 @@ export class ClassificationQueueStack extends cdk.Stack {
         },
       })
       this.queue = queue;
+
+      const imapCooloffDlqName = `imap_cooloff_dlq_${props.environmentName}.fifo`;
+      const imapCooloffDlq = new SQS.Queue(this, imapCooloffDlqName, {
+        queueName: imapCooloffDlqName,
+        fifo: true,
+      });
+      this.imapCooloffDlq = imapCooloffDlq;
+
+      const imapCooloffQueueName = `imap_cooloff_queue_${props.environmentName}.fifo`;
+      const imapCooloffQueue = new SQS.Queue(this, imapCooloffQueueName, {
+        queueName: imapCooloffQueueName,
+        fifo: true,
+        deadLetterQueue: {
+          queue: imapCooloffDlq,
+          maxReceiveCount: 3,
+        }
+      });
+      this.imapCooloffQueue = imapCooloffQueue;
     }
   }

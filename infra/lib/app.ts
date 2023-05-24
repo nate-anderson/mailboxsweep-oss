@@ -22,6 +22,7 @@ import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudwatchDashboard } from './cloudwatch-dashboard';
+import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 
 type AppProps = InfraStackProps & {
@@ -163,7 +164,7 @@ export class AppStack extends cdk.Stack {
             SESSION_KEY_LENGTH: "30",
             COOKIE_PATH: "/",
             LOGIN_LINK_DURATION_MINUTES: "10",
-            SESSION_DURATION_MINUTES: "180",
+            SESSION_DURATION_MINUTES: "1440",
 
             // Stripe
             PAYMENT_ACCESS_DURATION_DAYS: "30",
@@ -193,7 +194,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "t",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -254,7 +255,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "t",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -318,6 +319,94 @@ export class AppStack extends cdk.Stack {
         });
         securityGroup.addIngressRule(EC2.Peer.ipv4('0.0.0.0/0'), EC2.Port.tcp(Port.HTTP));
 
+        const managedRules: WAF.CfnWebACL.RuleProperty[] = [
+            // AWS IP Reputation list includes known malicious actors/bots and is regularly updated    
+            {
+                name: 'AWS-AWSManagedRulesAmazonIpReputationList',
+                priority: 10,
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesAmazonIpReputationList',
+                    },
+                },
+                overrideAction: {
+                    none: {},
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRulesAmazonIpReputationList',
+                },
+            },
+            
+            // Common Rule Set aligns with major portions of OWASP Core Rule Set    
+            {
+                name: 'AWS-AWSManagedRulesCommonRuleSet',
+                priority: 20,
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesCommonRuleSet',
+                    // Excluding generic RFI body rule for sns notifications
+                    // https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
+                      excludedRules: [
+                       { name: 'GenericRFI_BODY' },
+                       { name: 'SizeRestrictions_BODY' },
+                       { name: 'SizeRestrictions_URIPATH' },
+                    ],
+                    },
+                },
+                overrideAction: {
+                    none: {},
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWS-AWSManagedRulesCommonRuleSet',
+                },
+            },
+            // Blocks common SQL Injection
+            {
+                name: 'AWSManagedRulesSQLiRuleSet',
+                priority: 30,
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRulesSQLiRuleSet',
+                },
+                overrideAction: {
+                    none: {},
+                },
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesSQLiRuleSet',
+                    excludedRules: [],
+                    },
+                },
+            },
+            // Blocks attacks targeting LFI(Local File Injection) for linux systems
+            {
+                name: 'AWSManagedRuleLinux',
+                priority: 50,
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRuleLinux',
+                },
+                overrideAction: {
+                    none: {},
+                },
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesLinuxRuleSet',
+                    excludedRules: [],
+                    },
+                },
+            },
+        ];
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {
             cluster,
@@ -340,6 +429,26 @@ export class AppStack extends cdk.Stack {
             interval: cdk.Duration.seconds(300),
             healthyThresholdCount: 2,
             unhealthyThresholdCount: 2,
+        });
+        const webAcl = new WAF.CfnWebACL(this, `api-rate-limit`, {
+            defaultAction: {
+                allow: {
+                     
+                }
+            },
+            visibilityConfig: {
+                cloudWatchMetricsEnabled: true,
+                metricName: `${props.environmentName}-waf`,
+                sampledRequestsEnabled: false,
+            },
+            scope: 'REGIONAL',
+            name: `waf-${props.environmentName}`,
+            rules: managedRules,
+        });
+
+        new WAF.CfnWebACLAssociation(this, `web-api-acl`, {
+            resourceArn: loadBalancedAPIService.loadBalancer.loadBalancerArn,
+            webAclArn: webAcl.attrArn,
         });
         
         tableStack.table.grantReadWriteData(serverTaskDefinition.taskRole);
