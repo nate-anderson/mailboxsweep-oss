@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	xrayECS "github.com/aws/aws-xray-sdk-go/awsplugins/ecs"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -140,10 +141,12 @@ func main() {
 	}
 
 	// use JSON logging when deployed to AWS
+	// use ECS XRay config when deployed to AWS
 	if cfg.Env == "prod" || cfg.Env == "staging" {
 		log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339,
 		})
+		xrayECS.Init()
 	}
 
 	db, err := mailboxsweep.ConnectAWSService(
