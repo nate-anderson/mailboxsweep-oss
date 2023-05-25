@@ -178,26 +178,36 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
 
-    const res = await API.updateChangeSet({
-      operation,
-      path,
-      addOrRemove: ChangeSetRequest.addOrRemove.ADD,
-    });
-
-    AppCache.invalidate(`changeset_${operation}`);
-
-    if (isDeleteMode) {
-      setDeleteSelection((sel) => {
-        res.updatedPaths.forEach((path) => sel.add(path));
-        return sel;
+    try {
+      const res = await API.updateChangeSet({
+        operation,
+        path,
+        addOrRemove: ChangeSetRequest.addOrRemove.ADD,
       });
-      setDeleteCount((count) => count + res.messageCount);
-    } else {
-      setMarkReadSelection((sel) => {
-        res.updatedPaths.forEach((path) => sel.add(path));
-        return sel;
-      });
-      setMarkReadCount((count) => count + res.messageCount);
+    
+      AppCache.invalidate(`changeset_${operation}`);
+
+      if (isDeleteMode) {
+        // if the backend didn't detect a diff from this operation,
+        // the frontend cache is likely stale, so clear it
+        if (res.updatedPaths.length == 0) {
+          AppCache.clearAll();
+          return
+        }
+        setDeleteSelection((sel) => {
+          res.updatedPaths.forEach((path) => sel.add(path));
+          return sel;
+        });
+        setDeleteCount((count) => count + res.messageCount);
+      } else {
+        setMarkReadSelection((sel) => {
+          res.updatedPaths.forEach((path) => sel.add(path));
+          return sel;
+        });
+        setMarkReadCount((count) => count + res.messageCount);
+      }
+    } catch (error) {
+      console.log({ updateChangesetError: error });
     }
   };
 
