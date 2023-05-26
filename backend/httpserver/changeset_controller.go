@@ -40,6 +40,7 @@ func (c ChangeSetController) UpdateChangeSet(w http.ResponseWriter, req *http.Re
 
 	resBody := UpdateChangeSetResponse{
 		MessageCount: 0,
+		UpdatedPaths: [][]string{},
 	}
 
 	var updateFunc func(ctx context.Context, path classification.Path) (*inboxchangeset.ChangeResult, error)
