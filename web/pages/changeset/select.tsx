@@ -173,6 +173,30 @@ export default function Select() {
 
   const API = useAPIClient();
 
+  const refreshSelection = (operation: UpdateOperation) => {
+    AppCache.invalidate(`changeset_${operation}`);
+    AppCache.asyncCache<ChangeSetResponse>(
+      () => API.getChangeset(operation),
+      `changeset_${operation}`
+    ).then((changesetRes) => {
+      if (isDeleteMode) {
+        setDeleteSelection(new Selection(changesetRes.changeSet.paths));
+        setDeleteCount(changesetRes.size);
+      } else {
+        setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
+        setMarkReadCount(changesetRes.size);
+      }
+    }).catch((error) => {
+      if (error instanceof ApiError) {
+        const apiError = error as ApiError;
+        // 404 means no selection has been stored 
+        if (apiError.status !== 404) {
+          setError(apiError.message);
+        }
+      }
+    });
+  }
+
   const addLeaf = async (path: string[]) => {
     const operation = isDeleteMode
     ? UpdateOperation.DELETE
@@ -232,7 +256,7 @@ export default function Select() {
         path,
         addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
       });
-      
+
       console.log({ addLeafRes: res });
 
       // if the backend didn't detect a diff from this operation,
@@ -278,39 +302,8 @@ export default function Select() {
 
     const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
 
-    AppCache.asyncCache<ClassificationResponse>(
-      () => API.getClassificationSummary(requestPage),
-      `classification_summary_${requestPage}`
-    ).then((classificationRes) => {
-      setClassificationRoot(new ClassificationTree(classificationRes.classification));
-      setTotalPages(classificationRes.pageCount);
-    }).catch((error) => {
-      if (error instanceof ApiError) {
-        const apiError = error as ApiError;
-        setError(apiError.message);
-      }
-    });
+    refreshSelection(updateOperation);
 
-    AppCache.asyncCache<ChangeSetResponse>(
-      () => API.getChangeset(updateOperation),
-      `changeset_${updateOperation}`
-    ).then((changesetRes) => {
-      if (isDeleteMode) {
-        setDeleteSelection(new Selection(changesetRes.changeSet.paths));
-        setDeleteCount(changesetRes.size);
-      } else {
-        setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
-        setMarkReadCount(changesetRes.size);
-      }
-    }).catch((error) => {
-      if (error instanceof ApiError) {
-        const apiError = error as ApiError;
-        // 404 means no selection has been stored 
-        if (apiError.status !== 404) {
-          setError(apiError.message);
-        }
-      }
-    })
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
 
