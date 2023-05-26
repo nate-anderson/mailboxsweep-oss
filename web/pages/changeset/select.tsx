@@ -185,21 +185,24 @@ export default function Select() {
         addOrRemove: ChangeSetRequest.addOrRemove.ADD,
       });
     
-      AppCache.invalidate(`changeset_${operation}`);
+      console.log({ addLeafRes: res });
+
+      // if the backend didn't detect a diff from this operation,
+      // the frontend cache is likely stale, so clear it
+      if (res.updatedPaths.length == 0) {
+        AppCache.invalidate(`changeset_${operation}`);
+        return;
+      }
 
       if (isDeleteMode) {
-        // if the backend didn't detect a diff from this operation,
-        // the frontend cache is likely stale, so clear it
-        if (res.updatedPaths.length == 0) {
-          AppCache.clearAll();
-          return
-        }
+        console.log("modifying delete set");
         setDeleteSelection((sel) => {
           res.updatedPaths.forEach((path) => sel.add(path));
           return sel;
         });
         setDeleteCount((count) => count + res.messageCount);
       } else {
+        console.log("modifying mark read set")
         setMarkReadSelection((sel) => {
           res.updatedPaths.forEach((path) => sel.add(path));
           return sel;
@@ -207,7 +210,7 @@ export default function Select() {
         setMarkReadCount((count) => count + res.messageCount);
       }
     } catch (error) {
-      console.log({ updateChangesetError: error });
+      console.log({ addLeafError: error });
     }
   };
 
@@ -223,26 +226,38 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
     
-    const res = await API.updateChangeSet({
-      operation,
-      path,
-      addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
-    });
-
-    AppCache.invalidate(`changeset_${operation}`);
-
-    if (isDeleteMode) {
-      setDeleteSelection((sel) => {
-        res.updatedPaths.forEach((p) => sel.remove(p));
-        return sel;
+    try {
+      const res = await API.updateChangeSet({
+        operation,
+        path,
+        addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
       });
-      setDeleteCount((count) => count + res.messageCount);
-    } else {
-      setMarkReadSelection((sel) => {
-        res.updatedPaths.forEach((p) => sel.remove(p));
-        return sel;
-      });
-      setMarkReadCount((count) => count + res.messageCount);
+      
+      console.log({ addLeafRes: res });
+
+      // if the backend didn't detect a diff from this operation,
+      // the frontend cache is likely stale, so clear it
+      if (res.updatedPaths.length == 0) {
+        AppCache.invalidate(`changeset_${operation}`);
+        return;
+      }
+
+      if (isDeleteMode) {
+        setDeleteSelection((sel) => {
+          res.updatedPaths.forEach((p) => sel.remove(p));
+          return sel;
+        });
+        setDeleteCount((count) => count + res.messageCount);
+      } else {
+        setMarkReadSelection((sel) => {
+          res.updatedPaths.forEach((p) => sel.remove(p));
+          return sel;
+        });
+        setMarkReadCount((count) => count + res.messageCount);
+      }
+      
+    } catch (error) {
+      console.log({ removeLeafError: error });
     }
   };
 
