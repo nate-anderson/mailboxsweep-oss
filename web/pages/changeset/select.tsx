@@ -193,6 +193,8 @@ export default function Select() {
         if (apiError.status !== 404) {
           setError(apiError.message);
         }
+      } else {
+        console.log({ getChangesetError: error });
       }
     });
   }
