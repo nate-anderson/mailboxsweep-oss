@@ -29,6 +29,7 @@ import debounce from "debounce";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
 import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 /*
 @TODO/note:
@@ -45,6 +46,7 @@ function ToggleModeSwitch(props: {
   setIsDeleteMode: (v: boolean) => void;
   numSelected: number;
   onClickSubmit: (isDeleteMode: boolean) => void;
+  isLoading: boolean;
 }) {
   return (
     <AppBar position="fixed" color="default" sx={{ top: "auto", bottom: 0 }}>
@@ -55,17 +57,18 @@ function ToggleModeSwitch(props: {
           backgroundColor: props.isDeleteMode ? "#ffd4d4" : "white",
         }}
       >
-        <Button
+        <LoadingButton
           variant="contained"
           size="small"
           color={props.isDeleteMode ? "error" : undefined}
           disabled={props.numSelected <= 0}
           onClick={() => props.onClickSubmit(props.isDeleteMode)}
+          loading={props.isLoading}
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()}`
             : `Mark ${props.numSelected.toLocaleString()} read`}
-        </Button>
+        </LoadingButton>
         <Stack direction="row" alignItems="center">
           <IconMarkRead
             style={{ color: props.isDeleteMode ? undefined : "#1976d2" }}
@@ -186,6 +189,7 @@ export default function Select() {
 
   const [isLoadingClassificationSummary, setIsLoadingClassificationSummary] = useState(false);
   const [isLoadingSelection, setIsLoadingSelection] = useState(false);
+  const [isLoadingSelectionChange, setIsLoadingSelectionChange] = useState(false);
 
   const router = useRouter();
   const API = useAPIClient();
@@ -202,6 +206,8 @@ export default function Select() {
     const operation = isDeleteMode
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
+
+    setIsLoadingSelectionChange(true);
 
     // temporarily add this exact path to the delete selection for optimistic UI
     // when the API returns the leaf paths, remove this path and replace it with
@@ -236,8 +242,12 @@ export default function Select() {
         // remove intermediate path
         setMarkReadSelection((sel) => sel.remove(path));
       }
-    }).catch((error)=>{
+    })
+    .catch((error)=>{
       console.log({ addLeafError: error });
+    })
+    .finally(() => {
+      setIsLoadingSelectionChange(false);
     });
   };
 
@@ -253,6 +263,8 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
     
+    setIsLoadingSelectionChange(true);
+
     // temporarily add this exact path to the exclude set for optimistic UI
     // when the API returns the leaf paths, remove this path and replace it with
     // those
@@ -287,6 +299,9 @@ export default function Select() {
     })
     .catch((error) => {
       console.log({ removeLeafError: error });
+    })
+    .finally(() => {
+      setIsLoadingSelectionChange(false);
     });
   };
 
@@ -312,12 +327,14 @@ export default function Select() {
       .then((classificationRes) => {
         setClassificationRoot(new ClassificationTree(classificationRes.classification));
         setTotalPages(classificationRes.pageCount);
-      }).catch((error) => {
+      })
+      .catch((error) => {
         if (error instanceof ApiError) {
           const apiError = error as ApiError;
           setError(apiError.message);
         }
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingClassificationSummary(false);
       });
       
@@ -330,7 +347,8 @@ export default function Select() {
         setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
         setMarkReadCount(changesetRes.size);
       }
-    }).catch((error) => {
+    })
+    .catch((error) => {
       if (error instanceof ApiError) {
         const apiError = error as ApiError;
         // 404 means no selection has been stored 
@@ -338,7 +356,8 @@ export default function Select() {
           setError(apiError.message);
         }
       }
-    }).finally(() => {
+    })
+    .finally(() => {
       setIsLoadingSelection(false);
     })
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -466,6 +485,7 @@ export default function Select() {
           isDeleteMode={isDeleteMode}
           setIsDeleteMode={debouncedSetIsDeleteMode}
           numSelected={isDeleteMode ? deleteCount : markReadCount}
+          isLoading={isLoadingSelectionChange}
         />
       </>
     </PrivatePage>
