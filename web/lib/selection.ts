@@ -7,12 +7,18 @@ export class Selection {
 
   public add(path: string[]): Selection {
     this.internal.add(JSON.stringify(path));
-    return this;
+
+    // returning a new object means the useState setter will cause a rerender
+    const n = new Selection([]);
+    n.internal = this.internal;
+    return n;
   }
 
   public remove(path: string[]): Selection {
     this.internal.delete(JSON.stringify(path));
-    return this;
+    const n = new Selection([]);
+    n.internal = this.internal;
+    return n;
   }
 
   public has(path: string[]): boolean {
