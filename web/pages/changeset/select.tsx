@@ -203,33 +203,42 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
 
-    try {
-      const res = await API.updateChangeSet({
-        operation,
-        path,
-        addOrRemove: ChangeSetRequest.addOrRemove.ADD,
-      });
-    
-      console.log({ addLeafRes: res });
+    // temporarily add this exact path to the delete selection for optimistic UI
+    // when the API returns the leaf paths, remove this path and replace it with
+    // those
+    if (isDeleteMode) {
+      setDeleteSelection((sel) => sel.add(path));
+    } else {
+      setMarkReadSelection((sel) => sel.add(path));
+    }
 
+    API.updateChangeSet({
+      operation,
+      path,
+      addOrRemove: ChangeSetRequest.addOrRemove.ADD,
+    }).then((res) => {
       if (isDeleteMode) {
-        console.log("modifying delete set");
         setDeleteSelection((sel) => {
-          res.updatedPaths.forEach((path) => sel.add(path));
+          res.updatedPaths.forEach((p) => sel.add(p));
           return sel;
         });
         setDeleteCount((count) => count + res.messageCount);
+
+        // remove intermediate path
+        setDeleteSelection((sel) => sel.remove(path));
       } else {
-        console.log("modifying mark read set")
         setMarkReadSelection((sel) => {
-          res.updatedPaths.forEach((path) => sel.add(path));
+          res.updatedPaths.forEach((p) => sel.add(p));
           return sel;
         });
         setMarkReadCount((count) => count + res.messageCount);
+
+        // remove intermediate path
+        setMarkReadSelection((sel) => sel.remove(path));
       }
-    } catch (error) {
+    }).catch((error)=>{
       console.log({ addLeafError: error });
-    }
+    });
   };
 
   const getSelection = (): Selection => {
@@ -244,32 +253,41 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
     
-    try {
-      const res = await API.updateChangeSet({
-        operation,
-        path,
-        addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
-      });
+    // temporarily add this exact path to the exclude set for optimistic UI
+    // when the API returns the leaf paths, remove this path and replace it with
+    // those
+    if (isDeleteMode) {
+      setDeleteSelection((sel) => sel.optimisticExclude(path));
+    } else {
+      setMarkReadSelection((sel) => sel.optimisticExclude(path));
+    }
 
-      console.log({ addLeafRes: res });
-
+    API.updateChangeSet({
+      operation,
+      path,
+      addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
+    }).then((res) => {
       if (isDeleteMode) {
         setDeleteSelection((sel) => {
-          res.updatedPaths.forEach((p) => sel.remove(p));
-          return sel;
+          // remove optimistic exclude
+          const updated = sel.clearOptimisticExclude(path);
+          res.updatedPaths.forEach((p) => updated.remove(p));
+          return updated;
         });
         setDeleteCount((count) => count + res.messageCount);
       } else {
         setMarkReadSelection((sel) => {
-          res.updatedPaths.forEach((p) => sel.remove(p));
-          return sel;
+          //  remove optimistic exclude
+          const updated = sel.clearOptimisticExclude(path);
+          res.updatedPaths.forEach((p) => updated.remove(p));
+          return updated;
         });
         setMarkReadCount((count) => count + res.messageCount);
       }
-      
-    } catch (error) {
+    })
+    .catch((error) => {
       console.log({ removeLeafError: error });
-    }
+    });
   };
 
   useEffect(() => {
