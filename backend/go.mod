@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.22.0
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.3
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.4
 	github.com/aws/aws-xray-sdk-go v1.8.1
 	github.com/aws/smithy-go v1.13.5
 	github.com/deepmap/oapi-codegen v1.12.4
