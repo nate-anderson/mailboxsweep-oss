@@ -75,6 +75,8 @@ type workerConfig struct {
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
 	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
+
+	ClassifySelectURL string `fig:"CLASSIFY_SELECT_URL"`
 }
 
 func main() {
@@ -243,6 +245,7 @@ func main() {
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
 		userService,
+		cfg.ClassifySelectURL,
 	)
 
 	log.Fatal(w.Work())

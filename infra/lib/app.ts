@@ -139,6 +139,7 @@ export class AppStack extends cdk.Stack {
 
             // Login
             BASE_URL: `https://${webUrl}/login/token`,
+            CLASSIFY_SELECT_URL: `https://${webUrl}/changeset/select`,
 
             // DB
             DYNAMODB_REGION: "us-west-2",

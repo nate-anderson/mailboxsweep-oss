@@ -30,6 +30,8 @@ type Worker struct {
 	emailSender              email.Sender
 	classifyCompleteTemplate string
 	inboxUserService         inboxuser.Service
+
+	changesetSelectURL string
 }
 
 func NewWorker(
@@ -42,6 +44,7 @@ func NewWorker(
 	emailSender email.Sender,
 	classifyCompleteTemplate string,
 	inboxUserService inboxuser.Service,
+	changesetSelectURL string,
 ) *Worker {
 	return &Worker{
 		log,
@@ -53,6 +56,7 @@ func NewWorker(
 		emailSender,
 		classifyCompleteTemplate,
 		inboxUserService,
+		changesetSelectURL,
 	}
 }
 
@@ -169,7 +173,8 @@ func (w Worker) Work() error {
 
 			if w.emailSender != nil {
 				if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
-					"greeting": greeting,
+					"greeting":       greeting,
+					"changeset_link": w.changesetSelectURL,
 				}); err != nil {
 					w.log.
 						WithField("address", body.Address).

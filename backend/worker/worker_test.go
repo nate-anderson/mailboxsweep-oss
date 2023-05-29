@@ -214,7 +214,7 @@ func TestWorker(t *testing.T) {
 
 	emailSender := email.TestSender{}
 	completeTemplate := "test_complete_template"
-	wrk := NewWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService, &emailSender, completeTemplate, userService)
+	wrk := NewWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService, &emailSender, completeTemplate, userService, "localhost")
 
 	go func() {
 		err = wrk.Work()
