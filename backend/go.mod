@@ -24,7 +24,7 @@ require (
 	github.com/stripe/stripe-go/v74 v74.3.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	golang.org/x/oauth2 v0.8.0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.116.0
 	gopkg.in/yaml.v2 v2.4.0
