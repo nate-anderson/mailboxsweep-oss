@@ -7,11 +7,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.25
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.25
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.15.3
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.17
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.3
 	github.com/aws/smithy-go v1.13.5
+	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/emersion/go-imap v1.2.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
@@ -33,23 +34,22 @@ require (
 	cloud.google.com/go/compute v1.19.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.9 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.24 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.33 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.27 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.34 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.17 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.20 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.28 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.27 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.27 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
-	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
