@@ -45,7 +45,7 @@ func (c PaymentController) GetPaymentStatus(w http.ResponseWriter, req *http.Req
 	}
 
 	resBody := UserPaymentStatus{
-		Plan: Plan{
+		Plan: &Plan{
 			AllowedScans: plan.AllowedScans,
 			Description:  plan.Description,
 			DisplayName:  plan.DisplayName,

@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ApiError, ClassificationStatus } from "../client-gen";
+import { ApiError, ClassificationStatus, Plan } from "../client-gen";
 import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
@@ -15,6 +15,7 @@ import Link from "next/link";
 import Button from "@mui/material/Button";
 import IconChevronRight from "@mui/icons-material/ChevronRight";
 import PrivatePage from "../auth";
+import { format, parseISO } from "date-fns";
 
 function ActionLink(props: {
   color: string;
@@ -169,6 +170,8 @@ export default function Home() {
   const [classificationStatus, setClassificationStatus] = useState<
     ClassificationStatus.status | undefined
   >();
+  const [subscribedPlan, setSubscribedPlan] = useState<Plan | undefined>();
+  const [planExpires, setPlanExpires] = useState<string | undefined>();
 
   const API = useAPIClient();
 
@@ -201,9 +204,31 @@ export default function Home() {
         if (err instanceof ApiError) {
           const e = err as ApiError;
           setErrorMessage(e.message);
+        } else {
+          console.log(err);
         }
       });
-  }, [API, setErrorMessage]);
+
+    API.getPaymentStatus()
+      .then((res) => {
+        if (res.plan) {
+          setSubscribedPlan(res.plan);
+        }
+        if (res.validUntil) {
+          // 2023-06-28T00:43:25-07:00
+          const expires = parseISO(res.validUntil);
+          setPlanExpires(format(expires, `MM/dd/yyyy`));
+        }
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          const e = err as ApiError;
+          setErrorMessage(e.message);
+        } else {
+          console.log(err);
+        }
+      })
+  }, []);
 
   return (
     <PrivatePage>
@@ -268,38 +293,41 @@ export default function Home() {
               marginX: "auto",
             }}
           >
-            <CardContent>
-              <Typography
-                sx={{
-                  color: "var(--color-gray)",
-                }}
-              >
-                Your plan
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: "1.6em",
-                  color: "var(--color-primary)",
-                }}
-              >
-                Mailboxsweep
-              </Typography>
-              <Typography
-                sx={{
-                  marginTop: 1,
-                  color: "var(--color-gray)",
-                }}
-              >
-                Expires 12/15/2023
-              </Typography>
-              <Typography
-                sx={{
-                  color: "var(--color-accent)",
-                }}
-              >
-                120k messages deleted
-              </Typography>
-            </CardContent>
+            {subscribedPlan
+              ? <CardContent>
+                  <Typography
+                    sx={{
+                      color: "var(--color-gray)",
+                    }}
+                  >
+                    Your plan
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "1.6em",
+                      color: "var(--color-primary)",
+                    }}
+                  >
+                    {subscribedPlan?.displayName}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      marginTop: 1,
+                      color: "var(--color-gray)",
+                    }}
+                  >
+                    Expires {planExpires}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: "var(--color-accent)",
+                    }}
+                  >
+                    120k messages deleted
+                  </Typography>
+                </CardContent>
+              : <></>
+            }
 
             {/* If scan is complete, link to scan inside the inbox
                       card with a big "Continue ->" button or similar */}
