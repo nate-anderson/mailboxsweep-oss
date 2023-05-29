@@ -107,7 +107,6 @@ export default function CompleteProfile() {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    autoFocus={nameFirst === ""}
                     label="First Name"
                     required
                     fullWidth

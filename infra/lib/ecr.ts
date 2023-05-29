@@ -12,7 +12,7 @@ export class RepositoryStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
-        const serverRepoName = `mailboxsweep-server`;
+        const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = new ECR.Repository(this, serverRepoName, {
             repositoryName: serverRepoName,
             lifecycleRules: [
@@ -28,7 +28,7 @@ export class RepositoryStack extends cdk.Stack {
         this.serverRepo = serverRepo;
         this.serverRepoArn = serverRepo.repositoryArn;
 
-        const workerRepoName = `mailboxsweep-worker`;
+        const workerRepoName = `mailboxsweep-worker-${props.environmentName}`;
         const workerRepo = new ECR.Repository(this, workerRepoName, {
             repositoryName: workerRepoName,
             lifecycleRules: [

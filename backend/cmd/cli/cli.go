@@ -393,7 +393,7 @@ var gmailMessageSummary = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		redirectURL := "https://localhost:3001/login-gmail"
+		redirectURL := "https://localhost:3001/login/gmail"
 		gmailLoginService := login.NewGmailLoginService(tokenRepo, credentialService, inboxUserService, cfg.GoogleClientID, cfg.GoogleClientSecret, redirectURL)
 
 		config := oauth2.Config{

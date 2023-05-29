@@ -9,9 +9,7 @@ import { useSnackbar } from "../../components/snackbar";
 import {
   ApiError,
   ChangeSetRequest,
-  ChangeSetResponse,
   Classification,
-  ClassificationResponse,
   UpdateOperation,
 } from "../../client-gen";
 import IconDeleteForever from "@mui/icons-material/DeleteForever";
@@ -29,14 +27,26 @@ import Button from "@mui/material/Button";
 import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
-import * as AppCache from "../../lib/cache";
 import PrivatePage from "../../auth";
+import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "@mui/lab/LoadingButton";
+
+/*
+@TODO/note:
+Client-side caching is not the right tool to achieve smoothness and speed here.
+The risk of the frontend and backend getting out of sync is too high.
+Instead: 
+- Loading animations
+- Optimistic UI updates when adding and removing leaves
+- No caching
+*/
 
 function ToggleModeSwitch(props: {
   isDeleteMode: boolean;
   setIsDeleteMode: (v: boolean) => void;
   numSelected: number;
   onClickSubmit: (isDeleteMode: boolean) => void;
+  isLoading: boolean;
 }) {
   return (
     <AppBar position="fixed" color="default" sx={{ top: "auto", bottom: 0 }}>
@@ -47,17 +57,18 @@ function ToggleModeSwitch(props: {
           backgroundColor: props.isDeleteMode ? "#ffd4d4" : "white",
         }}
       >
-        <Button
+        <LoadingButton
           variant="contained"
           size="small"
           color={props.isDeleteMode ? "error" : undefined}
           disabled={props.numSelected <= 0}
           onClick={() => props.onClickSubmit(props.isDeleteMode)}
+          loading={props.isLoading}
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()}`
             : `Mark ${props.numSelected.toLocaleString()} read`}
-        </Button>
+        </LoadingButton>
         <Stack direction="row" alignItems="center">
           <IconMarkRead
             style={{ color: props.isDeleteMode ? undefined : "#1976d2" }}
@@ -145,6 +156,19 @@ function List(props: ListProps) {
   );
 }
 
+function LoadingSpinner() {
+  return <Box
+    sx={{
+      marginTop: "25vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+    }}
+  >
+    <CircularProgress />
+  </Box>
+}
+
 export default function Select() {
   const [classificationRoot, setClassificationRoot] = useState<
     ClassificationTree | undefined
@@ -162,7 +186,14 @@ export default function Select() {
 
   const [deleteSelection, setDeleteSelection] = useState(new Selection([]));
   const [markReadSelection, setMarkReadSelection] = useState(new Selection([]));
-  const router = useRouter()
+
+  const [isLoadingClassificationSummary, setIsLoadingClassificationSummary] = useState(false);
+  const [isLoadingSelection, setIsLoadingSelection] = useState(false);
+  const [isLoadingSelectionChange, setIsLoadingSelectionChange] = useState(false);
+
+  const router = useRouter();
+  const API = useAPIClient();
+
 
   const navigateDownward = (key: string | undefined) => {
     if (key) {
@@ -171,34 +202,53 @@ export default function Select() {
     return setCurrentPath([]);
   };
 
-  const API = useAPIClient();
-
   const addLeaf = async (path: string[]) => {
     const operation = isDeleteMode
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
 
-    const res = await API.updateChangeSet({
+    setIsLoadingSelectionChange(true);
+
+    // temporarily add this exact path to the delete selection for optimistic UI
+    // when the API returns the leaf paths, remove this path and replace it with
+    // those
+    if (isDeleteMode) {
+      setDeleteSelection((sel) => sel.add(path));
+    } else {
+      setMarkReadSelection((sel) => sel.add(path));
+    }
+
+    API.updateChangeSet({
       operation,
       path,
       addOrRemove: ChangeSetRequest.addOrRemove.ADD,
+    }).then((res) => {
+      if (isDeleteMode) {
+        setDeleteSelection((sel) => {
+          res.updatedPaths.forEach((p) => sel.add(p));
+          return sel;
+        });
+        setDeleteCount((count) => count + res.messageCount);
+
+        // remove intermediate path
+        setDeleteSelection((sel) => sel.remove(path));
+      } else {
+        setMarkReadSelection((sel) => {
+          res.updatedPaths.forEach((p) => sel.add(p));
+          return sel;
+        });
+        setMarkReadCount((count) => count + res.messageCount);
+
+        // remove intermediate path
+        setMarkReadSelection((sel) => sel.remove(path));
+      }
+    })
+    .catch((error)=>{
+      console.log({ addLeafError: error });
+    })
+    .finally(() => {
+      setIsLoadingSelectionChange(false);
     });
-
-    AppCache.invalidate(`changeset_${operation}`);
-
-    if (isDeleteMode) {
-      setDeleteSelection((sel) => {
-        res.updatedPaths.forEach((path) => sel.add(path));
-        return sel;
-      });
-      setDeleteCount((count) => count + res.messageCount);
-    } else {
-      setMarkReadSelection((sel) => {
-        res.updatedPaths.forEach((path) => sel.add(path));
-        return sel;
-      });
-      setMarkReadCount((count) => count + res.messageCount);
-    }
   };
 
   const getSelection = (): Selection => {
@@ -213,27 +263,46 @@ export default function Select() {
     ? UpdateOperation.DELETE
     : UpdateOperation.MARK_READ;
     
-    const res = await API.updateChangeSet({
+    setIsLoadingSelectionChange(true);
+
+    // temporarily add this exact path to the exclude set for optimistic UI
+    // when the API returns the leaf paths, remove this path and replace it with
+    // those
+    if (isDeleteMode) {
+      setDeleteSelection((sel) => sel.optimisticExclude(path));
+    } else {
+      setMarkReadSelection((sel) => sel.optimisticExclude(path));
+    }
+
+    API.updateChangeSet({
       operation,
       path,
       addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
+    }).then((res) => {
+      if (isDeleteMode) {
+        setDeleteSelection((sel) => {
+          // remove optimistic exclude
+          const updated = sel.clearOptimisticExclude(path);
+          res.updatedPaths.forEach((p) => updated.remove(p));
+          return updated;
+        });
+        setDeleteCount((count) => count + res.messageCount);
+      } else {
+        setMarkReadSelection((sel) => {
+          //  remove optimistic exclude
+          const updated = sel.clearOptimisticExclude(path);
+          res.updatedPaths.forEach((p) => updated.remove(p));
+          return updated;
+        });
+        setMarkReadCount((count) => count + res.messageCount);
+      }
+    })
+    .catch((error) => {
+      console.log({ removeLeafError: error });
+    })
+    .finally(() => {
+      setIsLoadingSelectionChange(false);
     });
-
-    AppCache.invalidate(`changeset_${operation}`);
-
-    if (isDeleteMode) {
-      setDeleteSelection((sel) => {
-        res.updatedPaths.forEach((p) => sel.remove(p));
-        return sel;
-      });
-      setDeleteCount((count) => count + res.messageCount);
-    } else {
-      setMarkReadSelection((sel) => {
-        res.updatedPaths.forEach((p) => sel.remove(p));
-        return sel;
-      });
-      setMarkReadCount((count) => count + res.messageCount);
-    }
   };
 
   useEffect(() => {
@@ -253,23 +322,24 @@ export default function Select() {
 
     const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
 
-    AppCache.asyncCache<ClassificationResponse>(
-      () => API.getClassificationSummary(requestPage),
-      `classification_summary_${requestPage}`
-    ).then((classificationRes) => {
-      setClassificationRoot(new ClassificationTree(classificationRes.classification));
-      setTotalPages(classificationRes.pageCount);
-    }).catch((error) => {
-      if (error instanceof ApiError) {
-        const apiError = error as ApiError;
-        setError(apiError.message);
-      }
-    });
-
-    AppCache.asyncCache<ChangeSetResponse>(
-      () => API.getChangeset(updateOperation),
-      `changeset_${updateOperation}`
-    ).then((changesetRes) => {
+    setIsLoadingClassificationSummary(true);
+    API.getClassificationSummary(requestPage)
+      .then((classificationRes) => {
+        setClassificationRoot(new ClassificationTree(classificationRes.classification));
+        setTotalPages(classificationRes.pageCount);
+      })
+      .catch((error) => {
+        if (error instanceof ApiError) {
+          const apiError = error as ApiError;
+          setError(apiError.message);
+        }
+      })
+      .finally(() => {
+        setIsLoadingClassificationSummary(false);
+      });
+      
+    setIsLoadingSelection(true);
+    API.getChangeset(updateOperation).then((changesetRes) => {
       if (isDeleteMode) {
         setDeleteSelection(new Selection(changesetRes.changeSet.paths));
         setDeleteCount(changesetRes.size);
@@ -277,7 +347,8 @@ export default function Select() {
         setMarkReadSelection(new Selection(changesetRes.changeSet.paths));
         setMarkReadCount(changesetRes.size);
       }
-    }).catch((error) => {
+    })
+    .catch((error) => {
       if (error instanceof ApiError) {
         const apiError = error as ApiError;
         // 404 means no selection has been stored 
@@ -285,6 +356,9 @@ export default function Select() {
           setError(apiError.message);
         }
       }
+    })
+    .finally(() => {
+      setIsLoadingSelection(false);
     })
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestPage, isDeleteMode, router.isReady, router.query, router]);
@@ -318,87 +392,91 @@ export default function Select() {
               alignItems: "center",
             }}
           >
-            <Box
-              sx={{
-                maxWidth: 600,
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Crumbs
-                currentPath={currentPath}
-                onClickBack={() => {
-                  setSlideBackward(true);
-                  setCurrentPath(currentPath.slice(0, -1));
-                }}
-                title={selectedClassification?.label}
-                typeKey={selectedClassification?.typeKey}
-              />
-              {currentPath.length == 0 ? (
-                <Typography
-                  align="center"
-                  sx={{
-                    marginY: 1,
-                    marginX: 1,
-                    color: "var(--color-gray)",
-                    maxWidth: 600,
-                  }}
-                >
-                  Select a category to update all messages in that group, or
-                  expand the category to make specific selections.
-                </Typography>
-              ) : undefined}
-            </Box>
-            <Box
-              sx={{
-                marginBottom: 2,
-                maxWidth: 600,
-                width: "auto",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <List
-                selected={selectedClassification}
-                appendSelectedLeaf={addLeaf}
-                removeSelectedLeaf={removeLeaf}
-                navigate={navigateDownward}
-                slideBackward={slideBackward}
-                setSlideBackward={setSlideBackward}
-                pathPrefix={currentPath}
-                classificationTree={classificationRoot}
-                selectedNodes={getSelection()}
-              />
-
+            { isLoadingClassificationSummary || isLoadingSelection
+              ? <LoadingSpinner />
+              :  <>
               <Box
-                display="flex"
-                justifyContent="center"
                 sx={{
-                  width: "90vw",
-                  maxWidth: "600px",
-                  marginBottom: 6,
+                  maxWidth: 600,
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
-                {currentPath.length <= 0 ? (
-                  <Pagination
-                    size="small"
-                    page={requestPage + 1}
-                    count={totalPages}
-                    onChange={(_, page) => setRequestPage(page - 1)}
+                <Crumbs
+                  currentPath={currentPath}
+                  onClickBack={() => {
+                    setSlideBackward(true);
+                    setCurrentPath(currentPath.slice(0, -1));
+                  }}
+                  title={selectedClassification?.label}
+                  typeKey={selectedClassification?.typeKey}
+                />
+                {currentPath.length == 0 ? (
+                  <Typography
+                    align="center"
                     sx={{
-                      marginY: 3,
-                      // hack to make it fit on small phone screens
-                      marginX: -1,
+                      marginY: 1,
+                      marginX: 1,
+                      color: "var(--color-gray)",
+                      maxWidth: 600,
                     }}
-                  />
-                ) : (
-                  <></>
-                )}
+                  >
+                    Select a category to update all messages in that group, or
+                    expand the category to make specific selections.
+                  </Typography>
+                ) : undefined}
               </Box>
-            </Box>
+              <Box
+                sx={{
+                  marginBottom: 2,
+                  maxWidth: 600,
+                  width: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <List
+                  selected={selectedClassification}
+                  appendSelectedLeaf={addLeaf}
+                  removeSelectedLeaf={removeLeaf}
+                  navigate={navigateDownward}
+                  slideBackward={slideBackward}
+                  setSlideBackward={setSlideBackward}
+                  pathPrefix={currentPath}
+                  classificationTree={classificationRoot}
+                  selectedNodes={getSelection()}
+                />
+
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  sx={{
+                    width: "90vw",
+                    maxWidth: "600px",
+                    marginBottom: 6,
+                  }}
+                >
+                  {currentPath.length <= 0 ? (
+                    <Pagination
+                      size="small"
+                      page={requestPage + 1}
+                      count={totalPages}
+                      onChange={(_, page) => setRequestPage(page - 1)}
+                      sx={{
+                        marginY: 3,
+                        // hack to make it fit on small phone screens
+                        marginX: -1,
+                      }}
+                    />
+                  ) : (
+                    <></>
+                  )}
+                </Box>
+              </Box>
+            </> }
           </Box>
         </Container>
 
@@ -407,6 +485,7 @@ export default function Select() {
           isDeleteMode={isDeleteMode}
           setIsDeleteMode={debouncedSetIsDeleteMode}
           numSelected={isDeleteMode ? deleteCount : markReadCount}
+          isLoading={isLoadingSelectionChange}
         />
       </>
     </PrivatePage>

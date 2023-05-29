@@ -22,15 +22,13 @@ import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudwatchDashboard } from './cloudwatch-dashboard';
+import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
     clusterInstanceType: string;
 };
-
-const baseUrl = "mailboxsweep.com";
-const latestTag = 'latest';
 
 const Port = {
     HTTPS: 443,
@@ -44,10 +42,10 @@ export class AppStack extends cdk.Stack {
         const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
         const queues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
 
-        const serverRepoName = `mailboxsweep-server`;
+        const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = ECR.Repository.fromRepositoryName(this, serverRepoName, serverRepoName);
 
-        const workerRepoName = `mailboxsweep-worker`;
+        const workerRepoName = `mailboxsweep-worker-${props.environmentName}`;
         const workerRepo = ECR.Repository.fromRepositoryName(this, workerRepoName, workerRepoName);
 
         const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, `hosted-zone`, {
@@ -140,7 +138,8 @@ export class AppStack extends cdk.Stack {
             MINUTES_BETWEEN_CLOSED_REQUESTS: "10",
 
             // Login
-            BASE_URL: `https://${webUrl}/login-token`,
+            BASE_URL: `https://${webUrl}/login/token`,
+            CLASSIFY_SELECT_URL: `https://${webUrl}/changeset/select`,
 
             // DB
             DYNAMODB_REGION: "us-west-2",
@@ -159,20 +158,21 @@ export class AppStack extends cdk.Stack {
 
             SES_REGION: "us-west-2",
             SES_LOGIN_EMAIL_TEMPLATE_NAME: "mailboxsweep_login_link",
+            SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME: "mailboxsweep_classify_complete",
 
             // Sessions & cookies
             COOKIE_DOMAIN: webUrl,
             SESSION_KEY_LENGTH: "30",
             COOKIE_PATH: "/",
             LOGIN_LINK_DURATION_MINUTES: "10",
-            SESSION_DURATION_MINUTES: "180",
+            SESSION_DURATION_MINUTES: "1440",
 
             // Stripe
             PAYMENT_ACCESS_DURATION_DAYS: "30",
             STRIPE_PAYMENT_CONFIRMATION_URL: `https://${webUrl}/plan/payment-success?checkoutSessionId={CHECKOUT_SESSION_ID}`,
             STRIPE_CHECKOUT_SESSION_DURATION_MINUTES: "30",
 
-            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login-gmail`
+            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`
 
             // Secrets that need to come from SSM
             // GOOGLE_OAUTH_CLIENT_ID
@@ -182,17 +182,25 @@ export class AppStack extends cdk.Stack {
             // SIGNING_KEY
         };
 
+        // environment-specific "latest" tag for ECR images
+        const latestTag = `latest`;
+        const serverLogGroup = new AWSLogs.LogGroup(this, `server-logs`, {
+            logGroupName: `mailboxsweep-server-${props.environmentName}`,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            retention: AWSLogs.RetentionDays.ONE_YEAR,
+        });
+
         const serverContainer = serverTaskDefinition.addContainer('ServerContainer', {
             image: ContainerImage.fromEcrRepository(serverRepo, latestTag),
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "e",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-server",
-                logRetention: AWSLogs.RetentionDays.ONE_YEAR,
+                logGroup: serverLogGroup,
             }),
             portMappings: [
                 {
@@ -232,9 +240,15 @@ export class AppStack extends cdk.Stack {
         });
         serverTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
 
-        const workerTaskId = `worker-task-${props.environmentName}`
+        const workerTaskId = `worker-task`;
         const workerTaskDefinition = new ECS.TaskDefinition(this, workerTaskId, {
             compatibility: ECS.Compatibility.EC2,
+        });
+
+        const workerLogGroup = new AWSLogs.LogGroup(this, `worker-logs`, {
+            logGroupName: `mailboxsweep-worker-${props.environmentName}`,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            retention: AWSLogs.RetentionDays.ONE_YEAR,
         });
 
         workerTaskDefinition.addContainer('WorkerContainer', {
@@ -242,17 +256,17 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "e",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-worker",
-                logRetention: AWSLogs.RetentionDays.ONE_YEAR,
+                logGroup: workerLogGroup,
             })
         });
         workerTaskDefinition.taskRole.attachInlinePolicy(readSSMPolicy);
 
-        const workerServiceId = `worker-service-${props.environmentName}`;
+        const workerServiceId = `worker-service`;
         const workerService = new ECS.Ec2Service(this, workerServiceId, {
             cluster,
             taskDefinition: workerTaskDefinition,
@@ -306,6 +320,94 @@ export class AppStack extends cdk.Stack {
         });
         securityGroup.addIngressRule(EC2.Peer.ipv4('0.0.0.0/0'), EC2.Port.tcp(Port.HTTP));
 
+        const managedRules: WAF.CfnWebACL.RuleProperty[] = [
+            // AWS IP Reputation list includes known malicious actors/bots and is regularly updated    
+            {
+                name: 'AWS-AWSManagedRulesAmazonIpReputationList',
+                priority: 10,
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesAmazonIpReputationList',
+                    },
+                },
+                overrideAction: {
+                    none: {},
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRulesAmazonIpReputationList',
+                },
+            },
+            
+            // Common Rule Set aligns with major portions of OWASP Core Rule Set    
+            {
+                name: 'AWS-AWSManagedRulesCommonRuleSet',
+                priority: 20,
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesCommonRuleSet',
+                    // Excluding generic RFI body rule for sns notifications
+                    // https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
+                      excludedRules: [
+                       { name: 'GenericRFI_BODY' },
+                       { name: 'SizeRestrictions_BODY' },
+                       { name: 'SizeRestrictions_URIPATH' },
+                    ],
+                    },
+                },
+                overrideAction: {
+                    none: {},
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWS-AWSManagedRulesCommonRuleSet',
+                },
+            },
+            // Blocks common SQL Injection
+            {
+                name: 'AWSManagedRulesSQLiRuleSet',
+                priority: 30,
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRulesSQLiRuleSet',
+                },
+                overrideAction: {
+                    none: {},
+                },
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesSQLiRuleSet',
+                    excludedRules: [],
+                    },
+                },
+            },
+            // Blocks attacks targeting LFI(Local File Injection) for linux systems
+            {
+                name: 'AWSManagedRuleLinux',
+                priority: 50,
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: 'AWSManagedRuleLinux',
+                },
+                overrideAction: {
+                    none: {},
+                },
+                statement: {
+                    managedRuleGroupStatement: {
+                    vendorName: 'AWS',
+                    name: 'AWSManagedRulesLinuxRuleSet',
+                    excludedRules: [],
+                    },
+                },
+            },
+        ];
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {
             cluster,
@@ -328,6 +430,26 @@ export class AppStack extends cdk.Stack {
             interval: cdk.Duration.seconds(300),
             healthyThresholdCount: 2,
             unhealthyThresholdCount: 2,
+        });
+        const webAcl = new WAF.CfnWebACL(this, `api-rate-limit`, {
+            defaultAction: {
+                allow: {
+                     
+                }
+            },
+            visibilityConfig: {
+                cloudWatchMetricsEnabled: true,
+                metricName: `${props.environmentName}-waf`,
+                sampledRequestsEnabled: false,
+            },
+            scope: 'REGIONAL',
+            name: `waf-${props.environmentName}`,
+            rules: managedRules,
+        });
+
+        new WAF.CfnWebACLAssociation(this, `web-api-acl`, {
+            resourceArn: loadBalancedAPIService.loadBalancer.loadBalancerArn,
+            webAclArn: webAcl.attrArn,
         });
         
         tableStack.table.grantReadWriteData(serverTaskDefinition.taskRole);
@@ -411,11 +533,13 @@ export class AppStack extends cdk.Stack {
             destinationKeyPrefix: "/",
         });
 
-        new CloudwatchDashboard(this, `dashboard`, {
+        const dashboard = new CloudwatchDashboard(this, `dashboard`, {
             ...props,
             table: tableStack.table,
             queue: queues.queue,
             dlq: queues.dlq,
+            serverLogGroup: serverLogGroup,
+            workerLogGroup: workerLogGroup,
         });
     }
 }

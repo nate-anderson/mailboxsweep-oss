@@ -84,6 +84,9 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 		),
 	)
 
+	c.log.Info("USER-AGENT: ", req.UserAgent())
+	c.log.Infof("HEADERS: %+v\n", req.Header)
+
 	// slow down login spamming
 	time.Sleep(time.Second)
 

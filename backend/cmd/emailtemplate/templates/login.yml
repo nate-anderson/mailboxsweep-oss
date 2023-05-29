@@ -8,15 +8,12 @@ html: >
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
 
-    <body style="background-color: #F6EEE3;">
+    <body>
       <table width="100%" border="0" cellspacing="0" cellpadding="10">
         <tr>
           <td align="center">
-            <h1 style="color:#fa782d; justify-content:center; font-size:1.75em; font-family:Lobster,sans-serif; padding-top:8px; padding-bottom:8px;">
-              MailboxSweep
-            </h1>
+            <img  style="width: 190px; display: block; padding-top:8px; padding-bottom:8px;" src="https://staging.mailboxsweep.com/Logo_text.png">
           </td>
         </tr>
 
@@ -35,6 +32,12 @@ html: >
         <tr>
           <td align="center">
             <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{signin_link}}">Log in</a>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <small style="margin-top: 20px; color: #2795f5; font-family: Roboto, sans-serif; font-weight: bold; font-size: 0.7em;" href="{{signin_link}}">This link will expire at {{expiry_time}}.</small>
           </td>
         </tr>
 

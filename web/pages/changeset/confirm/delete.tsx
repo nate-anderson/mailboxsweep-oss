@@ -10,7 +10,6 @@ import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
 import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
-import * as AppCache from "../../../lib/cache";
 import PrivatePage from "../../../auth";
 
 export default function ConfirmDelete() {
@@ -25,10 +24,7 @@ export default function ConfirmDelete() {
 
 
     useEffect(() => {
-        AppCache.asyncCache<ChangeSetResponse>(
-            () => API.getChangeset(UpdateOperation.DELETE),
-            `changeset_${UpdateOperation.MARK_READ}`,
-        )
+        API.getChangeset(UpdateOperation.DELETE)
         .then((res) => {
             setDeleteChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -46,7 +42,6 @@ export default function ConfirmDelete() {
         })
         .then((res) => {
             showSuccessSnackbar(true);
-            AppCache.clearAll();
         })
         .catch((err) => {
             setError(err as string);

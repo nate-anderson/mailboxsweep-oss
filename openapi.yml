@@ -495,7 +495,6 @@ components:
     UserPaymentStatus:
       type: object
       required:
-        - plan
         - validUntil
       properties:
         plan:
@@ -991,6 +990,20 @@ paths:
           schema:
             type: string
           required: true
+
+  /reauth/gmail:
+    get:
+      operationId: reauthenticateGmail
+      description: reauthenticate Gmail account (requires being logged in to Mailboxsweep)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartLoginResponse"
+        "500":
+          description: Internal server error
 
   /logout:
     get:

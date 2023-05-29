@@ -17,7 +17,6 @@ import (
 )
 
 type GmailProvider struct {
-	client      *gmail.Service
 	oauthConfig *oauth2.Config
 }
 
@@ -69,7 +68,6 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, err
 	}
 
-	p.client = client
 	return &GmailInbox{
 		address: username,
 		client:  client,
@@ -84,7 +82,10 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
-		return fmt.Errorf("failed to check grants for Google token: %w", err)
+		if strings.Contains(err.Error(), `invalid_grant`) {
+			return mailboxsweep.GoogleReauthenticationRequiredError()
+		}
+		return err
 	}
 
 	scopes := strings.Fields(info.Scope)

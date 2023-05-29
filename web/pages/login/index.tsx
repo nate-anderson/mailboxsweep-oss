@@ -1,8 +1,7 @@
-import { API } from "../client";
+import { API } from "../../client";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import TextField from "@mui/material/TextField";
-import Button from "../components/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -10,34 +9,10 @@ import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import { useConstantSnackbar } from "../components/snackbar";
-import ImageLogo from "../components/image-logo";
+import { useConstantSnackbar } from "../../components/snackbar";
+import ImageLogo from "../../components/image-logo";
 import Alert from "@mui/material/Alert";
-
-const submitLogin = async (
-  address: string,
-  setMagicLinkModalOpen: (open: boolean) => void
-) => {
-  try {
-    const res = await API.initiateLogin({
-      address,
-    });
-
-    if (res.ok && !res.redirect) {
-      setMagicLinkModalOpen(true);
-    }
-
-    if (res.ok && res.redirect) {
-      if (!res.redirectUrl) {
-        console.error("Redirect was true, but no URL was provided");
-        return;
-      }
-      window.location.href = res.redirectUrl;
-    }
-  } catch (error) {
-    console.log({ initiateLoginError: error });
-  }
-};
+import LoadingButton from "@mui/lab/LoadingButton";
 
 function StagingWarning(props: { environment: string | undefined }) {
   if (props.environment === "prod") {
@@ -62,6 +37,34 @@ export default function Login() {
     "Please log in to continue.",
     "success"
   );
+  const [isLoading, setIsLoading] = useState(false);
+
+  const submitLogin = async (
+    address: string,
+    setMagicLinkModalOpen: (open: boolean) => void
+  ) => {
+    try {
+      setIsLoading(true);
+      const res = await API.initiateLogin({
+        address,
+      });
+      setIsLoading(false);
+  
+      if (res.ok && !res.redirect) {
+        setMagicLinkModalOpen(true);
+      }
+  
+      if (res.ok && res.redirect) {
+        if (!res.redirectUrl) {
+          console.error("Redirect was true, but no URL was provided");
+          return;
+        }
+        window.location.href = res.redirectUrl;
+      }
+    } catch (error) {
+      console.log({ initiateLoginError: error });
+    }
+  };
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -87,6 +90,10 @@ export default function Login() {
         </DialogContent>
       </Dialog>
       <CssBaseline />
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        submitLogin(email, () => setModalOpen(true))
+      }}>
       <Box
         sx={{
           marginTop: "25vh",
@@ -105,25 +112,32 @@ export default function Login() {
           Log in or sign up
         </Typography>
         <StagingWarning environment={process.env.ENV}/>
-        <TextField
-          label="Email"
-          value={email}
-          onChange={(e) => changeEmail(e.target.value)}
-          sx={{
-            marginX: 20,
-            maxWidth: 300,
-            width: "100%",
-          }}
-        ></TextField>
-        <Button
-          onClick={() => submitLogin(email, () => setModalOpen(true))}
-          sx={{
-            marginY: 3,
-          }}
-        >
-          Sign in
-        </Button>
-      </Box>
+          <TextField
+            label="Email"
+            value={email}
+            onChange={(e) => changeEmail(e.target.value)}
+            sx={{
+              marginX: 20,
+              maxWidth: 300,
+              width: "100%",
+            }}
+          ></TextField>
+          <LoadingButton
+            variant="contained"
+            onClick={() => submitLogin(email, () => setModalOpen(true))}
+            size="large"
+            sx={{
+              marginY: 3,
+              backgroundColor: "var(--color-accent)",
+              color: "white",
+            }}
+            type="submit"
+            loading={isLoading}
+          >
+            Sign in
+          </LoadingButton>
+        </Box>
+      </form>
     </Container>
   );
 }

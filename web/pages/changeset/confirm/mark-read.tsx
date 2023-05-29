@@ -10,7 +10,6 @@ import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
 import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
-import * as AppCache from "../../../lib/cache";
 import PrivatePage from "../../../auth";
 
 export default function ConfirmMarkRead() {
@@ -24,10 +23,7 @@ export default function ConfirmMarkRead() {
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
     useEffect(() => {
-        AppCache.asyncCache<ChangeSetResponse>(
-            () => API.getChangeset(UpdateOperation.MARK_READ),
-            `changeset_${UpdateOperation.MARK_READ}`
-        )
+        API.getChangeset(UpdateOperation.MARK_READ)
         .then((res) => {
             setMarkReadChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -45,7 +41,6 @@ export default function ConfirmMarkRead() {
         })
         .then((res) => {
             showSuccessSnackbar(true);
-            AppCache.clearAll();
         })
         .catch((err) => {
             setError(err as string);
