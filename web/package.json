@@ -20,7 +20,7 @@
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.129",
-    "@mui/material": "^5.11.1",
+    "@mui/material": "^5.13.1",
     "@mui/x-date-pickers": "^5.0.15",
     "@next/font": "13.1.0",
     "currency.js": "^2.0.4",
