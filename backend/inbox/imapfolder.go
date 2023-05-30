@@ -74,9 +74,6 @@ func sanitize(address string) string {
 	return clean
 }
 
-// @TODO: urgent
-// this function is not parsing addresses with < > correctly
-// domain classifier is failing
 func imapToMessage(i imap.Message, folder string) (Message, error) {
 	var sender *imap.Address
 	if len(i.Envelope.Sender) >= 1 {
