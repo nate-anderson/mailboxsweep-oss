@@ -11,16 +11,20 @@ import Avatar from "@mui/material/Avatar";
 import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
 import PrivatePage from "../../../auth";
+import { useRouter } from "next/router";
 
 export default function ConfirmMarkRead() {
     const API = useAPIClient();
     const [ markReadChangeset, setMarkReadChangeset ] = useState<ChangeSet | undefined>();
     const [ selectedCount, setSelectedCount ] = useState<number>(0);
     const [ error, setError ] = useState<string | undefined>();
+    const router = useRouter();
 
     const [ errorSnackbar, showErrorSnackbar ] = useConstantSnackbar('Something went wrong when loading your changeset. No changes have been made to your inbox. Please try again.', 'warning');
     const [ successSnackbar, showSuccessSnackbar ] = useConstantSnackbar('Messages successfully marked read!', 'success');
     const [ isConfirmed, setIsConfirmed ] = useState(false);
+
+    const [ submitIsLoading, setSubmitIsLoading ] = useState(false);
 
     useEffect(() => {
         API.getChangeset(UpdateOperation.MARK_READ)
@@ -35,15 +39,22 @@ export default function ConfirmMarkRead() {
     }, [API, showErrorSnackbar])
     
     const submit = () => {
+        setSubmitIsLoading(true);
         API.commitChangeset({
             confirm: isConfirmed,
             operation: UpdateOperation.MARK_READ,
         })
         .then((res) => {
             showSuccessSnackbar(true);
+            setTimeout(() => {
+                router.push("/home");
+            }, 5000);
         })
         .catch((err) => {
             setError(err as string);
+        })
+        .finally(() => {
+            setSubmitIsLoading(false);
         })
     }
 
@@ -87,6 +98,7 @@ export default function ConfirmMarkRead() {
                     </Typography>
                     <ConfirmBar
                         deleteMode={false}
+                        isLoading={submitIsLoading}
                         confirmButtonEnabled={isConfirmed}
                         onCheckEnabled={setIsConfirmed}
                         label="I'm sure I want to make this change"
