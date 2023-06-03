@@ -1,17 +1,18 @@
 name: Terms and Conditions
 updated: 2023/06/02
 description: Terms and conditions for using Mailboxsweep
-  MAILBOXSWEEP TERMS AND CONDITIONS OF USE
+body: >
+  ## MailboxSweep Terms and Conditions of Use
 
-  PRIVACY POLICY
+  ### Privacy Policy
 
   This agreement defines how Mailboxsweep, LLC (MailboxSweep, "the company") will use the information
   you provide in the course of providing you service, as well as what information we collect, and your
   rights.
 
-  DATA COLLECTED BY MAILBOXSWEEP
+  ### Data collected by MailboxSweep
 
-  Mailboxsweep will collect basic contact information from you (your full name and email address) as well
+  MailboxSweep will collect basic contact information from you (your full name and email address) as well
   as basic information required to collect payment for our service through our payment processing partner,
   such as your address and phone number. You may provide this information to us directly, or we may get
   it when you interact with our partners in the process of using our service (such as if you sign in
@@ -24,9 +25,10 @@ description: Terms and conditions for using Mailboxsweep
   email inbox, such as email senders, subjects, and keywords. This information is only collected for
   the purposes of organizing your inbox and is stored securely. MailboxSweep does not share or sell
   ANY information provided directly by you or used during organizing your inbox with any external
-  parties, to the extent afforded by applicable law.
+  parties, except where required to process your payment or if subpoenaed by a United States court or
+  law enforcement.
 
-  DATA RETENTION
+  ### Data Retention
 
   The basic profile information used to create your account is maintained as long as you have an account
   with MailboxSweep. You may request to have this profile information deleted by emailing support
@@ -39,30 +41,32 @@ description: Terms and conditions for using Mailboxsweep
   offered service, and information used to access your inbox securely, are encrypted with enterprise-
   grade encryption.
 
-  DATA USAGE
+  ### Data Usage
 
   We use the profile information you provide, as well as any information submitted when you complete payment,
   to associate your payment with your account.
 
   We use the inbox credentials you provide to access your email for the sole purpose of helping you
-  organize and clean up your inbox. Your inbox will never be accessed without your explicit consent.
+  organize and clean up your inbox. Your inbox will never be accessed without your consent. By
+  requesting that MailboxSweep organize, delete, or modify your messages, you are consenting to allow
+  our automated systems to access and make changes to your email inbox.
 
-  COOKIES
+  ## Cookies
 
-  MailboxSweep uses cookies to support necessary app functionality and improve your experience using the product.
-  We do not use cookies to track you across other websites, and we do not use third party cookies.
+  MailboxSweep uses cookies and browser storage to support necessary app functionality and improve your
+  experience using the product. We do not use cookies to track you across other websites.
 
-  User Backup Responsibility
+  ## User Backup Responsibility
 
   Mailboxsweep is a powerful tool that can update and delete large numbers of messages. As a
   user of the Mailboxsweep service, the mailbox owner ("you") are responsible for creating
   a comprehensive backup of your email inbox. In the event that use of the Mailboxsweep tool
   results in unwanted changes or deletions from your inbox, your backup will ensure no loss
   of data. Mailboxsweep, LLC is not responsible for loss of data due to use of the Mailboxsweep
-  tool. By agreeing to this notice, you certify that you will create a full backup of your
+  tool. By agreeing to this notice, you agree that you will create a full backup of your
   email inbox before using the Mailboxsweep tool.
 
-  Email Inbox Ownership Agreement
+  ## Email Inbox Ownership Agreement
 
   The use of the Mailboxsweep tool and website is limited strictly to the owner of
   the email inbox. Only the creator of an inbox or a person authorized directly by
@@ -73,7 +77,7 @@ description: Terms and conditions for using Mailboxsweep
   Mailboxsweep accepts no liability for loss due to violation of this agreement.
   If you did not sign up for an inbox yourself, you should not use it with Mailboxsweep.
 
-  Marketing Emails
+  ## Marketing Emails
 
   MailboxSweep would like to send you occasional marketing and promotional emails. We know
   better than anyone how annoying marketing emails can be, so we will only email you a few

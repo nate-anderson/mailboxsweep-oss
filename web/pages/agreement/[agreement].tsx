@@ -15,6 +15,7 @@ import { parseISO, format, formatISO } from "date-fns";
 import { displayFormat } from "../../dates";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import PrivatePage from "../../auth";
+import ReactMarkdown from 'react-markdown'
 
 const renderAgreedAt = (agr?: UserAgreement) => {
   if (!agr?.agreedAt) {
@@ -78,13 +79,19 @@ export default function Agreement() {
 
     const query = router.query;
     const { agreement: agreementCode } = router.query;
+    let slug = "";
+    if (typeof agreementCode === "string") {
+      slug = agreementCode.replaceAll("-", "_").toUpperCase();
+    } else {
+      console.log("agreement code is not string");
+    }
 
-    API.getUserAgreements(agreementCode as string)
+    API.getUserAgreement(slug)
       .then((res) => {
         setUserAgreement(res);
       })
       .catch((error) => {
-        console.log({ getUserAgreementsError: error });
+        console.log({ getUserAgreementError: error });
       });
   }, [router.isReady, router.query]);
 
@@ -165,18 +172,18 @@ export default function Agreement() {
             >
               Updated {agreement?.agreementUpdatedAt}
             </Typography>
-            <Paper variant="outlined">
-              <Typography
-                sx={{
-                  margin: 1,
-                  padding: 1,
-                  fontFamily: "monospace",
-                  fontSize: "12px",
-                  lineHeight: "1.75em",
-                }}
-              >
-                {agreement?.body}
-              </Typography>
+            <Paper
+              variant="outlined"
+              sx={{
+                margin: 1,
+                padding: 3,
+                fontFamily: "monospace",
+                fontSize: "12px",
+                lineHeight: "1.75em",
+              }}>
+              <ReactMarkdown>
+                {agreement?.body ?? ""}
+              </ReactMarkdown>
             </Paper>
             {agreement?.agreedAt
               ? renderAgreedAt(agreement)
