@@ -43,7 +43,7 @@ func TestInboxUserService(t *testing.T) {
 	})
 
 	t.Run("user agreement", func(t *testing.T) {
-		agreements := []Agreement{PersonalInbox, BackupResponsibility}
+		agreements := []Agreement{TermsAndConditions}
 		t.Run("consent", func(t *testing.T) {
 			err := service.Consent(authedCtx, agreements)
 			assert.ThatError(t, err).IsNil()
@@ -66,7 +66,7 @@ func TestInboxUserService(t *testing.T) {
 
 		t.Run("get agreement", func(t *testing.T) {
 			t.Run("unauthorized, error", func(t *testing.T) {
-				ua, err := service.GetAgreement(ctx, PersonalInbox)
+				ua, err := service.GetAgreement(ctx, TermsAndConditions)
 				assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 				assert.That(t, ua).Equals(nil)
 			})
@@ -78,12 +78,12 @@ func TestInboxUserService(t *testing.T) {
 			})
 
 			t.Run("authorized, success, agreed", func(t *testing.T) {
-				ua, err := service.GetAgreement(authedCtx, PersonalInbox)
+				ua, err := service.GetAgreement(authedCtx, TermsAndConditions)
 				assert.ThatError(t, err).IsNil()
 				assert.That(t, ua.Agreed).Equals(true)
 				assert.That(t, ua.AgreedAt.IsZero()).Equals(false)
-				assert.That(t, ua.Agreement).Equals(PersonalInbox)
-				assert.That(t, ua.Body).Equals(service.agreements[PersonalInbox].Body)
+				assert.That(t, ua.Agreement).Equals(TermsAndConditions)
+				assert.That(t, ua.Body).Equals(service.agreements[TermsAndConditions].Body)
 				assert.That(t, ua.Required).Equals(true)
 			})
 		})
