@@ -84,9 +84,6 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 		),
 	)
 
-	c.log.Info("USER-AGENT: ", req.UserAgent())
-	c.log.Infof("HEADERS: %+v\n", req.Header)
-
 	// slow down login spamming
 	time.Sleep(time.Second)
 
@@ -97,11 +94,8 @@ func (c LoginController) SubmitLoginToken(w http.ResponseWriter, req *http.Reque
 	}
 
 	resBody := LoginResponse{
-		Address: user.Address,
-	}
-
-	if !user.ProfileComplete() {
-		resBody.RedirectToSignup = true
+		Address:         user.Address,
+		ProfileComplete: user.ProfileComplete(),
 	}
 
 	sessionCookie := session.AuthCookie(c.isDev, c.cookieDomain)
@@ -142,7 +136,7 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 		Address: user.Address,
 
 		// login.Service.CompleteGmailLogin pulls the user's profile data
-		RedirectToSignup: false,
+		ProfileComplete: true,
 	}
 
 	sessionCookie := sess.AuthCookie(c.isDev, c.cookieDomain)

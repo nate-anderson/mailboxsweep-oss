@@ -297,11 +297,11 @@ components:
       type: object
       required:
         - address
-        - redirectToSignup
+        - profileComplete
       properties:
         address:
           type: string
-        redirectToSignup:
+        profileComplete:
           type: boolean
 
     MessagePreview:
