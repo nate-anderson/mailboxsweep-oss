@@ -228,7 +228,7 @@ export default function Home() {
           console.log(err);
         }
       })
-  }, []);
+  }, [API, setErrorMessage]);
 
   return (
     <PrivatePage>

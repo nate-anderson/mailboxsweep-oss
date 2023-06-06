@@ -23,7 +23,7 @@ export default function PageHeader(props: PageHeaderProps) {
         if (steps && steps.find((step) => step.slug === props.stepperSlug)) {
             setIncludeSlug(true);
         }
-    }, []);
+    }, [props.stepperSlug]);
 
     return <Box
         sx={{
