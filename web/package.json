@@ -39,7 +39,7 @@
     "@types/react": "18.2.8",
     "@types/react-beautiful-dnd": "^13.1.4",
     "@types/react-dom": "18.2.4",
-    "openapi-typescript-codegen": "^0.23.0",
+    "openapi-typescript-codegen": "^0.24.0",
     "prettier": "^2.8.8",
     "yaml": "^2.3.1",
     "eslint": "8.41.0",
