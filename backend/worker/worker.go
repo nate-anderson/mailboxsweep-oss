@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -59,6 +60,8 @@ func NewWorker(
 		changesetSelectURL,
 	}
 }
+
+const visibilityTimeoutMinutes = 5
 
 func (w Worker) Work() error {
 	w.log.Infof("Listening to queue %s...\n", w.queueURL)
@@ -107,10 +110,11 @@ func (w Worker) Work() error {
 				continue
 			}
 			jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
-			w.log.
+			log := w.log.
 				WithField("address", body.Address).
-				WithField("num_classifiers", len(body.Classifiers)).
-				Info("starting inbox classification")
+				WithField("num_classifiers", len(body.Classifiers))
+
+			log.Info("starting inbox classification")
 
 			classifiers := make([]classification.Classifier, len(body.Classifiers))
 			for i, srcl := range body.Classifiers {
@@ -122,9 +126,43 @@ func (w Worker) Work() error {
 				classifiers[i] = cl
 			}
 
+			errChan := make(chan error)
+			// keep the message handle active while the process runs
+			go func(address string, m types.Message) {
+				ticker := time.NewTicker(time.Minute * 5)
+				defer ticker.Stop()
+				for {
+					select {
+					case <-ticker.C:
+						// mark message as being processed
+						_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
+							QueueUrl:          &w.queueURL,
+							ReceiptHandle:     m.ReceiptHandle,
+							VisibilityTimeout: 60 * visibilityTimeoutMinutes,
+						})
+						if err != nil {
+							w.log.
+								WithField("address", address).
+								WithError(err).
+								Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
+							return
+						}
+					case err := <-errChan:
+						if err != nil {
+							w.log.
+								WithField("address", address).
+								WithError(err).
+								Errorf("got error for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
+							return
+						}
+					}
+				}
+			}(body.Address, m)
+
 			err = w.service.Classify(jobCtx, body.Folders, classifiers)
 			end := time.Now()
 			if err != nil {
+				errChan <- err
 				w.log.
 					WithError(err).
 					WithField("execution_time_seconds", end.Sub(start).Seconds()).
@@ -145,6 +183,8 @@ func (w Worker) Work() error {
 					}
 				}
 				continue
+			} else {
+				errChan <- nil
 			}
 
 			_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
