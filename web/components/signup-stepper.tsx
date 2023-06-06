@@ -1,86 +1,8 @@
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
-import { getProvider, getStep } from "../lib/steps";
+import { Step as SignupStep, getProvider, getStepIndex, getSteps } from "../lib/steps";
 import StepLabel from "@mui/material/StepLabel";
 import { useEffect, useState } from "react";
-
-export interface Step {
-    // short display title
-    label: string;
-    // url path to display when this step is reached
-    path: string;
-    slug: StepSlug;
-    hide?: boolean;
-};
-
-type StepSlug = 
-    "TERMS" | 
-    "PROFILE" | 
-    "PLAN" |
-    "PROVIDER_SIGNIN" |
-    "ORGANIZE";
-
-const stepsIMAP: Step[] = [
-    {
-        label: "Terms & Conditions",
-        path: "/agreement/terms-and-conditions",
-        slug: "TERMS",
-    },
-    {
-        label: "Complete Profile",
-        path: "/complete-profile",
-        slug: "PROFILE",
-    },
-    {
-        label: "Select Plan",
-        path: "/plan/select",
-        slug: "PLAN",
-    },
-    {
-        label: "Email Login",
-        path: "/email-account/login",
-        slug: "PROVIDER_SIGNIN",
-    },
-    {
-        label: "Organize Messages",
-        path: "/classify/configure",
-        slug: "ORGANIZE",
-        hide: true,
-    }
-];
-
-const stepsGmail: Step[] = [
-    {
-        label: "Terms & Conditions",
-        path: "/agreement/terms-and-conditions",
-        slug: "TERMS",
-    },
-    {
-        label: "Select Plan",
-        path: "/plan/select",
-        slug: "PLAN",
-    },
-    {
-        label: "Organize Messages",
-        path: "/classify/configure",
-        slug: "ORGANIZE",
-        hide: true,
-    }
-];
-
-export function getSteps(): Step[] | undefined {
-    const provider = getProvider();
-
-    // this is ugly, JS should support multi variable switches
-    if (provider === "GMAIL") {
-        return stepsGmail;
-    } else if (provider === "IMAP") {
-        return stepsIMAP;
-    } else {
-        console.log(`cannot select a step for provider ${provider}`);
-        return undefined;
-    }
-}
 
 export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, profileComplete: boolean): string | undefined {
     const steps = getSteps();
@@ -118,11 +40,11 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
 }
 
 export function SignupStepper() {
-    const [ steps, setSteps ] = useState<Step[] | undefined>();
+    const [ steps, setSteps ] = useState<SignupStep[] | undefined>();
     const [ currentStepIndex, setCurrentStepIndex ] = useState(0);
     
     useEffect(() => {
-        let sti = getStep();
+        let sti = getStepIndex();
         if (sti) {
             setCurrentStepIndex(sti);
         }

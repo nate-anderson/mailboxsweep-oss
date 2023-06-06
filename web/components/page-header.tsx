@@ -1,7 +1,7 @@
 import { Avatar, Box, Typography } from "@mui/material";
 import { SignupStepper } from "./signup-stepper";
 import { useEffect, useState } from "react";
-import { getStep } from "../lib/steps";
+import { getStepIndex } from "../lib/steps";
 
 interface PageHeaderProps {
     showStepper?: boolean;
@@ -14,7 +14,7 @@ export default function PageHeader(props: PageHeaderProps) {
     const [ stepIsSet, setStepIsSet ] = useState(false);
 
     useEffect(() => {
-        const step = getStep();
+        const step = getStepIndex();
         setStepIsSet(step !== undefined);
     }, []);
 

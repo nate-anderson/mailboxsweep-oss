@@ -5,6 +5,8 @@ import Container from "@mui/material/Container";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { getProviderByAddress, setProvider } from "../../lib/steps";
+import { getInitialStepPath } from "../../components/signup-stepper";
 
 export default function Login() {
   const router = useRouter();
@@ -20,11 +22,24 @@ export default function Login() {
 
     API.submitLoginToken(loginToken, signature)
       .then((res) => {
-        if (res.redirectToSignup) {
-          router.push("/complete-profile");
-        } else {
+        const provider = getProviderByAddress(res.address);
+        setProvider(provider);
+        Promise.all([
+          API.getPaymentStatus(),
+          API.getUserAgreement("TERMS_AND_CONDITIONS"),
+        ])
+        .then(([paymentStatus, agreement]) => {
+          const stepPath = getInitialStepPath(Boolean(agreement.agreedAt), Boolean(paymentStatus.subscribedAt), res.profileComplete);
+          console.log({ stepPath, agreedAt: Boolean(agreement.agreedAt), subscribedAt: Boolean(paymentStatus.subscribedAt), profileComplete: res.profileComplete });
+          if (stepPath) {
+            router.push(stepPath);
+          } else {
+            router.push("/home");
+          }
+        })
+        .catch(() => {
           router.push("/home");
-        }
+        });
       })
       .catch(console.error);
   }, [router.isReady, router.query, router, API]);
