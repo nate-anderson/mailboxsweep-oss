@@ -44,7 +44,7 @@ export interface Step {
     hide?: boolean;
 };
 
-type StepSlug = 
+export type StepSlug = 
     "TERMS" | 
     "PROFILE" | 
     "PLAN" |
@@ -122,10 +122,19 @@ export function getStepIndex(): number | undefined {
 }
 
 export function nextStep(): string | undefined {
+    const steps = getSteps();
     let step = getStepIndex();
-    if (step) {
-        step++;
-        setStep(step);
+    // if there is another step, increment the step index and return the path of the next step
+    if (step && steps) {
+        if (steps[step + 1]) {
+            step++;
+            setStep(step);
+            return steps[step].path;
+        } else {
+            setStep(undefined);
+        }
+    } else {
+        console.log({ step, steps });
     }
     return undefined;
 }

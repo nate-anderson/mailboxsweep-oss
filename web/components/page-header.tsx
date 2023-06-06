@@ -1,10 +1,11 @@
 import { Avatar, Box, Typography } from "@mui/material";
 import { SignupStepper } from "./signup-stepper";
 import { useEffect, useState } from "react";
-import { getStepIndex } from "../lib/steps";
+import { StepSlug, getStepIndex, getSteps } from "../lib/steps";
 
 interface PageHeaderProps {
     showStepper?: boolean;
+    stepperSlug?: StepSlug;
     title: string;
     icon: JSX.Element;
 }
@@ -12,10 +13,16 @@ interface PageHeaderProps {
 export default function PageHeader(props: PageHeaderProps) {
     // if a signup step is set in local storage, show the stepper
     const [ stepIsSet, setStepIsSet ] = useState(false);
+    // if the provided slug is not in the user's signup path, don't show the stepper here
+    const [ includeSlug, setIncludeSlug ] = useState(false);
 
     useEffect(() => {
         const step = getStepIndex();
         setStepIsSet(step !== undefined);
+        const steps = getSteps();
+        if (steps && steps.find((step) => step.slug === props.stepperSlug)) {
+            setIncludeSlug(true);
+        }
     }, []);
 
     return <Box
@@ -30,7 +37,7 @@ export default function PageHeader(props: PageHeaderProps) {
         }}
     >
         {
-            props.showStepper && stepIsSet
+            props.showStepper && stepIsSet && includeSlug
                 ? <SignupStepper />
                 : <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
                     {props.icon}

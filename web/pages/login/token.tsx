@@ -30,7 +30,6 @@ export default function Login() {
         ])
         .then(([paymentStatus, agreement]) => {
           const stepPath = getInitialStepPath(Boolean(agreement.agreedAt), Boolean(paymentStatus.subscribedAt), res.profileComplete);
-          console.log({ stepPath, agreedAt: Boolean(agreement.agreedAt), subscribedAt: Boolean(paymentStatus.subscribedAt), profileComplete: res.profileComplete });
           if (stepPath) {
             router.push(stepPath);
           } else {

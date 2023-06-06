@@ -10,6 +10,7 @@ import IconCardMembership from "@mui/icons-material/CardMembership";
 import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";
 import PrivatePage from "../../auth";
+import PageHeader from "../../components/page-header";
 
 export default function SelectPlan() {
   const [plans, setPlans] = useState<Plan[] | undefined>();
@@ -50,28 +51,20 @@ export default function SelectPlan() {
           }}
         >
           <CssBaseline />
+          <PageHeader
+            showStepper={true}
+            title="Choose a Plan"
+            icon={<IconCardMembership />}
+            stepperSlug="PLAN"
+          />
           <Box
             sx={{
-              marginTop: 6,
               marginX: 1,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-              <IconCardMembership />
-            </Avatar>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                fontSize: "2em",
-                fontWeight: 100,
-              }}
-            >
-              Choose a Plan
-            </Typography>
             <Typography
               align="center"
               sx={{

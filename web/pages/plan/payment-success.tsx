@@ -5,6 +5,7 @@ import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
+import { nextStep } from "../../lib/steps";
 
 // store the success token and redirect to /plan
 export default function PaymentSuccess() {
@@ -18,7 +19,12 @@ export default function PaymentSuccess() {
 
     API.completePayment(checkoutSessionId)
       .then((res) => {
-        router.push("/plan");
+        const next = nextStep();
+        if (next) {
+          router.push(next);
+        } else {
+          router.push("/plan");
+        }
       })
       .catch(console.error);
   }, [router.isReady, router.query, router]);

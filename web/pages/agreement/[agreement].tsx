@@ -139,7 +139,12 @@ export default function Agreement() {
         {errorSnackbar}
         <Container component="main">
           <CssBaseline />
-          <PageHeader title={agreement?.name ?? ""} showStepper={true} icon={<IconGrading />} />
+          <PageHeader
+            title={agreement?.name ?? ""}
+            showStepper={true}
+            icon={<IconGrading />}
+            stepperSlug="TERMS"
+          />
           <Box
             sx={{
               display: "flex",
