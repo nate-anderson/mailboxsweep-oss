@@ -7,30 +7,32 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
     super(config);
   }
 
-  public override async request<T>(options: ApiRequestOptions): CancelablePromise<T> {
-    try {
-      const result = await __request<T>(this.config, options);
-      return result;
-    } catch(error) {
-      if (error instanceof ApiError) {
-        const e = error as ApiError;
-        // if error has a well-defined error code, that will be more useful than
-        // the status code. try that first.
-        switch (e.body.code) {
-          case "google_reauthentication_required":
-            window.location.href = "/login/gmail/reauth";
-            return null as T;
-          default:
-            console.log("unknown body code ", e.body.code);
+  public override request<T>(options: ApiRequestOptions): CancelablePromise<T> {
+    return new CancelablePromise(async (resolve, reject, _) => {
+      try {
+        const result = await __request<T>(this.config, options);
+        resolve(result);
+      } catch(error) {
+        if (error instanceof ApiError) {
+          const e = error as ApiError;
+          // if error has a well-defined error code, that will be more useful than
+          // the status code. try that first.
+          switch (e.body.code) {
+            case "google_reauthentication_required":
+              window.location.href = "/login/gmail/reauth";
+              return null as T;
+            default:
+              console.log("unknown body code ", e.body.code);
+          }
+  
+          if (e.status === 401) {
+            window.location.href = "/login?prompt=1";
+          }
         }
-
-        if (e.status === 401) {
-          window.location.href = "/login?prompt=1";
-        }
+  
+        reject(error);
       }
-
-      throw error;
-    }
+    });
   }
 }
 
