@@ -31,6 +31,7 @@ const renderAgreedAt = (agr?: UserAgreement) => {
       <Typography
         sx={{
           marginY: 2,
+          textAlign: "center",
         }}
       >
         You consented to this agreement on {displayDate}
@@ -159,7 +160,8 @@ export default function Agreement() {
               variant="outlined"
               sx={{
                 margin: 1,
-                padding: 3,
+                paddingX: 3,
+                paddingY: 1,
                 fontFamily: "monospace",
                 fontSize: "12px",
                 lineHeight: "1.75em",
