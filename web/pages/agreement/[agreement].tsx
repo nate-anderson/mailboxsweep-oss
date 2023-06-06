@@ -1,12 +1,11 @@
 import { CssBaseline } from "@mui/material";
-import { useRouter } from "next/router";
+import { Router, useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { API } from "../../client";
 import { UserAgreement } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
-import Avatar from "@mui/material/Avatar";
 import Typography from "@mui/material/Typography";
 import IconGrading from "@mui/icons-material/Grading";
 import Paper from "@mui/material/Paper";
@@ -16,6 +15,8 @@ import { displayFormat } from "../../dates";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import PrivatePage from "../../auth";
 import ReactMarkdown from 'react-markdown'
+import PageHeader from "../../components/page-header";
+import { nextStep } from "../../lib/steps";
 
 const renderAgreedAt = (agr?: UserAgreement) => {
   if (!agr?.agreedAt) {
@@ -46,7 +47,7 @@ const renderAgreementForm = (
     <Box
       component="form"
       sx={{
-        marginY: 2,
+        marginTop: 2,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -108,16 +109,21 @@ export default function Agreement() {
       });
       const agreedDate = formatISO(new Date());
       setShowSuccess(true);
+      const nextPath = nextStep();
       setUserAgreement((agr) => {
         if (!agr) {
           console.log("failed to set user agreement: existing undefined");
           return undefined;
         }
+        
         return {
           ...agr,
           agreedAt: agreedDate,
         };
       });
+      if (nextPath) {
+        router.push(nextPath);
+      }
     } catch (err) {
       console.log(err);
       setError("Failure submitting agreement. Please try again later.");
@@ -132,28 +138,14 @@ export default function Agreement() {
         {errorSnackbar}
         <Container component="main">
           <CssBaseline />
+          <PageHeader title={agreement?.name ?? ""} showStepper={true} icon={<IconGrading />} />
           <Box
             sx={{
-              marginTop: 6,
-              marginX: 1,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-              <IconGrading />
-            </Avatar>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                fontSize: "2em",
-                fontWeight: 100,
-              }}
-            >
-              {agreement?.name}
-            </Typography>
             <Typography
               align="center"
               sx={{
@@ -162,15 +154,6 @@ export default function Agreement() {
               }}
             >
               {agreement?.description}
-            </Typography>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-accent)",
-                marginY: 1,
-              }}
-            >
-              Updated {agreement?.agreementUpdatedAt}
             </Typography>
             <Paper
               variant="outlined"
@@ -185,9 +168,21 @@ export default function Agreement() {
                 {agreement?.body ?? ""}
               </ReactMarkdown>
             </Paper>
-            {agreement?.agreedAt
-              ? renderAgreedAt(agreement)
-              : renderAgreementForm(submitAgreement, agreement)}
+            {
+              agreement?.agreedAt
+                ? renderAgreedAt(agreement)
+                : renderAgreementForm(submitAgreement, agreement)
+            }
+            <Typography
+              align="center"
+              sx={{
+                color: "var(--color-gray)",
+                marginTop: 1,
+                marginBottom: 3,
+              }}
+            >
+              Terms Updated {agreement?.agreementUpdatedAt}
+            </Typography>
           </Box>
         </Container>
       </>
