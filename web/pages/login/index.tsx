@@ -124,7 +124,6 @@ export default function Login() {
           ></TextField>
           <LoadingButton
             variant="contained"
-            onClick={() => submitLogin(email, () => setModalOpen(true))}
             size="large"
             sx={{
               marginY: 3,
