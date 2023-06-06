@@ -127,7 +127,7 @@ func (c UserController) GetUserData(w http.ResponseWriter, req *http.Request) {
 	c.respond(w, http.StatusOK, res)
 }
 
-func (c UserController) GetUserAgreementsAgreementSlug(w http.ResponseWriter, req *http.Request, agreementSlug string) {
+func (c UserController) GetUserAgreement(w http.ResponseWriter, req *http.Request, agreementSlug string) {
 	ctx := req.Context()
 
 	ua, err := c.service.GetAgreement(ctx, inboxuser.Agreement(agreementSlug))
