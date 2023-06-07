@@ -35,10 +35,6 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
 
     }
 
-    if (steps.length > 0) {
-        return steps[0].path;
-    }
-
     return undefined;
 }
 
