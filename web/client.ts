@@ -21,6 +21,9 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
             case "google_reauthentication_required":
               window.location.href = "/login/gmail/reauth";
               return null as T;
+            case "terms_and_conditions_not_accepted":
+              window.location.href = "/agreement/TERMS_AND_CONDITIONS";
+              return null as T;
             default:
               console.log("unknown body code ", e.body.code);
           }
