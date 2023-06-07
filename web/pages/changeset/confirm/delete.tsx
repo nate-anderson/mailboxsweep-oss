@@ -12,6 +12,7 @@ import IconCheckBox from "@mui/icons-material/CheckBox";
 import ConfirmBar from "../../../components/changeset/confirm-bar";
 import PrivatePage from "../../../auth";
 import { useRouter } from "next/router";
+import { CircularProgress } from "@mui/material";
 
 export default function ConfirmDelete() {
     const API = useAPIClient();
@@ -25,6 +26,7 @@ export default function ConfirmDelete() {
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
     const [ submitIsLoading, setSubmitIsLoading ] = useState(false);
+    const [ changesetIsLoading, setChangesetIsLoading ] = useState(true);
 
     useEffect(() => {
         API.getChangeset(UpdateOperation.DELETE)
@@ -35,6 +37,9 @@ export default function ConfirmDelete() {
         .catch((err) => {
             setError(err);
             showErrorSnackbar(true);
+        })
+        .finally(() => {
+            setChangesetIsLoading(false);
         });
     }, [API, showErrorSnackbar]);
 
@@ -72,30 +77,35 @@ export default function ConfirmDelete() {
                         flexDirection: "column",
                         alignItems: "center",
                     }}
-                    >
-                    <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-                        <IconCheckBox />
-                    </Avatar>
-                    <Typography
-                        align="center"
-                        sx={{
-                            color: "var(--color-black)",
-                            fontSize: "1.75em",
-                            fontWeight: 100,
-                        }}
-                    >
-                        Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages
-                    </Typography>
-                    <Typography
-                        align="center"
-                        sx={{
-                            marginY: 2,
-                            color: "var(--color-gray)",
-                            maxWidth: 600,
-                        }}
-                    >
-                        These messages will be permanently deleted from your inbox. <b style={{color: "var(--color-danger)"}}>This cannot be undone.</b>
-                    </Typography>
+                >
+                    {changesetIsLoading
+                        ? <CircularProgress sx={{ marginTop: 6 }} />
+                        : <>
+                            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
+                                <IconCheckBox />
+                            </Avatar>
+                            <Typography
+                                align="center"
+                                sx={{
+                                    color: "var(--color-black)",
+                                    fontSize: "1.75em",
+                                    fontWeight: 100,
+                                }}
+                            >
+                                Deleting <b style={{color: "var(--color-accent)"}}>{selectedCount.toLocaleString()}</b> messages
+                            </Typography>
+                            <Typography
+                                align="center"
+                                sx={{
+                                    marginY: 2,
+                                    color: "var(--color-gray)",
+                                    maxWidth: 600,
+                                }}
+                            >
+                                These messages will be permanently deleted from your inbox. <b style={{color: "var(--color-danger)"}}>This cannot be undone.</b>
+                            </Typography>
+                        </>
+                        }
                     <ConfirmBar
                         isLoading={submitIsLoading}
                         deleteMode={true}
