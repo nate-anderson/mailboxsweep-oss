@@ -176,6 +176,7 @@ func TestInboxChangesetService(t *testing.T) {
 	_, err = userService.Store(ctx, testAddress)
 	assert.ThatError(t, err).IsNil()
 	err = userService.Consent(authedCtx, []inboxuser.Agreement{inboxuser.TermsAndConditions})
+	assert.ThatError(t, err).IsNil()
 
 	// seed a classification request
 	err = classifyRequestService.RecordRequest(authedCtx)
