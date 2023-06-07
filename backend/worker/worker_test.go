@@ -207,6 +207,7 @@ func TestWorker(t *testing.T) {
 		classifyRequestService,
 		paymentService,
 		inboxMetadataService,
+		userService,
 		log,
 		eventPublisher,
 		5,

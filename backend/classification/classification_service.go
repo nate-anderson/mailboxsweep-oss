@@ -8,6 +8,7 @@ import (
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
+	"mailboxsweep/inboxuser"
 	"mailboxsweep/payment"
 	"time"
 
@@ -33,6 +34,7 @@ type DefaultService struct {
 	logger                 *logrus.Logger
 	eventPublisher         mailboxsweep.EventPublisher[ClassifyQueueItem]
 	inboxMetadataService   inbox.MetadataService
+	inboxUserService       inboxuser.Service
 	numSubjectPreviews     int
 }
 
@@ -44,6 +46,7 @@ func NewService(
 	classifyRequestService classifyrequest.Service,
 	paymentService payment.Service,
 	inboxMetadataService inbox.MetadataService,
+	inboxUserService inboxuser.Service,
 	logger *logrus.Logger,
 	pub mailboxsweep.EventPublisher[ClassifyQueueItem],
 	numSubjectPreviews int,
@@ -58,6 +61,7 @@ func NewService(
 		logger,
 		pub,
 		inboxMetadataService,
+		inboxUserService,
 		numSubjectPreviews,
 	}
 }
@@ -97,6 +101,15 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	}
 	log = log.WithField("address", addr)
 	log.Info("beginning classification")
+
+	// verify user has agreed to terms and conditions
+	terms, err := s.inboxUserService.GetAgreement(ctx, inboxuser.TermsAndConditions)
+	if err != nil {
+		return err
+	}
+	if !terms.Agreed {
+		return mailboxsweep.TermsAndConditionsNotAgreedError()
+	}
 
 	_, err = s.paymentService.VerifyPayment(ctx)
 	if err != nil {
@@ -178,6 +191,15 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 				Errorf("EnqueueClassify failed")
 		}
 	}()
+
+	// verify user has agreed to terms and conditions
+	terms, err := s.inboxUserService.GetAgreement(ctx, inboxuser.TermsAndConditions)
+	if err != nil {
+		return err
+	}
+	if !terms.Agreed {
+		return mailboxsweep.TermsAndConditionsNotAgreedError()
+	}
 
 	// make sure user has paid
 	pmt, err := s.paymentService.VerifyPayment(ctx)
