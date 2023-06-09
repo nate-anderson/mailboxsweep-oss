@@ -17,10 +17,16 @@
     "id": "mailboxsweep",
     "screenshots": [
         {
-            "src": "ui/level_1.png",
+            "src": "screenshots/ui1.png",
             "form_factor": "narrow",
             "type": "image/png",
-            "sizes": "800x1400"
+            "sizes": "750x1344"
+        },
+        {
+            "src": "screenshots/ui2.png",
+            "form_factor": "narrow",
+            "type": "image/png",
+            "sizes": "750x1344"
         }
     ]
 }
