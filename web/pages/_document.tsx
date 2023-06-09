@@ -23,6 +23,7 @@ export default function Document() {
         <link rel="apple-touch-icon" href="/apple-home-shortcut.png" />
         <link rel="shortcut icon" href="/apple-home-shortcut.png" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="manifest" href="/manifest.json" />
       </Head>
       <body>
         <Main />
