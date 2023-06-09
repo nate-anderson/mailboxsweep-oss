@@ -114,6 +114,8 @@ export default function Login() {
         <StagingWarning environment={process.env.ENV}/>
           <TextField
             label="Email"
+            name="email"
+            type="email"
             value={email}
             onChange={(e) => changeEmail(e.target.value)}
             sx={{
