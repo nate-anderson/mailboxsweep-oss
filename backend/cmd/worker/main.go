@@ -106,6 +106,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if cfg.Env == "staging" || cfg.Env == "prod" {
+		log.Formatter = &logrus.JSONFormatter{
+			PrettyPrint:     false,
+			TimestampFormat: time.RFC3339,
+		}
+	}
+
 	db, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.DynamoDBHost,
