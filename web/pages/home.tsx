@@ -144,7 +144,7 @@ const renderClassificationStatus = (
             maxWidth: 600,
           }}
         >
-          <AlertTitle>Classification completed! &#127881;</AlertTitle>
+          <AlertTitle>Cleanip complete! &#127881;</AlertTitle>
           <p style={{ display: "block" }}>
             We scanned and cleaned up your inbox! If you want to make more changes, you can scan your inbox again.
           </p>

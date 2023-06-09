@@ -95,7 +95,7 @@ export default function Agreement() {
       .catch((error) => {
         console.log({ getUserAgreementError: error });
       });
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, agreement, setUserAgreement]);
 
   const [successSnackbar, setShowSuccess] = useConstantSnackbar(
     "Agreement submitted!",
