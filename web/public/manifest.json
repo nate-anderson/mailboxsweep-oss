@@ -2,14 +2,14 @@
     "name": "MailboxSweep",
     "short_name": "MailboxSweep",
     "start_url": "/home",
-    "display": "minimal-ui",
+    "display": "standalone",
     "description": "MailboxSweep cleans your inbox.",
     "background_color": "#f6eee3",
     "theme_color": "#fa782d",
     "orientation": "portrait",
     "icons": [
         {
-            "src": "/apple-home-shortcut.png",
+            "src": "/apple-home-shortcut-192.png",
             "type": "image/png",
             "sizes": "192x192"
         }
