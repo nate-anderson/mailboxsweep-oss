@@ -15,7 +15,7 @@ const stepKey = "mailboxsweep_signup_step";
 const StepsComplete = "COMPLETE";
 
 export function setStep(index: number | undefined) {
-    if (!index) {
+    if (index === undefined) {
         localStorage.removeItem(stepKey);
         return;
     }
