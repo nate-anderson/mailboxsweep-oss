@@ -1,10 +1,11 @@
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
-import { Step as SignupStep, getProvider, getStepIndex, getSteps, setStep } from "../lib/steps";
+import { Step as SignupStep, getStepIndex, getSteps, setStep } from "../lib/steps";
 import StepLabel from "@mui/material/StepLabel";
 import { useEffect, useState } from "react";
 
 export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, profileComplete: boolean): string | undefined {
+    console.log( {hasAgreedToTerms, hasPaid, profileComplete});
     const steps = getSteps();
     if (!steps) {
         return undefined;
@@ -12,7 +13,7 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
 
     if (!hasAgreedToTerms) {
         const termsStep = steps.findIndex(step => step.slug === "TERMS");
-        if (termsStep) {
+        if (termsStep > -1) {
             setStep(termsStep);
             return steps[termsStep].path;
         }
@@ -20,7 +21,7 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
 
     if (!profileComplete) {
         const profileStep = steps.findIndex(step => step.slug === "PROFILE");
-        if (profileStep) {
+        if (profileStep > -1) {
             setStep(profileStep);
             return steps[profileStep].path;
         }
@@ -28,7 +29,7 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
 
     if (!hasPaid) {
         const paymentStep = steps.findIndex(step => step.slug === "PLAN");
-        if (paymentStep) {
+        if (paymentStep > -1) {
             setStep(paymentStep);
             return steps[paymentStep].path;
         }

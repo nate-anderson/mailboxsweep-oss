@@ -95,7 +95,7 @@ export default function Agreement() {
       .catch((error) => {
         console.log({ getUserAgreementError: error });
       });
-  }, [router.isReady, router.query, agreement, setUserAgreement]);
+  }, [router.isReady]);
 
   const [successSnackbar, setShowSuccess] = useConstantSnackbar(
     "Agreement submitted!",
@@ -152,15 +152,6 @@ export default function Agreement() {
               alignItems: "center",
             }}
           >
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                marginY: 2,
-              }}
-            >
-              {agreement?.description}
-            </Typography>
             <Paper
               variant="outlined"
               sx={{
