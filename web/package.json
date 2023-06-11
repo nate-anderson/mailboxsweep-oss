@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:prod": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.mailboxsweep.com ENV=prodnext build",
+    "build:prod": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.mailboxsweep.com ENV=prod next build",
     "build:staging": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.staging.mailboxsweep.com ENV=staging next build",
     "robots:staging": "cp staging.robots.txt ./out/robots.txt",
     "robots:prod": "cp prod.robots.txt ./out/robots.txt",
