@@ -41,43 +41,69 @@ func (f GmailFolder) UnreadCount() uint32 {
 	return uint32(f.label.MessagesUnread)
 }
 
-const deleteBatchLimit = 1000
+const (
+	deleteBatchLimit = 1000
+	apiCallCost      = 50
+	apiCallLimit     = 250
+)
 
 func (f GmailFolder) Delete(ctx context.Context, ids []string) error {
+	// rate-limit API calls
+	limiter := rate.NewLimiter(apiCallLimit, apiCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
+
 	group, groupCtx := errgroup.WithContext(ctx)
 	for _, batch := range batches {
 		b := batch
 		group.Go(func() error {
-			err := f.client.Users.Messages.BatchDelete(f.address, &gmail.BatchDeleteMessagesRequest{
+			err := limiter.WaitN(groupCtx, apiCallCost)
+			if err != nil {
+				return fmt.Errorf("rate-limit error: %w", err)
+			}
+
+			err = f.client.Users.Messages.BatchDelete(f.address, &gmail.BatchDeleteMessagesRequest{
 				Ids: b,
 			}).Context(groupCtx).Do()
 			if err != nil {
 				return fmt.Errorf("Gmail BatchDelete failed: %w", err)
 			}
+
 			return nil
 		})
 	}
 	if err := group.Wait(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 const unreadLabel = "UNREAD"
 
 func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
+	// rate-limit API calls
+	limiter := rate.NewLimiter(apiCallLimit, apiCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
+
 	group, groupCtx := errgroup.WithContext(ctx)
 	for _, batch := range batches {
 		b := batch
-		err := f.client.Users.Messages.BatchModify(f.address, &gmail.BatchModifyMessagesRequest{
-			RemoveLabelIds: []string{unreadLabel},
-			Ids:            b,
-		}).Context(groupCtx).Do()
-		if err != nil {
-			return fmt.Errorf("Gmail BatchModify (MarkRead) failed: %w", err)
-		}
+		group.Go(func() error {
+			err := limiter.WaitN(groupCtx, apiCallCost)
+			if err != nil {
+				return fmt.Errorf("rate-limit error: %w", err)
+			}
+
+			err = f.client.Users.Messages.BatchModify(f.address, &gmail.BatchModifyMessagesRequest{
+				RemoveLabelIds: []string{unreadLabel},
+				Ids:            b,
+			}).Context(groupCtx).Do()
+			if err != nil {
+				return fmt.Errorf("Gmail BatchModify (MarkRead) failed: %w", err)
+			}
+			return nil
+		})
+
 	}
 	if err := group.Wait(); err != nil {
 		return err
