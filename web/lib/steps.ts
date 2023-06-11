@@ -45,7 +45,6 @@ export interface Step {
 
 export type StepSlug = 
     "TERMS" | 
-    "PROFILE" | 
     "PLAN" |
     "PROVIDER_SIGNIN" |
     "ORGANIZE";
