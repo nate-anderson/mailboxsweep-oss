@@ -321,7 +321,7 @@ var deleteCmd = &cobra.Command{
 			uids = append(uids, strconv.Itoa(uid))
 		}
 
-		if err := folder.Delete(uids); err != nil {
+		if err := folder.Delete(ctx, uids); err != nil {
 			log.Fatal(err)
 		}
 

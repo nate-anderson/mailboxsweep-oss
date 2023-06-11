@@ -80,35 +80,21 @@ type Payment struct {
 type Agreement string
 
 var (
-	PrivacyPolicy        Agreement = "PRIVACY_POLICY"
-	PersonalInbox        Agreement = "PERSONAL_INBOX"
-	BackupResponsibility Agreement = "BACKUP_RESPONSIBILITY"
-	Marketing            Agreement = "MARKETING"
+	TermsAndConditions Agreement = "TERMS_AND_CONDITIONS"
 )
 
 var requiredAgreements = []Agreement{
-	PrivacyPolicy,
-	PersonalInbox,
-	BackupResponsibility,
+	TermsAndConditions,
 }
 
 var allAgreements = []Agreement{
-	PrivacyPolicy,
-	PersonalInbox,
-	BackupResponsibility,
-	Marketing,
+	TermsAndConditions,
 }
 
 func ParseAgreement(str string) (Agreement, error) {
 	switch Agreement(str) {
-	case PrivacyPolicy:
-		return PrivacyPolicy, nil
-	case PersonalInbox:
-		return PersonalInbox, nil
-	case BackupResponsibility:
-		return BackupResponsibility, nil
-	case Marketing:
-		return Marketing, nil
+	case TermsAndConditions:
+		return TermsAndConditions, nil
 	default:
 		return "", fmt.Errorf("unknown agreement string '%s'", str)
 	}

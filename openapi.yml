@@ -297,11 +297,11 @@ components:
       type: object
       required:
         - address
-        - redirectToSignup
+        - profileComplete
       properties:
         address:
           type: string
-        redirectToSignup:
+        profileComplete:
           type: boolean
 
     MessagePreview:
@@ -645,8 +645,8 @@ paths:
           Description: Internal server error
 
   /user/agreements/{agreementSlug}:
-    operationId: getUserAgreement
     get:
+      operationId: getUserAgreement
       description: Get agreement
       parameters:
         - in: path

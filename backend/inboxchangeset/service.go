@@ -217,6 +217,9 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 			} else {
 				log.Info("success")
 			}
+		} else if errors.Is(err, mailboxsweep.ErrGoogleReauthenticationRequired) {
+			// the user will reauthenticate and can come back and submit this again
+			log.Info("user needs to reauthenticate with google - changeset untouched")
 		} else {
 			updateErr := s.requestService.MarkExecutedError(ctx, string(operation), msgChangeCount, err)
 			if updateErr != nil {
@@ -296,12 +299,12 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		}
 
 		if operation == changeset.Delete {
-			err = folder.Delete(uids)
+			err = folder.Delete(ctx, uids)
 			if err != nil {
 				return err
 			}
 		} else if operation == changeset.MarkRead {
-			err = folder.MarkRead(uids)
+			err = folder.MarkRead(ctx, uids)
 			if err != nil {
 				return err
 			}

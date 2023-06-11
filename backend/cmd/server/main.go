@@ -257,6 +257,7 @@ func main() {
 		classifyRequestService,
 		paymentService,
 		metadataService,
+		userService,
 		log,
 		publisher,
 		cfg.ClassificationSubjectPreviews,

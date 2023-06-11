@@ -4,14 +4,15 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Navbar from "../components/navbar";
-import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import IconAccountCircle from "@mui/icons-material/AccountCircle";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Button from "../components/button";
 import { useSnackbar, useConstantSnackbar } from "../components/snackbar";
 import PrivatePage from "../auth";
+import PageHeader from "../components/page-header";
+import { nextStep } from "../lib/steps";
+import { useRouter } from "next/router";
 
 export default function CompleteProfile() {
   const [nameFirst, changeNameFirst] = useState("");
@@ -27,6 +28,7 @@ export default function CompleteProfile() {
   const [errorSnackbar, setError] = useSnackbar("error");
 
   const API = useAPIClient();
+  const router = useRouter();
 
   useEffect(() => {
     API.getUserData()
@@ -50,6 +52,10 @@ export default function CompleteProfile() {
       .then(() => {
         setShowSuccess(true);
         setSaveButtonEnabled(false);
+        const nextStepPath = nextStep();
+        if (nextStepPath) {
+          router.push(nextStepPath);
+        }
       })
       .catch((error) => {
         setError("Something went wrong. Please try again later.");
@@ -64,9 +70,14 @@ export default function CompleteProfile() {
         {errorSnackbar}
         <Container component="main">
           <CssBaseline />
+          <PageHeader
+            showStepper={true}
+            title="Complete your profile"
+            icon={<IconAccountCircle />}
+            stepperSlug="PROFILE"
+          />
           <Box
             sx={{
-              marginTop: 6,
               maxWidth: 600,
               width: "auto",
               marginX: "auto",
@@ -75,19 +86,6 @@ export default function CompleteProfile() {
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-              <IconAccountCircle />
-            </Avatar>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                fontSize: "2em",
-                fontWeight: 100,
-              }}
-            >
-              Complete your profile
-            </Typography>
             <Box
               component="form"
               sx={{

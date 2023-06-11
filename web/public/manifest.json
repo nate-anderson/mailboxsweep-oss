@@ -1,0 +1,32 @@
+{
+    "name": "MailboxSweep",
+    "short_name": "MailboxSweep",
+    "start_url": "/home",
+    "display": "standalone",
+    "description": "MailboxSweep cleans your inbox.",
+    "background_color": "#f6eee3",
+    "theme_color": "#fa782d",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/apple-home-shortcut-192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        }
+    ],
+    "id": "mailboxsweep",
+    "screenshots": [
+        {
+            "src": "screenshots/ui1.png",
+            "form_factor": "narrow",
+            "type": "image/png",
+            "sizes": "750x1344"
+        },
+        {
+            "src": "screenshots/ui2.png",
+            "form_factor": "narrow",
+            "type": "image/png",
+            "sizes": "750x1344"
+        }
+    ]
+}

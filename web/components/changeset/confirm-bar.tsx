@@ -7,6 +7,7 @@ import Button from "@mui/material/Button";
 import IconArrowBack from "@mui/icons-material/ArrowBack";
 import IconCheck from "@mui/icons-material/Check";
 import Link from "next/link";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 interface ConfirmBarProps {
     deleteMode: boolean;
@@ -14,6 +15,7 @@ interface ConfirmBarProps {
     confirmButtonEnabled: boolean;
     onCheckEnabled: (enabled: boolean) => void;
     onSubmit: () => void;
+    isLoading: boolean;
 }
 
 export default function ConfirmBar(props: ConfirmBarProps) {
@@ -52,7 +54,8 @@ export default function ConfirmBar(props: ConfirmBarProps) {
                         Back
                     </Button>
                 </Link>
-                <Button
+                <LoadingButton
+                    loading={props.isLoading}
                     disabled={!props.confirmButtonEnabled}
                     sx={{
                         backgroundColor: "var(--color-accent)"
@@ -60,7 +63,7 @@ export default function ConfirmBar(props: ConfirmBarProps) {
                     variant="contained"
                     endIcon={<IconCheck />}
                     onClick={() => props.onSubmit()}
-                >Confirm</Button>
+                >Confirm</LoadingButton>
             </Toolbar>
         </AppBar>
     )

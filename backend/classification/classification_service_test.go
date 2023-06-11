@@ -279,6 +279,7 @@ func TestClassificationService(t *testing.T) {
 		&classifyRequestService,
 		paymentService,
 		inboxMetadataService,
+		userService,
 		logrus.New(),
 		publisher,
 		5,
@@ -300,6 +301,17 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, len(publisher.Entries)).Equals(0)
 		})
 
+		t.Run("authenticated, terms and conditions not agreed, failure", func(t *testing.T) {
+			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
+				{
+					TypeKey: TypeKeySenderDomain,
+				},
+			})
+			assert.ThatError(t, err).Is(mailboxsweep.ErrTermsAndConditionsNotAgreed)
+			err = userService.Consent(authedCtx, []inboxuser.Agreement{inboxuser.TermsAndConditions})
+			assert.ThatError(t, err).IsNil()
+		})
+
 		t.Run("authenticated, not paid, failure", func(t *testing.T) {
 			err := service.EnqueueClassify(authedCtx, folders, []SerializableClassifier{
 				{
@@ -308,6 +320,8 @@ func TestClassificationService(t *testing.T) {
 			})
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
 		})
+
+		// t.Run("authenticated, terms not accepted, failure", func(t *testing.T) {})
 
 		t.Run("authenticated, paid, success", func(t *testing.T) {
 			err = userService.StorePayment(authedCtx, inboxuser.Payment{
@@ -355,6 +369,8 @@ func TestClassificationService(t *testing.T) {
 			_, err := userService.Store(ctx, tooManyAddr)
 			assert.ThatError(t, err).IsNil()
 			exceededCtx := mailboxsweep.AuthorizeTestContext(ctx, tooManyAddr, t)
+			err = userService.Consent(exceededCtx, []inboxuser.Agreement{inboxuser.TermsAndConditions})
+			assert.ThatError(t, err).IsNil()
 
 			// store successful payment
 			err = userService.StorePayment(exceededCtx, inboxuser.Payment{
@@ -440,11 +456,22 @@ func TestClassificationService(t *testing.T) {
 		providerService.Messages["INBOX"] = messages
 		providerService.Messages["trash"] = []inbox.Message{}
 
+		t.Run("authenticated, terms and conditions not agreed, failure", func(t *testing.T) {
+			unagreedAddr := "me0@me.com"
+			_, err := userService.Store(ctx, unagreedAddr)
+			assert.ThatError(t, err).IsNil()
+			unagreedCtx := mailboxsweep.AuthorizeJobContext(ctx, unagreedAddr)
+			err = service.Classify(unagreedCtx, folders, classifiers)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrTermsAndConditionsNotAgreed)
+		})
+
 		t.Run("not paid, failure", func(t *testing.T) {
-			unpaidAddr := "me@me.com"
+			unpaidAddr := "me1@me.com"
 			_, err := userService.Store(ctx, unpaidAddr)
 			assert.ThatError(t, err).IsNil()
 			unpaidCtx := mailboxsweep.AuthorizeJobContext(ctx, unpaidAddr)
+			err = userService.Consent(unpaidCtx, []inboxuser.Agreement{inboxuser.TermsAndConditions})
+			assert.ThatError(t, err).IsNil()
 			err = service.Classify(unpaidCtx, folders, classifiers)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrNeedsPayment)
 		})

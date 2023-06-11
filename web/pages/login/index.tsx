@@ -96,7 +96,7 @@ export default function Login() {
       }}>
       <Box
         sx={{
-          marginTop: "25vh",
+          marginTop: "20vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -114,6 +114,8 @@ export default function Login() {
         <StagingWarning environment={process.env.ENV}/>
           <TextField
             label="Email"
+            name="email"
+            type="email"
             value={email}
             onChange={(e) => changeEmail(e.target.value)}
             sx={{
@@ -124,7 +126,6 @@ export default function Login() {
           ></TextField>
           <LoadingButton
             variant="contained"
-            onClick={() => submitLogin(email, () => setModalOpen(true))}
             size="large"
             sx={{
               marginY: 3,

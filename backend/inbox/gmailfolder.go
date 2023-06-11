@@ -7,6 +7,7 @@ import (
 	"html"
 	"log"
 	"mailboxsweep"
+	"mailboxsweep/pkg/batch"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/googleapi"
@@ -39,25 +41,46 @@ func (f GmailFolder) UnreadCount() uint32 {
 	return uint32(f.label.MessagesUnread)
 }
 
-func (f GmailFolder) Delete(ids []string) error {
-	err := f.client.Users.Messages.BatchDelete(f.address, &gmail.BatchDeleteMessagesRequest{
-		Ids: ids,
-	}).Do()
-	if err != nil {
-		return fmt.Errorf("Gmail BatchDelete failed: %w", err)
+const deleteBatchLimit = 1000
+
+func (f GmailFolder) Delete(ctx context.Context, ids []string) error {
+	batches := batch.WithLimit(ids, deleteBatchLimit)
+	group, groupCtx := errgroup.WithContext(ctx)
+	for _, batch := range batches {
+		b := batch
+		group.Go(func() error {
+			err := f.client.Users.Messages.BatchDelete(f.address, &gmail.BatchDeleteMessagesRequest{
+				Ids: b,
+			}).Context(groupCtx).Do()
+			if err != nil {
+				return fmt.Errorf("Gmail BatchDelete failed: %w", err)
+			}
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return err
 	}
 	return nil
 }
 
 const unreadLabel = "UNREAD"
 
-func (f GmailFolder) MarkRead(ids []string) error {
-	err := f.client.Users.Messages.BatchModify(f.address, &gmail.BatchModifyMessagesRequest{
-		RemoveLabelIds: []string{unreadLabel},
-		Ids:            ids,
-	}).Do()
-	if err != nil {
-		return fmt.Errorf("Gmail BatchModify (MarkRead) failed: %w", err)
+func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
+	batches := batch.WithLimit(ids, deleteBatchLimit)
+	group, groupCtx := errgroup.WithContext(ctx)
+	for _, batch := range batches {
+		b := batch
+		err := f.client.Users.Messages.BatchModify(f.address, &gmail.BatchModifyMessagesRequest{
+			RemoveLabelIds: []string{unreadLabel},
+			Ids:            b,
+		}).Context(groupCtx).Do()
+		if err != nil {
+			return fmt.Errorf("Gmail BatchModify (MarkRead) failed: %w", err)
+		}
+	}
+	if err := group.Wait(); err != nil {
+		return err
 	}
 	return nil
 }

@@ -23,23 +23,12 @@ import Leaf from "../../components/changeset/leaf";
 import { ClassificationTree } from "../../lib/tree";
 import Crumbs from "../../components/changeset/crumbs";
 import Animation from "../../styles/animations.module.css";
-import Button from "@mui/material/Button";
 import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
 import CircularProgress from "@mui/material/CircularProgress";
 import LoadingButton from "@mui/lab/LoadingButton";
-
-/*
-@TODO/note:
-Client-side caching is not the right tool to achieve smoothness and speed here.
-The risk of the frontend and backend getting out of sync is too high.
-Instead: 
-- Loading animations
-- Optimistic UI updates when adding and removing leaves
-- No caching
-*/
 
 function ToggleModeSwitch(props: {
   isDeleteMode: boolean;
@@ -224,23 +213,23 @@ export default function Select() {
       addOrRemove: ChangeSetRequest.addOrRemove.ADD,
     }).then((res) => {
       if (isDeleteMode) {
+        // remove intermediate path
+        setDeleteSelection((sel) => sel.remove(path));
+        
         setDeleteSelection((sel) => {
           res.updatedPaths.forEach((p) => sel.add(p));
           return sel;
         });
         setDeleteCount((count) => count + res.messageCount);
-
-        // remove intermediate path
-        setDeleteSelection((sel) => sel.remove(path));
       } else {
+        // remove intermediate path
+        setMarkReadSelection((sel) => sel.remove(path));
+        
         setMarkReadSelection((sel) => {
           res.updatedPaths.forEach((p) => sel.add(p));
           return sel;
         });
         setMarkReadCount((count) => count + res.messageCount);
-
-        // remove intermediate path
-        setMarkReadSelection((sel) => sel.remove(path));
       }
     })
     .catch((error)=>{

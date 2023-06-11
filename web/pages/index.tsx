@@ -27,6 +27,7 @@ import IconMarkEmailUnread from "@mui/icons-material/MarkEmailUnread";
 import IconTicket from "@mui/icons-material/LocalActivity";
 import { useRef } from "react";
 import Alert from "@mui/material/Alert";
+import FeatureCard from "../components/feature-card";
 
 function CTA(props: { text: string, href: string }) {
   return <Button
@@ -529,7 +530,63 @@ export default function Home(props: IStaticProps) {
           </Grid>
         </Grid>
 
-        {/* Row 5 */}
+        {/* Row 7 */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          marginTop={{
+            xs: "40px",
+            md: "60px",
+          }}
+        >
+          <Grid
+            item
+            xs={12}
+            md={12}
+            lg={8}
+            display="flex"
+            justifyContent="center"
+            sx={{
+              marginBottom: 2,
+            }}
+          >
+            <Typography
+              fontSize="2em"
+              ref={plansRef}
+            >
+              Your safety comes first
+            </Typography>
+          </Grid>
+          <Grid
+            container
+            item
+            direction="row"
+            justifyContent="center"
+            alignItems="top"
+            xs={12}
+            marginTop={3}
+          >
+            <FeatureCard
+              headline="Security"
+              icon="shield"
+              description="We don't store message bodies or attachments."
+            />
+            <FeatureCard
+              headline="Encryption"
+              icon="lock"
+              description="Your data is secured with military-grade encryption and deleted after 30 days."
+            />
+            <FeatureCard
+              headline="Privacy"
+              icon="fence"
+              description="We will never sell or share information from your inbox."
+            />
+          </Grid>
+        </Grid>
+
+        {/* Row 6 */}
         <Grid
           container
           direction="row"

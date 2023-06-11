@@ -32,7 +32,7 @@ func (e ApplicationKeyError) Key() string {
 
 func (e ApplicationKeyError) Is(target error) bool {
 	var other *ApplicationKeyError
-	if errors.As(target, other) {
+	if errors.As(target, &other) {
 		return other.key == e.key
 	}
 	return false
@@ -102,6 +102,14 @@ var (
 		},
 		key: "google_reauthentication_required",
 	}
+
+	ErrTermsAndConditionsNotAgreed = ApplicationKeyError{
+		ApplicationError: ApplicationError{
+			status: http.StatusForbidden,
+			msg:    "terms and conditions not accepted",
+		},
+		key: "terms_and_conditions_not_accepted",
+	}
 )
 
 /*
@@ -150,4 +158,8 @@ func InsufficientPermissionsError(parent error) error {
 
 func GoogleReauthenticationRequiredError() error {
 	return ErrGoogleReauthenticationRequired
+}
+
+func TermsAndConditionsNotAgreedError() error {
+	return ErrTermsAndConditionsNotAgreed
 }

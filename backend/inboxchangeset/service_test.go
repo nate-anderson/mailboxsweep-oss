@@ -109,6 +109,10 @@ func TestInboxChangesetService(t *testing.T) {
 
 	publisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
 
+	inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
+	inboxUserService, err := inboxuser.NewService(inboxUserRepo)
+	assert.ThatError(t, err).IsNil()
+
 	classificationService := classification.NewService(
 		credentialReadService,
 		imapServerService,
@@ -117,6 +121,7 @@ func TestInboxChangesetService(t *testing.T) {
 		classifyRequestService,
 		paymentService,
 		metadataService,
+		inboxUserService,
 		logrus.New(),
 		publisher,
 		5,
@@ -169,6 +174,8 @@ func TestInboxChangesetService(t *testing.T) {
 
 	// seed the user
 	_, err = userService.Store(ctx, testAddress)
+	assert.ThatError(t, err).IsNil()
+	err = userService.Consent(authedCtx, []inboxuser.Agreement{inboxuser.TermsAndConditions})
 	assert.ThatError(t, err).IsNil()
 
 	// seed a classification request

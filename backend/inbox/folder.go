@@ -9,6 +9,6 @@ type Folder interface {
 	Messages(ctx context.Context, start, end uint32, m chan<- Message, e chan<- error)
 	Count() uint32
 	UnreadCount() uint32
-	Delete(uids []string) error
-	MarkRead(uids []string) error
+	Delete(ctx context.Context, uids []string) error
+	MarkRead(ctx context.Context, uids []string) error
 }

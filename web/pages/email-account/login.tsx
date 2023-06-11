@@ -162,6 +162,10 @@ export default function Login() {
             API.getUserData()
               .then((res) => {
                 setAddress(res.address);
+                // if using Gmail, there will always be a credential
+                // unless reauth is required, in which case we won't reach this page anyway
+                // thus, default to IMAP here
+                setCredentialType(GetCredentialResponse.type.IMAP);
               })
               .catch((err) => {
                 console.error({ getUserDataError: err });
@@ -331,65 +335,65 @@ export default function Login() {
 
           {credentialType === GetCredentialResponse.type.IMAP
             ? <Box
-            component="form"
-            sx={{
-              marginY: 3,
-              maxWidth: 600,
-              width: "auto",
-              marginX: "auto",
-            }}
-          >
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
-                {/* Read-only */}
-                <TextField
-                  label="Email"
-                  fullWidth
-                  disabled
-                  value={address}
-                ></TextField>
-              </Grid>
-              {showImapServerForm
-                ? <PasswordAndIMAPServerInputs
-                    password={password}
-                    setPassword={updatePassword}
-                    host={imapHost}
-                    setHost={updateHost}
-                    port={imapPort}
-                    setPort={updatePort}
-                  />
-                : <PasswordOnlyInput
-                  password={password}
-                  setPassword={updatePassword}
-                />
-              }
-
-              <Grid
-                item
-                xs={12}
-                sm={12}
+                component="form"
                 sx={{
-                  display: "flex",
-                  justifyContent: showImapServerForm ? "space-between" : "right",
+                  marginY: 3,
+                  maxWidth: 600,
+                  width: "auto",
+                  marginX: "auto",
                 }}
               >
-                {showImapServerForm ? (
-                  <Link href="#">
-                    <MUIButton endIcon={<IconHelp />}>Help</MUIButton>
-                  </Link>
-                ) : (
-                  <></>
-                )}
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={12}>
+                    {/* Read-only */}
+                    <TextField
+                      label="Email"
+                      fullWidth
+                      disabled
+                      value={address}
+                    ></TextField>
+                  </Grid>
+                  {showImapServerForm
+                    ? <PasswordAndIMAPServerInputs
+                        password={password}
+                        setPassword={updatePassword}
+                        host={imapHost}
+                        setHost={updateHost}
+                        port={imapPort}
+                        setPort={updatePort}
+                      />
+                    : <PasswordOnlyInput
+                      password={password}
+                      setPassword={updatePassword}
+                    />
+                  }
 
-                <Button
-                  disabled={!submitButtonEnabled}
-                  onClick={submitCredential}
-                >
-                  Save
-                </Button>
-              </Grid>
-            </Grid>
-          </Box>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={12}
+                    sx={{
+                      display: "flex",
+                      justifyContent: showImapServerForm ? "space-between" : "right",
+                    }}
+                  >
+                    {showImapServerForm ? (
+                      <Link href="#">
+                        <MUIButton endIcon={<IconHelp />}>Help</MUIButton>
+                      </Link>
+                    ) : (
+                      <></>
+                    )}
+
+                    <Button
+                      disabled={!submitButtonEnabled}
+                      onClick={submitCredential}
+                    >
+                      Save
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
             : <Alert
               severity="info"
               sx={{
