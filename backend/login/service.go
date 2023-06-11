@@ -46,8 +46,8 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 	// Temporary login block for Staging environment
 	if os.Getenv("ENV") == "staging" {
 		allowedAddressesStr := os.Getenv("STAGING_ALLOWED_USERS")
-		allowdAddresses := strings.Split(allowedAddressesStr, ",")
-		if !slice.Contains(allowdAddresses, address) {
+		allowedAddresses := strings.Split(allowedAddressesStr, ",")
+		if !slice.Contains(allowedAddresses, address) {
 			return res, mailboxsweep.UnauthenticatedError(errors.New("user is not in test user list"))
 		}
 	}

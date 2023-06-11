@@ -12,7 +12,6 @@ export interface Step {
 
 const providerKey = "mailboxsweep_provider";
 const stepKey = "mailboxsweep_signup_step";
-const StepsComplete = "COMPLETE";
 
 export function setStep(index: number | undefined) {
     if (index === undefined) {
@@ -46,7 +45,6 @@ export interface Step {
 
 export type StepSlug = 
     "TERMS" | 
-    "PROFILE" | 
     "PLAN" |
     "PROVIDER_SIGNIN" |
     "ORGANIZE";
@@ -56,11 +54,6 @@ const stepsIMAP: Step[] = [
         label: "Terms & Conditions",
         path: "/agreement/terms-and-conditions",
         slug: "TERMS",
-    },
-    {
-        label: "Complete Profile",
-        path: "/complete-profile",
-        slug: "PROFILE",
     },
     {
         label: "Select Plan",
