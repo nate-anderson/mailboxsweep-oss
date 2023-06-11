@@ -89,11 +89,6 @@ export default function Navbar(props: NavbarProps) {
   const drawerItems: DrawerItem[] = [
     { text: "Home", icon: <IconHome />, path: "/home" },
     {
-      text: "My Profile",
-      icon: <IconAccountCircle />,
-      path: "/complete-profile",
-    },
-    {
       text: "Email Account",
       icon: <IconEnvelope />,
       path: "/email-account/login",
