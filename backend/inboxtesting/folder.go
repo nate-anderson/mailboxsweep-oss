@@ -53,7 +53,7 @@ func (t TestFolder) UnreadCount() uint32 {
 	return count
 }
 
-func (t *TestFolder) Delete(uids []string) error {
+func (t *TestFolder) Delete(_ context.Context, uids []string) error {
 	if t.DeleteError != nil {
 		return t.DeleteError
 	}
@@ -62,7 +62,7 @@ func (t *TestFolder) Delete(uids []string) error {
 	return nil
 }
 
-func (t *TestFolder) MarkRead(uids []string) error {
+func (t *TestFolder) MarkRead(_ context.Context, uids []string) error {
 	if t.MarkReadError != nil {
 		return t.MarkReadError
 	}

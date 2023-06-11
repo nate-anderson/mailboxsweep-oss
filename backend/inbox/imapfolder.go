@@ -131,7 +131,7 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 }
 
 // @TODO: test this
-func (f IMAPFolder) Delete(uids []string) error {
+func (f IMAPFolder) Delete(_ context.Context, uids []string) error {
 	set := imap.SeqSet{}
 	for _, uid := range uids {
 		u, err := strconv.ParseUint(uid, 10, 32)
@@ -157,7 +157,7 @@ func (f IMAPFolder) Name() string {
 	return f.name
 }
 
-func (f *IMAPFolder) MarkRead(uids []string) error {
+func (f *IMAPFolder) MarkRead(_ context.Context, uids []string) error {
 	readOnly := f.mailbox.ReadOnly
 	set := imap.SeqSet{}
 	for _, uid := range uids {

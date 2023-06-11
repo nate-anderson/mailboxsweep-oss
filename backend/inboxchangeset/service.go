@@ -299,12 +299,12 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 		}
 
 		if operation == changeset.Delete {
-			err = folder.Delete(uids)
+			err = folder.Delete(ctx, uids)
 			if err != nil {
 				return err
 			}
 		} else if operation == changeset.MarkRead {
-			err = folder.MarkRead(uids)
+			err = folder.MarkRead(ctx, uids)
 			if err != nil {
 				return err
 			}

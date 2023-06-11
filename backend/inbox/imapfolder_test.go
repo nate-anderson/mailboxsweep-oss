@@ -98,7 +98,7 @@ func TestIMAPFolder(t *testing.T) {
 
 	t.Run("mark messages read", func(t *testing.T) {
 		assert.That(t, len(msgIDs)).NotEqual(0)
-		err := folder.MarkRead(msgIDs)
+		err := folder.MarkRead(ctx, msgIDs)
 		assert.ThatError(t, err).IsNil()
 
 		updatedMsgs := make([]Message, 0, n)
@@ -134,7 +134,7 @@ func TestIMAPFolder(t *testing.T) {
 
 	t.Run("delete messages", func(t *testing.T) {
 		assert.That(t, len(msgIDs)).NotEqual(0)
-		err = folder.Delete(msgIDs)
+		err = folder.Delete(ctx, msgIDs)
 		assert.ThatError(t, err).IsNil()
 
 		deletedMsgs := make([]Message, 0, n)
