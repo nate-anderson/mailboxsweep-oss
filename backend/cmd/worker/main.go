@@ -74,7 +74,7 @@ type workerConfig struct {
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
-	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
+	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_classify_complete"`
 
 	ClassifySelectURL string `fig:"CLASSIFY_SELECT_URL"`
 }

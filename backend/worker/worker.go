@@ -78,7 +78,7 @@ func (w Worker) Work() error {
 			QueueUrl:                &w.queueURL,
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
 			WaitTimeSeconds:         20,
-			VisibilityTimeout:       60 * visibilityTimeoutMinutes,
+			VisibilityTimeout:       60 * (visibilityTimeoutMinutes + 1),
 		})
 		if err != nil {
 			w.log.
@@ -213,6 +213,7 @@ func (w Worker) Work() error {
 			}
 
 			if w.emailSender != nil {
+				log.Info("going to send completion email")
 				if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
 					"greeting":       greeting,
 					"changeset_link": w.changesetSelectURL,
