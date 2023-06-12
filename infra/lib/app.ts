@@ -128,7 +128,7 @@ export class AppStack extends cdk.Stack {
             // Generic app config
             ENV: props.environmentName,
             HTTP_PORT: Port.HTTP.toString(),
-            STAGING_ALLOWED_USERS: "nathanid95@gmail.com,camerah91@gmail.com,citrusnewsletter@gmail.com",
+            STAGING_ALLOWED_USERS: "nathanid95@gmail.com,camerah91@gmail.com,citrusnewsletter@gmail.com,vanover0333@gmail.com",
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
