@@ -78,6 +78,7 @@ func (w Worker) Work() error {
 			QueueUrl:                &w.queueURL,
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
 			WaitTimeSeconds:         20,
+			VisibilityTimeout:       60 * visibilityTimeoutMinutes,
 		})
 		if err != nil {
 			w.log.
