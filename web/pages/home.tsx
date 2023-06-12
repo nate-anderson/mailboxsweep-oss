@@ -11,50 +11,11 @@ import { ApiError, ClassificationStatus, Plan } from "../client-gen";
 import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
-import Link from "next/link";
-import Button from "@mui/material/Button";
-import IconChevronRight from "@mui/icons-material/ChevronRight";
 import PrivatePage from "../auth";
 import { format, parseISO } from "date-fns";
-
-function ActionLink(props: {
-  color: string;
-  backgroundColor: string;
-  href: string;
-  text: string;
-}) {
-  return (
-    <Link
-      href={props.href}
-      style={{
-        textDecoration: "none",
-        width: "100%",
-      }}
-    >
-      <Box display="flex" justifyContent="end">
-        <Button
-          endIcon={<IconChevronRight />}
-          size="large"
-          sx={{
-            color: props.color,
-            border: `1px solid ${props.backgroundColor}`,
-            backgroundColor: props.backgroundColor,
-            fontWeight: "bold",
-            marginRight: 0,
-            marginLeft: "auto",
-            "&:hover": {
-              color: props.backgroundColor,
-              backgroundColor: props.color,
-              borderColor: props.color,
-            },
-          }}
-        >
-          {props.text}
-        </Button>
-      </Box>
-    </Link>
-  );
-}
+import ActionLink from "../components/action-link";
+import BackupPrompt1 from "../components/prompt/backup-1";
+import BackupPrompt2 from "../components/prompt/backup-2";
 
 const renderClassificationStatus = (
   status: ClassificationStatus.status | undefined
@@ -162,6 +123,15 @@ const renderClassificationStatus = (
   }
 };
 
+const renderActionPrompt = (status: ClassificationStatus.status | undefined) => {
+  switch (status) {
+    case ClassificationStatus.status.IN_PROGRESS:
+      return <BackupPrompt1 />;
+    case ClassificationStatus.status.COMPLETE:
+      return <BackupPrompt2 />;
+  }
+}
+
 export default function Home() {
   const [address, setAddress] = useState("");
   const [errorSnackbar, setErrorMessage] = useSnackbar("error");
@@ -239,6 +209,7 @@ export default function Home() {
           <CssBaseline />
 
           {renderClassificationStatus(classificationStatus)}
+          {renderActionPrompt(classificationStatus)}
 
           <Card
             sx={{
