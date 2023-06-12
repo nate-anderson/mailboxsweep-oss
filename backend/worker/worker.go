@@ -213,7 +213,7 @@ func (w Worker) Work() error {
 			}
 
 			if w.emailSender != nil {
-				log.Info("going to send completion email")
+				log.Infof("going to send completion email (template %s, recipient %s)", w.classifyCompleteTemplate, body.Address)
 				if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
 					"greeting":       greeting,
 					"changeset_link": w.changesetSelectURL,
