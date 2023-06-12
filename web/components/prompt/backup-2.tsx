@@ -15,10 +15,9 @@ export default function BackupPrompt2() {
     >
         <Alert
           severity="warning"
-          variant="filled"
+          variant="standard"
           sx={{
             maxWidth: 600,
-            backgroundColor: "var(--color-accent)",
           }}
         >
           <AlertTitle>Reminder: back up your inbox</AlertTitle>
