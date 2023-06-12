@@ -18,6 +18,10 @@ export default function BackupPrompt1() {
           variant="standard"
           sx={{
             maxWidth: 600,
+            width: "100%",
+            "& > .MuiAlert-message": {
+              width: "100%",
+            },
           }}
         >
           <AlertTitle>Now is a great time to back up your inbox.</AlertTitle>
