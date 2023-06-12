@@ -21,7 +21,7 @@ require (
 	github.com/nate-anderson/fig/v2 v2.2.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/stripe/stripe-go/v74 v74.21.0
+	github.com/stripe/stripe-go/v74 v74.22.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.2.0
