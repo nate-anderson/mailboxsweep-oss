@@ -221,6 +221,8 @@ func (w Worker) Work() error {
 						WithField("address", body.Address).
 						WithError(err).
 						Error("failed to send notification email for classification completion")
+				} else {
+					w.log.Info("sent notification email")
 				}
 			}
 		}
