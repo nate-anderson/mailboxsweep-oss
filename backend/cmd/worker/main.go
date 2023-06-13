@@ -77,6 +77,7 @@ type workerConfig struct {
 	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_classify_complete"`
 
 	ClassifySelectURL string `fig:"CLASSIFY_SELECT_URL"`
+	SESConfigSetName  string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
 }
 
 func main() {
@@ -241,7 +242,7 @@ func main() {
 			return
 		}
 
-		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 	}
 
 	w := worker.NewWorker(

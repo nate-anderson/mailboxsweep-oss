@@ -85,7 +85,6 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		res.Redirect = true
 		res.RedirectURL = authURL
 		res.ExternalAuthCookie = &cookie
-		log.Info("Google OAuth login initiated")
 		return res, nil
 
 	default:
@@ -99,7 +98,6 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		if err != nil {
 			return res, err
 		}
-		log.Info("Magic Link login initiated")
 		return res, nil
 	}
 

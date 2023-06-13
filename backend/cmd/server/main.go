@@ -110,6 +110,7 @@ type serverConfig struct {
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
 	SESLoginEmailTemplateName string `fig:"SES_LOGIN_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
+	SESConfigSetName          string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
 }
 
 func main() {
@@ -286,7 +287,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to initialize SES client: %s", err)
 		}
-		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName, cfg.LoginBaseURL)
 	}
 

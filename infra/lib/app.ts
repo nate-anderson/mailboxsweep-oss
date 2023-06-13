@@ -22,6 +22,9 @@ import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudwatchDashboard } from './cloudwatch-dashboard';
+import * as SES from "aws-cdk-lib/aws-ses";
+import * as SNS from "aws-cdk-lib/aws-sns";
+import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 
@@ -34,6 +37,8 @@ const Port = {
     HTTPS: 443,
     HTTP: 80
 }
+
+const errorEmail = "tech@mailboxsweep.com";
 
 export class AppStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: AppProps) {
@@ -172,7 +177,8 @@ export class AppStack extends cdk.Stack {
             STRIPE_PAYMENT_CONFIRMATION_URL: `https://${webUrl}/plan/payment-success?checkoutSessionId={CHECKOUT_SESSION_ID}`,
             STRIPE_CHECKOUT_SESSION_DURATION_MINUTES: "30",
 
-            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`
+            GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`,
+            SES_CONFIGURATION_SET_NAME: "MailboxSweep_Transactional",
 
             // Secrets that need to come from SSM
             // GOOGLE_OAUTH_CLIENT_ID
@@ -541,5 +547,29 @@ export class AppStack extends cdk.Stack {
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
         });
+
+        // SES configuration
+        const sesConfigSet = new SES.ConfigurationSet(this, `mailboxsweep_transactional`, {
+            configurationSetName: "MailboxSweep_Transactional",
+            reputationMetrics: true,
+            suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
+        });
+        const sesRenderFailureTopic = new SNS.Topic(this, `mailboxsweep_ses_errors`, {
+            fifo: false,
+            topicName: "SESErrors",
+            displayName: "MailboxSweep SES Failures",
+        });
+        sesRenderFailureTopic.addSubscription(new SNSSubscriptions.EmailSubscription(errorEmail, {}));
+        
+        new SES.CfnConfigurationSetEventDestination(this, `ses-error-dest`, {
+            configurationSetName: sesConfigSet.configurationSetName,
+            eventDestination: {
+                matchingEventTypes: ['renderingFailure', 'complaint', 'bounce', 'reject'],
+                enabled: true,
+                snsDestination: {
+                    topicArn: sesRenderFailureTopic.topicArn,
+                }
+            }
+        })
     }
 }
