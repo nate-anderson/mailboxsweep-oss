@@ -504,6 +504,8 @@ export class AppStack extends cdk.Stack {
                 cachePolicy: new CloudFront.CachePolicy(this, "cache-policy", {
                     minTtl: cdk.Duration.minutes(30),
                     maxTtl: cdk.Duration.minutes(60),
+                    enableAcceptEncodingBrotli: true,
+                    enableAcceptEncodingGzip: true,
                 }),
                 compress: true,
                 allowedMethods: CloudFront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,

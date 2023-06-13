@@ -1,5 +1,6 @@
 const withPWA = require('next-pwa')({
   dest: 'public',
+  disable: !['staging', 'prod'].includes(process.env.ENV),
 });
 
 /** @type {import('next').NextConfig} */
