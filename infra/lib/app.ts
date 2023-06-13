@@ -556,6 +556,8 @@ export class AppStack extends cdk.Stack {
             reputationMetrics: true,
             suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
         });
+
+        // send notifications to tech@mailboxsweep.com when render fails, a customer complains, an email bounces or is rejected
         const sesRenderFailureTopic = new SNS.Topic(this, `mailboxsweep_ses_errors`, {
             fifo: false,
             topicName: "SESErrors",

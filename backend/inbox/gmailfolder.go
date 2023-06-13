@@ -43,7 +43,7 @@ func (f GmailFolder) UnreadCount() uint32 {
 
 const (
 	deleteBatchLimit = 1000
-	apiCallCost      = 50
+	apiCallCost      = 51 // limit is really 50 but Google is picky
 	apiCallLimit     = 250
 )
 
@@ -146,6 +146,7 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 			LabelIds(f.label.Id).
 			MaxResults(500).
 			PageToken(nextPageToken).
+			Context(ctx).
 			Do()
 
 		if err != nil {
