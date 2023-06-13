@@ -76,6 +76,7 @@ func syncTemplates(ctx context.Context, ses *sesv2.Client, templates []Template)
 			if err != nil {
 				log.Fatalf("failed to create new template %s: %s", tmpl.Name, err)
 			}
+			log.Printf("Created template %s", tmpl.Name)
 			continue
 		}
 
@@ -89,9 +90,11 @@ func syncTemplates(ctx context.Context, ses *sesv2.Client, templates []Template)
 				Subject: &tmpl.Subject,
 			},
 		})
+
 		if err != nil {
 			log.Fatalf("failed to update existing template %s: %s", tmpl.Name, err)
 		}
+		log.Printf("Updated template %s", tmpl.Name)
 	}
 	return nil
 }
