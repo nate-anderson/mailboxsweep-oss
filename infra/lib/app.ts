@@ -291,7 +291,8 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueUrl",
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
-                        "sqs:DeleteMessage"
+                        "sqs:DeleteMessage",
+                        "sqs:ChangeMessageVisibility",
                     ],
                     resources: [queues.queue.queueArn, queues.dlq.queueArn],
                 })

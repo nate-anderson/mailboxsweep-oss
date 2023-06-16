@@ -225,6 +225,8 @@ func (w Worker) Work() error {
 				} else {
 					w.log.Info("sent notification email")
 				}
+			} else {
+				log.Infoln("skipping email notification - no sender configured")
 			}
 		}
 	}
