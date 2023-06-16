@@ -58,7 +58,8 @@ const deleteBatchLimit = 1000
 
 func (f GmailFolder) Delete(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.DeleteCallCost)
+	// use lower token refresh rate because Google fights back
+	limiter := rate.NewLimiter(f.limits.APICallLimit-10, f.limits.DeleteCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -91,7 +92,8 @@ const unreadLabel = "UNREAD"
 
 func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.MarkReadCallCost)
+	// use lower token refresh rate because Google fights back
+	limiter := rate.NewLimiter(f.limits.APICallLimit-10, f.limits.MarkReadCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
 	group, groupCtx := errgroup.WithContext(ctx)
