@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/time/rate"
 )
 
 var rootCmd = &cobra.Command{
@@ -334,6 +335,12 @@ type cmdConfig struct {
 	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET"`
 	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL"`
 
+	GmailDeleteCallCost       int     `fig:"GMAIL_API_DELETE_CALL_COST"        default:"50"`
+	GmailMarkReadCallCost     int     `fig:"GMAIL_API_MARK_READ_CALL_COST"     default:"50"`
+	GmailListMessagesCallCost int     `fig:"GMAIL_API_LIST_MESSAGES_CALL_COST" default:"5"`
+	GmailGetMessageCallCost   int     `fig:"GMAIL_API_GET_MESSAGE_CALL_COST"   default:"5"`
+	GmailAPICallLimit         float64 `fig:"GMAIL_API_CALL_LIMIT"              default:"250"`
+
 	DynamoDBHost   *string `fig:"DYNAMODB_HOST"`
 	DynamoDBPort   int     `fig:"DYNAMODB_PORT"`
 	DynamoDBRegion string  `fig:"DYNAMODB_REGION"`
@@ -359,7 +366,13 @@ var gmailMessageSummary = &cobra.Command{
 		}
 
 		ctx := context.Background()
-		provider := inbox.NewGmailProvider(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret)
+		provider := inbox.NewGmailProvider(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, inbox.GmailAPIRateLimits{
+			APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
+			DeleteCallCost:       cfg.GmailDeleteCallCost,
+			MarkReadCallCost:     cfg.GmailMarkReadCallCost,
+			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
+			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
+		})
 
 		db, err := mailboxsweep.ConnectAWSService(
 			mailboxsweep.AWSServiceConfig{

@@ -17,6 +17,8 @@ type DefaultProviderService struct {
 
 	googleClientID     string
 	googleClientSecret string
+
+	gmailAPILimits GmailAPIRateLimits
 }
 
 func NewProviderService(
@@ -24,12 +26,14 @@ func NewProviderService(
 	usageRepository metering.UsageRepository,
 	googleClientID,
 	googleClientSecret string,
+	gmailAPIRateLimits GmailAPIRateLimits,
 ) *DefaultProviderService {
 	return &DefaultProviderService{
 		imapServerService,
 		usageRepository,
 		googleClientID,
 		googleClientSecret,
+		gmailAPIRateLimits,
 	}
 }
 
@@ -45,7 +49,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 	var provider Provider
 	switch domain {
 	case mailboxsweep.DomainGmail:
-		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret)
+		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret, s.gmailAPILimits)
 
 	// default to IMAP
 	default:

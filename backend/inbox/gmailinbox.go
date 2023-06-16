@@ -10,6 +10,8 @@ import (
 type GmailInbox struct {
 	address string
 	client  *gmail.Service
+
+	limits *GmailAPIRateLimits
 }
 
 func (i GmailInbox) Name() string {
@@ -67,5 +69,6 @@ func (i GmailInbox) Folder(name string) (Folder, error) {
 		label:   label,
 		client:  i.client,
 		address: i.address,
+		limits:  i.limits,
 	}, nil
 }

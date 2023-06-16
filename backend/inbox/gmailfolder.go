@@ -22,11 +22,24 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
+type GmailAPIRateLimits struct {
+	// rate limiting is configurable because Google doesn't seem to
+	// agree with the rate limiter we use
+	APICallLimit rate.Limit // 250 by default
+
+	DeleteCallCost       int
+	MarkReadCallCost     int
+	ListMessagesCallCost int
+	GetMessageCallCost   int
+}
+
 // Gmail labels are approximated to folders in our system
 type GmailFolder struct {
 	address string
 	label   *gmail.Label
 	client  *gmail.Service
+
+	limits *GmailAPIRateLimits
 }
 
 func (f GmailFolder) Name() string {
@@ -41,22 +54,18 @@ func (f GmailFolder) UnreadCount() uint32 {
 	return uint32(f.label.MessagesUnread)
 }
 
-const (
-	deleteBatchLimit = 1000
-	apiCallCost      = 51 // limit is really 50 but Google is picky
-	apiCallLimit     = 250
-)
+const deleteBatchLimit = 1000
 
 func (f GmailFolder) Delete(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	limiter := rate.NewLimiter(apiCallLimit, apiCallCost)
+	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.DeleteCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	for _, batch := range batches {
 		b := batch
 		group.Go(func() error {
-			err := limiter.WaitN(groupCtx, apiCallCost)
+			err := limiter.WaitN(groupCtx, f.limits.DeleteCallCost)
 			if err != nil {
 				return fmt.Errorf("rate-limit error: %w", err)
 			}
@@ -82,14 +91,14 @@ const unreadLabel = "UNREAD"
 
 func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	limiter := rate.NewLimiter(apiCallLimit, apiCallCost)
+	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.MarkReadCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	for _, batch := range batches {
 		b := batch
 		group.Go(func() error {
-			err := limiter.WaitN(groupCtx, apiCallCost)
+			err := limiter.WaitN(groupCtx, f.limits.MarkReadCallCost)
 			if err != nil {
 				return fmt.Errorf("rate-limit error: %w", err)
 			}
@@ -113,7 +122,7 @@ func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
 
 func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- Message, e chan<- error) {
 	if start >= end {
-		e <- fmt.Errorf("folder.Messages called with start == end")
+		e <- fmt.Errorf("folder.Messages called with start >= end")
 		return
 	}
 
@@ -127,8 +136,7 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 	// Gmail API allows up to 50 calls per second of the APIs used here
 	// (250 units/second, 5 units/call)
 	// https://developers.google.com/gmail/api/reference/quota
-	callCost := 5
-	limiter := rate.NewLimiter(250, callCost)
+	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.ListMessagesCallCost)
 
 	concurrencyLimit := 50
 	workers := make(chan bool, concurrencyLimit)
@@ -136,7 +144,7 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 	wg := sync.WaitGroup{}
 
 	for i < end {
-		err := limiter.WaitN(ctx, callCost)
+		err := limiter.WaitN(ctx, f.limits.ListMessagesCallCost)
 		if err != nil {
 			e <- fmt.Errorf("rate limit error: %w", err)
 			return
@@ -172,7 +180,7 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 					wg.Done()
 					<-workers
 				}()
-				err := limiter.WaitN(ctx, callCost)
+				err := limiter.WaitN(ctx, f.limits.GetMessageCallCost)
 				if err != nil {
 					e <- err
 					return

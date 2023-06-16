@@ -23,6 +23,7 @@ import (
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
+	"golang.org/x/time/rate"
 )
 
 type workerConfig struct {
@@ -70,6 +71,12 @@ type workerConfig struct {
 
 	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
+
+	GmailDeleteCallCost       int     `fig:"GMAIL_API_DELETE_CALL_COST"        default:"50"`
+	GmailMarkReadCallCost     int     `fig:"GMAIL_API_MARK_READ_CALL_COST"     default:"50"`
+	GmailListMessagesCallCost int     `fig:"GMAIL_API_LIST_MESSAGES_CALL_COST" default:"5"`
+	GmailGetMessageCallCost   int     `fig:"GMAIL_API_GET_MESSAGE_CALL_COST"   default:"5"`
+	GmailAPICallLimit         float64 `fig:"GMAIL_API_CALL_LIMIT"              default:"250"`
 
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
@@ -143,7 +150,13 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
-	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret)
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, inbox.GmailAPIRateLimits{
+		APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
+		DeleteCallCost:       cfg.GmailDeleteCallCost,
+		MarkReadCallCost:     cfg.GmailMarkReadCallCost,
+		ListMessagesCallCost: cfg.GmailListMessagesCallCost,
+		GetMessageCallCost:   cfg.GmailGetMessageCallCost,
+	})
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {

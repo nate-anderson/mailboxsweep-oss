@@ -18,6 +18,7 @@ import (
 
 type GmailProvider struct {
 	oauthConfig *oauth2.Config
+	limits      GmailAPIRateLimits
 }
 
 const redirectURL = "mailboxsweep.com"
@@ -26,6 +27,7 @@ func NewGmailProvider(
 	ctx context.Context,
 	clientID string,
 	clientSecret string,
+	limits GmailAPIRateLimits,
 ) *GmailProvider {
 	conf := oauth2.Config{
 		ClientID:     clientID,
@@ -37,6 +39,7 @@ func NewGmailProvider(
 
 	return &GmailProvider{
 		oauthConfig: &conf,
+		limits:      limits,
 	}
 }
 
