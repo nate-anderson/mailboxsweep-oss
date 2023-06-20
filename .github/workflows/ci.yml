@@ -183,7 +183,7 @@ jobs:
 
       - name: Invalidate CloudFront distribution
         env:
-          DISTRIBUTION: E3JGCHRLTZRPO
+          DISTRIBUTION: E12RGUT06QPULN
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
 
       # - name: Build (prod)
