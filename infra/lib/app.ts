@@ -94,10 +94,11 @@ export class AppStack extends cdk.Stack {
          * @TODO retry deployment with DNS namespace
          * didn't try this last night
          */
-        const namespace = 'mailboxsweep';
-        const dnsNamespace = new ServiceDiscovery.PrivateDnsNamespace(this, `dns-namespace`, {
+        const namespace = 'cluster.mailboxsweep.com';
+        const dnsNamespace = cluster.addDefaultCloudMapNamespace({
             vpc,
             name: namespace,
+            type: ServiceDiscovery.NamespaceType.DNS_PRIVATE,
         });
         
 
