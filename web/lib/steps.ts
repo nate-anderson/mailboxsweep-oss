@@ -118,7 +118,7 @@ export function nextStep(): string | undefined {
     const steps = getSteps();
     let step = getStepIndex();
     // if there is another step, increment the step index and return the path of the next step
-    if (step && steps) {
+    if (typeof step !== 'undefined' && steps) {
         if (steps[step + 1]) {
             step++;
             setStep(step);
