@@ -118,6 +118,8 @@ type serverConfig struct {
 
 	SESLoginEmailTemplateName string `fig:"SES_LOGIN_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
 	SESConfigSetName          string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
+
+	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
 }
 
 func main() {
@@ -150,7 +152,7 @@ func main() {
 
 	// use JSON logging when deployed to AWS
 	// use ECS XRay config when deployed to AWS
-	if cfg.Env == "prod" || cfg.Env == "staging" {
+	if (cfg.Env == "prod" || cfg.Env == "staging") && cfg.XRayEnabled {
 		log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339,
 		})
@@ -411,7 +413,7 @@ func main() {
 		},
 	})
 
-	if cfg.Env == "prod" || cfg.Env == "staging" {
+	if (cfg.Env == "prod" || cfg.Env == "staging") && cfg.XRayEnabled {
 		srv = xray.Handler(xray.NewDynamicSegmentNamer("MailboxSweep", "api.*.mailboxsweep.com"), srv)
 	}
 
