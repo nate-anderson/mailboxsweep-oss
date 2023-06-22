@@ -22,6 +22,7 @@ import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudwatchDashboard } from './cloudwatch-dashboard';
+import * as ServiceDiscovery from "aws-cdk-lib/aws-servicediscovery";
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
 import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
@@ -31,6 +32,8 @@ import { join } from 'path';
 type AppProps = InfraStackProps & {
     subdomain?: string;
     clusterInstanceType: string;
+    clusterInstanceCount: number;
+    xrayEnabled: boolean;
 };
 
 const Port = {
@@ -72,7 +75,10 @@ export class AppStack extends cdk.Stack {
             ]
         });
 
-        const vpc = new Vpc(this, `vpc-${props.environmentName}`, {});
+        const vpc = new Vpc(this, `vpc-${props.environmentName}`, {
+            // enableDnsSupport: true,
+            // enableDnsHostnames: true,
+        });
 
         const clusterId = `cluster-${props.environmentName}`;
         const cluster = new ECS.Cluster(this, `mailboxsweep-cluster`, {
@@ -84,11 +90,30 @@ export class AppStack extends cdk.Stack {
             containerInsights: true,
         });
 
+        /**
+         * @TODO retry deployment with DNS namespace
+         * didn't try this last night
+         */
+        const namespace = 'mailboxsweep';
+        const dnsNamespace = new ServiceDiscovery.PrivateDnsNamespace(this, `dns-namespace`, {
+            vpc,
+            name: namespace,
+        });
+        
+
+        // current cluster doesn't have enough capacity, try with more capacity
+        if (props.clusterInstanceCount > 1) {
+            for (let i = 1; i < props.clusterInstanceCount; i++) {
+                cluster.addCapacity(`cap-${i}`, {
+                    instanceType: new EC2.InstanceType(props.clusterInstanceType),
+                });
+            }
+        }
+
         const serverTaskId = `server-task-${props.environmentName}`
         const serverTaskDefinition = new ECS.TaskDefinition(this, serverTaskId, {
             compatibility: ECS.Compatibility.EC2,
         });
-        
 
         const readSSMPolicy = new IAM.Policy(this, `read-ssm`, {
             policyName: "read-ssm",
@@ -126,8 +151,16 @@ export class AppStack extends cdk.Stack {
 
         serverTaskDefinition.taskRole.attachInlinePolicy(readSSMPolicy);
         serverTaskDefinition.taskRole.attachInlinePolicy(serverWriteQueuePolicy);
+        serverTaskDefinition.taskRole.addManagedPolicy({
+            managedPolicyArn: 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+        });
 
         const webUrl = Resources[props.environmentName].web.dns.fullyQualifiedDomainName;
+
+        const XRayConfig = {
+            port: 2000,
+            containerName: 'xray-sidecar',
+        };
 
         const appConfig: Record<string, string> = {
             // Generic app config
@@ -180,6 +213,9 @@ export class AppStack extends cdk.Stack {
             GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`,
             SES_CONFIGURATION_SET_NAME: "MailboxSweep_Transactional",
 
+            AWS_XRAY_DAEMON_ADDRESS: `${XRayConfig.containerName}.${namespace}:${XRayConfig.port}`,
+            AWS_XRAY_ENABLED: props.xrayEnabled.toString(),
+
             // Secrets that need to come from SSM
             // GOOGLE_OAUTH_CLIENT_ID
             // GOOGLE_OAUTH_CLIENT_SECRET
@@ -222,13 +258,6 @@ export class AppStack extends cdk.Stack {
         // server must be able to read and serve classification trees
         bucket.grantRead(serverTaskDefinition.taskRole);
 
-        // const serverServiceId = `server-service-${props.environmentName}`;
-        // const serverService = new ECS.Ec2Service(this, serverServiceId, {
-        //     cluster,
-        //     taskDefinition: serverTaskDefinition,
-        //     desiredCount: 2,
-        // })
-
         // write to DLQ
         const sendEmailPolicy = new IAM.Policy(this, `taskdef-ses-send`, {
             policyName: "send-email",
@@ -268,15 +297,26 @@ export class AppStack extends cdk.Stack {
             logging: ECS.LogDrivers.awsLogs({
                 streamPrefix: "mailboxsweep-worker",
                 logGroup: workerLogGroup,
-            })
+            }),
+            portMappings: [
+                {
+                    containerPort: XRayConfig.port,
+                }
+            ],
         });
         workerTaskDefinition.taskRole.attachInlinePolicy(readSSMPolicy);
+        workerTaskDefinition.taskRole.addManagedPolicy({
+            managedPolicyArn: 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+        });
 
         const workerServiceId = `worker-service`;
         const workerService = new ECS.Ec2Service(this, workerServiceId, {
             cluster,
             taskDefinition: workerTaskDefinition,
             desiredCount: 1,
+            // cloudMapOptions: {
+            //     cloudMapNamespace: dnsNamespace,
+            // },
         });
         
         // read from main queue or DLQ
@@ -320,6 +360,38 @@ export class AppStack extends cdk.Stack {
         workerTaskDefinition.taskRole.attachInlinePolicy(writeDLQPolicy);
         workerTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
  
+        if (props.xrayEnabled) {
+            const xraySidecarTaskDefinition = new ECS.TaskDefinition(this, `xray-sidecar`, {
+                compatibility: ECS.Compatibility.EC2,
+            });
+            
+            xraySidecarTaskDefinition.addContainer('xray-sidecar-task', {
+                containerName: XRayConfig.containerName,
+                image: ContainerImage.fromRegistry("amazon/aws-xray-daemon"),
+                cpu: 32,
+                memoryReservationMiB: 256,
+                portMappings: [
+                    {
+                        hostPort: XRayConfig.port,
+                        containerPort: XRayConfig.port,
+                        protocol: ECS.Protocol.UDP,
+                    }
+                ]
+            });
+            const xraySidecarService = new ECS.Ec2Service(this, `xray-sidecar-service`, {
+                taskDefinition: xraySidecarTaskDefinition,
+                cluster,
+                desiredCount: 1,
+                cloudMapOptions: {
+                    cloudMapNamespace: dnsNamespace,
+                    name: XRayConfig.containerName,
+                    containerPort: XRayConfig.port,
+                    dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
+                },
+            });
+        }
+
+
         const cert = CertMan.Certificate.fromCertificateArn(this, `api-cert-${props.environmentName}`, Resources.global.api.cert.arn);
 
         const securityGroup = new EC2.SecurityGroup(this, `api-security-group`, {
@@ -429,6 +501,12 @@ export class AppStack extends cdk.Stack {
             publicLoadBalancer: true,
             maxHealthyPercent: 200,
             minHealthyPercent: 100,
+            cloudMapOptions: {
+                cloudMapNamespace: dnsNamespace,
+                name: `server`,
+                containerPort: Port.HTTP,
+                dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
+            },
         });
         loadBalancedAPIService.targetGroup.configureHealthCheck({
             path: "/healthcheck",
