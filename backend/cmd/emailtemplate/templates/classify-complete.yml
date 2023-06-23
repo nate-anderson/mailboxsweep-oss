@@ -25,7 +25,7 @@ html: >
 
         <tr>
           <td align="center">
-            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;"><p>{{greeting}}, your inbox is organized and ready for cleanup!</h2>
+            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;"><p>{{greeting}} your inbox is organized and ready for cleanup!</h2>
           </td>
         </tr>
 

@@ -207,7 +207,7 @@ func (w Worker) Work() error {
 			// this user must exist, this failure can only be temporary
 			// default to the generic greeting
 			if err != nil {
-				greeting = "Hi there!"
+				greeting = "Hi there,"
 			} else if user.NameFirst != "" {
 				greeting = fmt.Sprintf("Hi, %s,", user.NameFirst)
 			}
