@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/googleapi"
@@ -58,33 +57,45 @@ const deleteBatchLimit = 1000
 
 func (f GmailFolder) Delete(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	// use lower token refresh rate because Google fights back
-	limiter := rate.NewLimiter(f.limits.APICallLimit-10, f.limits.DeleteCallCost)
+	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.MarkReadCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
-	group, groupCtx := errgroup.WithContext(ctx)
+	concurrencyLimit := 5
+	workers := make(chan bool, concurrencyLimit)
+	errChan := make(chan error)
+
+	wg := sync.WaitGroup{}
+
 	for _, batch := range batches {
-		b := batch
-		group.Go(func() error {
-			err := limiter.WaitN(groupCtx, f.limits.DeleteCallCost)
+		wg.Add(1)
+		go func(batch []string) {
+			defer wg.Done()
+			defer func() {
+				<-workers
+			}()
+			err := limiter.WaitN(ctx, f.limits.MarkReadCallCost)
+			workers <- true
 			if err != nil {
-				return fmt.Errorf("rate-limit error: %w", err)
+				errChan <- err
+				return
 			}
 
 			err = f.client.Users.Messages.BatchDelete(f.address, &gmail.BatchDeleteMessagesRequest{
-				Ids: b,
-			}).Context(groupCtx).Do()
+				Ids: batch,
+			}).Context(ctx).Do()
 			if err != nil {
-				return fmt.Errorf("Gmail BatchDelete failed: %w", err)
+				var apiErr *googleapi.Error
+				if apiErr.Code == http.StatusForbidden {
+					time.Sleep(time.Second * 10)
+					return
+				}
+				errChan <- err
+				return
 			}
+		}(batch)
 
-			return nil
-		})
 	}
-	if err := group.Wait(); err != nil {
-		return err
-	}
-
+	wg.Wait()
 	return nil
 }
 
@@ -92,33 +103,46 @@ const unreadLabel = "UNREAD"
 
 func (f GmailFolder) MarkRead(ctx context.Context, ids []string) error {
 	// rate-limit API calls
-	// use lower token refresh rate because Google fights back
-	limiter := rate.NewLimiter(f.limits.APICallLimit-10, f.limits.MarkReadCallCost)
+	limiter := rate.NewLimiter(f.limits.APICallLimit, f.limits.MarkReadCallCost)
 	batches := batch.WithLimit(ids, deleteBatchLimit)
 
-	group, groupCtx := errgroup.WithContext(ctx)
+	concurrencyLimit := 5
+	workers := make(chan bool, concurrencyLimit)
+	errChan := make(chan error)
+
+	wg := sync.WaitGroup{}
+
 	for _, batch := range batches {
-		b := batch
-		group.Go(func() error {
-			err := limiter.WaitN(groupCtx, f.limits.MarkReadCallCost)
+		wg.Add(1)
+		go func(batch []string) {
+			defer wg.Done()
+			defer func() {
+				<-workers
+			}()
+			err := limiter.WaitN(ctx, f.limits.MarkReadCallCost)
+			workers <- true
 			if err != nil {
-				return fmt.Errorf("rate-limit error: %w", err)
+				errChan <- err
+				return
 			}
 
 			err = f.client.Users.Messages.BatchModify(f.address, &gmail.BatchModifyMessagesRequest{
 				RemoveLabelIds: []string{unreadLabel},
-				Ids:            b,
-			}).Context(groupCtx).Do()
+				Ids:            batch,
+			}).Context(ctx).Do()
 			if err != nil {
-				return fmt.Errorf("Gmail BatchModify (MarkRead) failed: %w", err)
+				var apiErr *googleapi.Error
+				if apiErr.Code == http.StatusForbidden {
+					time.Sleep(time.Second * 10)
+					return
+				}
+				errChan <- err
+				return
 			}
-			return nil
-		})
+		}(batch)
+	}
 
-	}
-	if err := group.Wait(); err != nil {
-		return err
-	}
+	wg.Wait()
 	return nil
 }
 
