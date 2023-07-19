@@ -13,6 +13,8 @@ export class TableStack extends cdk.Stack {
         const table = new DynamoDB.Table(this, tableName, {
             tableName: tableName,
             billingMode: DynamoDB.BillingMode.PROVISIONED,
+            writeCapacity: 10,
+            readCapacity: 10,
             pointInTimeRecovery: true,
             partitionKey: {
                 name: "pk",
