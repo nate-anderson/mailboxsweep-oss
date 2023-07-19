@@ -5,6 +5,7 @@ import * as SQS from "aws-cdk-lib/aws-sqs";
 import * as DynamoDB from "aws-cdk-lib/aws-dynamodb";
 import * as CloudWatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as AWSLogs from 'aws-cdk-lib/aws-logs';
+import * as ElasticLoadBalancingV2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 type CloudwatchDashboardProps = InfraStackProps & {
     table: DynamoDB.Table,
@@ -12,6 +13,7 @@ type CloudwatchDashboardProps = InfraStackProps & {
     dlq: SQS.Queue,
     serverLogGroup: AWSLogs.ILogGroup,
     workerLogGroup: AWSLogs.ILogGroup,
+    loadBalancer: ElasticLoadBalancingV2.ApplicationLoadBalancer,
 }
 
 export class CloudwatchDashboard extends cdk.Stack {
@@ -120,6 +122,14 @@ export class CloudwatchDashboard extends cdk.Stack {
                 })
             ]
         })
+
+        // const loadbalancerErrorsMetric = new CloudWatch.Metric({
+        //     namespace: 'AWS/ApplicationELB',
+        //     metricName: "HTTPCode_ELB_4XX_Count",
+        //     dimensionsMap: {
+        //         LoadBalancer: props.loadBalancer.loadBalancerArn,
+        //     }
+        // });
 
         dashboard.addWidgets(
             dbCapacityGraph,

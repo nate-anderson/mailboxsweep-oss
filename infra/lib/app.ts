@@ -94,12 +94,12 @@ export class AppStack extends cdk.Stack {
          * @TODO retry deployment with DNS namespace
          * didn't try this last night
          */
-        const namespace = 'cluster.mailboxsweep.com';
-        const dnsNamespace = cluster.addDefaultCloudMapNamespace({
-            vpc,
-            name: namespace,
-            type: ServiceDiscovery.NamespaceType.DNS_PRIVATE,
-        });
+        // const namespace = 'cluster.mailboxsweep.com';
+        // const dnsNamespace = cluster.addDefaultCloudMapNamespace({
+        //     vpc,
+        //     name: namespace,
+        //     type: ServiceDiscovery.NamespaceType.DNS_PRIVATE,
+        // });
         
 
         // current cluster doesn't have enough capacity, try with more capacity
@@ -214,7 +214,7 @@ export class AppStack extends cdk.Stack {
             GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`,
             SES_CONFIGURATION_SET_NAME: "MailboxSweep_Transactional",
 
-            AWS_XRAY_DAEMON_ADDRESS: `${XRayConfig.containerName}.${namespace}:${XRayConfig.port}`,
+            // AWS_XRAY_DAEMON_ADDRESS: `${XRayConfig.containerName}.${namespace}:${XRayConfig.port}`,
             AWS_XRAY_ENABLED: props.xrayEnabled.toString(),
 
             // Secrets that need to come from SSM
@@ -238,7 +238,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "truef",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -292,7 +292,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "truef",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -383,12 +383,12 @@ export class AppStack extends cdk.Stack {
                 taskDefinition: xraySidecarTaskDefinition,
                 cluster,
                 desiredCount: 1,
-                cloudMapOptions: {
-                    cloudMapNamespace: dnsNamespace,
-                    name: XRayConfig.containerName,
-                    containerPort: XRayConfig.port,
-                    dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
-                },
+                // cloudMapOptions: {
+                //     cloudMapNamespace: dnsNamespace,
+                //     name: XRayConfig.containerName,
+                //     containerPort: XRayConfig.port,
+                //     dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
+                // },
             });
         }
 
@@ -502,12 +502,12 @@ export class AppStack extends cdk.Stack {
             publicLoadBalancer: true,
             maxHealthyPercent: 200,
             minHealthyPercent: 100,
-            cloudMapOptions: {
-                cloudMapNamespace: dnsNamespace,
-                name: `server`,
-                containerPort: Port.HTTP,
-                dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
-            },
+            // cloudMapOptions: {
+            //     cloudMapNamespace: dnsNamespace,
+            //     name: `server`,
+            //     containerPort: Port.HTTP,
+            //     dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
+            // },
         });
         loadBalancedAPIService.targetGroup.configureHealthCheck({
             path: "/healthcheck",
@@ -628,6 +628,7 @@ export class AppStack extends cdk.Stack {
             dlq: queues.dlq,
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
+            loadBalancer: loadBalancedAPIService.loadBalancer,
         });
 
         // SES configuration
