@@ -54,7 +54,7 @@ export default function DateClassifierCard(props: Props) {
         onChange={props.setInput}
         label={props.classifier.inputLabel}
         inputFormat="MM/dd/yy"
-        renderInput={(params) => (
+        renderInput={(params: any) => (
           <TextField
             variant="standard"
             sx={{ maxWidth: "80px", marginRight: 0.5 }}
