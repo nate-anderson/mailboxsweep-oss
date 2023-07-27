@@ -107,7 +107,8 @@ func TestInboxChangesetService(t *testing.T) {
 	metadataRepo := inbox.NewMetadataRepository(db, table)
 	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, time.Hour)
 
-	publisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
+	classifyPublisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
+	commitPublisher := &mailboxsweep.TestEventPublisher[changeset.CommitQueueMessage]{}
 
 	inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
 	inboxUserService, err := inboxuser.NewService(inboxUserRepo)
@@ -123,7 +124,7 @@ func TestInboxChangesetService(t *testing.T) {
 		metadataService,
 		inboxUserService,
 		logrus.New(),
-		publisher,
+		classifyPublisher,
 		5,
 	)
 
@@ -134,6 +135,7 @@ func TestInboxChangesetService(t *testing.T) {
 		credentialReadService,
 		classifyRequestService,
 		metadataService,
+		commitPublisher,
 		logrus.New(),
 	)
 
