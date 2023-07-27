@@ -58,6 +58,7 @@ type serverConfig struct {
 	SQSRegion string  `fig:"SQS_REGION" default:"us-west-2"`
 
 	SQSClassifyQueueURL string `fig:"SQS_CLASSIFY_QUEUE_URL" required:"true"`
+	SQSCommitQueueURL   string `fig:"SQS_COMMIT_QUEUE_URL" required:"true"`
 
 	SESHost   *string `fig:"SES_HOST"`
 	SESPort   int     `fig:"SES_PORT"`
@@ -232,7 +233,8 @@ func main() {
 		log.Fatalf("failed to initialize eventbridge client: %s", err)
 	}
 
-	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSClassifyQueueURL)
+	classifyQueuePublisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSClassifyQueueURL)
+	commitQueuePublisher := mailboxsweep.NewSQSEventPublisher[changeset.CommitQueueMessage](queue, cfg.SQSCommitQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	userService, err := inboxuser.NewService(userRepo)
@@ -277,7 +279,7 @@ func main() {
 		metadataService,
 		userService,
 		log,
-		publisher,
+		classifyQueuePublisher,
 		cfg.ClassificationSubjectPreviews,
 	)
 
@@ -361,6 +363,7 @@ func main() {
 		credentialService,
 		classifyRequestService,
 		metadataService,
+		commitQueuePublisher,
 		log,
 	)
 

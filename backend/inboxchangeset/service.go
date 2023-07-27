@@ -33,6 +33,7 @@ type Service interface {
 	ClearSelection(ctx context.Context, operation changeset.UpdateOperation) error
 
 	// do the deletes
+	EnqueueCommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 }
 
@@ -43,6 +44,7 @@ type DefaultService struct {
 	credentialService     inboxcredential.CredentialReadService
 	requestService        classifyrequest.Service
 	metadataService       inbox.MetadataService
+	queuePublisher        mailboxsweep.EventPublisher[changeset.CommitQueueMessage]
 	logger                *logrus.Logger
 }
 
@@ -53,6 +55,7 @@ func NewService(
 	credentialService inboxcredential.CredentialReadService,
 	requestService classifyrequest.Service,
 	metadataService inbox.MetadataService,
+	queuePublisher mailboxsweep.EventPublisher[changeset.CommitQueueMessage],
 	logger *logrus.Logger,
 ) *DefaultService {
 	return &DefaultService{
@@ -62,6 +65,7 @@ func NewService(
 		credentialService:     credentialService,
 		requestService:        requestService,
 		metadataService:       metadataService,
+		queuePublisher:        queuePublisher,
 		logger:                logger,
 	}
 }
@@ -368,6 +372,20 @@ func (s DefaultService) FindByOperation(ctx context.Context, operation changeset
 
 func (s DefaultService) ClearSelection(ctx context.Context, operation changeset.UpdateOperation) error {
 	return s.changeSetService.ClearSelection(ctx, operation)
+}
+
+func (s DefaultService) EnqueueCommitChanges(ctx context.Context, operation changeset.UpdateOperation) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return s.queuePublisher.PublishEvent(ctx, mailboxsweep.EventBody[changeset.CommitQueueMessage]{
+		Body: changeset.CommitQueueMessage{
+			Inbox:     addr,
+			Operation: operation,
+		},
+	})
 }
 
 func max[T constraints.Ordered](a, b T) T {
