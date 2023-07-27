@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/email"
@@ -23,6 +25,7 @@ import (
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 )
 
@@ -44,10 +47,12 @@ type workerConfig struct {
 	SESPort   int     `fig:"SES_PORT"`
 	SESRegion string  `fig:"SES_REGION" default:"us-west-2"`
 
-	S3Bucket              string `fig:"S3_BUCKET" required:"true"`
-	DynamoDBTable         string `fig:"DYNAMODB_TABLE" required:"true"`
-	SQSQueueURL           string `fig:"SQS_QUEUE_URL" required:"true"`
-	SQSDeadLetterQueueURL string `fig:"SQS_DLQ_URL" required:"true"`
+	S3Bucket                      string `fig:"S3_BUCKET" required:"true"`
+	DynamoDBTable                 string `fig:"DYNAMODB_TABLE" required:"true"`
+	SQSClassifyQueueURL           string `fig:"SQS_CLASSIFY_QUEUE_URL" required:"true"`
+	SQSCommitQueueURL             string `fig:"SQS_COMMIT_QUEUE_URL" required:"true"`
+	SQSClassifyDeadLetterQueueURL string `fig:"SQS_CLASSIFY_DLQ_URL" required:"true"`
+	SQSCommitDeadLetterQueueURL   string `fig:"SQS_COMMIT_DLQ_URL" required:"true"`
 
 	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
@@ -189,7 +194,7 @@ func main() {
 
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 
-	queue, err := mailboxsweep.ConnectAWSService(
+	queueClient, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SQSHost,
 			ServicePort:   cfg.SQSPort,
@@ -201,7 +206,7 @@ func main() {
 		log.Fatalf("failed to initialize SQS client: %s", err)
 	}
 
-	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
+	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queueClient, cfg.SQSClassifyQueueURL)
 
 	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
 	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
@@ -239,7 +244,8 @@ func main() {
 		cfg.ClassificationSubjectPreviews,
 	)
 
-	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)
+	classifyDLQPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queueClient, cfg.SQSClassifyDeadLetterQueueURL)
+	commitDLQPub := mailboxsweep.NewSQSEventPublisher[changeset.CommitQueueMessage](queueClient, cfg.SQSCommitDeadLetterQueueURL)
 
 	var emailSender email.Sender
 	if cfg.Env == "staging" || cfg.Env == "prod" {
@@ -258,12 +264,12 @@ func main() {
 		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 	}
 
-	w := worker.NewWorker(
+	classifyWorker := worker.NewClassifyWorker(
 		log,
-		queue,
-		cfg.SQSQueueURL,
-		dlqPub,
-		cfg.SQSDeadLetterQueueURL,
+		queueClient,
+		cfg.SQSClassifyQueueURL,
+		classifyDLQPub,
+		cfg.SQSClassifyDeadLetterQueueURL,
 		service,
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
@@ -271,5 +277,21 @@ func main() {
 		cfg.ClassifySelectURL,
 	)
 
-	log.Fatal(w.Work())
+	commitWorker := worker.NewCommitWorker(
+		log,
+		queueClient,
+		cfg.SQSCommitQueueURL,
+		commitDLQPub,
+		cfg.SQSCommitDeadLetterQueueURL,
+	)
+
+	group, workerCtx := errgroup.WithContext(context.Background())
+	group.Go(func() error {
+		return classifyWorker.Work(workerCtx)
+	})
+	group.Go(func() error {
+		return commitWorker.Work(workerCtx)
+	})
+	err = group.Wait()
+	log.Fatal(err)
 }

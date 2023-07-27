@@ -53,10 +53,11 @@ type serverConfig struct {
 	S3Port   int     `fig:"S3_PORT"`
 	S3Region string  `fig:"S3_REGION" default:"us-west-2"`
 
-	SQSHost     *string `fig:"SQS_HOST"`
-	SQSPort     int     `fig:"SQS_PORT"`
-	SQSRegion   string  `fig:"SQS_REGION" default:"us-west-2"`
-	SQSQueueURL string  `fig:"SQS_QUEUE_URL" required:"true"`
+	SQSHost   *string `fig:"SQS_HOST"`
+	SQSPort   int     `fig:"SQS_PORT"`
+	SQSRegion string  `fig:"SQS_REGION" default:"us-west-2"`
+
+	SQSClassifyQueueURL string `fig:"SQS_CLASSIFY_QUEUE_URL" required:"true"`
 
 	SESHost   *string `fig:"SES_HOST"`
 	SESPort   int     `fig:"SES_PORT"`
@@ -231,7 +232,7 @@ func main() {
 		log.Fatalf("failed to initialize eventbridge client: %s", err)
 	}
 
-	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
+	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSClassifyQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	userService, err := inboxuser.NewService(userRepo)

@@ -8,7 +8,7 @@ import * as ECS from "aws-cdk-lib/aws-ecs";
 import * as EC2 from 'aws-cdk-lib/aws-ec2';
 import * as ECR from 'aws-cdk-lib/aws-ecr';
 import { TableStack } from './table';
-import { ClassificationQueueStack } from './queues';
+import { ClassificationQueueStack, CommitChangesetQueueStack } from './queues';
 import * as S3 from "aws-cdk-lib/aws-s3";
 import * as CertMan from "aws-cdk-lib/aws-certificatemanager";
 import * as Route53 from "aws-cdk-lib/aws-route53";
@@ -48,7 +48,8 @@ export class AppStack extends cdk.Stack {
         super(scope, id, props);
 
         const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
-        const queues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
+        const classifyQueues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
+        const commitChangesetQueues = new CommitChangesetQueueStack(this, `changeset-queues-${props.environmentName}`, props);
 
         const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = ECR.Repository.fromRepositoryName(this, serverRepoName, serverRepoName);
@@ -145,7 +146,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [queues.queue.queueArn],
+                    resources: [classifyQueues.queue.queueArn],
                 })
             ]
         })
@@ -189,11 +190,18 @@ export class AppStack extends cdk.Stack {
             S3_BUCKET: bucket.bucketName,
 
             // Queues
-            SQS_QUEUE_URL: queues.queue.queueUrl,
-            SQS_QUEUE: queues.queue.queueName,
-            SQS_DLQ_URL: queues.dlq.queueUrl,
-            SQS_DLQ: queues.dlq.queueName,
             SQS_REGION: "us-west-2",
+            
+            SQS_CLASSIFY_QUEUE_URL: classifyQueues.queue.queueUrl,
+            SQS_CLASSIFY_QUEUE: classifyQueues.queue.queueName,
+            SQS_CLASSIFY_DLQ_URL: classifyQueues.dlq.queueUrl,
+            SQS_CLASSIFY_DLQ: classifyQueues.dlq.queueName,
+
+            SQS_COMMIT_QUEUE_URL: commitChangesetQueues.queue.queueUrl,
+            SQS_COMMIT_QUEUE: commitChangesetQueues.queue.queueName,
+            SQS_COMMIT_DLQ_URL: commitChangesetQueues.dlq.queueUrl,
+            SQS_COMMIT_DLQ: commitChangesetQueues.dlq.queueName,
+            
 
             SES_REGION: "us-west-2",
             SES_LOGIN_EMAIL_TEMPLATE_NAME: "mailboxsweep_login_link",
@@ -335,7 +343,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:DeleteMessage",
                         "sqs:ChangeMessageVisibility",
                     ],
-                    resources: [queues.queue.queueArn, queues.dlq.queueArn],
+                    resources: [classifyQueues.queue.queueArn, classifyQueues.dlq.queueArn],
                 })
             ]
         });
@@ -353,7 +361,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [queues.dlq.queueArn],
+                    resources: [classifyQueues.dlq.queueArn],
                 })
             ]
         });
@@ -624,8 +632,8 @@ export class AppStack extends cdk.Stack {
         const dashboard = new CloudwatchDashboard(this, `dashboard`, {
             ...props,
             table: tableStack.table,
-            queue: queues.queue,
-            dlq: queues.dlq,
+            queue: classifyQueues.queue,
+            dlq: classifyQueues.dlq,
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
             loadBalancer: loadBalancedAPIService.loadBalancer,

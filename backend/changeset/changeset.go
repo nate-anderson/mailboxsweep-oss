@@ -59,3 +59,8 @@ func (d ChangeSet) Validate() error {
 
 	return nil
 }
+
+type CommitQueueMessage struct {
+	Inbox     string          `json:"inbox"`
+	Operation UpdateOperation `json:"operation"`
+}
