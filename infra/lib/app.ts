@@ -146,7 +146,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.queue.queueArn],
+                    resources: [classifyQueues.queue.queueArn, commitChangesetQueues.queue.queueArn],
                 })
             ]
         })
@@ -343,7 +343,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:DeleteMessage",
                         "sqs:ChangeMessageVisibility",
                     ],
-                    resources: [classifyQueues.queue.queueArn, classifyQueues.dlq.queueArn],
+                    resources: [classifyQueues.queue.queueArn, classifyQueues.dlq.queueArn, commitChangesetQueues.queue.queueArn, commitChangesetQueues.dlq.queueArn],
                 })
             ]
         });
@@ -361,7 +361,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.dlq.queueArn],
+                    resources: [classifyQueues.dlq.queueArn, commitChangesetQueues.dlq.queueArn],
                 })
             ]
         });
