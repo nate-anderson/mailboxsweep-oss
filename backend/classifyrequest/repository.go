@@ -13,11 +13,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+type RequestStatusFilter int
+
+const (
+	Open RequestStatusFilter = 1 << iota
+	Completed
+	Executing
+	Executed
+)
+
 type ClassifyRequestRepository interface {
 	Store(ctx context.Context, req ClassifyRequest) error
 	List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error)
-	MarkCompleted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error)
-	MarkExecuted(ctx context.Context, inbox string, startedAt int64, operation string, count int, errDetails *string) (*ClassifyRequest, error)
+	ListCompleted(ctx context.Context, inbox string, consistentRead bool) ([]ClassifyRequest, error)
+	MarkCompleted(ctx context.Context, inbox string, requestedAt int64, errDetails *string) (*ClassifyRequest, error)
+	MarkExecuting(ctx context.Context, inbox string, requestedAt int64, operation string) (*ClassifyRequest, error)
+	MarkExecuted(ctx context.Context, inbox string, requestedAt int64, count int, errDetails *string) (*ClassifyRequest, error)
 }
 
 type DynamoRequestRepository struct {
@@ -70,6 +81,49 @@ func (r DynamoRequestRepository) Store(ctx context.Context, req ClassifyRequest)
 	return err
 }
 
+func (r DynamoRequestRepository) ListCompleted(ctx context.Context, inbox string, consistentRead bool) ([]ClassifyRequest, error) {
+	pk := r.formatPK(inbox)
+	var requests []ClassifyRequest
+
+	input := &dynamodb.QueryInput{
+		TableName:              &r.tableName,
+		KeyConditionExpression: aws.String("#pk = :pk"),
+		ExpressionAttributeNames: map[string]string{
+			"#pk":                mailboxsweep.DynamoPK,
+			"#completed_at_unix": "completed_at_unix",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk": &types.AttributeValueMemberS{
+				Value: pk,
+			},
+			":null": &types.AttributeValueMemberS{Value: "NULL"},
+		},
+		ConsistentRead:   &consistentRead,
+		FilterExpression: aws.String("attribute_exists(#completed_at_unix) AND NOT attribute_type(#completed_at_unix, :null)"),
+	}
+
+	for {
+		var chunk []ClassifyRequest
+		queryRes, err := r.db.Query(ctx, input)
+		if err != nil {
+			return requests, err
+		}
+
+		if err := attributevalue.UnmarshalListOfMaps(queryRes.Items, &chunk); err != nil {
+			return requests, err
+		} else {
+			requests = append(requests, chunk...)
+		}
+
+		if len(queryRes.LastEvaluatedKey) > 0 {
+			input.ExclusiveStartKey = queryRes.LastEvaluatedKey
+		} else {
+			break
+		}
+	}
+	return requests, nil
+}
+
 func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyIncomplete, consistentRead bool) ([]ClassifyRequest, error) {
 	pk := r.formatPK(inbox)
 	var requests []ClassifyRequest
@@ -115,8 +169,8 @@ func (r DynamoRequestRepository) List(ctx context.Context, inbox string, onlyInc
 	return requests, nil
 }
 
-func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string, startedAt int64, errDetails *string) (*ClassifyRequest, error) {
-	key := r.buildKey(inbox, startedAt)
+func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string, requestedAt int64, errDetails *string) (*ClassifyRequest, error) {
+	key := r.buildKey(inbox, requestedAt)
 	completed := time.Now().Unix()
 	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
 		Value: true,
@@ -142,7 +196,7 @@ func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string
 			},
 			":err_details": errDetailsValue,
 			":sk": &types.AttributeValueMemberS{
-				Value: r.formatSK(startedAt),
+				Value: r.formatSK(requestedAt),
 			},
 		},
 		ReturnValues: types.ReturnValueAllNew,
@@ -156,8 +210,8 @@ func (r DynamoRequestRepository) MarkCompleted(ctx context.Context, inbox string
 	return &c, err
 }
 
-func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string, startedAt int64, operation string, count int, errDetails *string) (*ClassifyRequest, error) {
-	key := r.buildKey(inbox, startedAt)
+func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string, requestedAt int64, count int, errDetails *string) (*ClassifyRequest, error) {
+	key := r.buildKey(inbox, requestedAt)
 	executed := time.Now().Unix()
 	var errDetailsValue types.AttributeValue = &types.AttributeValueMemberNULL{
 		Value: true,
@@ -170,14 +224,13 @@ func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string,
 	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		Key:                 key,
 		TableName:           &r.tableName,
-		UpdateExpression:    aws.String("SET #executed = :executed, #error = :err_details, #count = :count, #operation = :operation"),
+		UpdateExpression:    aws.String("SET #executed = :executed, #error = :err_details, #count = :count"),
 		ConditionExpression: aws.String("#sk = :sk"),
 		ExpressionAttributeNames: map[string]string{
-			"#executed":  "executed_at_unix",
-			"#error":     "error",
-			"#sk":        mailboxsweep.DynamoSK,
-			"#count":     "count",
-			"#operation": "operation",
+			"#executed": "executed_at_unix",
+			"#error":    "error",
+			"#sk":       mailboxsweep.DynamoSK,
+			"#count":    "count",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":executed": &types.AttributeValueMemberN{
@@ -185,10 +238,43 @@ func (r DynamoRequestRepository) MarkExecuted(ctx context.Context, inbox string,
 			},
 			":err_details": errDetailsValue,
 			":sk": &types.AttributeValueMemberS{
-				Value: r.formatSK(startedAt),
+				Value: r.formatSK(requestedAt),
 			},
 			":count": &types.AttributeValueMemberN{
 				Value: strconv.Itoa(count),
+			},
+		},
+		ReturnValues: types.ReturnValueAllNew,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	c := ClassifyRequest{}
+	err = attributevalue.UnmarshalMap(res.Attributes, &c)
+	return &c, err
+}
+
+func (r DynamoRequestRepository) MarkExecuting(ctx context.Context, inbox string, requestedAt int64, operation string) (*ClassifyRequest, error) {
+	key := r.buildKey(inbox, requestedAt)
+	executionStarted := time.Now().Unix()
+
+	res, err := r.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		Key:                 key,
+		TableName:           &r.tableName,
+		UpdateExpression:    aws.String("SET #started = :started, #operation = :operation"),
+		ConditionExpression: aws.String("#sk = :sk"),
+		ExpressionAttributeNames: map[string]string{
+			"#started":   "execute_started_at_unix",
+			"#sk":        mailboxsweep.DynamoSK,
+			"#operation": "operation",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":started": &types.AttributeValueMemberN{
+				Value: strconv.FormatInt(executionStarted, 10),
+			},
+			":sk": &types.AttributeValueMemberS{
+				Value: r.formatSK(requestedAt),
 			},
 			":operation": &types.AttributeValueMemberS{
 				Value: operation,

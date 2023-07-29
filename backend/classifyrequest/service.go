@@ -18,9 +18,12 @@ type Service interface {
 	MarkCompletedSuccess(ctx context.Context) error
 	MarkCompletedError(ctx context.Context, err error) error
 
+	// mark the request as currently being executed (messages are being modified or deleted)
+	MarkExecuting(ctx context.Context, operation string) error
+
 	// change set has been executed, a new scan is needed to do anything else
-	MarkExecutedSuccess(ctx context.Context, operation string, count int) error
-	MarkExecutedError(ctx context.Context, operation string, count int, err error) error
+	MarkExecutedSuccess(ctx context.Context, count int) error
+	MarkExecutedError(ctx context.Context, count int, err error) error
 }
 
 type DefaultService struct {
@@ -190,7 +193,49 @@ func (s DefaultService) MarkCompletedError(ctx context.Context, classifyErr erro
 	return err
 }
 
-func (s DefaultService) MarkExecutedSuccess(ctx context.Context, operation string, count int) error {
+// Mark the most recently completed classify request as executing
+func (s DefaultService) MarkExecuting(ctx context.Context, operation string) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	completedRequests, err := s.requestRepo.ListCompleted(ctx, addr, true)
+	if err != nil {
+		return err
+	}
+
+	// find oldest request that has been completed but not started to execute
+	var oldestReadyRequest ClassifyRequest
+	found := false
+
+	for _, req := range completedRequests {
+		if req.CompletedAtUnix == nil {
+			continue
+		}
+
+		if req.ExecuteStartedAtUnix != nil || req.ExecutedAtUnix != nil {
+			continue
+		}
+
+		if !found {
+			oldestReadyRequest = req
+			found = true
+		} else if *req.ExecuteStartedAtUnix < *oldestReadyRequest.ExecuteStartedAtUnix {
+			oldestReadyRequest = req
+		}
+	}
+
+	if !found {
+		return errors.New("no requests ready to start executing were found")
+	}
+
+	_, err = s.requestRepo.MarkExecuting(ctx, addr, oldestReadyRequest.RequestedAt, operation)
+
+	return err
+}
+
+func (s DefaultService) MarkExecutedSuccess(ctx context.Context, count int) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -209,7 +254,7 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context, operation strin
 			continue
 		}
 
-		if req.ExecutedAtUnix != nil {
+		if req.ExecuteStartedAtUnix == nil {
 			continue
 		}
 
@@ -225,11 +270,11 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context, operation strin
 		return errors.New("no completed requests found")
 	}
 
-	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, operation, count, nil)
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, nil)
 	return err
 }
 
-func (s DefaultService) MarkExecutedError(ctx context.Context, operation string, count int, executeError error) error {
+func (s DefaultService) MarkExecutedError(ctx context.Context, count int, executeError error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -248,7 +293,7 @@ func (s DefaultService) MarkExecutedError(ctx context.Context, operation string,
 	var oldestClosedRequest ClassifyRequest
 	found := false
 	for _, req := range requests {
-		if req.CompletedAtUnix == nil {
+		if req.CompletedAtUnix == nil || req.ExecuteStartedAtUnix == nil {
 			continue
 		}
 
@@ -269,6 +314,6 @@ func (s DefaultService) MarkExecutedError(ctx context.Context, operation string,
 	}
 
 	errMsg := executeError.Error()
-	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, operation, count, &errMsg)
+	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, &errMsg)
 	return err
 }

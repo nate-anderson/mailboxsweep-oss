@@ -81,94 +81,104 @@ func TestClassifyRequestRepository(t *testing.T) {
 			assert.That(t, incomplete).Equals(1)
 			assert.That(t, nonError).Equals(1)
 		})
+	})
 
-		t.Run("mark completed", func(t *testing.T) {
-			var requestedAt int64 = 10000000
+	t.Run("mark completed", func(t *testing.T) {
+		var requestedAt int64 = 10000000
 
-			t.Run("successful outcome", func(t *testing.T) {
-				updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, nil)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, updated.Inbox).Equals(testAddress)
-				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
-				assert.That(t, updated.UserUUID).Equals(id)
-				assert.That(t, updated.Error).Equals(nil)
+		t.Run("successful outcome", func(t *testing.T) {
+			updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, nil)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, updated.Inbox).Equals(testAddress)
+			assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
+			assert.That(t, updated.UserUUID).Equals(id)
+			assert.That(t, updated.Error).Equals(nil)
 
-				var retrieved ClassifyRequest
-				list, err := repo.List(ctx, testAddress, false, false)
-				assert.ThatError(t, err).IsNil()
-				for _, r := range list {
-					if r.RequestedAt == requestedAt {
-						retrieved = r
-					}
+			var retrieved ClassifyRequest
+			list, err := repo.List(ctx, testAddress, false, false)
+			assert.ThatError(t, err).IsNil()
+			for _, r := range list {
+				if r.RequestedAt == requestedAt {
+					retrieved = r
 				}
-				assert.That(t, retrieved.Inbox).SoThat("found updated record").Equals(testAddress)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, updated.Inbox).Equals(testAddress)
-				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
-				assert.That(t, updated.UserUUID).Equals(id)
-				assert.That(t, updated.Error).Equals(nil)
-			})
-
-			t.Run("failed outcome", func(t *testing.T) {
-				errMsg := "a big error"
-				updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, &errMsg)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, updated.Inbox).Equals(testAddress)
-				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
-				assert.That(t, updated.UserUUID).Equals(id)
-				assert.That(t, *updated.Error).Equals(errMsg)
-
-				var retrieved ClassifyRequest
-				list, err := repo.List(ctx, testAddress, false, false)
-				assert.ThatError(t, err).IsNil()
-				for _, r := range list {
-					if r.RequestedAt == requestedAt {
-						retrieved = r
-					}
-				}
-				assert.That(t, retrieved.Inbox).SoThat("found updated record").Equals(testAddress)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, updated.Inbox).Equals(testAddress)
-				assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
-				assert.That(t, updated.UserUUID).Equals(id)
-				assert.That(t, *updated.Error).Equals(errMsg)
-			})
+			}
+			assert.That(t, retrieved.Inbox).SoThat("found updated record").Equals(testAddress)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, updated.Inbox).Equals(testAddress)
+			assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
+			assert.That(t, updated.UserUUID).Equals(id)
+			assert.That(t, updated.Error).Equals(nil)
 		})
 
-		t.Run("mark executed", func(t *testing.T) {
-			requestedAt := 10000001
+		t.Run("failed outcome", func(t *testing.T) {
+			errMsg := "a big error"
+			updated, err := repo.MarkCompleted(ctx, testAddress, requestedAt, &errMsg)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, updated.Inbox).Equals(testAddress)
+			assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
+			assert.That(t, updated.UserUUID).Equals(id)
+			assert.That(t, *updated.Error).Equals(errMsg)
 
-			var (
-				successCount = 10
-				failureCount = 20
-			)
-
-			t.Run("success", func(t *testing.T) {
-				operation := "MARK_READ"
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), operation, successCount, nil)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
-				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
-				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
-				assert.That(t, req.Inbox).Equals(testAddress)
-				assert.That(t, req.Error).Equals(nil)
-				assert.That(t, *req.Count).Equals(successCount)
-				assert.That(t, *req.Operation).Equals(operation)
-			})
-
-			t.Run("error", func(t *testing.T) {
-				errDetails := "something horrible happened"
-				operation := "DELETE"
-				req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), operation, failureCount, &errDetails)
-				assert.ThatError(t, err).IsNil()
-				assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
-				assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
-				assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
-				assert.That(t, req.Inbox).Equals(testAddress)
-				assert.That(t, *req.Error).Equals(errDetails)
-				assert.That(t, *req.Count).Equals(failureCount)
-				assert.That(t, *req.Operation).Equals(operation)
-			})
+			var retrieved ClassifyRequest
+			list, err := repo.List(ctx, testAddress, false, false)
+			assert.ThatError(t, err).IsNil()
+			for _, r := range list {
+				if r.RequestedAt == requestedAt {
+					retrieved = r
+				}
+			}
+			assert.That(t, retrieved.Inbox).SoThat("found updated record").Equals(testAddress)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, updated.Inbox).Equals(testAddress)
+			assert.ThatOrdered(t, *updated.CompletedAtUnix).GreaterThan(0)
+			assert.That(t, updated.UserUUID).Equals(id)
+			assert.That(t, *updated.Error).Equals(errMsg)
 		})
 	})
+
+	t.Run("mark executing", func(t *testing.T) {
+		requestedAt := int64(10000000)
+		operation := "MARK_READ"
+		req, err := repo.MarkExecuting(ctx, testAddress, requestedAt, operation)
+		assert.ThatError(t, err).IsNil()
+		assert.That(t, req.ExecutedAtUnix).Equals(nil)
+		assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
+		assert.That(t, req.ExecuteStartedAtUnix).NotEqual(nil)
+		assert.That(t, *req.ExecuteStartedAtUnix).NotEqual(0)
+		assert.That(t, req.Inbox).Equals(testAddress)
+		assert.That(t, *req.Operation).Equals(operation)
+	})
+
+	t.Run("mark executed", func(t *testing.T) {
+		requestedAt := 10000001
+
+		var (
+			successCount = 10
+			failureCount = 20
+		)
+
+		t.Run("success", func(t *testing.T) {
+			req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), successCount, nil)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
+			assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
+			assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
+			assert.That(t, req.Inbox).Equals(testAddress)
+			assert.That(t, req.Error).Equals(nil)
+			assert.That(t, *req.Count).Equals(successCount)
+		})
+
+		t.Run("error", func(t *testing.T) {
+			errDetails := "something horrible happened"
+			req, err := repo.MarkExecuted(ctx, testAddress, int64(requestedAt), failureCount, &errDetails)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, req.ExecutedAtUnix).NotEqual(nil)
+			assert.That(t, *req.ExecutedAtUnix).NotEqual(0)
+			assert.That(t, req.RequestedAt).Equals(int64(requestedAt))
+			assert.That(t, req.Inbox).Equals(testAddress)
+			assert.That(t, *req.Error).Equals(errDetails)
+			assert.That(t, *req.Count).Equals(failureCount)
+		})
+	})
+
 }
