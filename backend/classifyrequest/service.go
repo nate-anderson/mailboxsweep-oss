@@ -111,7 +111,15 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 		return nil, ErrNoOpenRequests
 	}
 
-	return list, nil
+	results := []ClassifyRequest{}
+	for _, r := range list {
+		if r.ExecutedAtUnix != nil {
+			continue
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
 }
 
 // incurs an expensive consistent read

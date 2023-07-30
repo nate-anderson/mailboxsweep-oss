@@ -147,6 +147,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		var open classifyrequest.ClassifyRequest
 		if len(openRequests) == 1 {
 			open = openRequests[0]
+			// otherwise return the most recent
 		} else {
 			for _, r := range openRequests {
 				if r.RequestedAt > open.RequestedAt {
@@ -162,6 +163,8 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 			resBody.Status.Details = open.Error
 		} else if open.CompletedAtUnix != nil {
 			resBody.Status.Status = Complete
+		} else if open.ExecuteStartedAtUnix != nil {
+			resBody.Status.Status = Executing
 		} else {
 			resBody.Status.Status = InProgress
 		}

@@ -114,6 +114,7 @@ components:
             - in_progress
             - complete
             - errored
+            - executing
             - executed
         details:
           type: string
