@@ -44,7 +44,7 @@ type DefaultService struct {
 	credentialService     inboxcredential.CredentialReadService
 	requestService        classifyrequest.Service
 	metadataService       inbox.MetadataService
-	queuePublisher        mailboxsweep.EventPublisher[changeset.CommitQueueMessage]
+	commitQueuePublisher  mailboxsweep.EventPublisher[changeset.CommitQueueMessage]
 	logger                *logrus.Logger
 }
 
@@ -55,7 +55,7 @@ func NewService(
 	credentialService inboxcredential.CredentialReadService,
 	requestService classifyrequest.Service,
 	metadataService inbox.MetadataService,
-	queuePublisher mailboxsweep.EventPublisher[changeset.CommitQueueMessage],
+	commitQueuePublisher mailboxsweep.EventPublisher[changeset.CommitQueueMessage],
 	logger *logrus.Logger,
 ) *DefaultService {
 	return &DefaultService{
@@ -65,7 +65,7 @@ func NewService(
 		credentialService:     credentialService,
 		requestService:        requestService,
 		metadataService:       metadataService,
-		queuePublisher:        queuePublisher,
+		commitQueuePublisher:  commitQueuePublisher,
 		logger:                logger,
 	}
 }
@@ -382,7 +382,7 @@ func (s DefaultService) EnqueueCommitChanges(ctx context.Context, operation chan
 		return fmt.Errorf("failed to mark classify request as executing: %w", err)
 	}
 
-	return s.queuePublisher.PublishEvent(ctx, mailboxsweep.EventBody[changeset.CommitQueueMessage]{
+	return s.commitQueuePublisher.PublishEvent(ctx, mailboxsweep.EventBody[changeset.CommitQueueMessage]{
 		Body: changeset.CommitQueueMessage{
 			Inbox:     addr,
 			Operation: operation,

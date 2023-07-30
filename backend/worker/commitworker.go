@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// subset of inboxchangeset service
 type ChangeCommitter interface {
 	CommitChanges(ctx context.Context, operation changeset.UpdateOperation) error
 }
@@ -32,6 +33,7 @@ type CommitWorker struct {
 
 func NewCommitWorker(
 	log *logrus.Logger,
+	service ChangeCommitter,
 	queue *sqs.Client,
 	queueURL string,
 	dlqPub mailboxsweep.EventPublisher[changeset.CommitQueueMessage],
@@ -40,6 +42,7 @@ func NewCommitWorker(
 	return &CommitWorker{
 		log:      log,
 		queue:    queue,
+		service:  service,
 		queueURL: queueURL,
 		dlqPub:   dlqPub,
 		dlqURL:   dlqURL,

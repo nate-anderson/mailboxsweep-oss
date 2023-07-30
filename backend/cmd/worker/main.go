@@ -10,6 +10,7 @@ import (
 	"mailboxsweep/email"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
+	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/metering"
@@ -90,6 +91,9 @@ type workerConfig struct {
 
 	ClassifySelectURL string `fig:"CLASSIFY_SELECT_URL"`
 	SESConfigSetName  string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
+
+	// Used to split changesets up among documents
+	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
 }
 
 func main() {
@@ -230,7 +234,7 @@ func main() {
 		time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute,
 	)
 
-	service := classification.NewService(
+	classificationService := classification.NewService(
 		credentialService,
 		imapServerService,
 		classificationRepo,
@@ -264,13 +268,30 @@ func main() {
 		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 	}
 
+	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, uint64(cfg.ChangeSetPageIDHashMod))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	changesetService := changeset.NewDefaultService(changesetRepo)
+	inboxChangsesetService := inboxchangeset.NewService(
+		changesetService,
+		classificationService,
+		providerService,
+		credentialService,
+		classifyRequestService,
+		metadataService,
+		commitDLQPub,
+		log,
+	)
+
 	classifyWorker := worker.NewClassifyWorker(
 		log,
 		queueClient,
 		cfg.SQSClassifyQueueURL,
 		classifyDLQPub,
 		cfg.SQSClassifyDeadLetterQueueURL,
-		service,
+		classificationService,
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
 		userService,
@@ -279,6 +300,7 @@ func main() {
 
 	commitWorker := worker.NewCommitWorker(
 		log,
+		inboxChangsesetService,
 		queueClient,
 		cfg.SQSCommitQueueURL,
 		commitDLQPub,
