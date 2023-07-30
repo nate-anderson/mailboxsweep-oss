@@ -118,6 +118,8 @@ components:
             - executed
         details:
           type: string
+        operation:
+          $ref: "#/components/schemas/UpdateOperation"
 
     ClassificationStatusResponse:
       type: object

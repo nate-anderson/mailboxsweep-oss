@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ApiError, ClassificationStatus, Plan } from "../client-gen";
+import { ApiError, ClassificationStatus, Plan, UpdateOperation } from "../client-gen";
 import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
@@ -18,7 +18,8 @@ import BackupPrompt1 from "../components/prompt/backup-1";
 import BackupPrompt2 from "../components/prompt/backup-2";
 
 const renderClassificationStatus = (
-  status: ClassificationStatus.status | undefined
+  status: ClassificationStatus.status | undefined,
+  operation: UpdateOperation | undefined,
 ) => {
   const boxify = (children: React.ReactNode) => (
     <Box
@@ -76,6 +77,7 @@ const renderClassificationStatus = (
           />
         </Alert>
       );
+
     case ClassificationStatus.status.ERRORED:
       return boxify(
         <Alert
@@ -97,6 +99,7 @@ const renderClassificationStatus = (
           />
         </Alert>
       );
+      
     case ClassificationStatus.status.EXECUTED:
       return boxify(
         <Alert
@@ -116,7 +119,19 @@ const renderClassificationStatus = (
             color="white"
           />
         </Alert>
-      )
+      );
+
+    case ClassificationStatus.status.EXECUTING:
+      return boxify(
+        <Alert
+          severity="info"
+          sx={{
+            maxWidth: 600,
+          }}
+        >
+          <AlertTitle></AlertTitle>
+        </Alert>
+      );
     case undefined:
       // display nothing, the stepper should still be visible at this point
       return <></>;
@@ -142,6 +157,7 @@ export default function Home() {
   >();
   const [subscribedPlan, setSubscribedPlan] = useState<Plan | undefined>();
   const [planExpires, setPlanExpires] = useState<string | undefined>();
+  const [operation, setOperation] = useState<UpdateOperation | undefined>();
 
   const API = useAPIClient();
 
@@ -168,6 +184,9 @@ export default function Home() {
         setAddress(res.address);
         if (res.status) {
           setClassificationStatus(res.status.status);
+        }
+        if (res.status?.operation) {
+          setOperation(res.status.operation);
         }
       })
       .catch((err) => {
@@ -208,7 +227,7 @@ export default function Home() {
           {errorSnackbar}
           <CssBaseline />
 
-          {renderClassificationStatus(classificationStatus)}
+          {renderClassificationStatus(classificationStatus, operation)}
           {renderActionPrompt(classificationStatus)}
 
           <Card
