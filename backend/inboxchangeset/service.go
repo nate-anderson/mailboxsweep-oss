@@ -215,17 +215,15 @@ func (s DefaultService) CommitChanges(ctx context.Context, operation changeset.U
 
 	defer func() {
 		if err == nil {
-			updateErr := s.requestService.MarkExecutedSuccess(ctx, string(operation), msgChangeCount)
+			updateErr := s.requestService.MarkExecutedSuccess(ctx, msgChangeCount)
 			if updateErr != nil {
 				log.Error("failed to update request: ", updateErr)
-			} else {
-				log.Info("success")
 			}
 		} else if errors.Is(err, mailboxsweep.ErrGoogleReauthenticationRequired) {
 			// the user will reauthenticate and can come back and submit this again
 			log.Info("user needs to reauthenticate with google - changeset untouched")
 		} else {
-			updateErr := s.requestService.MarkExecutedError(ctx, string(operation), msgChangeCount, err)
+			updateErr := s.requestService.MarkExecutedError(ctx, msgChangeCount, err)
 			if updateErr != nil {
 				log.Error("failed to update request: ", updateErr)
 			}
@@ -378,6 +376,10 @@ func (s DefaultService) EnqueueCommitChanges(ctx context.Context, operation chan
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
+	}
+
+	if err = s.requestService.MarkExecuting(ctx, string(operation)); err != nil {
+		return fmt.Errorf("failed to mark classify request as executing: %w", err)
 	}
 
 	return s.queuePublisher.PublishEvent(ctx, mailboxsweep.EventBody[changeset.CommitQueueMessage]{

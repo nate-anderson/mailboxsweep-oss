@@ -241,7 +241,7 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context, count int) erro
 		return err
 	}
 
-	requests, err := s.requestRepo.List(ctx, addr, false, true)
+	requests, err := s.requestRepo.ListCompleted(ctx, addr, true)
 	if err != nil {
 		return err
 	}
@@ -255,6 +255,10 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context, count int) erro
 		}
 
 		if req.ExecuteStartedAtUnix == nil {
+			continue
+		}
+
+		if req.ExecutedAtUnix != nil {
 			continue
 		}
 
