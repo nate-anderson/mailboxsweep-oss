@@ -16,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import ActionLink from "../components/action-link";
 import BackupPrompt1 from "../components/prompt/backup-1";
 import BackupPrompt2 from "../components/prompt/backup-2";
+import LinearProgress from "@mui/material/LinearProgress";
 
 const renderClassificationStatus = (
   status: ClassificationStatus.status | undefined,
@@ -135,6 +136,7 @@ const renderClassificationStatus = (
           <p style={{ display: "block" }}>
             This can take a few minutes, especially if you've selected a lot of messages. We'll let you know when cleanup is complete!
           </p>
+          <LinearProgress />
         </Alert>
       );
     case undefined:
