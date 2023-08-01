@@ -173,8 +173,6 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 			resBody.Status.Details = open.Error
 		} else if open.CompletedAtUnix != nil {
 			resBody.Status.Status = Complete
-		} else if open.ExecuteStartedAtUnix != nil {
-			resBody.Status.Status = Executing
 		} else {
 			resBody.Status.Status = InProgress
 		}
@@ -216,6 +214,8 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		resBody.Status.Details = closed.Error
 	} else if closed.ExecutedAtUnix != nil {
 		resBody.Status.Status = Executed
+	} else if closed.ExecuteStartedAtUnix != nil {
+		resBody.Status.Status = Executing
 	} else {
 		resBody.Status.Status = Complete
 	}
