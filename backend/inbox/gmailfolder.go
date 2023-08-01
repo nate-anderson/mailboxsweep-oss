@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"log"
 	"mailboxsweep"
 	"mailboxsweep/pkg/batch"
 	"net/http"
@@ -225,7 +224,14 @@ func (f GmailFolder) Messages(ctx context.Context, start, end uint32, m chan<- M
 
 				sender, err := getGmailSender(msgRes.Payload.Headers)
 				if err != nil {
-					log.Printf("error parsing gmail sender %s for message %s (account %s): %s", getHeader("From", msgRes.Payload.Headers), msg.Id, f.address, err)
+					f.logger.
+						WithFields(logrus.Fields{
+							"sender":  getHeader("From", msgRes.Payload.Headers),
+							"message": msg.Id,
+							"inbox":   f.address,
+						}).
+						WithError(err).
+						Warn("error parsing gmail sender")
 					// if there's no sender, log errors and skip. We just won't let the user act on this message from our app.
 					return
 				}
