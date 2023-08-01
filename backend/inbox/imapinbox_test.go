@@ -6,13 +6,15 @@ import (
 	"mailboxsweep/assert"
 	"mailboxsweep/inboxcredential"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
 
 func TestIMAPInbox(t *testing.T) {
 	testConf, err := mailboxsweep.GetTestConfig()
 	assert.ThatError(t, err).IsNil()
 	ctx := context.Background()
-	provider, err := NewIMAPProvider(ctx, testConf.IMAPHost, testConf.IMAPPort, testConf.Address, nil, nil)
+	provider, err := NewIMAPProvider(ctx, testConf.IMAPHost, testConf.IMAPPort, testConf.Address, nil, nil, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	imapCred := inboxcredential.NewIMAPInboxCredential(testConf.Address, testConf.Password)

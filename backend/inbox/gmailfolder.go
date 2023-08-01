@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/googleapi"
@@ -37,6 +38,7 @@ type GmailFolder struct {
 	address string
 	label   *gmail.Label
 	client  *gmail.Service
+	logger  *logrus.Logger
 
 	limits *GmailAPIRateLimits
 }

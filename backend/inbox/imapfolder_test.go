@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emersion/go-imap"
+	"github.com/sirupsen/logrus"
 )
 
 func TestIMAPFolder(t *testing.T) {
@@ -46,6 +47,7 @@ func TestIMAPFolder(t *testing.T) {
 		testConf.Address,
 		usageRepo,
 		nil,
+		logrus.New(),
 	)
 	assert.ThatError(t, err).IsNil()
 

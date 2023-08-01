@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
@@ -19,6 +20,7 @@ import (
 type GmailProvider struct {
 	oauthConfig *oauth2.Config
 	limits      *GmailAPIRateLimits
+	logger      *logrus.Logger
 }
 
 const redirectURL = "mailboxsweep.com"
@@ -28,6 +30,7 @@ func NewGmailProvider(
 	clientID string,
 	clientSecret string,
 	limits GmailAPIRateLimits,
+	logger *logrus.Logger,
 ) *GmailProvider {
 	conf := oauth2.Config{
 		ClientID:     clientID,
@@ -40,6 +43,7 @@ func NewGmailProvider(
 	return &GmailProvider{
 		oauthConfig: &conf,
 		limits:      &limits,
+		logger:      logger,
 	}
 }
 
@@ -75,6 +79,7 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		address: username,
 		client:  client,
 		limits:  p.limits,
+		logger:  p.logger,
 	}, nil
 }
 

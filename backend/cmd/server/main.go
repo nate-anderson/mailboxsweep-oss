@@ -218,6 +218,7 @@ func main() {
 			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
 		},
+		log,
 	)
 
 	queue, err := mailboxsweep.ConnectAWSService(

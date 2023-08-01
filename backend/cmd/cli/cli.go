@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/nate-anderson/fig/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -73,7 +74,7 @@ var listMailboxesCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -140,7 +141,7 @@ var listMessagesCmd = &cobra.Command{
 
 		quotaBytes := metering.Megabyte * 1800
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, usageRepo, &quotaBytes)
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, usageRepo, &quotaBytes, logrus.New())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -204,7 +205,7 @@ var classifyMessagesCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -290,7 +291,7 @@ var deleteCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil)
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -366,13 +367,19 @@ var gmailMessageSummary = &cobra.Command{
 		}
 
 		ctx := context.Background()
-		provider := inbox.NewGmailProvider(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, inbox.GmailAPIRateLimits{
-			APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
-			DeleteCallCost:       cfg.GmailDeleteCallCost,
-			MarkReadCallCost:     cfg.GmailMarkReadCallCost,
-			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
-			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
-		})
+		provider := inbox.NewGmailProvider(
+			ctx,
+			cfg.GoogleClientID,
+			cfg.GoogleClientSecret,
+			inbox.GmailAPIRateLimits{
+				APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
+				DeleteCallCost:       cfg.GmailDeleteCallCost,
+				MarkReadCallCost:     cfg.GmailMarkReadCallCost,
+				ListMessagesCallCost: cfg.GmailListMessagesCallCost,
+				GetMessageCallCost:   cfg.GmailGetMessageCallCost,
+			},
+			logrus.New(),
+		)
 
 		db, err := mailboxsweep.ConnectAWSService(
 			mailboxsweep.AWSServiceConfig{

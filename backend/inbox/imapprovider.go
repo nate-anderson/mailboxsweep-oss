@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/emersion/go-imap/client"
+	"github.com/sirupsen/logrus"
 )
 
 type IMAPProvider struct {
@@ -18,6 +19,7 @@ type IMAPProvider struct {
 	IMAPPort int
 
 	client *client.Client
+	logger *logrus.Logger
 }
 
 func NewIMAPProvider(
@@ -27,6 +29,7 @@ func NewIMAPProvider(
 	address string,
 	usageRepo metering.UsageRepository,
 	quotaBytes *int,
+	logger *logrus.Logger,
 ) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 
@@ -44,6 +47,7 @@ func NewIMAPProvider(
 		IMAPHost: host,
 		IMAPPort: port,
 		client:   cl,
+		logger:   logger,
 	}, nil
 }
 
@@ -87,5 +91,5 @@ func (p *IMAPProvider) Login(_ context.Context, username string, credential inbo
 		return nil, err
 	}
 
-	return NewIMAPInbox(p.client, username), nil
+	return NewIMAPInbox(p.client, username, p.logger), nil
 }

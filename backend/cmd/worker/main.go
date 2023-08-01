@@ -159,13 +159,14 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
-	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, inbox.GmailAPIRateLimits{
+	gmailRateLimits := inbox.GmailAPIRateLimits{
 		APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
 		DeleteCallCost:       cfg.GmailDeleteCallCost,
 		MarkReadCallCost:     cfg.GmailMarkReadCallCost,
 		ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 		GetMessageCallCost:   cfg.GmailGetMessageCallCost,
-	})
+	}
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, log)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {
