@@ -93,7 +93,7 @@ const renderClassificationStatus = (
             try again, or contact support for help.
           </p>
           <ActionLink
-            href="/classify/configure"
+            href="/classify"
             text="Try again"
             backgroundColor="white"
             color="var(--color-danger)"
@@ -114,7 +114,7 @@ const renderClassificationStatus = (
             We scanned and cleaned up your inbox! If you want to make more changes, you can scan your inbox again.
           </p>
           <ActionLink
-            href="/classify/configure"
+            href="/classify"
             text="Clean up more"
             backgroundColor="var(--color-accent)"
             color="white"
