@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAPIClient } from "../../client";
-import { ApiError, Classifier } from "../../client-gen";
+import { ApiError } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { getYear } from "date-fns";
 import { SelectedClassifier } from "../../lib/classifier";
 import Button from "../../components/button";
 
@@ -15,15 +14,7 @@ import SelectedClassifierList from "../../components/classifier-inputs/list";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
-
-const year = getYear(new Date());
-
-const defaultClassifiers: Classifier[] = [
-  { typeKey: "SENDER_DOMAIN" },
-  { typeKey: "SENDER_USERNAME" },
-  // default to the first day of three years ago
-  { typeKey: "SEND_DATE", initValue: `01-01-${year - 3}` },
-];
+import { defaultClassifiers } from "../../lib/classifier";
 
 export default function Configure() {
   const API = useAPIClient();
@@ -125,7 +116,7 @@ export default function Configure() {
                 fontWeight: 100,
               }}
             >
-              Let's organize your inbox.
+              Custom organization
             </Typography>
             <Typography
               align="center"
@@ -137,9 +128,8 @@ export default function Configure() {
                 marginX: 2,
               }}
             >
-              We'll put all your messages into groups based on who sent them, when
-              they were sent, and what's inside. The recommended settings are
-              below, but we'll organize your inbox however you like.
+              Messages will be broken into increasingly specific groups based on the rules you set here. Rules at the top will be applied first,
+              and messages in those groups will be further broken down into smaller groups based on the rules further down the list.
             </Typography>
           </Box>
           <Box
