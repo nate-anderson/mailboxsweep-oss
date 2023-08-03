@@ -67,7 +67,7 @@ const stepsIMAP: Step[] = [
     },
     {
         label: "Organize Messages",
-        path: "/classify/configure",
+        path: "/classify",
         slug: "ORGANIZE",
         hide: true,
     }
@@ -86,7 +86,7 @@ const stepsGmail: Step[] = [
     },
     {
         label: "Organize Messages",
-        path: "/classify/configure",
+        path: "/classify",
         slug: "ORGANIZE",
         hide: true,
     }

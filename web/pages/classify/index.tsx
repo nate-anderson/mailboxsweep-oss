@@ -63,20 +63,15 @@ export default function Classify() {
                     Let's organize your inbox.
                     </Typography>
                     <Typography
-                    align="center"
-                    sx={{
-                        color: "var(--color-black)",
-                        marginTop: 2,
-                        marginBottom: 2,
-                        maxWidth: 600,
-                        marginX: 2,
-                    }}
+                        align="center"
+                        sx={{
+                            color: "var(--color-black)",
+                            marginTop: 2,
+                            maxWidth: 600,
+                            marginX: 2,
+                        }}
                     >
-                    We'll put all your messages into groups based on who sent them, when
-                    they were sent, and what's inside. We recommend using these rules, but you
-                    can organize with custom rules.<br /><br />
-
-                    By default, your classified messages will be grouped like this:
+                        We'll group your messages based on who sent them, and when they were sent by default.
                     </Typography>
                 </Box>
                 <Box
@@ -95,11 +90,23 @@ export default function Classify() {
                         style={{
                             width: "80vw",
                             height: "auto",
-                            maxWidth: "300px",
+                            maxWidth: "320px",
                             marginBottom: "20px",
                             
                         }}
                     />
+                    <Typography
+                        align="center"
+                        sx={{
+                            color: "var(--color-black)",
+                            marginTop: 2,
+                            marginBottom: 2,
+                            maxWidth: 600,
+                            marginX: 2,
+                        }}
+                    >
+                        We recommend using these rules, but you can organize with custom rules.
+                    </Typography>
                     <Box
                         display="flex"
                         gap="6px"
