@@ -19,6 +19,7 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
           // the status code. try that first.
           switch (e.body.code) {
             case "google_reauthentication_required":
+            case "email_login_required":
               window.location.href = "/login/gmail/reauth";
               return null as T;
             case "terms_and_conditions_not_accepted":
