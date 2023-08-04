@@ -15,6 +15,7 @@ import { displayFormat } from "../../../dates";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
+import remarkGfm from "remark-gfm";
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const paths = await readdir(
@@ -104,7 +105,7 @@ export default function Agreement(props: any) {
                 fontSize: "12px",
                 lineHeight: "1.75em",
               }}>
-              <ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {props.agreement?.body ?? ""}
               </ReactMarkdown>
             </Paper>

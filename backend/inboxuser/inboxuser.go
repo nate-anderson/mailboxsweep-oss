@@ -81,6 +81,7 @@ type Agreement string
 
 var (
 	TermsAndConditions Agreement = "TERMS_AND_CONDITIONS"
+	PrivacyPolicy      Agreement = "PRIVACY_POLICY"
 )
 
 var requiredAgreements = []Agreement{
