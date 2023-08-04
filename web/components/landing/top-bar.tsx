@@ -72,6 +72,7 @@ interface NavbarProps {
   page?: string;
   shadow: boolean;
   drawerItems: DrawerItem[];
+  backgroundColor?: string | undefined
 }
 
 export default function TopBar(props: NavbarProps) {
@@ -89,7 +90,11 @@ export default function TopBar(props: NavbarProps) {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
         sx={{
-          backgroundColor: scrollTrigger ? "var(--color-primary)" : "var(--color-light)",
+          backgroundColor: scrollTrigger
+            ? "var(--color-primary)"
+            : Boolean(props.backgroundColor)
+              ? props.backgroundColor
+              : "var(--color-light)",
         }}
         position="fixed"
         elevation={scrollTrigger ? 4 : 0}
