@@ -90,12 +90,15 @@ var requiredAgreements = []Agreement{
 
 var allAgreements = []Agreement{
 	TermsAndConditions,
+	PrivacyPolicy,
 }
 
 func ParseAgreement(str string) (Agreement, error) {
 	switch Agreement(str) {
 	case TermsAndConditions:
 		return TermsAndConditions, nil
+	case PrivacyPolicy:
+		return PrivacyPolicy, nil
 	default:
 		return "", fmt.Errorf("unknown agreement string '%s'", str)
 	}
