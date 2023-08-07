@@ -161,6 +161,8 @@ export default function Agreement() {
                 fontFamily: "monospace",
                 fontSize: "12px",
                 lineHeight: "1.75em",
+                overflow: "auto",
+                maxHeight: "400px",
               }}>
               <ReactMarkdown>
                 {agreement?.body ?? ""}
