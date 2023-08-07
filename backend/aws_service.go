@@ -14,6 +14,7 @@ type AWSServiceConfig struct {
 	ServicePort   int
 	ServiceRegion string
 	Environment   string
+	XRayEnabled   bool
 }
 
 // Generic function for instantiating AWS clients
@@ -32,7 +33,7 @@ func ConnectAWSService[
 			context.Background(),
 			config.WithRegion(cfg.ServiceRegion),
 		)
-		if cfg.Environment == "prod" || cfg.Environment == "staging" {
+		if (cfg.Environment == "prod" || cfg.Environment == "staging") && cfg.XRayEnabled {
 			awsv2.AWSV2Instrumentor(&awsCfg.APIOptions)
 		}
 		if err != nil {
