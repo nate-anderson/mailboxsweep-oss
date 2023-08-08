@@ -3,6 +3,7 @@ package httpserver
 import (
 	"encoding/json"
 	"mailboxsweep/login"
+	"mailboxsweep/session"
 	"net/http"
 	"strings"
 	"time"
@@ -149,7 +150,13 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 }
 
 func (c LoginController) Logout(w http.ResponseWriter, req *http.Request) {
-	clearSessionCookie, clearLoggedInCookie, err := c.service.GenerateEndSessionCookie(req.Context(), c.cookieDomain)
+	cookie, err := req.Cookie(session.SessionAuthCookie)
+	if err != nil {
+		c.respondAuthError(w, err)
+		return
+	}
+
+	clearSessionCookie, clearLoggedInCookie, err := c.service.GenerateEndSessionCookie(req.Context(), cookie.Value, c.cookieDomain)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
