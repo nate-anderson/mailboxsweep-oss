@@ -168,7 +168,7 @@ export class AppStack extends cdk.Stack {
             // Generic app config
             ENV: props.environmentName,
             HTTP_PORT: Port.HTTP.toString(),
-            STAGING_ALLOWED_USERS: "nathanid95@gmail.com,camerah91@gmail.com,citrusnewsletter@gmail.com,vanover0333@gmail.com",
+            STAGING_ALLOWED_USERS: "nathanid95@gmail.com,camerah91@gmail.com,citrusnewsletter@gmail.com,vanover0333@gmail.com,oauthtest121@gmail.com",
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
@@ -368,6 +368,9 @@ export class AppStack extends cdk.Stack {
         workerTaskDefinition.taskRole.attachInlinePolicy(readQueuePolicy);
         workerTaskDefinition.taskRole.attachInlinePolicy(writeDLQPolicy);
         workerTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
+
+        // worker must read classification leaves when modifying
+        bucket.grantRead(workerTaskDefinition.taskRole);
  
         if (props.xrayEnabled) {
             const xraySidecarTaskDefinition = new ECS.TaskDefinition(this, `xray-sidecar`, {
