@@ -65,12 +65,13 @@ func NewClassifyWorker(
 const classifyVisibilityTimeoutMinutes = 5
 
 func (w ClassifyWorker) Work(ctx context.Context) error {
-	w.log.Infof("Listening to classify queue %s...\n", w.queueURL)
+	log := w.log.WithField("worker", "classify")
+	log.Infof("Listening to classify queue %s...\n", w.queueURL)
 
 	for {
 		retrieveID, err := uuid.NewUUID()
 		if err != nil {
-			w.log.Errorf("failed to generate UUID to read from queue: %s", err)
+			log.Errorf("failed to generate UUID to read from queue: %s", err)
 			continue
 		}
 
@@ -81,7 +82,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			VisibilityTimeout:       60 * (classifyVisibilityTimeoutMinutes + 1),
 		})
 		if err != nil {
-			w.log.
+			log.
 				WithError(err).
 				Errorf("failed to read message from queue %s", w.queueURL)
 			continue
@@ -94,7 +95,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			goroutines
 		*/
 
-		w.log.Infof("read %d messages from the queue", len(batch.Messages))
+		log.Infof("read %d messages from the queue", len(batch.Messages))
 
 		wg := sync.WaitGroup{}
 		wg.Add(len(batch.Messages))
@@ -103,17 +104,17 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			queueItem := mailboxsweep.EventBody[classification.ClassifyQueueItem]{}
 			err := json.Unmarshal([]byte(*m.Body), &queueItem)
 			if err != nil {
-				w.log.Errorf("failed to unmarshal queue item: %s", err)
+				log.Errorf("failed to unmarshal queue item: %s", err)
 				continue
 			}
 
 			body := queueItem.Body
 			if strings.TrimSpace(body.Address) == "" {
-				w.log.Errorf("no address in queue item %+v", body)
+				log.Errorf("no address in queue item %+v", body)
 				continue
 			}
 			jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
-			log := w.log.
+			log := log.
 				WithField("address", body.Address).
 				WithField("num_classifiers", len(body.Classifiers))
 
@@ -123,7 +124,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			for i, srcl := range body.Classifiers {
 				cl, err := srcl.Classifier()
 				if err != nil {
-					w.log.Errorf("invalid classifier %v: %s", srcl, err)
+					log.Errorf("invalid classifier %v: %s", srcl, err)
 					continue
 				}
 				classifiers[i] = cl
@@ -145,7 +146,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 							VisibilityTimeout: 60 * classifyVisibilityTimeoutMinutes,
 						})
 						if err != nil {
-							w.log.
+							log.
 								WithField("address", address).
 								WithError(err).
 								Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
@@ -153,7 +154,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 						}
 					case err := <-errChan:
 						if err != nil {
-							w.log.
+							log.
 								WithField("address", address).
 								WithError(err).
 								Errorf("got error for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
@@ -167,14 +168,14 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			end := time.Now()
 			if err != nil {
 				errChan <- err
-				w.log.
+				log.
 					WithError(err).
 					WithField("execution_time_seconds", end.Sub(start).Seconds()).
 					Error("classify failed")
 				// push to DLQ
 				err = w.dlqPub.PublishEvent(ctx, queueItem)
 				if err != nil {
-					w.log.
+					log.
 						WithError(err).
 						Error("failed to push to DLQ after failure")
 				} else {
@@ -183,7 +184,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 						ReceiptHandle: m.ReceiptHandle,
 					})
 					if err != nil {
-						w.log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
+						log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
 					}
 				}
 				continue
@@ -196,11 +197,11 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 				ReceiptHandle: m.ReceiptHandle,
 			})
 			if err != nil {
-				w.log.
+				log.
 					WithField("address", body.Address).
 					Errorf("failed to delete message after classify: %s", err.Error())
 			}
-			w.log.
+			log.
 				WithField("address", body.Address).
 				WithField("execution_time_seconds", end.Sub(start).Seconds()).
 				Info("classify complete")
@@ -221,12 +222,12 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 					"greeting":       greeting,
 					"changeset_link": w.changesetSelectURL,
 				}); err != nil {
-					w.log.
+					log.
 						WithField("address", body.Address).
 						WithError(err).
 						Error("failed to send notification email for classification completion")
 				} else {
-					w.log.Info("sent notification email")
+					log.Info("sent notification email")
 				}
 			} else {
 				log.Infoln("skipping email notification - no sender configured")

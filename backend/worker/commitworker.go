@@ -52,12 +52,13 @@ func NewCommitWorker(
 const commitVisibilityTimeoutMinutes = 1
 
 func (w CommitWorker) Work(ctx context.Context) error {
-	w.log.Infof("Listening to commit queue %s...\n", w.queueURL)
+	log := w.log.WithField("worker", "commit")
+	log.Infof("Listening to commit queue %s...\n", w.queueURL)
 
 	for {
 		retrieveID, err := uuid.NewUUID()
 		if err != nil {
-			w.log.Errorf("failed to generate UUID to read from queue: %s", err)
+			log.Errorf("failed to generate UUID to read from queue: %s", err)
 			continue
 		}
 
@@ -68,13 +69,13 @@ func (w CommitWorker) Work(ctx context.Context) error {
 			VisibilityTimeout:       60 * (commitVisibilityTimeoutMinutes + 1),
 		})
 		if err != nil {
-			w.log.
+			log.
 				WithError(err).
 				Errorf("failed to read message from queue %s", w.queueURL)
 			continue
 		}
 
-		w.log.Infof("read %d messages from the queue", len(batch.Messages))
+		log.Infof("read %d messages from the queue", len(batch.Messages))
 		wg := sync.WaitGroup{}
 		wg.Add(len(batch.Messages))
 		for _, m := range batch.Messages {
@@ -82,12 +83,12 @@ func (w CommitWorker) Work(ctx context.Context) error {
 				defer wg.Done()
 				var e mailboxsweep.EventBody[changeset.CommitQueueMessage]
 				if err := json.Unmarshal([]byte(*message.Body), &e); err != nil {
-					w.log.Errorf("failed to unmarshal queue item: %s", err)
+					log.Errorf("failed to unmarshal queue item: %s", err)
 					return
 				}
 
 				jobCtx := mailboxsweep.AuthorizeJobContext(ctx, e.Body.Inbox)
-				log := w.log.
+				log := log.
 					WithField("address", e.Body.Inbox).
 					WithField("operation", e.Body.Operation)
 
