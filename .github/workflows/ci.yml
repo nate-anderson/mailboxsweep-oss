@@ -84,6 +84,8 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          - mask-password: true
 
       - name: Build, tag, push image (server)
         env:
@@ -113,6 +115,8 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          - mask-password: true
 
       - name: Build, tag, push image (worker)
         env:
