@@ -61,7 +61,7 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 
 	oauthToken, err := gmailCred.OAuth2Token()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)
 	}
 
 	httpClient := p.oauthConfig.Client(ctx, oauthToken)
@@ -89,12 +89,12 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 		return fmt.Errorf("failed to initiate Oauth service for Google permission check: %w", err)
 	}
 
-	info, err := oauthService.Tokeninfo().Do()
+	info, err := oauthService.Tokeninfo().AccessToken(token.AccessToken).Do()
 	if err != nil {
 		if strings.Contains(err.Error(), `invalid_grant`) {
 			return mailboxsweep.GoogleReauthenticationRequiredError()
 		}
-		return err
+		return fmt.Errorf("failed to verify Gmail credential permissions: %w", err)
 	}
 
 	scopes := strings.Fields(info.Scope)
