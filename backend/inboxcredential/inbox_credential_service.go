@@ -100,8 +100,13 @@ func (s DefaultService) DecryptCredential(ctx context.Context, cred Credential) 
 	}
 
 	err = cred.decrypt(s.encryptor)
+	if err != nil {
+		return nil, err
+	}
+
 	if cred.Address() != addr {
 		return nil, errors.New("incorrect context user for credential")
 	}
-	return cred, err
+
+	return cred, nil
 }
