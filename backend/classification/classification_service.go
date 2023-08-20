@@ -133,7 +133,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	}
 
 	// #DEBUG
-	log.Printf("encrypted credential of type %T: %+v", encryptedCred, encryptedCred)
+	log.Infof("encrypted credential of type %T: %+v", encryptedCred, encryptedCred)
 	password, err := s.credentialService.DecryptCredential(ctx, encryptedCred)
 	if err != nil {
 		return err
