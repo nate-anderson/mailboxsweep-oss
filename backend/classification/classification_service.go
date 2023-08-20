@@ -12,6 +12,8 @@ import (
 	"mailboxsweep/payment"
 	"time"
 
+	golog "log"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -133,7 +135,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 	}
 
 	// #DEBUG
-	log.Infof("encrypted credential of type %T: %+v", encryptedCred, encryptedCred)
+	golog.Printf("encrypted credential of type %T: %+v", encryptedCred, encryptedCred)
 	password, err := s.credentialService.DecryptCredential(ctx, encryptedCred)
 	if err != nil {
 		return err
