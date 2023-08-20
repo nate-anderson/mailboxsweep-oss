@@ -3,6 +3,7 @@ package inbox
 import (
 	"context"
 	"fmt"
+	"log"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
@@ -64,6 +65,7 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)
 	}
 
+	log.Printf("using oauth token %+v", oauthToken)
 	httpClient := p.oauthConfig.Client(ctx, oauthToken)
 
 	client, err := gmail.NewService(context.Background(), option.WithHTTPClient(httpClient))
@@ -89,7 +91,7 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 		return fmt.Errorf("failed to initiate Oauth service for Google permission check: %w", err)
 	}
 
-	info, err := oauthService.Tokeninfo().AccessToken(token.AccessToken).Do()
+	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
 		if strings.Contains(err.Error(), `invalid_grant`) {
 			return mailboxsweep.GoogleReauthenticationRequiredError()
