@@ -139,7 +139,7 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 
 	mailbox, err := provider.Login(ctx, addr, password)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to login with provider of type %T: %w", provider, err)
 	}
 
 	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers, s.numSubjectPreviews)
