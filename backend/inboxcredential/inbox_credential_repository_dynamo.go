@@ -2,7 +2,6 @@ package inboxcredential
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"mailboxsweep"
 
@@ -62,36 +61,31 @@ func (r DynamoInboxCredentialRepository) Upsert(ctx context.Context, credential 
 }
 
 func (r DynamoInboxCredentialRepository) FindByAddress(ctx context.Context, address string) (Credential, error) {
+	var ic Credential
 	key := r.buildKey(address)
 	res, err := r.db.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: &r.tableName,
 		Key:       key,
 	})
 	if err != nil {
-		return nil, err
+		return ic, err
 	}
 
 	if res.Item == nil {
-		return nil, mailboxsweep.ErrNotFound
+		return ic, mailboxsweep.ErrNotFound
 	}
 
 	if _, ok := res.Item["is_imap"]; ok {
-		ic := &IMAPInboxCredential{}
-		if err := attributevalue.UnmarshalMap(res.Item, &ic); err != nil {
-			return ic, fmt.Errorf("failed to unmarshal credential result: %w", err)
-		}
-
-		return ic, nil
+		ic = &IMAPInboxCredential{}
 	} else if _, ok := res.Item["is_gmail"]; ok {
-		ic := &GmailInboxCredential{}
-		if err := attributevalue.UnmarshalMap(res.Item, &ic); err != nil {
-			return ic, fmt.Errorf("failed to unmarshal credential result: %w", err)
-		}
-
-		return ic, nil
+		ic = &GmailInboxCredential{}
 	}
 
-	return nil, errors.New("could not determine type of credential ")
+	if err := attributevalue.UnmarshalMap(res.Item, &ic); err != nil {
+		return ic, fmt.Errorf("failed to unmarshal credential result: %w", err)
+	}
+
+	return ic, nil
 }
 
 func (r DynamoInboxCredentialRepository) DeleteByAddress(ctx context.Context, address string) error {

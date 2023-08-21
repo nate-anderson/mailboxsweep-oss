@@ -96,14 +96,13 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 		return err
 	}
 
-	var tokenBuf, refreshBuf []byte
-	tokenBuf, err = decryptor.Open(tokenBuf, decodedNonce, decodedAPITokenCipher, nil)
+	tokenBuf, err := decryptor.Open(nil, decodedNonce, decodedAPITokenCipher, nil)
 	if err != nil {
 		return err
 	}
 	c.APIToken = string(tokenBuf)
 
-	refreshBuf, err = decryptor.Open(refreshBuf, decodedNonce, decodedRefreshTokenCipher, nil)
+	refreshBuf, err := decryptor.Open(nil, decodedNonce, decodedRefreshTokenCipher, nil)
 	if err != nil {
 		return err
 	}
