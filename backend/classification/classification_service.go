@@ -134,12 +134,13 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 
 	// #DEBUG
 	log.Infof("encrypted credential of type %T: %+v", encryptedCred, encryptedCred)
-	password, err := s.credentialService.DecryptCredential(ctx, encryptedCred)
+	decryptedCred, err := s.credentialService.DecryptCredential(ctx, encryptedCred)
 	if err != nil {
 		return err
 	}
+	log.Infof("got decrypted credential %+v", decryptedCred)
 
-	mailbox, err := provider.Login(ctx, addr, password)
+	mailbox, err := provider.Login(ctx, addr, decryptedCred)
 	if err != nil {
 		return fmt.Errorf("failed to login with provider of type %T: %w", provider, err)
 	}
