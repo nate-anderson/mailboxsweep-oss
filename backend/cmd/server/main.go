@@ -155,10 +155,13 @@ func main() {
 	// use JSON logging when deployed to AWS
 	// use ECS XRay config when deployed to AWS
 	if (cfg.Env == "prod" || cfg.Env == "staging") && cfg.XRayEnabled {
+		xrayECS.Init()
+	}
+
+	if !cfg.DevMode {
 		log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339,
 		})
-		xrayECS.Init()
 	}
 
 	db, err := mailboxsweep.ConnectAWSService(
