@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"errors"
 	"fmt"
-	"log"
 	"mailboxsweep"
 )
 
@@ -104,8 +103,6 @@ func (s DefaultService) DecryptCredential(ctx context.Context, cred Credential) 
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("Going to return credential %+v", cred)
 
 	if cred.Address() != addr {
 		return nil, errors.New("incorrect context user for credential")

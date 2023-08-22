@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mailboxsweep"
 	"time"
 
@@ -105,7 +104,7 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 	if err != nil {
 		return err
 	}
-	log.Println("DECRYPTED REFRESH TOKEN: ", string(refreshBuf))
+
 	c.RefreshToken = string(refreshBuf)
 	c.Encrypted = false
 

@@ -155,7 +155,6 @@ func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRed
 	}
 
 	log = log.WithField("session_exp", time.Unix(sess.Expires, 0).UTC().String())
-	log.Info("Gmail login completed, session started")
 	return user, sess, nil
 }
 
