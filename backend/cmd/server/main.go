@@ -415,9 +415,15 @@ func main() {
 	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
 		BaseRouter: root,
 		Middlewares: []httpserver.MiddlewareFunc{
+			middleware.RealIP,
+			middleware.RequestID,
 			auth.Middleware,
 			cors.Middleware,
 			loggingMiddleware,
+			// middleware.Heartbeat("/healthcheck"), // disabled for now because I don't want to make too many changes at once
+			middleware.Recoverer,
+			middleware.Timeout(time.Second * 10),
+			middleware.AllowContentType("application/json"),
 		},
 	})
 
