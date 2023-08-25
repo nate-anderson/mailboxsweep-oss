@@ -3,7 +3,6 @@ package inbox
 import (
 	"context"
 	"fmt"
-	"log"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
@@ -65,7 +64,6 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)
 	}
 
-	log.Printf("using oauth token %+v, gmail cred %+v", oauthToken, gmailCred)
 	httpClient := p.oauthConfig.Client(ctx, oauthToken)
 
 	client, err := gmail.NewService(context.Background(), option.WithHTTPClient(httpClient))
