@@ -34,7 +34,7 @@ export default function SelectPlan() {
       });
       setErrorMessage(undefined);
       setShowSuccess(true);
-      window.open(res.checkoutUrl!);
+      window.location.href = res.checkoutUrl!;
     } catch (error) {
       setErrorMessage(error as string);
     }
