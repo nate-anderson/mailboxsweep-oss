@@ -28,16 +28,17 @@ export default function SelectPlan() {
   }, []);
 
   const submit = async (plan: string) => {
-    try {
-      const res = await API.initiatePayment({
-        plan,
-      });
+    API.initiatePayment({
+      plan,
+    })
+    .then((res) => {
       setErrorMessage(undefined);
       setShowSuccess(true);
       window.location.href = res.checkoutUrl!;
-    } catch (error) {
+    })
+    .catch((error) => {
       setErrorMessage(error as string);
-    }
+    });
   };
 
   return (
