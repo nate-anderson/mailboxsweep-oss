@@ -5,6 +5,8 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/metering"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ProviderService interface {
@@ -17,6 +19,10 @@ type DefaultProviderService struct {
 
 	googleClientID     string
 	googleClientSecret string
+
+	logger *logrus.Logger
+
+	gmailAPILimits GmailAPIRateLimits
 }
 
 func NewProviderService(
@@ -24,12 +30,16 @@ func NewProviderService(
 	usageRepository metering.UsageRepository,
 	googleClientID,
 	googleClientSecret string,
+	gmailAPIRateLimits GmailAPIRateLimits,
+	logger *logrus.Logger,
 ) *DefaultProviderService {
 	return &DefaultProviderService{
 		imapServerService,
 		usageRepository,
 		googleClientID,
 		googleClientSecret,
+		logger,
+		gmailAPIRateLimits,
 	}
 }
 
@@ -45,7 +55,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 	var provider Provider
 	switch domain {
 	case mailboxsweep.DomainGmail:
-		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret)
+		provider = NewGmailProvider(ctx, s.googleClientID, s.googleClientSecret, s.gmailAPILimits, s.logger)
 
 	// default to IMAP
 	default:
@@ -54,7 +64,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 			return nil, err
 		}
 
-		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota)
+		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota, s.logger)
 		if err != nil {
 			return nil, err
 		}

@@ -19,14 +19,6 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
         }
     }
 
-    if (!profileComplete) {
-        const profileStep = steps.findIndex(step => step.slug === "PROFILE");
-        if (profileStep > -1) {
-            setStep(profileStep);
-            return steps[profileStep].path;
-        }
-    }
-
     if (!hasPaid) {
         const paymentStep = steps.findIndex(step => step.slug === "PLAN");
         if (paymentStep > -1) {

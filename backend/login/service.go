@@ -46,8 +46,8 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 	// Temporary login block for Staging environment
 	if os.Getenv("ENV") == "staging" {
 		allowedAddressesStr := os.Getenv("STAGING_ALLOWED_USERS")
-		allowdAddresses := strings.Split(allowedAddressesStr, ",")
-		if !slice.Contains(allowdAddresses, address) {
+		allowedAddresses := strings.Split(allowedAddressesStr, ",")
+		if !slice.Contains(allowedAddresses, address) {
 			return res, mailboxsweep.UnauthenticatedError(errors.New("user is not in test user list"))
 		}
 	}
@@ -85,7 +85,6 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		res.Redirect = true
 		res.RedirectURL = authURL
 		res.ExternalAuthCookie = &cookie
-		log.Info("Google OAuth login initiated")
 		return res, nil
 
 	default:
@@ -99,7 +98,6 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		if err != nil {
 			return res, err
 		}
-		log.Info("Magic Link login initiated")
 		return res, nil
 	}
 
@@ -162,6 +160,6 @@ func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRed
 }
 
 // Generates a cookie to overwrite the session cookie and log the user out
-func (s Service) GenerateEndSessionCookie(ctx context.Context, domain string) (*http.Cookie, *http.Cookie, error) {
-	return s.sessionService.GenerateEndSessionCookie(ctx, domain)
+func (s Service) GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (*http.Cookie, *http.Cookie, error) {
+	return s.sessionService.GenerateEndSessionCookie(ctx, cookie, domain)
 }

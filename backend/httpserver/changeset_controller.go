@@ -149,7 +149,7 @@ func (c ChangeSetController) CommitChangeset(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if err = c.inboxChangeSetService.CommitChanges(ctx, operation); err != nil {
+	if err = c.inboxChangeSetService.EnqueueCommitChanges(ctx, operation); err != nil {
 		c.respondError(w, err)
 		return
 	}

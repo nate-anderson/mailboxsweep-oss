@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/email"
 	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
+	"mailboxsweep/inboxchangeset"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/metering"
@@ -23,6 +26,8 @@ import (
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 )
 
 type workerConfig struct {
@@ -43,10 +48,12 @@ type workerConfig struct {
 	SESPort   int     `fig:"SES_PORT"`
 	SESRegion string  `fig:"SES_REGION" default:"us-west-2"`
 
-	S3Bucket              string `fig:"S3_BUCKET" required:"true"`
-	DynamoDBTable         string `fig:"DYNAMODB_TABLE" required:"true"`
-	SQSQueueURL           string `fig:"SQS_QUEUE_URL" required:"true"`
-	SQSDeadLetterQueueURL string `fig:"SQS_DLQ_URL" required:"true"`
+	S3Bucket                      string `fig:"S3_BUCKET" required:"true"`
+	DynamoDBTable                 string `fig:"DYNAMODB_TABLE" required:"true"`
+	SQSClassifyQueueURL           string `fig:"SQS_CLASSIFY_QUEUE_URL" required:"true"`
+	SQSCommitQueueURL             string `fig:"SQS_COMMIT_QUEUE_URL" required:"true"`
+	SQSClassifyDeadLetterQueueURL string `fig:"SQS_CLASSIFY_DLQ_URL" required:"true"`
+	SQSCommitDeadLetterQueueURL   string `fig:"SQS_COMMIT_DLQ_URL" required:"true"`
 
 	CredentialCipherKeyBase64 string `fig:"CREDENTIAL_CIPHER_KEY_BASE64"`
 
@@ -71,12 +78,22 @@ type workerConfig struct {
 	GoogleClientID     string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
 
+	GmailDeleteCallCost       int     `fig:"GMAIL_API_DELETE_CALL_COST"        default:"50"`
+	GmailMarkReadCallCost     int     `fig:"GMAIL_API_MARK_READ_CALL_COST"     default:"50"`
+	GmailListMessagesCallCost int     `fig:"GMAIL_API_LIST_MESSAGES_CALL_COST" default:"5"`
+	GmailGetMessageCallCost   int     `fig:"GMAIL_API_GET_MESSAGE_CALL_COST"   default:"5"`
+	GmailAPICallLimit         float64 `fig:"GMAIL_API_CALL_LIMIT"              default:"250"`
+
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
-	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
+	SESClassifyCompleteEmailTemplateName string `fig:"SES_CLASSIFY_COMPLETE_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_classify_complete"`
 
 	ClassifySelectURL string `fig:"CLASSIFY_SELECT_URL"`
+	SESConfigSetName  string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
+
+	// Used to split changesets up among documents
+	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
 }
 
 func main() {
@@ -142,7 +159,14 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
-	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret)
+	gmailRateLimits := inbox.GmailAPIRateLimits{
+		APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
+		DeleteCallCost:       cfg.GmailDeleteCallCost,
+		MarkReadCallCost:     cfg.GmailMarkReadCallCost,
+		ListMessagesCallCost: cfg.GmailListMessagesCallCost,
+		GetMessageCallCost:   cfg.GmailGetMessageCallCost,
+	}
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, log)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {
@@ -175,7 +199,7 @@ func main() {
 
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 
-	queue, err := mailboxsweep.ConnectAWSService(
+	queueClient, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SQSHost,
 			ServicePort:   cfg.SQSPort,
@@ -187,7 +211,7 @@ func main() {
 		log.Fatalf("failed to initialize SQS client: %s", err)
 	}
 
-	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
+	pub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queueClient, cfg.SQSClassifyQueueURL)
 
 	stripeClient := stripeClient.New(cfg.StripeAPIKey, nil)
 	checkoutSessionDuration := time.Minute * time.Duration(cfg.StripeCheckoutSessionDurationMinutes)
@@ -211,7 +235,7 @@ func main() {
 		time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute,
 	)
 
-	service := classification.NewService(
+	classificationService := classification.NewService(
 		credentialService,
 		imapServerService,
 		classificationRepo,
@@ -225,10 +249,12 @@ func main() {
 		cfg.ClassificationSubjectPreviews,
 	)
 
-	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSDeadLetterQueueURL)
+	classifyDLQPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queueClient, cfg.SQSClassifyDeadLetterQueueURL)
+	commitDLQPub := mailboxsweep.NewSQSEventPublisher[changeset.CommitQueueMessage](queueClient, cfg.SQSCommitDeadLetterQueueURL)
 
 	var emailSender email.Sender
 	if cfg.Env == "staging" || cfg.Env == "prod" {
+		log.WithField("environment", cfg.Env).Info("using SES email sender")
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SQSHost,
 			ServicePort:   cfg.SQSPort,
@@ -240,21 +266,55 @@ func main() {
 			return
 		}
 
-		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 	}
 
-	w := worker.NewWorker(
+	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, uint64(cfg.ChangeSetPageIDHashMod))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	changesetService := changeset.NewDefaultService(changesetRepo)
+	inboxChangsesetService := inboxchangeset.NewService(
+		changesetService,
+		classificationService,
+		providerService,
+		credentialService,
+		classifyRequestService,
+		metadataService,
+		commitDLQPub,
 		log,
-		queue,
-		cfg.SQSQueueURL,
-		dlqPub,
-		cfg.SQSDeadLetterQueueURL,
-		service,
+	)
+
+	classifyWorker := worker.NewClassifyWorker(
+		log,
+		queueClient,
+		cfg.SQSClassifyQueueURL,
+		classifyDLQPub,
+		cfg.SQSClassifyDeadLetterQueueURL,
+		classificationService,
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
 		userService,
 		cfg.ClassifySelectURL,
 	)
 
-	log.Fatal(w.Work())
+	commitWorker := worker.NewCommitWorker(
+		log,
+		inboxChangsesetService,
+		queueClient,
+		cfg.SQSCommitQueueURL,
+		commitDLQPub,
+		cfg.SQSCommitDeadLetterQueueURL,
+	)
+
+	group, workerCtx := errgroup.WithContext(context.Background())
+	group.Go(func() error {
+		return classifyWorker.Work(workerCtx)
+	})
+	group.Go(func() error {
+		return commitWorker.Work(workerCtx)
+	})
+	err = group.Wait()
+	log.Fatal(err)
 }

@@ -26,11 +26,13 @@ type migrateConfig struct {
 	S3Region string  `fig:"S3_REGION"`
 	S3Bucket string  `fig:"S3_BUCKET"`
 
-	SQSHost   *string `fig:"SQS_HOST"`
-	SQSPort   int     `fig:"SQS_PORT"`
-	SQSRegion string  `fig:"SQS_REGION"`
-	SQSQueue  string  `fig:"SQS_QUEUE"`
-	SQSDLQ    string  `fig:"SQS_DLQ"`
+	SQSHost          *string `fig:"SQS_HOST"`
+	SQSPort          int     `fig:"SQS_PORT"`
+	SQSRegion        string  `fig:"SQS_REGION"`
+	SQSClassifyQueue string  `fig:"SQS_CLASSIFY_QUEUE"`
+	SQSClassifyDLQ   string  `fig:"SQS_CLASSIFY_DLQ"`
+	SQSCommitQueue   string  `fig:"SQS_COMMIT_QUEUE"`
+	SQSCommitDLQ     string  `fig:"SQS_COMMIT_DLQ"`
 
 	Env string `fig:"ENV"`
 }
@@ -118,9 +120,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// create main FIFO queue
+		// create main classify FIFO queue
 		res, err := sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
-			QueueName: &cfg.SQSQueue,
+			QueueName: &cfg.SQSClassifyQueue,
 			Attributes: map[string]string{
 				"FifoQueue": "true",
 			},
@@ -129,10 +131,11 @@ func main() {
 			log.Fatalf("failed to create main queue: %s\n", err)
 		}
 
-		log.Printf("Created main queue at %s (region %s)", *res.QueueUrl, cfg.S3Region)
+		log.Printf("Created main classify queue at %s (region %s)", *res.QueueUrl, cfg.S3Region)
 
+		// classify DLQ
 		res, err = sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
-			QueueName: &cfg.SQSDLQ,
+			QueueName: &cfg.SQSClassifyDLQ,
 			Attributes: map[string]string{
 				"FifoQueue": "true",
 			},
@@ -141,7 +144,33 @@ func main() {
 			log.Fatalf("failed to create DLQ: %s", err)
 		}
 
-		log.Printf("created DLQ at %s (region %s)\n", *res.QueueUrl, cfg.SQSRegion)
+		log.Printf("created classify DLQ at %s (region %s)\n", *res.QueueUrl, cfg.SQSRegion)
+
+		// create main commit FIFO queue
+		res, err = sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
+			QueueName: &cfg.SQSCommitQueue,
+			Attributes: map[string]string{
+				"FifoQueue": "true",
+			},
+		})
+		if err != nil {
+			log.Fatalf("failed to create main queue: %s\n", err)
+		}
+
+		log.Printf("Created main commit queue at %s (region %s)", *res.QueueUrl, cfg.S3Region)
+
+		// commit DLQ
+		res, err = sqsClient.CreateQueue(ctx, &sqs.CreateQueueInput{
+			QueueName: &cfg.SQSCommitDLQ,
+			Attributes: map[string]string{
+				"FifoQueue": "true",
+			},
+		})
+		if err != nil {
+			log.Fatalf("failed to create DLQ: %s", err)
+		}
+
+		log.Printf("created commit DLQ at %s (region %s)\n", *res.QueueUrl, cfg.SQSRegion)
 
 		// create FIFO DLQ
 	default:

@@ -133,38 +133,54 @@ func TestClassifyRequestService(t *testing.T) {
 		})
 	})
 
-	t.Run("mark executed - success", func(t *testing.T) {
-		operation := "DELETE"
+	testAddr3 := "nobody@nowhere.com"
+	count := 30
+	operation := "DELETE"
+	authedCtx3 := mailboxsweep.AuthorizeAPIContext(ctx, testAddr3)
 
+	t.Run("mark executing", func(t *testing.T) {
 		t.Run("unauthorized, failure", func(t *testing.T) {
-			err := service.MarkExecutedSuccess(ctx, operation, 20)
+			err := service.MarkExecuting(ctx, operation)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
-		// store one incomplete
-		testAddr2 := "nobody@nowhere.com"
-		_, err = userService.Store(ctx, testAddr2)
+		// store one complete
+		_, err = userService.Store(ctx, testAddr3)
 		assert.ThatError(t, err).IsNil()
-		authedCtx2 := mailboxsweep.AuthorizeAPIContext(ctx, testAddr2)
-		err := service.RecordRequest(authedCtx2)
+		err := service.RecordRequest(authedCtx3)
 		assert.ThatError(t, err).IsNil()
-		count := 30
+		err = service.MarkCompletedSuccess(authedCtx3)
+		assert.ThatError(t, err).IsNil()
 
-		t.Run("authorized, no completed requests, failure", func(t *testing.T) {
-			err := service.MarkExecutedSuccess(authedCtx2, operation, count)
+		t.Run("success", func(t *testing.T) {
+			err := service.MarkExecuting(authedCtx3, operation)
+			assert.ThatError(t, err).IsNil()
+		})
+
+	})
+
+	t.Run("mark executed - success", func(t *testing.T) {
+
+		t.Run("unauthorized, failure", func(t *testing.T) {
+			err := service.MarkExecutedSuccess(ctx, 20)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+		})
+
+		t.Run("authorized, no executing requests, failure", func(t *testing.T) {
+			err := service.MarkExecutedSuccess(authedCtx, count)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatString(t, err.Error()).Contains("no completed requests found")
 		})
 
 		// mark it complete
-		err = service.MarkCompletedSuccess(authedCtx2)
-		assert.ThatError(t, err).IsNil()
+		// err = service.MarkCompletedSuccess(authedCtx3)
+		// assert.ThatError(t, err).IsNil()
 
 		t.Run("success", func(t *testing.T) {
-			err = service.MarkExecutedSuccess(authedCtx2, operation, count)
+			err = service.MarkExecutedSuccess(authedCtx3, count)
 			assert.ThatError(t, err).IsNil()
 
-			retrieved, err := service.FindCompletedRequests(authedCtx2)
+			retrieved, err := service.FindCompletedRequests(authedCtx3)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(retrieved)).Equals(1)
 			assert.That(t, retrieved[0].ExecutedAtUnix).NotEqual(nil)
@@ -180,11 +196,11 @@ func TestClassifyRequestService(t *testing.T) {
 		operation := "MARK_READ"
 
 		t.Run("unauthorized, failure", func(t *testing.T) {
-			err := service.MarkExecutedError(ctx, operation, count, testErr)
+			err := service.MarkExecutedError(ctx, count, testErr)
 			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
 		})
 
-		// store one incomplete
+		// store one incomplete and mark executing
 		testAddr2 := "nobody2@nowhere.com"
 		_, err = userService.Store(ctx, testAddr2)
 		assert.ThatError(t, err).IsNil()
@@ -192,19 +208,21 @@ func TestClassifyRequestService(t *testing.T) {
 		authedCtx2 := mailboxsweep.AuthorizeAPIContext(ctx, testAddr2)
 		err := service.RecordRequest(authedCtx2)
 		assert.ThatError(t, err).IsNil()
+		err = service.MarkCompletedSuccess(authedCtx2)
+		assert.ThatError(t, err).IsNil()
 
 		t.Run("authorized, no completed requests, failure", func(t *testing.T) {
-			err := service.MarkExecutedError(authedCtx2, operation, count, testErr)
+			err := service.MarkExecutedError(authedCtx2, count, testErr)
 			assert.ThatError(t, err).IsNotNil()
 			assert.ThatString(t, err.Error()).Contains("no completed requests found")
 		})
 
-		// mark it complete
-		err = service.MarkCompletedSuccess(authedCtx2)
+		// mark it executing
+		err = service.MarkExecuting(authedCtx2, operation)
 		assert.ThatError(t, err).IsNil()
 
 		t.Run("success", func(t *testing.T) {
-			err = service.MarkExecutedError(authedCtx2, operation, count, testErr)
+			err = service.MarkExecutedError(authedCtx2, count, testErr)
 			assert.ThatError(t, err).IsNil()
 
 			retrieved, err := service.FindCompletedRequests(authedCtx2)

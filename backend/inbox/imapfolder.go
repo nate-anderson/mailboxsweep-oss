@@ -12,12 +12,14 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/mcnijman/go-emailaddress"
+	"github.com/sirupsen/logrus"
 )
 
 type IMAPFolder struct {
 	name    string
 	client  *client.Client
 	mailbox *imap.MailboxStatus
+	logger  *logrus.Logger
 }
 
 func (f IMAPFolder) Count() uint32 {

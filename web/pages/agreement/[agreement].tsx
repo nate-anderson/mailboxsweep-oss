@@ -17,6 +17,7 @@ import PrivatePage from "../../auth";
 import ReactMarkdown from 'react-markdown'
 import PageHeader from "../../components/page-header";
 import { nextStep } from "../../lib/steps";
+import remarkGfm from "remark-gfm";
 
 const renderAgreedAt = (agr?: UserAgreement) => {
   if (!agr?.agreedAt) {
@@ -161,8 +162,10 @@ export default function Agreement() {
                 fontFamily: "monospace",
                 fontSize: "12px",
                 lineHeight: "1.75em",
+                overflow: "auto",
+                maxHeight: "400px",
               }}>
-              <ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {agreement?.body ?? ""}
               </ReactMarkdown>
             </Paper>

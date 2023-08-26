@@ -555,6 +555,7 @@ export default function Home(props: IStaticProps) {
             <Typography
               fontSize="2em"
               ref={plansRef}
+              align="center"
             >
               Your safety comes first
             </Typography>
@@ -611,6 +612,7 @@ export default function Home(props: IStaticProps) {
             <Typography
               fontSize="2em"
               ref={plansRef}
+              align="center"
             >
               Plans
             </Typography>

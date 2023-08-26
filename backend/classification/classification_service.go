@@ -127,19 +127,19 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	cred, err := s.credentialService.FindCredential(ctx)
+	encryptedCred, err := s.credentialService.FindCredential(ctx)
 	if err != nil {
 		return err
 	}
 
-	password, err := s.credentialService.DecryptCredential(ctx, cred)
+	decryptedCred, err := s.credentialService.DecryptCredential(ctx, encryptedCred)
 	if err != nil {
 		return err
 	}
 
-	mailbox, err := provider.Login(ctx, addr, password)
+	mailbox, err := provider.Login(ctx, addr, decryptedCred)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to login with provider of type %T: %w", provider, err)
 	}
 
 	organizer := NewOrganizer(mailbox, s.repo, folders, classifiers, s.numSubjectPreviews)

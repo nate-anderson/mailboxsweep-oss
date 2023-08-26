@@ -13,13 +13,15 @@ type SESSender struct {
 	client         *sesv2.Client
 	replyToAddress string
 	senderName     string
+	configSetName  string
 }
 
-func NewSESSender(sesClient *sesv2.Client, replyToAddress, senderName string) *SESSender {
+func NewSESSender(sesClient *sesv2.Client, replyToAddress, senderName, configSetName string) *SESSender {
 	return &SESSender{
 		client:         sesClient,
 		replyToAddress: replyToAddress,
 		senderName:     senderName,
+		configSetName:  configSetName,
 	}
 }
 
@@ -41,8 +43,9 @@ func (s SESSender) Send(ctx context.Context, address, template string, data map[
 		Destination: &types.Destination{
 			ToAddresses: []string{address},
 		},
-		ReplyToAddresses: []string{formattedAddress},
-		FromEmailAddress: &formattedAddress,
+		ConfigurationSetName: &s.configSetName,
+		ReplyToAddresses:     []string{formattedAddress},
+		FromEmailAddress:     &formattedAddress,
 		Content: &types.EmailContent{
 			Template: &types.Template{
 				TemplateName: &template,

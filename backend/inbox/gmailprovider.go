@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
@@ -18,6 +19,8 @@ import (
 
 type GmailProvider struct {
 	oauthConfig *oauth2.Config
+	limits      *GmailAPIRateLimits
+	logger      *logrus.Logger
 }
 
 const redirectURL = "mailboxsweep.com"
@@ -26,6 +29,8 @@ func NewGmailProvider(
 	ctx context.Context,
 	clientID string,
 	clientSecret string,
+	limits GmailAPIRateLimits,
+	logger *logrus.Logger,
 ) *GmailProvider {
 	conf := oauth2.Config{
 		ClientID:     clientID,
@@ -37,6 +42,8 @@ func NewGmailProvider(
 
 	return &GmailProvider{
 		oauthConfig: &conf,
+		limits:      &limits,
+		logger:      logger,
 	}
 }
 
@@ -54,7 +61,7 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 
 	oauthToken, err := gmailCred.OAuth2Token()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)
 	}
 
 	httpClient := p.oauthConfig.Client(ctx, oauthToken)
@@ -71,6 +78,8 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 	return &GmailInbox{
 		address: username,
 		client:  client,
+		limits:  p.limits,
+		logger:  p.logger,
 	}, nil
 }
 
@@ -85,7 +94,7 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 		if strings.Contains(err.Error(), `invalid_grant`) {
 			return mailboxsweep.GoogleReauthenticationRequiredError()
 		}
-		return err
+		return fmt.Errorf("failed to verify Gmail credential permissions: %w", err)
 	}
 
 	scopes := strings.Fields(info.Scope)

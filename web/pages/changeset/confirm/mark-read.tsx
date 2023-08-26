@@ -22,7 +22,7 @@ export default function ConfirmMarkRead() {
     const router = useRouter();
 
     const [ errorSnackbar, showErrorSnackbar ] = useConstantSnackbar('Something went wrong when loading your changeset. No changes have been made to your inbox. Please try again.', 'warning');
-    const [ successSnackbar, showSuccessSnackbar ] = useConstantSnackbar('Messages successfully marked read!', 'success');
+    const [ successSnackbar, showSuccessSnackbar ] = useConstantSnackbar('We are marking your selected messages read!', 'success');
     const [ isConfirmed, setIsConfirmed ] = useState(false);
 
     const [ submitIsLoading, setSubmitIsLoading ] = useState(false);

@@ -45,12 +45,12 @@ export default function PageHeader(props: PageHeaderProps) {
         }
         
         <Typography
-        align="center"
-        sx={{
-            color: "var(--color-black)",
-            fontSize: "2em",
-            fontWeight: 100,
-        }}
+            align="center"
+            sx={{
+                color: "var(--color-black)",
+                fontSize: "2em",
+                fontWeight: 100,
+            }}
         >
         {props.title}
         </Typography>

@@ -7,57 +7,20 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ApiError, ClassificationStatus, Plan } from "../client-gen";
+import { ApiError, ClassificationStatus, Plan, UpdateOperation } from "../client-gen";
 import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
-import Link from "next/link";
-import Button from "@mui/material/Button";
-import IconChevronRight from "@mui/icons-material/ChevronRight";
 import PrivatePage from "../auth";
 import { format, parseISO } from "date-fns";
-
-function ActionLink(props: {
-  color: string;
-  backgroundColor: string;
-  href: string;
-  text: string;
-}) {
-  return (
-    <Link
-      href={props.href}
-      style={{
-        textDecoration: "none",
-        width: "100%",
-      }}
-    >
-      <Box display="flex" justifyContent="end">
-        <Button
-          endIcon={<IconChevronRight />}
-          size="large"
-          sx={{
-            color: props.color,
-            border: `1px solid ${props.backgroundColor}`,
-            backgroundColor: props.backgroundColor,
-            fontWeight: "bold",
-            marginRight: 0,
-            marginLeft: "auto",
-            "&:hover": {
-              color: props.backgroundColor,
-              backgroundColor: props.color,
-              borderColor: props.color,
-            },
-          }}
-        >
-          {props.text}
-        </Button>
-      </Box>
-    </Link>
-  );
-}
+import ActionLink from "../components/action-link";
+import BackupPrompt1 from "../components/prompt/backup-1";
+import BackupPrompt2 from "../components/prompt/backup-2";
+import LinearProgress from "@mui/material/LinearProgress";
 
 const renderClassificationStatus = (
-  status: ClassificationStatus.status | undefined
+  status: ClassificationStatus.status | undefined,
+  operation: UpdateOperation | undefined,
 ) => {
   const boxify = (children: React.ReactNode) => (
     <Box
@@ -115,6 +78,7 @@ const renderClassificationStatus = (
           />
         </Alert>
       );
+
     case ClassificationStatus.status.ERRORED:
       return boxify(
         <Alert
@@ -129,13 +93,14 @@ const renderClassificationStatus = (
             try again, or contact support for help.
           </p>
           <ActionLink
-            href="/classify/configure"
+            href="/classify"
             text="Try again"
             backgroundColor="white"
             color="var(--color-danger)"
           />
         </Alert>
       );
+      
     case ClassificationStatus.status.EXECUTED:
       return boxify(
         <Alert
@@ -144,23 +109,50 @@ const renderClassificationStatus = (
             maxWidth: 600,
           }}
         >
-          <AlertTitle>Cleanip complete! &#127881;</AlertTitle>
+          <AlertTitle>Cleanup complete! &#127881;</AlertTitle>
           <p style={{ display: "block" }}>
             We scanned and cleaned up your inbox! If you want to make more changes, you can scan your inbox again.
           </p>
           <ActionLink
-            href="/classify/configure"
+            href="/classify"
             text="Clean up more"
             backgroundColor="var(--color-accent)"
             color="white"
           />
         </Alert>
-      )
+      );
+
+    case ClassificationStatus.status.EXECUTING:
+      return boxify(
+        <Alert
+          severity="info"
+          sx={{
+            maxWidth: 600,
+          }}
+        >
+          <AlertTitle>
+            Your messages are being {operation === UpdateOperation.DELETE ? "deleted" : "marked read"}.
+          </AlertTitle>
+          <p style={{ display: "block" }}>
+            This can take a few minutes, especially if you've selected a lot of messages. We'll let you know when cleanup is complete!
+          </p>
+          <LinearProgress />
+        </Alert>
+      );
     case undefined:
       // display nothing, the stepper should still be visible at this point
       return <></>;
   }
 };
+
+const renderActionPrompt = (status: ClassificationStatus.status | undefined) => {
+  switch (status) {
+    case ClassificationStatus.status.IN_PROGRESS:
+      return <BackupPrompt1 />;
+    case ClassificationStatus.status.COMPLETE:
+      return <BackupPrompt2 />;
+  }
+}
 
 export default function Home() {
   const [address, setAddress] = useState("");
@@ -172,6 +164,7 @@ export default function Home() {
   >();
   const [subscribedPlan, setSubscribedPlan] = useState<Plan | undefined>();
   const [planExpires, setPlanExpires] = useState<string | undefined>();
+  const [operation, setOperation] = useState<UpdateOperation | undefined>();
 
   const API = useAPIClient();
 
@@ -198,6 +191,9 @@ export default function Home() {
         setAddress(res.address);
         if (res.status) {
           setClassificationStatus(res.status.status);
+        }
+        if (res.status?.operation) {
+          setOperation(res.status.operation);
         }
       })
       .catch((err) => {
@@ -238,7 +234,8 @@ export default function Home() {
           {errorSnackbar}
           <CssBaseline />
 
-          {renderClassificationStatus(classificationStatus)}
+          {renderClassificationStatus(classificationStatus, operation)}
+          {renderActionPrompt(classificationStatus)}
 
           <Card
             sx={{

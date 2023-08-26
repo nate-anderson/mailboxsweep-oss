@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"mailboxsweep"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/gmail/v1"
 )
 
 type GmailInbox struct {
 	address string
 	client  *gmail.Service
+	logger  *logrus.Logger
+
+	limits *GmailAPIRateLimits
 }
 
 func (i GmailInbox) Name() string {
@@ -67,5 +71,7 @@ func (i GmailInbox) Folder(name string) (Folder, error) {
 		label:   label,
 		client:  i.client,
 		address: i.address,
+		limits:  i.limits,
+		logger:  i.logger,
 	}, nil
 }

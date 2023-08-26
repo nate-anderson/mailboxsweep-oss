@@ -51,4 +51,62 @@ func TestClassifiers(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("sender domain", func(t *testing.T) {
+		senders := map[string]string{
+			"admin@example.com":     "example.com",
+			"john@mailboxsweep.com": "mailboxsweep.com",
+		}
+
+		classifier := NewSenderDomainClassifier()
+		for sender, domain := range senders {
+			msg := inbox.Message{
+				UID:     sender,
+				Folder:  "bs-folder",
+				Subject: fmt.Sprintf("Message from %s", domain),
+				Sender: inbox.Sender{
+					Address: sender,
+					Domain:  domain,
+				},
+			}
+
+			key := classifier.Key(msg)
+			assert.That(t, key).Equals("domain=" + domain)
+			val := classifier.Classify(msg)
+			assert.That(t, val).Equals(domain)
+		}
+	})
+
+	t.Run("sender address", func(t *testing.T) {
+		senders := []inbox.Sender{
+			{
+				Address:  "admin@example.com",
+				Name:     "Admin",
+				Domain:   "example.com",
+				Username: "admin",
+			},
+			{
+				Address:  "john@mailboxsweep.com",
+				Name:     "John",
+				Domain:   "mailboxsweep.com",
+				Username: "john",
+			},
+		}
+
+		classifier := NewSenderUsernameClassifier()
+
+		for i, sender := range senders {
+			msg := inbox.Message{
+				UID:     sender.Address,
+				Folder:  "bs-folder",
+				Subject: fmt.Sprintf("Message %d", i),
+				Sender:  sender,
+			}
+
+			key := classifier.Key(msg)
+			assert.That(t, key).Equals("sender=" + sender.Address)
+			val := classifier.Classify(msg)
+			assert.That(t, val).Equals(fmt.Sprintf("%s (%s)", sender.Name, sender.Address))
+		}
+	})
 }

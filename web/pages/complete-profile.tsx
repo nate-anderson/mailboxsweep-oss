@@ -71,10 +71,9 @@ export default function CompleteProfile() {
         <Container component="main">
           <CssBaseline />
           <PageHeader
-            showStepper={true}
+            showStepper={false}
             title="Complete your profile"
             icon={<IconAccountCircle />}
-            stepperSlug="PROFILE"
           />
           <Box
             sx={{

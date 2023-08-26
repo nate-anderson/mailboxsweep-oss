@@ -6,17 +6,20 @@ import (
 
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/sirupsen/logrus"
 )
 
 type IMAPInbox struct {
 	address string
 	client  *client.Client
+	logger  *logrus.Logger
 }
 
-func NewIMAPInbox(client *client.Client, address string) *IMAPInbox {
+func NewIMAPInbox(client *client.Client, address string, logger *logrus.Logger) *IMAPInbox {
 	return &IMAPInbox{
 		client:  client,
 		address: address,
+		logger:  logger,
 	}
 }
 
@@ -63,6 +66,7 @@ func (i *IMAPInbox) Folder(mailbox string) (Folder, error) {
 		name:    mailbox,
 		client:  i.client,
 		mailbox: mbox,
+		logger:  i.logger,
 	}, nil
 }
 

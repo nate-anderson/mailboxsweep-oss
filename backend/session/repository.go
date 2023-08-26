@@ -108,7 +108,7 @@ func (r DynamoSessionRepository) Invalidate(ctx context.Context, cookieToken str
 
 func (s Session) AuthCookie(isDev bool, domain string) *http.Cookie {
 	cookie := &http.Cookie{
-		Name:     sessionAuthCookie,
+		Name:     SessionAuthCookie,
 		Value:    s.Token,
 		Expires:  time.Unix(s.Expires, 0),
 		Path:     "/",

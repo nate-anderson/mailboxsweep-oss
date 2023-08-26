@@ -12,7 +12,6 @@ export interface Step {
 
 const providerKey = "mailboxsweep_provider";
 const stepKey = "mailboxsweep_signup_step";
-const StepsComplete = "COMPLETE";
 
 export function setStep(index: number | undefined) {
     if (index === undefined) {
@@ -46,7 +45,6 @@ export interface Step {
 
 export type StepSlug = 
     "TERMS" | 
-    "PROFILE" | 
     "PLAN" |
     "PROVIDER_SIGNIN" |
     "ORGANIZE";
@@ -56,11 +54,6 @@ const stepsIMAP: Step[] = [
         label: "Terms & Conditions",
         path: "/agreement/terms-and-conditions",
         slug: "TERMS",
-    },
-    {
-        label: "Complete Profile",
-        path: "/complete-profile",
-        slug: "PROFILE",
     },
     {
         label: "Select Plan",
@@ -74,7 +67,7 @@ const stepsIMAP: Step[] = [
     },
     {
         label: "Organize Messages",
-        path: "/classify/configure",
+        path: "/classify",
         slug: "ORGANIZE",
         hide: true,
     }
@@ -93,7 +86,7 @@ const stepsGmail: Step[] = [
     },
     {
         label: "Organize Messages",
-        path: "/classify/configure",
+        path: "/classify",
         slug: "ORGANIZE",
         hide: true,
     }
@@ -125,7 +118,7 @@ export function nextStep(): string | undefined {
     const steps = getSteps();
     let step = getStepIndex();
     // if there is another step, increment the step index and return the path of the next step
-    if (step && steps) {
+    if (typeof step !== 'undefined' && steps) {
         if (steps[step + 1]) {
             step++;
             setStep(step);

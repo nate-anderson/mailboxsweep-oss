@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"net/http"
@@ -147,6 +148,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		var open classifyrequest.ClassifyRequest
 		if len(openRequests) == 1 {
 			open = openRequests[0]
+			// otherwise return the most recent
 		} else {
 			for _, r := range openRequests {
 				if r.RequestedAt > open.RequestedAt {
@@ -156,6 +158,15 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		}
 
 		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
+
+		if open.Operation != nil {
+			o, err := operationToAPI(changeset.UpdateOperation(*open.Operation))
+			if err != nil {
+				c.respondError(w, err)
+				return
+			}
+			resBody.Status.Operation = &o
+		}
 
 		if open.Error != nil {
 			resBody.Status.Status = Errored
@@ -203,6 +214,8 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		resBody.Status.Details = closed.Error
 	} else if closed.ExecutedAtUnix != nil {
 		resBody.Status.Status = Executed
+	} else if closed.ExecuteStartedAtUnix != nil {
+		resBody.Status.Status = Executing
 	} else {
 		resBody.Status.Status = Complete
 	}

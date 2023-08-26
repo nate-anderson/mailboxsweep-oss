@@ -17,7 +17,7 @@ type Service interface {
 	StartSession(ctx context.Context, userAddress string) (*Session, error)
 	// lookup session and return authorized context
 	Authorize(ctx context.Context, cookieValue string) (context.Context, error)
-	GenerateEndSessionCookie(ctx context.Context, domain string) (session *http.Cookie, isLoggedIn *http.Cookie, err error)
+	GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (session *http.Cookie, isLoggedIn *http.Cookie, err error)
 }
 
 type DefaultService struct {
@@ -82,7 +82,7 @@ type AuthMiddleware struct {
 	Service Service
 }
 
-const sessionAuthCookie = "X-MailboxSweep-Session"
+const SessionAuthCookie = "X-MailboxSweep-Session"
 
 var authPathPrefix = "/login"
 
@@ -94,7 +94,7 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		}
 
 		ctx := req.Context()
-		cookie, err := req.Cookie(sessionAuthCookie)
+		cookie, err := req.Cookie(SessionAuthCookie)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			log.Printf("missing session cookie: %s\n", err)
@@ -112,14 +112,18 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, domain string) (*http.Cookie, *http.Cookie, error) {
+func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (*http.Cookie, *http.Cookie, error) {
 	_, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	if err = s.repo.Invalidate(ctx, cookie); err != nil {
+		return nil, nil, err
+	}
+
 	c := &http.Cookie{
-		Name:     sessionAuthCookie,
+		Name:     SessionAuthCookie,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,

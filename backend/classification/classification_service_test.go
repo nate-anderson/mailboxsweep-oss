@@ -54,12 +54,13 @@ func (t testImapServerService) Store(ctx context.Context, server imapserver.Serv
 }
 
 type testRequest struct {
-	started   int64
-	completed *int64
-	executed  *int64
-	err       error
-	count     int
-	operation *string
+	started        int64
+	completed      *int64
+	executeStarted *int64
+	executed       *int64
+	err            error
+	count          int
+	operation      *string
 }
 
 type testRequestRecorder struct {
@@ -165,7 +166,29 @@ func (r *testRequestRecorder) MarkCompletedError(ctx context.Context, classifyEr
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, operation string, count int) error {
+func (r *testRequestRecorder) MarkExecuting(ctx context.Context, operation string) error {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return mailboxsweep.ErrNotFound
+	}
+	for i, l := range list {
+		if l.completed != nil {
+			updated := l
+			updated.executeStarted = aws.Int64(time.Now().Unix())
+			updated.operation = &operation
+			list[i] = updated
+			r.requests[addr] = list
+			return nil
+		}
+	}
+	return mailboxsweep.ErrNotFound
+}
+
+func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -179,7 +202,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, operation
 			updated := l
 			updated.executed = aws.Int64(time.Now().Unix())
 			updated.count = count
-			updated.operation = &operation
+
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -188,7 +211,7 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, operation
 	return mailboxsweep.ErrNotFound
 }
 
-func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, operation string, count int, classifyErr error) error {
+func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, classifyErr error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return err
@@ -203,7 +226,6 @@ func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, operation s
 			updated.executed = aws.Int64(time.Now().Unix())
 			updated.err = classifyErr
 			updated.count = count
-			updated.operation = &operation
 			list[i] = updated
 			r.requests[addr] = list
 			return nil

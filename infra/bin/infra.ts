@@ -52,4 +52,6 @@ new InfraStack(app, 'infra-staging', {
 new AppStack(app, `app-staging`, {
   environmentName: "staging",
   clusterInstanceType: "t2.medium",
+  clusterInstanceCount: 2,
+  xrayEnabled: false,
 });

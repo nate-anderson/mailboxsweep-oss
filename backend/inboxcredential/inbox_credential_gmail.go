@@ -64,13 +64,11 @@ func (c *GmailInboxCredential) encrypt(encryptor cipher.AEAD) error {
 
 	c.Nonce = base64.RawStdEncoding.EncodeToString(nonce)
 
-	var buf []byte
-	buf = encryptor.Seal(buf, nonce, []byte(c.APIToken), nil)
+	buf := encryptor.Seal(nil, nonce, []byte(c.APIToken), nil)
 	c.APIToken = base64.RawStdEncoding.EncodeToString(buf)
 
-	buf = nil
-	buf = encryptor.Seal(buf, nonce, []byte(c.RefreshToken), nil)
-	c.RefreshToken = base64.RawStdEncoding.EncodeToString(buf)
+	buf2 := encryptor.Seal(nil, nonce, []byte(c.RefreshToken), nil)
+	c.RefreshToken = base64.RawStdEncoding.EncodeToString(buf2)
 
 	c.Encrypted = true
 	return nil
@@ -96,19 +94,18 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 		return err
 	}
 
-	var buf []byte
-	buf, err = decryptor.Open(buf, decodedNonce, decodedAPITokenCipher, nil)
+	tokenBuf, err := decryptor.Open(nil, decodedNonce, decodedAPITokenCipher, nil)
 	if err != nil {
 		return err
 	}
-	c.APIToken = string(buf)
+	c.APIToken = string(tokenBuf)
 
-	buf = nil
-	buf, err = decryptor.Open(buf, decodedNonce, decodedRefreshTokenCipher, nil)
+	refreshBuf, err := decryptor.Open(nil, decodedNonce, decodedRefreshTokenCipher, nil)
 	if err != nil {
 		return err
 	}
-	c.RefreshToken = string(buf)
+
+	c.RefreshToken = string(refreshBuf)
 	c.Encrypted = false
 
 	return nil

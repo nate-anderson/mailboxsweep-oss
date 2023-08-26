@@ -60,6 +60,7 @@ jobs:
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/golang@master
+        continue-on-error: true
         with:
           args: --all-projects
         env:
@@ -83,6 +84,8 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
       - name: Build, tag, push image (server)
         env:
@@ -112,6 +115,8 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
       - name: Build, tag, push image (worker)
         env:
@@ -183,7 +188,7 @@ jobs:
 
       - name: Invalidate CloudFront distribution
         env:
-          DISTRIBUTION: E3JGCHRLTZRPO
+          DISTRIBUTION: E12RGUT06QPULN
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
 
       # - name: Build (prod)

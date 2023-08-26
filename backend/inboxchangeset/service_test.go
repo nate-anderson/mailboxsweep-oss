@@ -96,7 +96,7 @@ func TestInboxChangesetService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, table)
-	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, time.Minute, time.Minute*2)
+	classifyRequestService := classifyrequest.NewDefaultService(userService, classifyRequestRepo, time.Minute, 0)
 
 	paymentProcessor := payment.NewTestProcessor()
 	paymentProcessor.SessionID = "test_session_123"
@@ -107,7 +107,8 @@ func TestInboxChangesetService(t *testing.T) {
 	metadataRepo := inbox.NewMetadataRepository(db, table)
 	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, time.Hour)
 
-	publisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
+	classifyPublisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
+	commitPublisher := &mailboxsweep.TestEventPublisher[changeset.CommitQueueMessage]{}
 
 	inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
 	inboxUserService, err := inboxuser.NewService(inboxUserRepo)
@@ -123,7 +124,7 @@ func TestInboxChangesetService(t *testing.T) {
 		metadataService,
 		inboxUserService,
 		logrus.New(),
-		publisher,
+		classifyPublisher,
 		5,
 	)
 
@@ -134,6 +135,7 @@ func TestInboxChangesetService(t *testing.T) {
 		credentialReadService,
 		classifyRequestService,
 		metadataService,
+		commitPublisher,
 		logrus.New(),
 	)
 
@@ -421,8 +423,24 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 	})
 
+	t.Run("Enqueue for execute: mark read", func(t *testing.T) {
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			err := service.EnqueueCommitChanges(ctx, changeset.MarkRead)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			err := service.EnqueueCommitChanges(authedCtx, changeset.MarkRead)
+			assert.ThatError(t, err).IsNil()
+
+			assert.That(t, len(commitPublisher.Entries)).Equals(1)
+			assert.That(t, commitPublisher.Entries[0].Body.Inbox).Equals(testAddress)
+			assert.That(t, commitPublisher.Entries[0].Body.Operation).Equals(changeset.MarkRead)
+		})
+	})
+
 	t.Run("Execute: mark read", func(t *testing.T) {
-		err := service.CommitChanges(authedCtx, changeset.MarkRead)
+		err = service.CommitChanges(authedCtx, changeset.MarkRead)
 		assert.ThatError(t, err).IsNil()
 
 		provider := providerService.Providers[testAddress]
@@ -484,8 +502,30 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 	})
 
+	t.Run("Enqueue for execute: mark read", func(t *testing.T) {
+		t.Run("unauthenticated, failure", func(t *testing.T) {
+			err = service.EnqueueCommitChanges(ctx, changeset.Delete)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+		})
+
+		t.Run("success", func(t *testing.T) {
+			// simulate a second request
+			err = classifyRequestService.RecordRequest(authedCtx)
+			assert.ThatError(t, err).IsNil()
+			err = classifyRequestService.MarkCompletedSuccess(authedCtx)
+			assert.ThatError(t, err).IsNil()
+
+			err = service.EnqueueCommitChanges(authedCtx, changeset.Delete)
+			assert.ThatError(t, err).IsNil()
+
+			assert.That(t, len(commitPublisher.Entries)).Equals(2)
+			assert.That(t, commitPublisher.Entries[1].Body.Inbox).Equals(testAddress)
+			assert.That(t, commitPublisher.Entries[1].Body.Operation).Equals(changeset.Delete)
+		})
+	})
+
 	t.Run("Execute: delete", func(t *testing.T) {
-		err := service.CommitChanges(authedCtx, changeset.Delete)
+		err = service.CommitChanges(authedCtx, changeset.Delete)
 		assert.ThatError(t, err).IsNil()
 
 		provider := providerService.Providers[testAddress]
@@ -517,9 +557,11 @@ func TestInboxChangesetService(t *testing.T) {
 		t.Run("classify request is marked 'executed'", func(t *testing.T) {
 			requests, err := classifyRequestService.FindCompletedRequests(authedCtx)
 			assert.ThatError(t, err).IsNil()
-			assert.That(t, len(requests)).Equals(1)
+			assert.That(t, len(requests)).Equals(2)
 			assert.That(t, requests[0].ExecutedAtUnix).NotEqual(nil)
 			assert.ThatOrdered(t, *requests[0].ExecutedAtUnix).GreaterThan(0)
+			assert.That(t, requests[1].ExecutedAtUnix).NotEqual(nil)
+			assert.ThatOrdered(t, *requests[1].ExecutedAtUnix).GreaterThan(0)
 		})
 
 		t.Run("inbox metadata is updated", func(t *testing.T) {

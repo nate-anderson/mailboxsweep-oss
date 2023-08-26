@@ -37,6 +37,7 @@ import (
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	stripeClient "github.com/stripe/stripe-go/v74/client"
+	"golang.org/x/time/rate"
 )
 
 type serverConfig struct {
@@ -52,10 +53,12 @@ type serverConfig struct {
 	S3Port   int     `fig:"S3_PORT"`
 	S3Region string  `fig:"S3_REGION" default:"us-west-2"`
 
-	SQSHost     *string `fig:"SQS_HOST"`
-	SQSPort     int     `fig:"SQS_PORT"`
-	SQSRegion   string  `fig:"SQS_REGION" default:"us-west-2"`
-	SQSQueueURL string  `fig:"SQS_QUEUE_URL" required:"true"`
+	SQSHost   *string `fig:"SQS_HOST"`
+	SQSPort   int     `fig:"SQS_PORT"`
+	SQSRegion string  `fig:"SQS_REGION" default:"us-west-2"`
+
+	SQSClassifyQueueURL string `fig:"SQS_CLASSIFY_QUEUE_URL" required:"true"`
+	SQSCommitQueueURL   string `fig:"SQS_COMMIT_QUEUE_URL" required:"true"`
 
 	SESHost   *string `fig:"SES_HOST"`
 	SESPort   int     `fig:"SES_PORT"`
@@ -106,10 +109,19 @@ type serverConfig struct {
 	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
 	GoogleAuthRedirectURL string `fig:"GOOGLE_OAUTH_REDIRECT_URL" required:"true"`
 
+	GmailDeleteCallCost       int     `fig:"GMAIL_API_DELETE_CALL_COST"        default:"50"`
+	GmailMarkReadCallCost     int     `fig:"GMAIL_API_MARK_READ_CALL_COST"     default:"50"`
+	GmailListMessagesCallCost int     `fig:"GMAIL_API_LIST_MESSAGES_CALL_COST" default:"5"`
+	GmailGetMessageCallCost   int     `fig:"GMAIL_API_GET_MESSAGE_CALL_COST"   default:"5"`
+	GmailAPICallLimit         float64 `fig:"GMAIL_API_CALL_LIMIT"              default:"250"`
+
 	EmailReplyToAddress string `fig:"EMAIL_REPLY_TO_ADDRESS" default:"no-reply@mailboxsweep.com"`
 	EmailSenderName     string `fig:"EMAIL_SENDER_NAME" default:"MailboxSweep"`
 
 	SESLoginEmailTemplateName string `fig:"SES_LOGIN_EMAIL_TEMPLATE_NAME" default:"mailboxsweep_login_link"`
+	SESConfigSetName          string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
+
+	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
 }
 
 func main() {
@@ -142,11 +154,14 @@ func main() {
 
 	// use JSON logging when deployed to AWS
 	// use ECS XRay config when deployed to AWS
-	if cfg.Env == "prod" || cfg.Env == "staging" {
+	if (cfg.Env == "prod" || cfg.Env == "staging") && cfg.XRayEnabled {
+		xrayECS.Init()
+	}
+
+	if !cfg.DevMode {
 		log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339,
 		})
-		xrayECS.Init()
 	}
 
 	db, err := mailboxsweep.ConnectAWSService(
@@ -199,6 +214,14 @@ func main() {
 		usageRepo,
 		cfg.GoogleClientID,
 		cfg.GoogleClientSecret,
+		inbox.GmailAPIRateLimits{
+			APICallLimit:         rate.Limit(cfg.GmailAPICallLimit),
+			DeleteCallCost:       cfg.GmailDeleteCallCost,
+			MarkReadCallCost:     cfg.GmailMarkReadCallCost,
+			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
+			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
+		},
+		log,
 	)
 
 	queue, err := mailboxsweep.ConnectAWSService(
@@ -214,7 +237,8 @@ func main() {
 		log.Fatalf("failed to initialize eventbridge client: %s", err)
 	}
 
-	publisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSQueueURL)
+	classifyQueuePublisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](queue, cfg.SQSClassifyQueueURL)
+	commitQueuePublisher := mailboxsweep.NewSQSEventPublisher[changeset.CommitQueueMessage](queue, cfg.SQSCommitQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	userService, err := inboxuser.NewService(userRepo)
@@ -259,7 +283,7 @@ func main() {
 		metadataService,
 		userService,
 		log,
-		publisher,
+		classifyQueuePublisher,
 		cfg.ClassificationSubjectPreviews,
 	)
 
@@ -286,7 +310,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to initialize SES client: %s", err)
 		}
-		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName)
+		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
 		loginSender = login.NewEmailSender(emailSender, cfg.SESLoginEmailTemplateName, cfg.LoginBaseURL)
 	}
 
@@ -343,6 +367,7 @@ func main() {
 		credentialService,
 		classifyRequestService,
 		metadataService,
+		commitQueuePublisher,
 		log,
 	)
 
@@ -390,13 +415,19 @@ func main() {
 	srv := httpserver.HandlerWithOptions(controller, httpserver.ChiServerOptions{
 		BaseRouter: root,
 		Middlewares: []httpserver.MiddlewareFunc{
+			middleware.RealIP,
+			middleware.RequestID,
 			auth.Middleware,
 			cors.Middleware,
 			loggingMiddleware,
+			// middleware.Heartbeat("/healthcheck"), // disabled for now because I don't want to make too many changes at once
+			middleware.Recoverer,
+			middleware.Timeout(time.Second * 10),
+			middleware.AllowContentType("application/json"),
 		},
 	})
 
-	if cfg.Env == "prod" || cfg.Env == "staging" {
+	if (cfg.Env == "prod" || cfg.Env == "staging") && cfg.XRayEnabled {
 		srv = xray.Handler(xray.NewDynamicSegmentNamer("MailboxSweep", "api.*.mailboxsweep.com"), srv)
 	}
 

@@ -2,7 +2,7 @@ import { SelectedClassifier, dateFormat } from "../../lib/classifier";
 import ClassifierCard from "./card";
 import ListItemText from "@mui/material/ListItemText";
 import { parse } from "date-fns";
-import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
+import { DateField } from "@mui/x-date-pickers/DateField";
 import TextField from "@mui/material/TextField";
 import {
   DraggableProvidedDraggableProps,
@@ -49,18 +49,18 @@ export default function DateClassifierCard(props: Props) {
       >
         {props.classifier.name}
       </ListItemText>
-      <MobileDatePicker
+      <DateField
         value={value}
         onChange={props.setInput}
         label={props.classifier.inputLabel}
-        inputFormat="MM/dd/yy"
-        renderInput={(params: any) => (
-          <TextField
-            variant="standard"
-            sx={{ maxWidth: "80px", marginRight: 0.5 }}
-            {...params}
-          />
-        )}
+        format="MM/dd/yy"
+        formatDensity="dense"
+        margin="dense"
+        size="small"
+        variant="standard"
+        sx={{
+          width: '100px'
+        }}
       />
     </ClassifierCard>
   );

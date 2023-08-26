@@ -25,13 +25,13 @@ html: >
 
         <tr>
           <td align="center">
-            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;">Your inbox is organized and ready for cleanup</h2>
+            <h2 style="font-family: Roboto, sans-serif; color: #2b4162; display: block;"><p>{{greeting}} your inbox is organized and ready for cleanup!</h2>
           </td>
         </tr>
 
         <tr>
           <td align="center">
-            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{changeset_link}}">Get started</a>
+            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{changeset_link}}">Get Started</a>
           </td>
         </tr>
 
