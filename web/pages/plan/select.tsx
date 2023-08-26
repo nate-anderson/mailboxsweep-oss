@@ -34,7 +34,7 @@ export default function SelectPlan() {
     .then((res) => {
       setErrorMessage(undefined);
       setShowSuccess(true);
-      window.location.href = res.checkoutUrl!;
+      setTimeout(() => document.location.href = res.checkoutUrl!, 250);
     })
     .catch((error) => {
       setErrorMessage(error as string);
