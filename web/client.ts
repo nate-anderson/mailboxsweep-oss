@@ -25,6 +25,8 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
             case "terms_and_conditions_not_accepted":
               window.location.href = "/agreement/TERMS_AND_CONDITIONS";
               return null as T;
+            case undefined:
+              return null as T;
             default:
               console.log("unknown body code ", e.body.code);
           }

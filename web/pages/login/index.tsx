@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import { useConstantSnackbar } from "../../components/snackbar";
+import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import ImageLogo from "../../components/image-logo";
 import Alert from "@mui/material/Alert";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -38,6 +38,7 @@ export default function Login() {
     "success"
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [errorSnackbar, setErrorMessage] = useSnackbar("error", 5000);
 
   const submitLogin = async (
     address: string,
@@ -63,6 +64,7 @@ export default function Login() {
       }
     } catch (error) {
       console.log({ initiateLoginError: error });
+      setErrorMessage("Sorry, something went wrong. Please try again in a moment.");
     }
   };
 
@@ -78,6 +80,7 @@ export default function Login() {
   return (
     <Container component="main">
       {redirectPromptSnackbar}
+      {errorSnackbar}
       <Dialog
         open={modalOpen}
         aria-labelledby="login-email-modal-title"

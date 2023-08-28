@@ -1,5 +1,5 @@
 import { API } from "../../client";
-import { Plan } from "../../client-gen";
+import { ApiError, Plan } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -11,11 +11,12 @@ import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";
 import PrivatePage from "../../auth";
 import PageHeader from "../../components/page-header";
+import { useSnackbar } from "../../components/snackbar";
 
 export default function SelectPlan() {
   const [plans, setPlans] = useState<Plan[] | undefined>();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [errorSnackbar, setErrorMessage] = useSnackbar("error", 5000);
 
   useEffect(() => {
     API.listPlans()
@@ -32,11 +33,17 @@ export default function SelectPlan() {
       plan,
     })
     .then((res) => {
-      setErrorMessage(undefined);
+      setErrorMessage("");
       setShowSuccess(true);
       setTimeout(() => document.location.href = res.checkoutUrl!, 250);
     })
     .catch((error) => {
+      if (error instanceof ApiError) {
+        const e = error as ApiError;
+        if (e.status == 422) {
+          setErrorMessage("Your account already has an active plan.");
+        }
+      }
       setErrorMessage(error as string);
     });
   };
@@ -52,6 +59,7 @@ export default function SelectPlan() {
           }}
         >
           <CssBaseline />
+          {errorSnackbar}
           <PageHeader
             showStepper={true}
             title="Choose a Plan"
