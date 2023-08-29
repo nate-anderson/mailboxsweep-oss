@@ -13,13 +13,13 @@ BASIC:
 
 DELUXE:
   display_name: MailboxSweep Annual
-  description: "A year of access and lots of scans."
+  description: "A year of access to keep your inbox organized long-term."
   price_in_cents: 3999
   features:
-    - Scan your inbox up to 24 times
+    - Scan your inbox up to 30 times
     - Group by website, sender, send date, subject keywords
     - Delete unlimited messages.
     - Mark unlimited messages as read
   enabled: true
-  allowed_scans: 24
+  allowed_scans: 30
   duration_days: 365
