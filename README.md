@@ -88,7 +88,7 @@ docker run -v <full path to greenmail-standalone.jar>:/home/greenmail/greenmail-
 
 Using the full path of the local JAR file to get it working
 
-# I didn't actually try any of this yet ^^^
+I didn't actually try any of this yet ^^^
 
 ## Authentication
 
