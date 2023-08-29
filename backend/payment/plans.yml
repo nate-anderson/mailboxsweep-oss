@@ -1,7 +1,7 @@
 BASIC:
   display_name: MailboxSweep
   description: "Get an organized view of your inbox, delete and mark read as many emails as you need."
-  price_in_cents: 999
+  price_in_cents: 499
   features:
     - Scan your inbox up to 3 times
     - Group by website, sender, send date, subject keywords
@@ -12,14 +12,14 @@ BASIC:
   duration_days: 30
 
 DELUXE:
-  display_name: MailboxSweep Deluxe
-  description: "More advanced tools to help you sort your inbox by the details."
-  price_in_cents: 1999
+  display_name: MailboxSweep Annual
+  description: "A year of access and lots of scans."
+  price_in_cents: 3999
   features:
-    - Scan your inbox up to 10 times
-    - "Additional filters: subject keywords and attachments"
+    - Scan your inbox up to 24 times
+    - Group by website, sender, send date, subject keywords
     - Delete unlimited messages.
     - Mark unlimited messages as read
   enabled: true
-  allowed_scans: 10
-  duration_days: 30
+  allowed_scans: 24
+  duration_days: 365
