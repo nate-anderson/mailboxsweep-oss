@@ -164,29 +164,32 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 				}
 			}(body.Address, m)
 
-			err = w.service.Classify(jobCtx, body.Folders, classifiers)
 			end := time.Now()
+			err = w.service.Classify(jobCtx, body.Folders, classifiers)
 			if err != nil {
 				errChan <- err
 				log.
 					WithError(err).
 					WithField("execution_time_seconds", end.Sub(start).Seconds()).
 					Error("classify failed")
-				// push to DLQ
-				err = w.dlqPub.PublishEvent(ctx, queueItem)
-				if err != nil {
-					log.
-						WithError(err).
-						Error("failed to push to DLQ after failure")
-				} else {
-					_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
-						QueueUrl:      &w.queueURL,
-						ReceiptHandle: m.ReceiptHandle,
-					})
-					if err != nil {
-						log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
-					}
-				}
+					// push to DLQ
+					/*
+								err = w.dlqPub.PublishEvent(ctx, queueItem)
+								if err != nil {
+									log.
+										WithError(err).
+										Error("failed to push to DLQ after failure")
+								} else {
+
+						_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+							QueueUrl:      &w.queueURL,
+							ReceiptHandle: m.ReceiptHandle,
+						})
+						if err != nil {
+							log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
+						}
+						}
+					*/
 				continue
 			} else {
 				errChan <- nil
@@ -198,19 +201,22 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			})
 			if err != nil {
 				log.
-					WithField("address", body.Address).
 					Errorf("failed to delete message after classify: %s", err.Error())
 			}
+
 			log.
-				WithField("address", body.Address).
 				WithField("execution_time_seconds", end.Sub(start).Seconds()).
 				Info("classify complete")
 
 			var greeting string
-			user, err := w.inboxUserService.FindByAddress(ctx, body.Address)
+			user, err := w.inboxUserService.FindByAddress(jobCtx, body.Address)
 			// this user must exist, this failure can only be temporary
 			// default to the generic greeting
 			if err != nil {
+				log.
+					WithError(err).
+					Error("failed to find user after completing classification - continuing with generic email greeting")
+
 				greeting = "Hi there,"
 			} else if user.NameFirst != "" {
 				greeting = fmt.Sprintf("Hi, %s,", user.NameFirst)
