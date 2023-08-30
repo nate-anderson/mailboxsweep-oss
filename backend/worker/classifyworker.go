@@ -86,6 +86,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
 			WaitTimeSeconds:         20,
 			VisibilityTimeout:       60 * (classifyVisibilityTimeoutMinutes + 1),
+			MaxNumberOfMessages:     1,
 		})
 		if err != nil {
 			log.
@@ -99,6 +100,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			This is a simple loop queue reader
 			This should use a Pool to allow concurrent queue worker
 			goroutines
+			Increase ReceiveMessage call MaxNumberOfMessages
 		*/
 
 		log.Infof("read %d messages from the queue", len(batch.Messages))
@@ -139,7 +141,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			errChan := make(chan error)
 			// keep the message handle active while the process runs
 			go func(address string, m types.Message) {
-				ticker := time.NewTicker(time.Minute * 5)
+				ticker := time.NewTicker(time.Minute * 1)
 				defer ticker.Stop()
 				defer wg.Done()
 				for {
@@ -153,17 +155,21 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 						})
 						if err != nil {
 							log.
-								WithField("address", address).
 								WithError(err).
 								Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
 							return
 						}
 					case err := <-errChan:
 						if err != nil {
-							log.
-								WithField("address", address).
-								WithError(err).
-								Errorf("got error for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
+							log.Errorf("got error for message, releasing handle", *m.MessageId, *m.ReceiptHandle)
+							_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
+								QueueUrl:          &w.queueURL,
+								ReceiptHandle:     m.ReceiptHandle,
+								VisibilityTimeout: 0,
+							})
+							if err != nil {
+								log.Errorf("failed to release handle %s after error: %w", *m.ReceiptHandle, err)
+							}
 						}
 						return
 					}
@@ -202,13 +208,15 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 				errChan <- nil
 			}
 
+			log.Info("going to delete message after classify")
 			_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
 				QueueUrl:      &w.queueURL,
 				ReceiptHandle: m.ReceiptHandle,
 			})
 			if err != nil {
 				log.
-					Errorf("failed to delete message after classify: %s", err.Error())
+					WithError(err).
+					Errorf("failed to delete message after classify")
 			}
 
 			log.
