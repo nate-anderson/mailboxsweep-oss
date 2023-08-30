@@ -251,7 +251,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 					log.Info("sent notification email")
 				}
 			} else {
-				log.Infoln("skipping email notification - no sender configured")
+				log.Infof("skipping email notification - no sender configured (w.emailSender == %+v)", w.emailSender)
 			}
 		}
 		wg.Wait()

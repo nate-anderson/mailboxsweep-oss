@@ -22,7 +22,6 @@ import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudwatchDashboard } from './cloudwatch-dashboard';
-import * as ServiceDiscovery from "aws-cdk-lib/aws-servicediscovery";
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
 import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";

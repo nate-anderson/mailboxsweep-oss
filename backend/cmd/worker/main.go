@@ -255,9 +255,9 @@ func main() {
 	if cfg.Env == "staging" || cfg.Env == "prod" {
 		log.WithField("environment", cfg.Env).Info("using SES email sender")
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
-			ServiceHost:   cfg.SQSHost,
-			ServicePort:   cfg.SQSPort,
-			ServiceRegion: cfg.SQSRegion,
+			ServiceHost:   cfg.SESHost,
+			ServicePort:   cfg.SESPort,
+			ServiceRegion: cfg.SESRegion,
 			Environment:   cfg.Env,
 		}, sesv2.NewFromConfig)
 		if err != nil {
