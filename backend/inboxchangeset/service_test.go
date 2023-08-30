@@ -82,11 +82,6 @@ func TestInboxChangesetService(t *testing.T) {
 		Password: testPass,
 	}
 
-	imapServerService := &testImapServerService{
-		expectedDomain: "mailboxsweep.com",
-		t:              t,
-	}
-
 	providerService := inboxtesting.NewTestProviderService()
 
 	classificationRepo := classification.NewS3ClassificationRepository(s3Client, bucketName, 10)
@@ -116,7 +111,6 @@ func TestInboxChangesetService(t *testing.T) {
 
 	classificationService := classification.NewService(
 		credentialReadService,
-		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,

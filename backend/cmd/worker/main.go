@@ -237,7 +237,6 @@ func main() {
 
 	classificationService := classification.NewService(
 		credentialService,
-		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,

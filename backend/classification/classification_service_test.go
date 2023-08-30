@@ -243,9 +243,6 @@ the only unmocked dependency is the classification repo
 func TestClassificationService(t *testing.T) {
 	testAddress := "bigservicetest@service.org"
 	testPass := "123boogie567"
-	testHost := "imap.mail.org"
-	testDomain := "mail.org"
-	testPort := 474
 
 	ctx := context.Background()
 
@@ -258,11 +255,6 @@ func TestClassificationService(t *testing.T) {
 
 	repo := NewS3ClassificationRepository(s3Client, bucket, 2)
 
-	imapServerService := testImapServerService{
-		domain: testDomain,
-		host:   testHost,
-		port:   testPort,
-	}
 	providerService := inboxtesting.NewTestProviderService()
 	credentialReadService := &inboxtesting.TestCredentialReadService{
 		Address:  testAddress,
@@ -295,7 +287,6 @@ func TestClassificationService(t *testing.T) {
 
 	service := NewService(
 		credentialReadService,
-		imapServerService,
 		repo,
 		providerService,
 		&classifyRequestService,

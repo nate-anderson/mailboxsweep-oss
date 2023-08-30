@@ -275,7 +275,6 @@ func main() {
 	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
 	classificationService := classification.NewService(
 		credentialService,
-		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,
