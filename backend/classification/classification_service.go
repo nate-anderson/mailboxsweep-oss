@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classifyrequest"
-	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
@@ -26,7 +25,6 @@ type Service interface {
 
 type DefaultService struct {
 	credentialService      inboxcredential.CredentialReadService
-	imapServerService      imapserver.Service
 	repo                   ClassificationRepository
 	providerService        inbox.ProviderService
 	classifyRequestService classifyrequest.Service
@@ -40,7 +38,6 @@ type DefaultService struct {
 
 func NewService(
 	credentialService inboxcredential.CredentialReadService,
-	imapServerService imapserver.Service,
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
@@ -53,7 +50,6 @@ func NewService(
 ) *DefaultService {
 	return &DefaultService{
 		credentialService,
-		imapServerService,
 		repo,
 		providerService,
 		classifyRequestService,

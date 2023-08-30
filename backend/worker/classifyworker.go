@@ -158,8 +158,8 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 								WithField("address", address).
 								WithError(err).
 								Errorf("got error for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
-							return
 						}
+						return
 					}
 				}
 			}(body.Address, m)
