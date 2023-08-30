@@ -2,14 +2,12 @@ package inboxchangeset
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
-	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
@@ -22,41 +20,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
-
-type testImapServerService struct {
-	t              *testing.T
-	expectedDomain string
-	wasCalled      bool
-}
-
-func (s *testImapServerService) Find(ctx context.Context) (*imapserver.Server, error) {
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	domain, err := mailboxsweep.DomainFromEmail(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	assert.That(s.t, domain).Equals(domain)
-	s.wasCalled = true
-	return &imapserver.Server{
-		Domain: s.expectedDomain,
-		Host:   "imap." + s.expectedDomain,
-		Port:   993,
-	}, nil
-}
-
-func (s testImapServerService) Store(ctx context.Context, server imapserver.Server) error {
-	s.t.Fatalf("don't call Store on testImapServerService")
-	return nil
-}
-
-func (s testImapServerService) FindByUserAddress(ctx context.Context) (*imapserver.Server, error) {
-	return nil, errors.New("testImapServerService does not implement FindByUserAddress")
-}
 
 func TestInboxChangesetService(t *testing.T) {
 	db := mailboxsweep.SetupTestDynamoClient()

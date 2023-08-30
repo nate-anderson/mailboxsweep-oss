@@ -7,7 +7,6 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/classifyrequest"
-	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
@@ -20,38 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 )
-
-type testImapServerService struct {
-	domain string
-	host   string
-	port   int
-}
-
-func (t testImapServerService) Find(ctx context.Context) (*imapserver.Server, error) {
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	domain, err := mailboxsweep.DomainFromEmail(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	if domain != t.domain {
-		return nil, mailboxsweep.ErrNotFound
-	}
-
-	return &imapserver.Server{
-		Domain: t.domain,
-		Host:   t.host,
-		Port:   t.port,
-	}, nil
-}
-
-func (t testImapServerService) Store(ctx context.Context, server imapserver.Server) error {
-	return errors.New("don't call this method")
-}
 
 type testRequest struct {
 	started        int64
