@@ -87,7 +87,11 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 					err,
 				)
 		} else {
-			log.Info("completed classification")
+			if err != nil {
+				log.WithError(err).Error("completed classification with error")
+			} else {
+				log.Info("completed classification")
+			}
 		}
 	}()
 

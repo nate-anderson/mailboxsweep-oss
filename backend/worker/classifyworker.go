@@ -65,6 +65,12 @@ func NewClassifyWorker(
 const classifyVisibilityTimeoutMinutes = 5
 
 func (w ClassifyWorker) Work(ctx context.Context) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovered in ClassifyWorker.Work: %v", r)
+		}
+	}()
+
 	log := w.log.WithField("worker", "classify")
 	log.Infof("Listening to classify queue %s...\n", w.queueURL)
 
@@ -166,6 +172,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 
 			end := time.Now()
 			err = w.service.Classify(jobCtx, body.Folders, classifiers)
+			log.Info("CALL TO CLASSIFY RETURNED")
 			if err != nil {
 				errChan <- err
 				log.
