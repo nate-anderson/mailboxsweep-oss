@@ -167,14 +167,14 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 						}
 					case err := <-errChan:
 						if err != nil {
-							log.Errorf("got error for message, releasing handle", *m.MessageId, *m.ReceiptHandle)
+							log.Errorf("got error for message %s, releasing handle %s", *m.MessageId, *m.ReceiptHandle)
 							_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
 								QueueUrl:          &w.queueURL,
 								ReceiptHandle:     m.ReceiptHandle,
 								VisibilityTimeout: 0,
 							})
 							if err != nil {
-								log.Errorf("failed to release handle %s after error: %w", *m.ReceiptHandle, err)
+								log.Errorf("failed to release handle %s after error: %s", *m.ReceiptHandle, err)
 							}
 						}
 						return
