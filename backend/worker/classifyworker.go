@@ -184,10 +184,6 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 
 			end := time.Now()
 			err = w.service.Classify(jobCtx, body.Folders, classifiers)
-			log.
-				WithError(err).
-				Info("CALL TO CLASSIFY RETURNED")
-
 			if err != nil {
 				errChan <- err
 				log.
