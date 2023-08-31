@@ -259,6 +259,7 @@ func main() {
 			ServicePort:   cfg.SESPort,
 			ServiceRegion: cfg.SESRegion,
 			Environment:   cfg.Env,
+			XRayEnabled:   false,
 		}, sesv2.NewFromConfig)
 		if err != nil {
 			log.Fatal(err)
