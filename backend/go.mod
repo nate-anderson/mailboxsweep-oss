@@ -19,6 +19,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/mcnijman/go-emailaddress v1.1.0
 	github.com/nate-anderson/fig/v2 v2.2.2
+	github.com/oapi-codegen/runtime v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	github.com/stripe/stripe-go/v74 v74.26.0

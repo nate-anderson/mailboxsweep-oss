@@ -4,5 +4,5 @@
 package mailboxsweep
 
 import (
-	_ "github.com/deepmap/oapi-codegen/pkg/runtime"
+	_ "github.com/oapi-codegen/runtime"
 )
