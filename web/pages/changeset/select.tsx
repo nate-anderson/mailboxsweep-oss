@@ -322,6 +322,7 @@ export default function Select() {
           const apiError = error as ApiError;
           setError(apiError.message);
         }
+        console.log({ error });
       })
       .finally(() => {
         setIsLoadingClassificationSummary(false);
