@@ -31,7 +31,7 @@ html: >
 
         <tr>
           <td align="center">
-            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{changeset_link}}">Get Started</a>
+            <a style="padding: 12px 20px; color: white; background-color: #fa782d; text-decoration: none; font-family: Roboto, sans-serif; font-weight: bold; font-size: 1.4em;" href="{{changeset_link}}">Start Cleaning</a>
           </td>
         </tr>
 
