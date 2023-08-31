@@ -367,6 +367,8 @@ export default function Select() {
     }
   }
 
+  console.log({ isLoadingClassificationSummary,  isLoadingSelection });
+
   return (
     <PrivatePage>
       <>
