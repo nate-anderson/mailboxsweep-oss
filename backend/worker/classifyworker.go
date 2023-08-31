@@ -142,6 +142,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			// keep the message handle active while the process runs
 			go func(address string, m types.Message) {
 				ticker := time.NewTicker(time.Minute * 1)
+				failedAttempts := 0
 				defer ticker.Stop()
 				defer wg.Done()
 				for {
@@ -157,7 +158,12 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 							log.
 								WithError(err).
 								Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
-							return
+							failedAttempts++
+							if failedAttempts >= 3 {
+								log.WithError(err).Error("failed 3 attempts to change message visibility, aborting")
+								return
+							}
+
 						}
 					case err := <-errChan:
 						if err != nil {
@@ -178,7 +184,10 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 
 			end := time.Now()
 			err = w.service.Classify(jobCtx, body.Folders, classifiers)
-			log.Info("CALL TO CLASSIFY RETURNED")
+			log.
+				WithError(err).
+				Info("CALL TO CLASSIFY RETURNED")
+
 			if err != nil {
 				errChan <- err
 				log.

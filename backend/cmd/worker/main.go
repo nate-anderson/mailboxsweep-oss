@@ -266,6 +266,9 @@ func main() {
 		}
 
 		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
+	} else {
+		log.WithField("environment", cfg.Env).Info("using log email sender")
+		emailSender = email.NewLogSender(log)
 	}
 
 	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, uint64(cfg.ChangeSetPageIDHashMod))
