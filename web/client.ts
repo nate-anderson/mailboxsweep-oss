@@ -27,7 +27,9 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
               window.location.href = "/agreement/TERMS_AND_CONDITIONS";
               return null as T;
             default:
-              console.log("unknown or undefined body code in error: ", e.body);
+              if (process.env.ENV === "dev") {
+                console.log("unknown or undefined body code in error: ", e.body);
+              }
           }
 
           if (e.status === 401) {
@@ -43,7 +45,7 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
 }
 
 export const API = new Mailboxsweep({
-  BASE: `https://${process.env.MAILBOXSWEEP_API_HOST}:${process.env.MAILBOXSWEEP_API_PORT}`,
+  BASE: `${process.env.MAILBOXSWEEP_API_PROTO ?? "https"}://${process.env.MAILBOXSWEEP_API_HOST}:${process.env.MAILBOXSWEEP_API_PORT}`,
   WITH_CREDENTIALS: true,
 }, HTTPRequestWithErrorHandling).default;
 

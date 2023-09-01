@@ -10,6 +10,7 @@ const nextConfig = /*withPWA*/({
   env: {
     MAILBOXSWEEP_API_HOST: process.env.MAILBOXSWEEP_API_HOST, 
     MAILBOXSWEEP_API_PORT: process.env.MAILBOXSWEEP_API_PORT,
+    MAILBOXSWEEP_API_PROTO: process.env.MAILBOXSWEEP_API_PROTO,
     ENV: process.env.ENV
   },
   images:{
