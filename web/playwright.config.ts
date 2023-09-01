@@ -21,7 +21,7 @@ export default defineConfig({
 
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'https://127.0.0.1:3001',
+    baseURL: 'http://127.0.0.1:3000',
 
     // Collect trace when retrying the failed test.
     trace: 'on-first-retry',
@@ -36,7 +36,7 @@ export default defineConfig({
   // Run your local dev server before starting the tests.
   webServer: {
     command: 'npm run serve',
-    url: 'https://127.0.0.1:3001/',
+    url: 'http://127.0.0.1:3000/',
     reuseExistingServer: !process.env.CI,
   },
 });
