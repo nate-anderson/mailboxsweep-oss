@@ -37,3 +37,5 @@ next-env.d.ts
 
 # generated code for openapi client
 /client-gen
+
+/playwright-report

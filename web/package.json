@@ -12,7 +12,9 @@
     "start": "next start",
     "lint": "next lint",
     "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "serve": "serve out"
   },
   "dependencies": {
     "@date-io/date-fns": "^2.16.0",
@@ -37,6 +39,7 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.37.1",
     "@types/debounce": "^1.2.1",
     "@types/node": "20.2.5",
     "@types/react": "18.2.12",
@@ -46,6 +49,7 @@
     "eslint-config-next": "^13.4.10",
     "openapi-typescript-codegen": "^0.24.0",
     "prettier": "^2.8.8",
+    "serve": "^14.2.1",
     "yaml": "^2.3.1"
   }
 }
