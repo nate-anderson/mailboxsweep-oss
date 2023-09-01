@@ -15,6 +15,7 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
       } catch(error) {
         if (error instanceof ApiError) {
           const e = error as ApiError;
+
           // if error has a well-defined error code, that will be more useful than
           // the status code. try that first.
           switch (e.body.code) {
@@ -25,17 +26,16 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
             case "terms_and_conditions_not_accepted":
               window.location.href = "/agreement/TERMS_AND_CONDITIONS";
               return null as T;
-            case undefined:
-              return null as T;
             default:
-              console.log("unknown body code ", e.body.code);
+              console.log("unknown or undefined body code in error: ", e.body);
           }
-  
+
           if (e.status === 401) {
             window.location.href = "/login?prompt=1";
+            return null as T;
           }
         }
-  
+
         reject(error);
       }
     });
