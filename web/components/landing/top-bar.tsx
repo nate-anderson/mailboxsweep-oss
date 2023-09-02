@@ -35,8 +35,10 @@ function DrawerItem(props: {
   closeDrawer: () => void;
   currentlyScrolledRef?: MutableRefObject<HTMLElement | null>;
   setCurrentlyScrolledRef?: (ref: MutableRefObject<HTMLElement | null>) => void;
+  index: number;
 }) {
   return <ListItem
+      data-testid={`menu-drawer-item-${props.index}`}
       key={props.text}
       onClick={
           props.action.scrollRef
@@ -108,6 +110,7 @@ export default function TopBar(props: NavbarProps) {
           >
             <div style={{ width: "24px" }}></div>
             <Typography
+              variant="h1"
               sx={{
                 fontFamily: "Lobster",
                 fontSize: "1.75em",
@@ -118,6 +121,7 @@ export default function TopBar(props: NavbarProps) {
               MailboxSweep
             </Typography>
             <IconButton
+              id="sidebar-menu-open"
               edge="start"
               aria-label="menu"
               onClick={() => setDrawerOpen(!drawerOpen)}
@@ -131,6 +135,7 @@ export default function TopBar(props: NavbarProps) {
           </ToolBar>
         </Container>
         <Drawer
+          id="menu-drawer"
           anchor="right"
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -143,6 +148,7 @@ export default function TopBar(props: NavbarProps) {
             }}
           >
             <IconButton
+              id="sidebar-menu-close"
               edge="start"
               aria-label="close menu"
               onClick={() => setDrawerOpen(false)}
@@ -180,9 +186,10 @@ export default function TopBar(props: NavbarProps) {
             </ListItem>
            
           </Link>
-          {props.drawerItems.map((item) =>
+          {props.drawerItems.map((item, i) =>
             <DrawerItem
               key={item.text}
+              index={i}
               text={item.text}
               action={item.action}
               icon={item.icon}
