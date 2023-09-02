@@ -62,3 +62,7 @@ build_docker_server:
 .PHONY: build_docker_worker
 build_docker_worker:
 	cd .. && docker build -f ./backend/Dockerfile.worker .
+
+.PHONY: start_e2e_server
+start_e2e_server:
+	ENV=e2e TEST_LOGIN_SENDER_SERVER_PORT=8082 TEST_LOGIN_SENDER_SERVER_USER=tech@mailboxsweep.com go run ./cmd/server/

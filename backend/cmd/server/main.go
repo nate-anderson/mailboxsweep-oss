@@ -122,6 +122,9 @@ type serverConfig struct {
 	SESConfigSetName          string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
 
 	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
+
+	TestLoginServerSenderPort int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
+	TestLoginServerSenderUser string `fig:"TEST_LOGIN_SENDER_SERVER_USER"`
 }
 
 func main() {
@@ -299,6 +302,14 @@ func main() {
 	var emailSender email.Sender
 	if cfg.Env == "dev" {
 		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
+	} else if cfg.Env == "e2e" {
+		if cfg.TestLoginServerSenderPort == 0 {
+			log.Fatal("server started with env=e2e but no TestLoginServerSenderPort configured")
+		}
+		if cfg.TestLoginServerSenderUser == "" {
+			log.Fatal("server started with env=e2e but no TestLoginServerSenderUser configured")
+		}
+		loginSender = login.NewTestServerLoginSender(cfg.TestLoginServerSenderPort, cfg.TestLoginServerSenderUser, cfg.LoginBaseURL, cfg.Env)
 	} else {
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SESHost,
