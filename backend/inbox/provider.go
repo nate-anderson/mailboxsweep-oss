@@ -2,6 +2,7 @@ package inbox
 
 import (
 	"context"
+	"errors"
 	"mailboxsweep/inboxcredential"
 )
 
@@ -13,3 +14,8 @@ type Provider interface {
 	// Decorate error with provider-specific info
 	WrapError(err error) error
 }
+
+var (
+	GmailError = errors.New("gmail error")
+	IMAPError  = errors.New("imap error")
+)
