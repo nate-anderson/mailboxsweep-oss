@@ -88,3 +88,4 @@ maddy_gen_certs:
 .PHONY: maddy_init_setup
 maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds
 	ENV=e2e TEST_LOGIN_SENDER_SERVER_PORT=8082 TEST_LOGIN_SENDER_SERVER_USER=tech@mailboxsweep.com go run ./cmd/server/
+	ENV=e2e go run ./cmd/server/
