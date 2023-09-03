@@ -93,3 +93,7 @@ func (p *IMAPProvider) Login(_ context.Context, username string, credential inbo
 
 	return NewIMAPInbox(p.client, username, p.logger), nil
 }
+
+func (p *IMAPProvider) WrapError(err error) error {
+	return fmt.Errorf("%w: %w", IMAPError, err)
+}
