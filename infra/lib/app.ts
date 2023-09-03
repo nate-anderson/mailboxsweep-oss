@@ -184,7 +184,7 @@ export class AppStack extends cdk.Stack {
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
             CLASSIFICATION_PAGE_SIZE: "30",
-            CORS_ALLOWED_ORIGIN: `https://${webUrl}`,
+            CORS_ALLOWED_ORIGINS: `https://${webUrl}`,
             MINUTES_BETWEEN_OPEN_REQUESTS: "120",
             MINUTES_BETWEEN_CLOSED_REQUESTS: "10",
 
