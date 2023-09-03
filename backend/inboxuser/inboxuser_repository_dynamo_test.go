@@ -71,7 +71,7 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 
 	t.Run("store payment", func(t *testing.T) {
 		p := Payment{
-			Plan:          Deluxe,
+			Plan:          Annual,
 			AmountInCents: 2000,
 			Method:        Stripe,
 			Timestamp:     time.Now(),
@@ -86,7 +86,7 @@ func TestDynamoInboxUserRepository(t *testing.T) {
 		retrieved := user.Payments[0]
 		assert.That(t, retrieved.AmountInCents).Equals(p.AmountInCents)
 		assert.That(t, retrieved.Method).Equals(Stripe)
-		assert.That(t, retrieved.Plan).Equals(Deluxe)
+		assert.That(t, retrieved.Plan).Equals(Annual)
 		assert.That(t, retrieved.Timestamp.Year()).Equals(p.Timestamp.Year())
 		assert.That(t, retrieved.Timestamp.Month()).Equals(p.Timestamp.Month())
 		assert.That(t, retrieved.Timestamp.Day()).Equals(p.Timestamp.Day())
