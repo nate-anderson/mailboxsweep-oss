@@ -95,5 +95,5 @@ func (p *IMAPProvider) Login(_ context.Context, username string, credential inbo
 }
 
 func (p *IMAPProvider) WrapError(err error) error {
-	return fmt.Errorf("%w: %w", IMAPError, err)
+	return mailboxsweep.IMAPError(err)
 }
