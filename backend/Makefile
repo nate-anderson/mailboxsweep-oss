@@ -65,4 +65,4 @@ build_docker_worker:
 
 .PHONY: start_e2e_server
 start_e2e_server:
-	ENV=e2e TEST_LOGIN_SENDER_SERVER_PORT=8082 TEST_LOGIN_SENDER_SERVER_USER=tech@mailboxsweep.com go run ./cmd/server/
+	ENV=e2e go run ./cmd/server/

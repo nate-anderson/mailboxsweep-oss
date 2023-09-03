@@ -9,6 +9,9 @@ import (
 	"net/url"
 )
 
+// TestServerLoginSender allows one configured user to log in during E2E testing by
+// spinning up a temporary HTTP server with the login link in a JSON response that the E2E test
+// process may call and retrieve the login link. The server then shuts down.
 type TestServerLoginSender struct {
 	port     int
 	testUser string
@@ -68,7 +71,7 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 		log.Printf("serving login link temporary server at %s for login link %s", addr, link)
 
 		_ = <-finish
-		if err = srv.Shutdown(ctx); err != nil {
+		if err = srv.Shutdown(context.Background()); err != nil {
 			log.Printf("failed to shutdown temporary login sender server: %s", err)
 		} else {
 			log.Printf("temporary login link server shut down")
@@ -80,6 +83,7 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 
 func (s TestServerLoginSender) GetHTTPHandler(link string, finish chan struct{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
 		err := json.NewEncoder(w).Encode(JSONResBody{Link: link})
 		if err != nil {
 			log.Printf("error encoding login link JSON web response in temporary login sender server: %s", err)
