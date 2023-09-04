@@ -193,14 +193,14 @@ var (
 )
 
 func GmailError(parent error) error {
-	return ProviderError{
+	return &ProviderError{
 		Parent:   parent,
 		Provider: "gmail",
 	}
 }
 
 func IMAPError(parent error) error {
-	return ProviderError{
+	return &ProviderError{
 		Parent:   parent,
 		Provider: "imap",
 	}
