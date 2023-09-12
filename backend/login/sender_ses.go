@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"log"
 	"mailboxsweep/email"
 	"net/url"
 	"time"
@@ -31,10 +32,14 @@ func (s EmailSender) Send(ctx context.Context, req SendRequest) error {
 	if err != nil {
 		return err
 	}
+	urlStr := u.String()
 	tmplData := map[string]string{
-		"signin_link": u.String(),
+		"signin_link": urlStr,
 		"expiry_time": req.Expires.In(pst).Format("3:04 PM MST on Monday, Jan 2, 2006"),
 	}
+
+	// @TODO: Remove this
+	log.Printf("Login link for %s: %s", req.Address, urlStr)
 
 	err = s.client.Send(ctx, req.Address, s.templateName, tmplData)
 	return err
