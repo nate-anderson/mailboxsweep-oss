@@ -1,4 +1,4 @@
-import { useAPIClient } from "../../client";
+import { APINoRedirect as API } from "../../client";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -132,8 +132,6 @@ export default function Login() {
   const resetFilledInput = () => setPassword("********");
 
   const [credentialType, setCredentialType] = useState<GetCredentialResponse.type | undefined>();
-
-  const API = useAPIClient();
 
   useEffect(() => {
     API.getInboxCredential()

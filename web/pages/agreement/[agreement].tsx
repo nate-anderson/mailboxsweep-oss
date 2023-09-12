@@ -57,6 +57,7 @@ const renderAgreementForm = (
     >
       <Typography>I agree to the terms above</Typography>
       <Button
+        data-testid="button-agree-submit"
         sx={{
           marginY: 2,
         }}

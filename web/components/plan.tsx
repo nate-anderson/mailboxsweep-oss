@@ -10,7 +10,8 @@ interface IPlanCardProps {
     submit: undefined | (() => void)
 }
 
-const renderPrice = (price: currency) => {
+function Price(props: { plan: Plan }) {
+    const price = currency(props.plan.priceInCents, { fromCents: true });
     const cents = String(price.cents()).padStart(2, "0");
     const commonStyles = {
       marginBottom: 0,
@@ -31,6 +32,7 @@ const renderPrice = (price: currency) => {
           $
         </Typography>
         <Typography
+          data-testid={`price-${props.plan.key.toLowerCase()}-dollars`}
           display="inline"
           sx={{
             ...commonStyles,
@@ -70,7 +72,6 @@ const renderPrice = (price: currency) => {
   };
 
 export default function PlanCard(props: IPlanCardProps) {
-    const price = currency(props.plan.priceInCents, { fromCents: true });
   return (
     <Card
       key={props.plan.key}
@@ -86,6 +87,7 @@ export default function PlanCard(props: IPlanCardProps) {
       }}
     >
       <Typography
+        data-testid={`plan-name-${props.plan.key.toLowerCase()}`}
         variant="h5"
         align="center"
         sx={{
@@ -94,7 +96,7 @@ export default function PlanCard(props: IPlanCardProps) {
       >
         {props.plan.displayName}
       </Typography>
-      {renderPrice(price)}
+      <Price plan={props.plan} />
       <Typography
         sx={{
           color: "var(--color-gray)",
@@ -116,6 +118,7 @@ export default function PlanCard(props: IPlanCardProps) {
       {
         Boolean(props.submit) ? <>
         <Button
+          data-testid={`plan-${props.plan.key.toLowerCase()}-checkout`}
           size="large"
           sx={{
             maxWidth: "200px",
