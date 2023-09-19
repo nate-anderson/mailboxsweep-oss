@@ -178,6 +178,7 @@ export class AppStack extends cdk.Stack {
                 "robbi.anderson@gmail.com",
                 "robbi.anderson@yahoo.com",
                 "nathananderson488@gmail.com",
+                "carmonwong@hotmail.com"
             ].join(","), 
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
