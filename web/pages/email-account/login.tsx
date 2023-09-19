@@ -31,6 +31,9 @@ function PasswordOnlyInput(props: {
   return (
     <Grid item xs={12} sm={12}>
       <TextField
+        inputProps={{
+          'data-testid': "imap-password-input-no-server"
+        }}
         label="Password"
         type="password"
         autoComplete="none"
@@ -57,6 +60,10 @@ function PasswordAndIMAPServerInputs (props: {
     <>
       <Grid item xs={12} sm={12}>
         <TextField
+          inputProps={{
+            'data-testid': "imap-password-input-server"
+          }}
+          
           label="Password"
           type="password"
           autoComplete="none"
@@ -71,6 +78,9 @@ function PasswordAndIMAPServerInputs (props: {
       <Grid item xs={12} sm={12}>
         <TextField
           autoFocus
+          inputProps={{
+            'data-testid': "imap-server-input"
+          }}
           label="IMAP Host"
           type="text"
           autoComplete="none"
@@ -84,6 +94,9 @@ function PasswordAndIMAPServerInputs (props: {
       </Grid>
       <Grid item xs={12} sm={12}>
         <TextField
+          inputProps={{
+            'data-testid': "imap-port-input"
+          }}
           label="IMAP Port"
           type="text"
           autoComplete="none"
@@ -384,6 +397,7 @@ export default function Login() {
                     )}
 
                     <Button
+                      data-testid="imap-credential-submit"
                       disabled={!submitButtonEnabled}
                       onClick={submitCredential}
                     >
