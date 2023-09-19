@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import axios from "axios";
+import dotenv from "dotenv";
 
-const testUser = "e2e@mailboxsweep.com";
+dotenv.config({ path: ".env.e2e.local" });
+
+const testUser = "test@127.0.0.1";
 const testLoginLinkServerHTTPPort = 8082;
 const testCardNumber = "4242424242424242";
 const testCardExp = "12/30";
