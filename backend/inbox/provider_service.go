@@ -64,7 +64,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 			return nil, err
 		}
 
-		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota, s.logger)
+		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota, s.logger, true)
 		if err != nil {
 			return nil, err
 		}

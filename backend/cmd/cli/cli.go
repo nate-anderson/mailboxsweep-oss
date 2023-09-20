@@ -74,7 +74,7 @@ var listMailboxesCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New(), true)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -141,7 +141,7 @@ var listMessagesCmd = &cobra.Command{
 
 		quotaBytes := metering.Megabyte * 1800
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, usageRepo, &quotaBytes, logrus.New())
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, usageRepo, &quotaBytes, logrus.New(), true)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -205,7 +205,7 @@ var classifyMessagesCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New(), true)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -291,7 +291,7 @@ var deleteCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New())
+		provider, err := inbox.NewIMAPProvider(ctx, host, port, username, nil, nil, logrus.New(), true)
 		if err != nil {
 			log.Fatal(err)
 		}
