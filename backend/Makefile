@@ -55,7 +55,11 @@ start_e2e_server:
 # Maddy Email Test Server Image Directives
 # Config
 MADDY_VERSION = 0.7
+ifeq ($(CI), true)
+MADDY_DATA_DIR = maddy
+else
 MADDY_DATA_DIR = ./.docker-dev/volumes/maddy
+endif
 MADDY_VOLUMES = $(MADDY_DATA_DIR):/data
 MADDY_TESTUSER = testuser@mailboxsweep.local
 MADDY_TESTPASS = pass123
@@ -68,7 +72,7 @@ maddy_make_tls_dir:
 
 .PHONY: maddy_init_config
 maddy_init_config:
-	cp ./.docker-dev/maddy.conf ./.docker-dev/volumes/maddy/maddy.conf
+	cp ./.docker-dev/maddy.conf $(MADDY_DATA_DIR)/maddy.conf
 
 .PHONY: maddy_create_user_smtp
 maddy_create_user_smtp:
