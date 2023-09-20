@@ -70,7 +70,7 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 		go log.Fatal(srv.ListenAndServe())
 		log.Printf("serving login link temporary server at %s for login link %s", addr, link)
 
-		_ = <-finish
+		<-finish
 		if err = srv.Shutdown(context.Background()); err != nil {
 			log.Printf("failed to shutdown temporary login sender server: %s", err)
 		} else {
