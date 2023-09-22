@@ -44,10 +44,10 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: test_none
           AWS_SECRET_ACCESS_KEY: test_none
-          TEST_ADDRESS: ${{ secrets.TEST_ADDRESS }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-          TEST_IMAP_HOST: imap.gmail.com
-          TEST_SMTP_HOST: smtp.gmail.com
+          TEST_ADDRESS: testuser@mailboxsweep.local
+          TEST_PASSWORD: pass123
+          TEST_IMAP_HOST: localhost
+          TEST_SMTP_HOST: localhost
           TEST_IMAP_PORT: 993
           TEST_SMTP_PORT: 587
           DYNAMODB_HOST: localhost
