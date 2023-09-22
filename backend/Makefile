@@ -55,11 +55,7 @@ start_e2e_server:
 # Maddy Email Test Server Image Directives
 # Config
 MADDY_VERSION = 0.7
-ifeq ($(CI), true)
-MADDY_DATA_DIR = maddy
-else
 MADDY_DATA_DIR = ./.docker-dev/volumes/maddy
-endif
 MADDY_VOLUMES = $(MADDY_DATA_DIR):/data
 MADDY_TESTUSER = testuser@mailboxsweep.local
 MADDY_TESTPASS = pass123
@@ -68,11 +64,11 @@ MADDY_CONFIG_DEFAULT_URL = https://raw.githubusercontent.com/foxcpp/maddy/$(MADD
 
 .PHONY: maddy_make_tls_dir
 maddy_make_tls_dir:
-	mkdir $(MADDY_DATA_DIR)/tls
+	mkdir -p $(MADDY_DATA_DIR)/tls
 
 .PHONY: maddy_init_config
 maddy_init_config:
-	cp ./.docker-dev/maddy.conf $(MADDY_DATA_DIR)/maddy.conf
+	cp ./.docker-dev/maddy.conf ./.docker-dev/volumes/maddy/maddy.conf
 
 .PHONY: maddy_create_user_smtp
 maddy_create_user_smtp:
@@ -90,4 +86,4 @@ maddy_gen_certs:
 	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout $(MADDY_DATA_DIR)/tls/privkey.pem -out $(MADDY_DATA_DIR)/tls/fullchain.pem
 
 .PHONY: maddy_init_setup
-maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs maddy_creds down up
+maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds
