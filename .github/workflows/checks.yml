@@ -9,29 +9,6 @@ jobs:
     name: Build, lint and test backend
     runs-on: ubuntu-latest
 
-    # services:
-    #   localstack:
-    #     image: localstack/localstack
-    #     ports:
-    #       - "4566:4566" # LocalStack Gateway
-    #       - "4510-4559:4510-4559" # external services port range
-    #     volumes:
-    #       - "localstack:/tmp/localstack"
-
-    #   mailserver:
-    #     image: foxcpp/maddy:0.7
-    #     ports:
-    #       - "3025:25" # SMTP inbound
-    #       - "465:465" # SMTP submission
-    #       - "587:587" # SMTP submission
-    #       - "993:993" # IMAP4
-    #       - "143:143" # IMAP4
-    #     volumes:
-    #       - "maddy:/data"
-    #     env:
-    #       MADDY_DOMAIN: mailboxsweep.local
-    #       MADDY_HOSTNAME: mx.mailboxsweep.local
-
     steps:
       - uses: actions/checkout@v3
 
