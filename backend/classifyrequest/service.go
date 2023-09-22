@@ -229,7 +229,8 @@ func (s DefaultService) MarkExecuting(ctx context.Context, operation string) err
 		if !found {
 			oldestReadyRequest = req
 			found = true
-		} else if *req.ExecuteStartedAtUnix < *oldestReadyRequest.ExecuteStartedAtUnix {
+		} else if req.ExecuteStartedAtUnix != nil &&
+			*req.ExecuteStartedAtUnix < *oldestReadyRequest.ExecuteStartedAtUnix {
 			oldestReadyRequest = req
 		}
 	}
