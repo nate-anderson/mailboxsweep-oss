@@ -83,7 +83,7 @@ maddy_creds: maddy_create_user_smtp maddy_create_user_imap
 
 .PHONY: maddy_gen_certs
 maddy_gen_certs:
-	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout $(MADDY_DATA_DIR)/tls/privkey.pem -out $(MADDY_DATA_DIR)/tls/fullchain.pem
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=NV/L=Las Vegas/O=Technology/OU=Development/CN=mailboxsweep.local" -keyout $(MADDY_DATA_DIR)/tls/privkey.pem -out $(MADDY_DATA_DIR)/tls/fullchain.pem
 
 .PHONY: maddy_init_setup
 maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds
