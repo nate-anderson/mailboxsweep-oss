@@ -72,11 +72,11 @@ maddy_init_config:
 
 .PHONY: maddy_create_user_smtp
 maddy_create_user_smtp:
-	docker run --rm -it -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) creds create --password=$(MADDY_TESTPASS) testuser@mailboxsweep.local
+	docker run --rm -i -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) creds create --password=$(MADDY_TESTPASS) testuser@mailboxsweep.local
 
 .PHONY: maddy_create_user_imap
 maddy_create_user_imap:
-	docker run --rm -it -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) imap-acct create testuser@mailboxsweep.local
+	docker run --rm -i -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) imap-acct create testuser@mailboxsweep.local
 
 .PHONY: maddy_creds
 maddy_creds: maddy_create_user_smtp maddy_create_user_imap
