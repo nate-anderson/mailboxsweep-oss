@@ -213,7 +213,7 @@ func (s DefaultService) MarkExecuting(ctx context.Context, operation string) err
 		return err
 	}
 
-	// find oldest request that has been completed but not started to execute
+	// find oldest request (by completion timestamp) that has been completed but not started to execute
 	var oldestReadyRequest ClassifyRequest
 	found := false
 
@@ -229,8 +229,8 @@ func (s DefaultService) MarkExecuting(ctx context.Context, operation string) err
 		if !found {
 			oldestReadyRequest = req
 			found = true
-		} else if req.ExecuteStartedAtUnix != nil &&
-			*req.ExecuteStartedAtUnix < *oldestReadyRequest.ExecuteStartedAtUnix {
+		} else if oldestReadyRequest.CompletedAtUnix != nil &&
+			*req.CompletedAtUnix < *oldestReadyRequest.CompletedAtUnix {
 			oldestReadyRequest = req
 		}
 	}
