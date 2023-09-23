@@ -63,7 +63,7 @@ func (r DynamoChangesetRepository) FindByInboxAndOperation(ctx context.Context, 
 	}
 
 	if len(items) == 0 {
-		return nil, mailboxsweep.NotFoundError(errors.New("no changeset documents found for inbox"))
+		return nil, mailboxsweep.NotFoundError(fmt.Errorf("no changeset documents found for inbox %s", inbox))
 	}
 
 	results := make([]changeSetDocument, len(items))
