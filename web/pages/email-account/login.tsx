@@ -23,6 +23,9 @@ import Link from "next/link";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import Alert from "@mui/material/Alert";
 import PrivatePage from "../../auth";
+import PageHeader from "../../components/page-header";
+import { nextStep } from "../../lib/steps";
+import { useRouter } from "next/router";
 
 function PasswordOnlyInput(props: {
   password: string,
@@ -124,6 +127,8 @@ const displayCredentialType = (credType: GetCredentialResponse.type | undefined)
 }
 
 export default function Login() {
+  const router = useRouter();
+  
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [submitButtonEnabled, setSubmitButtonEnabled] = useState(false);
@@ -190,6 +195,13 @@ export default function Login() {
   }, []);
 
   const submitCredential = () => {
+    const proceed = () => {
+      const nextPath = nextStep();
+      if (nextPath) {
+        router.push(nextPath);
+      }
+    }
+
     setSubmitButtonEnabled(false);
     if (showImapServerForm) {
       API.storeImapServerAndCredentials({
@@ -199,6 +211,7 @@ export default function Login() {
       })
         .then((res) => {
           showSuccess(true);
+          proceed();
         })
         .catch((err) => {
           if (err instanceof ApiError) {
@@ -214,6 +227,7 @@ export default function Login() {
       .then(() => {
         showSuccess(true);
         resetFilledInput();
+        proceed();
       })
       .catch((err) => {
         if (err instanceof ApiError) {
@@ -279,25 +293,17 @@ export default function Login() {
           <CssBaseline />
           <Box
             sx={{
-              marginTop: 6,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-              <IconEnvelope />
-            </Avatar>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                fontSize: "2em",
-                fontWeight: 100,
-              }}
-            >
-              Inbox Credentials
-            </Typography>
+            <PageHeader
+              title="Inbox Credentials"
+              showStepper={true}
+              icon={<IconEnvelope />}
+              stepperSlug="PROVIDER_SIGNIN"
+            />
             <Typography
               align="center"
               sx={{
