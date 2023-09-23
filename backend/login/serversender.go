@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,7 +68,12 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 			Handler: handler,
 		}
 
-		go log.Fatal(srv.ListenAndServe())
+		go func() {
+			err := srv.ListenAndServe()
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Fatalf("test closed unexpectedly: %s", err)
+			}
+		}()
 		log.Printf("serving login link temporary server at %s for login link %s", addr, link)
 
 		<-finish
