@@ -125,6 +125,7 @@ type serverConfig struct {
 
 	TestLoginServerSenderPort int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
 	TestLoginServerSenderUser string `fig:"TEST_LOGIN_SENDER_SERVER_USER"`
+	AllowInsecureIMAP         *bool  `fig:"ALLOW_INSECURE_IMAP" default:"false"`
 }
 
 func main() {
@@ -212,6 +213,11 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
+	allowInsecureIMAP := false
+	// if insecure IMAP is explicitly configured, and environment is not one we deploy to the internet, allow insecure IMAP
+	if cfg.AllowInsecureIMAP != nil && *cfg.AllowInsecureIMAP && cfg.Env != "prod" && cfg.Env != "staging" {
+		allowInsecureIMAP = true
+	}
 	providerService := inbox.NewProviderService(
 		imapServerService,
 		usageRepo,
@@ -224,6 +230,7 @@ func main() {
 			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
 		},
+		allowInsecureIMAP,
 		log,
 	)
 
