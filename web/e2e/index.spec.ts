@@ -35,7 +35,7 @@ test.describe('index page sidebar', () => {
     test('sidebar navigation links lead to correct pages', async ({ page }) => {
         // test IDs
         const buttonToUrlMap = {
-            "menu-drawer-item-2": "/landing/faq/",
+            "menu-drawer-item-2": /landing\/faq/,
         };
 
         for (const [link, targetUrl] of Object.entries(buttonToUrlMap)) {
@@ -43,7 +43,7 @@ test.describe('index page sidebar', () => {
             await page.locator('#sidebar-menu-open').click();
             const button = await page.getByTestId(link);
             await button.click();
-            await expect(page).toHaveURL(targetUrl);
+            await page.waitForURL(targetUrl);
         }
     })
     
@@ -64,7 +64,7 @@ test.describe('index page login links', () => {
             await page.goto('/');
             const link = await page.getByText(linkText, { exact: true });
             await link.click();
-            await expect(page).toHaveURL("/login/");
+            await page.waitForURL(/login/);
         }
     });
 });

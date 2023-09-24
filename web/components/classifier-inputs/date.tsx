@@ -50,6 +50,9 @@ export default function DateClassifierCard(props: Props) {
         {props.classifier.name}
       </ListItemText>
       <DateField
+        inputProps={{
+          'data-testid': `classifier-date-input-${props.classifier.typeKey}`
+        } as React.InputHTMLAttributes<HTMLInputElement>}
         value={value}
         onChange={props.setInput}
         label={props.classifier.inputLabel}

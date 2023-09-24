@@ -1,18 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, Locator } from '@playwright/test';
 import axios from "axios";
-import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.e2e.local" });
-
-const testUser = "test@127.0.0.1";
+const testUser = "testuser@mailboxsweep.local";
 const testLoginLinkServerHTTPPort = 8082;
 const testCardNumber = "4242424242424242";
 const testCardExp = "12/30";
 const testCardCvv = "123";
 const testUserName = "MailboxSweep E2E Test User";
-const testImapHost = "localhost";
-const testImapPort = 3143;
-const testImapPassword = process.env.E2E_TEST_USER_IMAP_PASS;
+const testImapHost = "127.0.0.1";
+const testImapPort = 993;
+const testImapPassword = "pass123";
 
 test.describe('signup', () => {
     test.describe('imap user', () => {
@@ -39,7 +36,7 @@ test.describe('signup', () => {
             // click accept
             const acceptButton = await page.getByTestId("button-agree-submit");
             await acceptButton.click();
-            await expect(page).toHaveURL("/plan/select/");
+            await page.waitForURL(/plan\/select/);
             await expect(page.getByText("Choose a Plan")).toBeDefined();
 
             // plan titles, prices, and checkout buttons present
@@ -119,6 +116,128 @@ test.describe('signup', () => {
             
             // redirected to /classify/
             await page.waitForURL(/classify/);
+
+            await page.getByTestId("btn-configure-classify").click();
+            await page.waitForURL(/classify\/configure/);
+
+            const classifierTexts = [
+                "Sender domain",
+                "Sender email",
+                "Send date",
+            ];
+            for (const text of classifierTexts) {
+                await expect(page.getByText(text)).toBeVisible();
+            }
+
+            const classifierTypeKeys = [
+                "SENDER_DOMAIN",
+                "SENDER_USERNAME",
+                "SEND_DATE"
+            ];
+
+            for (const typeKey of classifierTypeKeys) {
+                // check box works
+                const checkboxId = `classifier-checkbox-${typeKey}`;
+                const checkbox = await page.getByTestId(checkboxId);
+                await expect(checkbox).toBeChecked();
+                
+                await checkbox.uncheck();
+                await expect(await checkbox.isChecked()).toBeFalsy();
+
+                await checkbox.check();
+                await expect(checkbox).toBeChecked();
+            }
+
+            // date input responds to input
+            const dateInput = await page.getByTestId('classifier-date-input-SEND_DATE');
+            await dateInput.focus();
+            const date = "02/02/22";
+            await dateInput.type(date);
+            await expect(dateInput).toHaveValue(date);
+
+            // expand buttons work
+            const toggleTextMap: Record<string, string> = {
+                "classifier-expand-toggle-SENDER_DOMAIN": "Classify messages by the website of the sender",
+                "classifier-expand-toggle-SENDER_USERNAME": "Classify messages by the sender",
+                "classifier-expand-toggle-SEND_DATE": "Divide messages before and after a given date"
+            };
+            for (const [testId, toggleText] of Object.entries(toggleTextMap)) {
+                const toggle = await page.getByTestId(testId);
+                await toggle.click();
+                const textDisplay = await page.getByText(toggleText);
+                await expect(textDisplay).toBeVisible();
+                await toggle.click();
+                await expect(textDisplay).toBeHidden();
+            }
+
+            // drag and drop re-arrange works
+            const firstDragHandle = await page.getByTestId("classifier-drag-handle-SENDER_DOMAIN");
+            const dropZone = await page.getByTestId("classifier-drag-drop-region");
+            const newFirst = await page.getByTestId("classifier-card-SENDER_USERNAME");
+            const newSecond = await page.getByTestId("classifier-card-SENDER_DOMAIN");
+            const boundingBox = await dropZone.boundingBox();
+            
+            await dragAndDropSwap(page, firstDragHandle, newFirst);
+
+            const firstY = (await (await newFirst.elementHandle())?.boundingBox())?.y;
+            
+            const secondY = (await (await newSecond.elementHandle())?.boundingBox())?.y;
+            await expect(secondY).toBeGreaterThan(firstY!);
+
+            await page.goBack();
+            await page.getByText("Start").click();
+            await page.waitForURL(/home/);
+            await expect(page.getByText("Inbox Scan In Progress", { exact: true })).toBeVisible();
+            await expect(page.getByText("Now is a great time to back up your inbox.", { exact: true })).toBeVisible();
+            const learnHowButton = await page.getByText("Learn how")
+            await expect(learnHowButton).toBeVisible();
+            await learnHowButton.click();
+            await page.waitForURL(/article\/backup/);
+
+            const backupLinkTextTargetMap: Record<string, string> = {
+                "Learn about Gmail Backup": "https://support.google.com/mail/answer/10016932?hl=en",
+                "Learn about Outlook Backup": "https://support.microsoft.com/en-us/office/back-up-your-email-e5845b0b-1aeb-424f-924c-aa1c33b18833",
+                "Learn about Backup with Thunderbird": "https://www.ionos.com/help/email/other-email-programs/mozilla-thunderbird-exporting-emails/",
+            };
+
+            for (const [text, target] of Object.entries(backupLinkTextTargetMap)) {
+                const link = await page.getByText(text);
+                const [newTab] = await Promise.all([
+                    page.waitForEvent('popup'),
+                    link.click(),
+                ]);
+                await expect(newTab).toHaveURL(target);
+            }
+
+            
         });
     });
 });
+
+const dragAndDropSwap = async (page: Page, subject: Locator, target: Locator) => {
+
+	const subjectElementBound = {
+		x: await subject.boundingBox().then(bound => bound?.x ?? 0),
+		y: await subject.boundingBox().then(bound => bound?.y ?? 0),
+		width: await subject.boundingBox().then(bound => bound?.width ?? 0),
+		height: await subject.boundingBox().then(bound => bound?.height ?? 0),
+	};
+
+	const targetElementBound = {
+		x: await target.boundingBox().then(bound => bound?.x ?? 0),
+		y: await target.boundingBox().then(bound => bound?.y ?? 0),
+		width: await target.boundingBox().then(bound => bound?.width ?? 0),
+		height: await target.boundingBox().then(bound => bound?.height ?? 0),
+	};
+
+	await page.mouse.move(subjectElementBound.x, subjectElementBound.y, { steps: 10 });
+    
+	await subject.dispatchEvent('mousedown', { button: 0, force: true });
+
+	const x = targetElementBound.x + targetElementBound.width / 2;
+	const y = targetElementBound.y + targetElementBound.height / 2;
+
+	await page.mouse.move(x, y, { steps: 10 });
+
+	await target.dispatchEvent('mouseup', { button: 0 });
+}

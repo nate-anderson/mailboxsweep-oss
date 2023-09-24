@@ -39,6 +39,7 @@ export default function SelectedClassifierList(props: Props) {
   return (
     <Box
       minHeight={((88 + 8) * props.classifiers.length) + "px"}
+      data-testid="classifier-drag-drop-region"
     >
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="classifier-droppable-list">
