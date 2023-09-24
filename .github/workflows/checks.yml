@@ -133,6 +133,10 @@ jobs:
         working-directory: web
         run: npm run openapi
 
+      - name: Build
+        working-directory: web
+        run: npm run build
+
       - name: Run E2E tests
         working-directory: web
         run: npm run test:e2e
