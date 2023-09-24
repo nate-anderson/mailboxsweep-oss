@@ -1,5 +1,9 @@
 name: PR Checks
 
+#
+# Pull request checks to be run against every branch that may be merged into develop
+#
+
 on:
   push:
     branches-ignore: [develop, main]
@@ -89,3 +93,9 @@ jobs:
       - name: Lint
         working-directory: web
         run: npm run lint
+
+      - name: Build
+        working-directory: web
+        run: npm run build
+
+  test-e2e:

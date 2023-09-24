@@ -1,5 +1,13 @@
 name: CI
 
+#
+# Continuous Integration
+# Branch `develop` shall always represent the version of the app deployed in the staging environment,
+# and be considered the release candidate for production.
+# When a branch is merged into develop, run every linting tool and test against it,
+# then deploy it automatically to staging.
+#
+
 on:
   push:
     branches: [develop]

@@ -1,4 +1,13 @@
-name: CI
+name: CD
+
+#
+# Continuous Deployment
+# Branch `main` shall always represent the version of the app deployed in the production environment
+# When a branch is merged into main, run every linting tool and test against it,
+# then deploy it automatically to production.
+#
+# There is no production environment and this hasn't been figured out yet.
+#
 
 on:
   push:
