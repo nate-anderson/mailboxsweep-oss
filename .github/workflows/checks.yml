@@ -137,6 +137,10 @@ jobs:
         working-directory: web
         run: npm run build
 
+      - name: Install Playwright browser(s)
+        working-directory: web
+        run: npx playwright install
+
       - name: Run E2E tests
         working-directory: web
         run: npm run test:e2e
