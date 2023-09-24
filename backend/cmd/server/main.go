@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"flag"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
@@ -131,7 +132,13 @@ type serverConfig struct {
 func main() {
 	log := logrus.New()
 
-	envDriver, err := fig.NewOptionalFileEnvironmentDriver(".env")
+	// flags:
+	// allow specifying configuration file
+	var envFile string
+	flag.StringVar(&envFile, "envFile", ".env", "specify .env configuration file to load")
+	flag.Parse()
+
+	envDriver, err := fig.NewOptionalFileEnvironmentDriver(envFile)
 	if err != nil {
 		log.Fatal(err)
 	}

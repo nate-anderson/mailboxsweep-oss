@@ -50,7 +50,7 @@ build_docker_worker:
 
 .PHONY: start_e2e_server
 start_e2e_server:
-	ENV=e2e go run ./cmd/server/
+	go run ./cmd/server/ --envFile=".env.e2e"
 
 # Maddy Email Test Server Image Directives
 # Config
