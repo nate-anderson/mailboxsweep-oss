@@ -14,6 +14,8 @@ const testImapPassword = "pass123";
 test.describe('signup', () => {
     test.describe('imap user', () => {
         test('first login', async ({ page }) => {
+            // log console messages
+            page.on('console', msg => console.log(msg.text()));
             
             await page.goto("/login");
 

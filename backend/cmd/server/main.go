@@ -134,9 +134,20 @@ func main() {
 
 	// flags:
 	// allow specifying configuration file
-	var envFile string
+	var (
+		envFile     string
+		ssmHostFlag string
+		ssmPort     int
+	)
 	flag.StringVar(&envFile, "envFile", ".env", "specify .env configuration file to load")
+	flag.StringVar(&ssmHostFlag, "ssmHost", "", "specify host of SSM (for ParamStore)")
+	flag.IntVar(&ssmPort, "ssmPort", 0, "specify port of SSM (for ParamStore)")
 	flag.Parse()
+
+	var ssmHost *string
+	if ssmHostFlag != "" {
+		ssmHost = &ssmHostFlag
+	}
 
 	envDriver, err := fig.NewOptionalFileEnvironmentDriver(envFile)
 	if err != nil {
@@ -146,6 +157,8 @@ func main() {
 	paramstoreClient, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceRegion: "us-west-2",
+			ServiceHost:   ssmHost,
+			ServicePort:   ssmPort,
 		},
 		ssm.NewFromConfig,
 	)
@@ -324,6 +337,7 @@ func main() {
 			log.Fatal("server started with env=e2e but no TestLoginServerSenderUser configured")
 		}
 		loginSender = login.NewTestServerLoginSender(cfg.TestLoginServerSenderPort, cfg.TestLoginServerSenderUser, cfg.LoginBaseURL, cfg.Env)
+		log.Printf("using temporary login link server for E2E test environment and user %s", cfg.TestLoginServerSenderUser)
 	} else {
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SESHost,

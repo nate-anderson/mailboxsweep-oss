@@ -50,7 +50,7 @@ build_docker_worker:
 
 .PHONY: start_e2e_server
 start_e2e_server:
-	go run ./cmd/server/ --envFile=".env.e2e"
+	go run ./cmd/server/ --envFile=".env.e2e" --ssmHost=localhost --ssmPort=4566 &
 
 # Maddy Email Test Server Image Directives
 # Config

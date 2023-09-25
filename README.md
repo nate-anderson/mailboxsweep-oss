@@ -101,3 +101,16 @@ Move them to `.docker-dev/volumes/maddy/tls`
 Create the credentials used in CI unit tests and browser tests: `make maddy_creds`
 
 This sets the username to `testuser@mailboxsweep.local` and the password to `pass123`.
+
+## Server configuration
+
+The server binary is located at `backend/cmd/server`. The majority of the server's configuration
+comes from environment variables (and `.env` files), but in deployed environments, sensitive
+config variables are stored in AWS SSM Paramstore. The server first checks the environment then
+SSM for params, and errors if a required param is found in neither source.
+
+A few flags exist for bootstrapping the application:
+
+- `--envFile`: specify the location of the configuration file in `.env` format, defaults to `./.env`
+- `--ssmHost`: specify the host of the SSM Paramstore API, useful when you want to use localstack instead of real AWS
+- `--ssmPort`: specify the port of the SSM Paramstore API, see above

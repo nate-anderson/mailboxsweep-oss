@@ -63,7 +63,7 @@ export default function Login() {
         window.location.href = res.redirectUrl;
       }
     } catch (error) {
-      console.log({ initiateLoginError: error });
+      console.log({ initiateLoginError: error!.toString() });
       setErrorMessage("Sorry, something went wrong. Please try again in a moment.");
     }
   };
