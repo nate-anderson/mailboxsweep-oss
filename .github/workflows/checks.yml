@@ -10,16 +10,19 @@ on:
 
 jobs:
   build-backend:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/workflows/build-test-backend.yml
 
   build-web:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/workflows/build-web.yml
 
   test-e2e:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/workflows/e2e.yml
