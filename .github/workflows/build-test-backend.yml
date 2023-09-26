@@ -1,0 +1,64 @@
+# Reusable workflow to build, start containers and test the Go backend
+name: Build, Lint & Test Backend
+
+on:
+  workflow_call:
+    inputs: {}
+    secrets: {}
+
+jobs:
+  build_test_backend:
+    name: Build, lint and test backend
+    runs-on: ubuntu-latest
+
+  steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-go@v4
+      with:
+        go-version: "^1.21.0"
+        cache-dependency-path: backend/go.sum
+
+    - name: Install server generator
+      working-directory: backend
+      run: make install_openapi_generator
+
+    - name: Generate server code
+      working-directory: backend
+      run: make http_scaffold
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        working-directory: backend
+        version: latest
+        skip-pkg-cache: true
+        skip-build-cache: true
+        args: --timeout=10m
+
+    - name: Start containers
+      working-directory: backend
+      run: make maddy_init_setup
+
+    - name: Test
+      working-directory: backend
+      run: go test ./... -timeout=3m
+      env:
+        AWS_ACCESS_KEY_ID: test_none
+        AWS_SECRET_ACCESS_KEY: test_none
+        TEST_ADDRESS: testuser@mailboxsweep.local
+        TEST_PASSWORD: pass123
+        TEST_IMAP_HOST: localhost
+        TEST_SMTP_HOST: localhost
+        TEST_IMAP_PORT: 993
+        TEST_SMTP_PORT: 587
+        DYNAMODB_HOST: localhost
+        S3_HOST: localhost
+
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/golang@master
+      continue-on-error: true
+      with:
+        args: --all-projects
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
