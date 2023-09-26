@@ -11,18 +11,12 @@ on:
 jobs:
   build-backend:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
 
   build-web:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
 
   test-e2e:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@84f65b4862dc527fe1a29c4d66a43395026daceb
