@@ -90,7 +90,7 @@ jobs:
     name: Build and upload web frontend artifacts
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    neexs: [test-e2e]
+    needs: [test-e2e]
     steps:
       - uses: actions/checkout@v3
 
