@@ -10,11 +10,11 @@ on:
 
 jobs:
   build-backend:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@b0df4f2d5ede783945ca245d2655684e0379c2a8
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@07f5fda0387b443a9bf68d8139afbaefe60f300a
 
   build-web:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@b0df4f2d5ede783945ca245d2655684e0379c2a8
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@07f5fda0387b443a9bf68d8139afbaefe60f300a
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@b0df4f2d5ede783945ca245d2655684e0379c2a8
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@07f5fda0387b443a9bf68d8139afbaefe60f300a
     secrets: inherit
