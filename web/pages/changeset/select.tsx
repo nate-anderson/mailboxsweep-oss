@@ -27,7 +27,7 @@ import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
-import CircularProgress from "@mui/material/CircularProgress";
+import { LoadingSpinner } from "../../components/loading-spinner";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 function ToggleModeSwitch(props: {
@@ -145,18 +145,7 @@ function List(props: ListProps) {
   );
 }
 
-function LoadingSpinner() {
-  return <Box
-    sx={{
-      marginTop: "25vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    }}
-  >
-    <CircularProgress />
-  </Box>
-}
+
 
 export default function Select() {
   const [classificationRoot, setClassificationRoot] = useState<
@@ -366,8 +355,6 @@ export default function Select() {
       return;
     }
   }
-
-  console.log({ isLoadingClassificationSummary,  isLoadingSelection });
 
   return (
     <PrivatePage>

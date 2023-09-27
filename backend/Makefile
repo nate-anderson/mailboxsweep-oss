@@ -10,21 +10,6 @@ down:
 install_openapi_gen:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
 
-# Greenmail testcontainer stuff
-GREENMAIL_RELEASE_HASH = 7dcc78cdfa258e57e2f931f4c610be55ae2c567a
-GREENMAIL_SPEC_URL = https://raw.githubusercontent.com/greenmail-mail-test/greenmail/$(GREENMAIL_RELEASE_HASH)/greenmail-standalone/src/main/resources/greenmail-openapi.yml
-GREENMAIL_SPEC_LOCAL_PATH = pkg/clients/greenmail/openapi.yml
-GREENMAIL_CLIENT_GEN_PATH = pkg/clients/greenmail/greenmail.gen.go
-GREENMAIL_OAPI_CODEGEN_CONFIG_PATH = pkg/clients/greenmail/codegen.yml
-
-.PHONY: greenmail_fetch_spec
-greenmail_fetch_spec:
-	curl $(GREENMAIL_SPEC_URL) --output $(GREENMAIL_SPEC_LOCAL_PATH)
-
-.PHONY: greenmail_gen_client
-greenmail_gen_client:
-	oapi-codegen -config $(GREENMAIL_OAPI_CODEGEN_CONFIG_PATH) $(GREENMAIL_SPEC_LOCAL_PATH)
-
 # HTTP API server codegen stuff
 HTTP_SERVER_SPEC_PATH = ../openapi.yml
 HTTP_SERVER_GEN_PATH = http_codegen.yml
@@ -62,3 +47,43 @@ build_docker_server:
 .PHONY: build_docker_worker
 build_docker_worker:
 	cd .. && docker build -f ./backend/Dockerfile.worker .
+
+.PHONY: start_e2e_server
+start_e2e_server:
+	go run ./cmd/server/ --envFile=".env.e2e" --ssmHost=localhost --ssmPort=4566 &
+
+# Maddy Email Test Server Image Directives
+# Config
+MADDY_VERSION = 0.7
+MADDY_DATA_DIR = ./.docker-dev/volumes/maddy
+MADDY_VOLUMES = $(MADDY_DATA_DIR):/data
+MADDY_TESTUSER = testuser@mailboxsweep.local
+MADDY_TESTPASS = pass123
+MADDY_VERSION_COMMIT = de756c8dc52b69efa511c8340aa29af76c407f93
+MADDY_CONFIG_DEFAULT_URL = https://raw.githubusercontent.com/foxcpp/maddy/$(MADDY_VERSION_COMMIT)/maddy.conf
+
+.PHONY: maddy_make_tls_dir
+maddy_make_tls_dir:
+	mkdir -p $(MADDY_DATA_DIR)/tls
+
+.PHONY: maddy_init_config
+maddy_init_config:
+	cp ./.docker-dev/maddy.conf ./.docker-dev/volumes/maddy/maddy.conf
+
+.PHONY: maddy_create_user_smtp
+maddy_create_user_smtp:
+	docker run --rm -i -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) creds create --password=$(MADDY_TESTPASS) testuser@mailboxsweep.local
+
+.PHONY: maddy_create_user_imap
+maddy_create_user_imap:
+	docker run --rm -i -v $(MADDY_VOLUMES) -- foxcpp/maddy:$(MADDY_VERSION) imap-acct create testuser@mailboxsweep.local
+
+.PHONY: maddy_creds
+maddy_creds: maddy_create_user_smtp maddy_create_user_imap
+
+.PHONY: maddy_gen_certs
+maddy_gen_certs:
+	openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=NV/L=Las Vegas/O=Technology/OU=Development/CN=mailboxsweep.local" -keyout $(MADDY_DATA_DIR)/tls/privkey.pem -out $(MADDY_DATA_DIR)/tls/fullchain.pem
+
+.PHONY: maddy_init_setup
+maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds

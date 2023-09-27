@@ -25,8 +25,9 @@ func (r baseController) respond(w http.ResponseWriter, status int, body any) {
 }
 
 type errorResponse struct {
-	Error string `json:"error"`
-	Key   string `json:"code,omitempty"`
+	Error    string `json:"error"`
+	Key      string `json:"code,omitempty"`
+	Provider string `json:"provider,omitempty"`
 }
 
 type respondErrorOptions struct {
@@ -58,6 +59,12 @@ func (r baseController) respondError(w http.ResponseWriter, err error, opts ...r
 		options.code = statusError.StatusCode()
 	}
 
+	var provider string
+	var providerError *mailboxsweep.ProviderError
+	if errors.As(err, &providerError) {
+		provider = providerError.Provider
+	}
+
 	for _, opt := range opts {
 		opt(&options)
 	}
@@ -66,7 +73,8 @@ func (r baseController) respondError(w http.ResponseWriter, err error, opts ...r
 
 	w.WriteHeader(options.code)
 	res := errorResponse{
-		Error: err.Error(),
+		Error:    err.Error(),
+		Provider: provider,
 	}
 
 	var errWithKey errorWithKey

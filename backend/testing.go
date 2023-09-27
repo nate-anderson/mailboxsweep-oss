@@ -3,6 +3,8 @@ package mailboxsweep
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -90,24 +92,84 @@ func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 }
 
 type testSMTPSender struct {
-	host string
-	addr string
-	auth smtp.Auth
+	host   string
+	addr   string
+	auth   smtp.Auth
+	client *smtp.Client
 }
 
-func NewTestSMTPSender(conf testConfig) *testSMTPSender {
+func NewTestSMTPSender(conf testConfig) (*testSMTPSender, error) {
 	addr := net.JoinHostPort(conf.SMTPHost, strconv.Itoa(conf.SMTPPort))
 	auth := smtp.PlainAuth("", conf.Address, conf.Password, conf.SMTPHost)
-	return &testSMTPSender{
-		host: conf.SMTPHost,
-		addr: addr,
-		auth: auth,
+	client, err := smtp.Dial(addr)
+	if err != nil {
+		return nil, err
 	}
+
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		err := client.StartTLS(&tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         conf.SMTPHost,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if ok, _ := client.Extension("AUTH"); !ok {
+		return nil, errors.New("smtp: server doesn't support AUTH")
+	}
+	if err = client.Auth(auth); err != nil {
+		return nil, err
+	}
+
+	return &testSMTPSender{
+		host:   conf.SMTPHost,
+		addr:   addr,
+		auth:   auth,
+		client: client,
+	}, nil
+}
+
+func (s testSMTPSender) formatMsg(to, from, subject, body string) string {
+	header := map[string]string{
+		"From":                      from,
+		"To":                        to,
+		"Subject":                   subject,
+		"MIME-Version":              "1.0",
+		"Content-Type":              "text/plain; charset=\"utf-8\"",
+		"Content-Transfer-Encoding": "base64",
+	}
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + base64.RawStdEncoding.EncodeToString([]byte(body))
+	return message
 }
 
 func (s testSMTPSender) Send(to, from, subj, body string) error {
-	return smtp.SendMail(s.addr, s.auth, from, []string{to}, []byte(body))
+	if err := s.client.Mail(from); err != nil {
+		return err
+	}
+	if err := s.client.Rcpt(to); err != nil {
+		return err
+	}
+	w, err := s.client.Data()
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write([]byte(s.formatMsg(to, from, subj, body))); err != nil {
+		return err
+	}
+	if err := w.Close(); err != nil {
+		return err
+	}
+	return nil
 }
+
+func (s testSMTPSender) Close() error { return s.client.Close() }
 
 type testConfig struct {
 	Address  string `fig:"TEST_ADDRESS"`

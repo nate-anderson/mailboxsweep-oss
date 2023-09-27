@@ -166,7 +166,7 @@ func main() {
 		ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 		GetMessageCallCost:   cfg.GmailGetMessageCallCost,
 	}
-	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, log)
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, false, log)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {

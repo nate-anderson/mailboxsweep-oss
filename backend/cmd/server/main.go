@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"flag"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
@@ -96,7 +97,7 @@ type serverConfig struct {
 	StripeCheckoutSessionDurationMinutes int    `fig:"STRIPE_CHECKOUT_SESSION_DURATION_MINUTES" required:"true"`
 	StripePaymentConfirmationURL         string `fig:"STRIPE_PAYMENT_CONFIRMATION_URL" required:"true"`
 
-	CORSAllowedOrigin string `fig:"CORS_ALLOWED_ORIGIN" required:"true"`
+	CORSAllowedOriginsConcat string `fig:"CORS_ALLOWED_ORIGINS" required:"true"`
 
 	SigningKeyFilePath string  `fig:"SIGNING_KEY_FILE_PATH"`
 	SigningKey         *string `fig:"SIGNING_KEY"`
@@ -122,12 +123,33 @@ type serverConfig struct {
 	SESConfigSetName          string `fig:"SES_CONFIGURATION_SET_NAME" default:"MailboxSweep_Transactional"`
 
 	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
+
+	TestLoginServerSenderPort int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
+	TestLoginServerSenderUser string `fig:"TEST_LOGIN_SENDER_SERVER_USER"`
+	AllowInsecureIMAP         *bool  `fig:"ALLOW_INSECURE_IMAP" default:"false"`
 }
 
 func main() {
 	log := logrus.New()
 
-	envDriver, err := fig.NewOptionalFileEnvironmentDriver(".env")
+	// flags:
+	// allow specifying configuration file
+	var (
+		envFile     string
+		ssmHostFlag string
+		ssmPort     int
+	)
+	flag.StringVar(&envFile, "envFile", ".env", "specify .env configuration file to load")
+	flag.StringVar(&ssmHostFlag, "ssmHost", "", "specify host of SSM (for ParamStore)")
+	flag.IntVar(&ssmPort, "ssmPort", 0, "specify port of SSM (for ParamStore)")
+	flag.Parse()
+
+	var ssmHost *string
+	if ssmHostFlag != "" {
+		ssmHost = &ssmHostFlag
+	}
+
+	envDriver, err := fig.NewOptionalFileEnvironmentDriver(envFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -135,6 +157,8 @@ func main() {
 	paramstoreClient, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{
 			ServiceRegion: "us-west-2",
+			ServiceHost:   ssmHost,
+			ServicePort:   ssmPort,
 		},
 		ssm.NewFromConfig,
 	)
@@ -209,6 +233,11 @@ func main() {
 
 	usageRepo := metering.NewUsageRepository(db, cfg.DynamoDBTable)
 
+	allowInsecureIMAP := false
+	// if insecure IMAP is explicitly configured, and environment is not one we deploy to the internet, allow insecure IMAP
+	if cfg.AllowInsecureIMAP != nil && *cfg.AllowInsecureIMAP && cfg.Env != "prod" && cfg.Env != "staging" {
+		allowInsecureIMAP = true
+	}
 	providerService := inbox.NewProviderService(
 		imapServerService,
 		usageRepo,
@@ -221,6 +250,7 @@ func main() {
 			ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 			GetMessageCallCost:   cfg.GmailGetMessageCallCost,
 		},
+		allowInsecureIMAP,
 		log,
 	)
 
@@ -299,6 +329,15 @@ func main() {
 	var emailSender email.Sender
 	if cfg.Env == "dev" {
 		loginSender = login.NewLogSender(log, cfg.LoginBaseURL)
+	} else if cfg.Env == "e2e" {
+		if cfg.TestLoginServerSenderPort == 0 {
+			log.Fatal("server started with env=e2e but no TestLoginServerSenderPort configured")
+		}
+		if cfg.TestLoginServerSenderUser == "" {
+			log.Fatal("server started with env=e2e but no TestLoginServerSenderUser configured")
+		}
+		loginSender = login.NewTestServerLoginSender(cfg.TestLoginServerSenderPort, cfg.TestLoginServerSenderUser, cfg.LoginBaseURL, cfg.Env)
+		log.Printf("using temporary login link server for E2E test environment and user %s", cfg.TestLoginServerSenderUser)
 	} else {
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SESHost,
@@ -392,10 +431,11 @@ func main() {
 	auth := session.AuthMiddleware{
 		Service: sessionService,
 	}
-	if cfg.CORSAllowedOrigin == "" {
+	if cfg.CORSAllowedOriginsConcat == "" {
 		log.Fatal("CORS_ALLOWED_ORIGIN is not configured")
 	}
-	cors := httpserver.NewCORSHandler(cfg.CORSAllowedOrigin)
+	corsOrigins := strings.Split(cfg.CORSAllowedOriginsConcat, ",")
+	cors := httpserver.NewCORSHandler(corsOrigins)
 
 	root := chi.NewMux()
 	root.Options("/*",

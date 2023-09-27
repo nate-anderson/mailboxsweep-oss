@@ -106,3 +106,7 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	return nil
 }
+
+func (p *GmailProvider) WrapError(err error) error {
+	return mailboxsweep.GmailError(err)
+}

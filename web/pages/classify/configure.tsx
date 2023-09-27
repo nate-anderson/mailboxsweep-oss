@@ -55,6 +55,7 @@ export default function Configure() {
               hasInput: classifier.hasInput,
               enabled: true,
               inputFormat: classifier.inputFormat,
+              typeKey: classifier.typeKey,
             };
           });
           setSelectedClassifiers(hydratedClassifiers);

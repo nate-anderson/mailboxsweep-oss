@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useAPIClient } from "../../client";
-import { ApiError, Classifier } from "../../client-gen";
+import { ApiError } from "../../client-gen";
 import { defaultClassifiers } from "../../lib/classifier";
 import FolderTree from "../../public/folder-tree.svg";
 import PrivatePage from "../../auth";
@@ -112,8 +112,24 @@ export default function Classify() {
                         gap="6px"
                         marginTop={3}
                     >
-                        <Button variant="outlined" color="info" endIcon={<IconGear />} href="/classify/configure">Customize</Button>
-                        <Button variant="contained" color="info" endIcon={<IconStart />} onClick={submit}>Start</Button>
+                        <Button 
+                            variant="outlined"
+                            color="info"
+                            endIcon={<IconGear />}
+                            href="/classify/configure"
+                            data-testid="btn-configure-classify"
+                        >
+                            Customize
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="info"
+                            endIcon={<IconStart />}
+                            onClick={submit}
+                            data-testid="btn-start-classify"
+                        >
+                            Start
+                        </Button>
                     </Box>
                 </Box>
             </Container>

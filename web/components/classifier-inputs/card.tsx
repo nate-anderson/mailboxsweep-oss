@@ -29,6 +29,7 @@ interface Props {
 export default function ClassifierCard(props: Props) {
   return (
     <Card
+      data-testid={`classifier-card-${props.classifier.typeKey}`}
       sx={{
         marginBottom: 1,
       }}
@@ -42,6 +43,7 @@ export default function ClassifierCard(props: Props) {
         {...props.dragHandleProps}
       >
         <DragHandle
+          data-testid={`classifier-drag-handle-${props.classifier.typeKey}`}
           sx={{
             color: "#a3a3a3",
           }}
@@ -49,13 +51,17 @@ export default function ClassifierCard(props: Props) {
 
         <ListItemIcon>
           <Checkbox
+            inputProps={{
+              'aria-label': `Toggle classifier ${props.classifier.name}`,
+              'data-testid': `classifier-checkbox-${props.classifier.typeKey}`,
+            } as React.InputHTMLAttributes<HTMLInputElement>}
             checked={props.classifier.enabled}
             onChange={() => props.toggleEnabled()}
           />
         </ListItemIcon>
         {props.children}
 
-        <IconButton onClick={() => props.toggleExpanded()}>
+        <IconButton data-testid={`classifier-expand-toggle-${props.classifier.typeKey}`} onClick={() => props.toggleExpanded()}>
           {props.expanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
       </ListItemButton>

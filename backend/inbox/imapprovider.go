@@ -2,6 +2,7 @@ package inbox
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
@@ -30,6 +31,7 @@ func NewIMAPProvider(
 	usageRepo metering.UsageRepository,
 	quotaBytes *int,
 	logger *logrus.Logger,
+	requireTLS bool,
 ) (*IMAPProvider, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 
@@ -38,7 +40,14 @@ func NewIMAPProvider(
 		opts = append(opts, metering.WithQuota(*quotaBytes))
 	}
 	dialer := metering.NewDialer(ctx, address, usageRepo, opts...)
-	cl, err := client.DialWithDialerTLS(dialer, addr, nil)
+	var config *tls.Config
+	if !requireTLS {
+		logger.Warnf("IMAP provider configured not to require TLS")
+		config = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+	cl, err := client.DialWithDialerTLS(dialer, addr, config)
 	if err != nil {
 		return nil, err
 	}
@@ -48,20 +57,6 @@ func NewIMAPProvider(
 		IMAPPort: port,
 		client:   cl,
 		logger:   logger,
-	}, nil
-}
-
-func NewTestIMAPProvider(host string, port int) (*IMAPProvider, error) {
-	addr := net.JoinHostPort(host, strconv.Itoa(port))
-	cl, err := client.Dial(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &IMAPProvider{
-		IMAPHost: host,
-		IMAPPort: port,
-		client:   cl,
 	}, nil
 }
 
@@ -92,4 +87,8 @@ func (p *IMAPProvider) Login(_ context.Context, username string, credential inbo
 	}
 
 	return NewIMAPInbox(p.client, username, p.logger), nil
+}
+
+func (p *IMAPProvider) WrapError(err error) error {
+	return mailboxsweep.IMAPError(err)
 }

@@ -10,6 +10,7 @@ export type SelectedClassifier = Classifier & {
   enabled: boolean;
   inputLabel?: string;
   inputFormat?: InputFormat;
+  typeKey: string;
 };
 
 export const reorder = <T>(array: T[], from: number, to: number): T[] => {

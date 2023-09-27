@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"mailboxsweep/pkg/slice"
 	"net/http"
 )
 
@@ -13,19 +14,23 @@ const corsAllowCredentialsHeader = "Access-Control-Allow-Credentials"
 
 // CORS middleware
 type corsHandler struct {
-	allowOrigin string
+	allowOrigins []string
 }
 
-func NewCORSHandler(allowOrigin string) *corsHandler {
+func NewCORSHandler(allowOrigins []string) *corsHandler {
 	return &corsHandler{
-		allowOrigin: allowOrigin,
+		allowOrigins: allowOrigins,
 	}
 }
 
 func (m corsHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+
+		origin := req.Header.Get("origin")
 		w.Header().Add(corsAllowMethodsHeader, corsAllowMethods)
-		w.Header().Add(corsAllowOriginHeader, m.allowOrigin)
+		if slice.Contains(m.allowOrigins, origin) {
+			w.Header().Add(corsAllowOriginHeader, origin)
+		}
 		w.Header().Add(corsAllowHeadersHeader, corsAllowedHeaders)
 		w.Header().Add(corsAllowCredentialsHeader, "true")
 

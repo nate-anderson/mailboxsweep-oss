@@ -119,6 +119,7 @@ export default function Navbar(props: NavbarProps) {
           >
             <div style={{ width: "24px" }}></div>
             <Typography
+              variant="h1"
               sx={{
                 fontFamily: "Lobster",
                 fontSize: "1.5em",
@@ -129,6 +130,7 @@ export default function Navbar(props: NavbarProps) {
               MailboxSweep
             </Typography>
             <IconButton
+              id="sidebar-menu-open"
               edge="start"
               color="inherit"
               aria-label="menu"
@@ -139,6 +141,7 @@ export default function Navbar(props: NavbarProps) {
           </ToolBar>
         </Container>
         <Drawer
+          id="menu-drawer"
           anchor="right"
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -151,6 +154,7 @@ export default function Navbar(props: NavbarProps) {
             }}
           >
             <IconButton
+              id="navbar-menu-close"
               edge="start"
               aria-label="close menu"
               onClick={() => setDrawerOpen(false)}

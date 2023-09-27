@@ -23,6 +23,8 @@ type DefaultProviderService struct {
 	logger *logrus.Logger
 
 	gmailAPILimits GmailAPIRateLimits
+
+	AllowInsecureIMAP bool
 }
 
 func NewProviderService(
@@ -31,6 +33,7 @@ func NewProviderService(
 	googleClientID,
 	googleClientSecret string,
 	gmailAPIRateLimits GmailAPIRateLimits,
+	allowInsecureIMAP bool,
 	logger *logrus.Logger,
 ) *DefaultProviderService {
 	return &DefaultProviderService{
@@ -40,6 +43,7 @@ func NewProviderService(
 		googleClientSecret,
 		logger,
 		gmailAPIRateLimits,
+		allowInsecureIMAP,
 	}
 }
 
@@ -64,7 +68,7 @@ func (s DefaultProviderService) GetProvider(ctx context.Context, address string)
 			return nil, err
 		}
 
-		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota, s.logger)
+		provider, err = NewIMAPProvider(ctx, server.Host, server.Port, address, s.usageRepository, &defaultQuota, s.logger, !s.AllowInsecureIMAP)
 		if err != nil {
 			return nil, err
 		}

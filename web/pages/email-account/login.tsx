@@ -1,4 +1,4 @@
-import { useAPIClient } from "../../client";
+import { APINoRedirect as API } from "../../client";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -23,6 +23,9 @@ import Link from "next/link";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import Alert from "@mui/material/Alert";
 import PrivatePage from "../../auth";
+import PageHeader from "../../components/page-header";
+import { nextStep } from "../../lib/steps";
+import { useRouter } from "next/router";
 
 function PasswordOnlyInput(props: {
   password: string,
@@ -31,6 +34,9 @@ function PasswordOnlyInput(props: {
   return (
     <Grid item xs={12} sm={12}>
       <TextField
+        inputProps={{
+          'data-testid': "imap-password-input-no-server"
+        }}
         label="Password"
         type="password"
         autoComplete="none"
@@ -57,6 +63,10 @@ function PasswordAndIMAPServerInputs (props: {
     <>
       <Grid item xs={12} sm={12}>
         <TextField
+          inputProps={{
+            'data-testid': "imap-password-input-server"
+          }}
+          
           label="Password"
           type="password"
           autoComplete="none"
@@ -71,6 +81,9 @@ function PasswordAndIMAPServerInputs (props: {
       <Grid item xs={12} sm={12}>
         <TextField
           autoFocus
+          inputProps={{
+            'data-testid': "imap-server-input"
+          }}
           label="IMAP Host"
           type="text"
           autoComplete="none"
@@ -84,6 +97,9 @@ function PasswordAndIMAPServerInputs (props: {
       </Grid>
       <Grid item xs={12} sm={12}>
         <TextField
+          inputProps={{
+            'data-testid': "imap-port-input"
+          }}
           label="IMAP Port"
           type="text"
           autoComplete="none"
@@ -111,6 +127,8 @@ const displayCredentialType = (credType: GetCredentialResponse.type | undefined)
 }
 
 export default function Login() {
+  const router = useRouter();
+  
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [submitButtonEnabled, setSubmitButtonEnabled] = useState(false);
@@ -132,8 +150,6 @@ export default function Login() {
   const resetFilledInput = () => setPassword("********");
 
   const [credentialType, setCredentialType] = useState<GetCredentialResponse.type | undefined>();
-
-  const API = useAPIClient();
 
   useEffect(() => {
     API.getInboxCredential()
@@ -179,6 +195,13 @@ export default function Login() {
   }, []);
 
   const submitCredential = () => {
+    const proceed = () => {
+      const nextPath = nextStep();
+      if (nextPath) {
+        router.push(nextPath);
+      }
+    }
+
     setSubmitButtonEnabled(false);
     if (showImapServerForm) {
       API.storeImapServerAndCredentials({
@@ -188,6 +211,7 @@ export default function Login() {
       })
         .then((res) => {
           showSuccess(true);
+          proceed();
         })
         .catch((err) => {
           if (err instanceof ApiError) {
@@ -203,6 +227,7 @@ export default function Login() {
       .then(() => {
         showSuccess(true);
         resetFilledInput();
+        proceed();
       })
       .catch((err) => {
         if (err instanceof ApiError) {
@@ -268,25 +293,17 @@ export default function Login() {
           <CssBaseline />
           <Box
             sx={{
-              marginTop: 6,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "var(--color-accent)" }}>
-              <IconEnvelope />
-            </Avatar>
-            <Typography
-              align="center"
-              sx={{
-                color: "var(--color-black)",
-                fontSize: "2em",
-                fontWeight: 100,
-              }}
-            >
-              Inbox Credentials
-            </Typography>
+            <PageHeader
+              title="Inbox Credentials"
+              showStepper={true}
+              icon={<IconEnvelope />}
+              stepperSlug="PROVIDER_SIGNIN"
+            />
             <Typography
               align="center"
               sx={{
@@ -386,6 +403,7 @@ export default function Login() {
                     )}
 
                     <Button
+                      data-testid="imap-credential-submit"
                       disabled={!submitButtonEnabled}
                       onClick={submitCredential}
                     >

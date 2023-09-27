@@ -47,14 +47,14 @@ func TestPaymentService(t *testing.T) {
 	})
 
 	t.Run("initiate payment, success", func(t *testing.T) {
-		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Deluxe)
+		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Annual)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, checkoutURL).Equals(TestCheckoutURL)
 
 		inProgress, err := cartRepo.find(ctx, inboxuser.PaymentMethod("Test"), processor.SessionID)
 		assert.ThatError(t, err).IsNil()
 		assert.That(t, inProgress.UserAddress).Equals(testAddr)
-		assert.That(t, inProgress.Plan).Equals(inboxuser.Deluxe)
+		assert.That(t, inProgress.Plan).Equals(inboxuser.Annual)
 		assert.That(t, inProgress.Method).Equals(inboxuser.PaymentMethod("Test"))
 		assert.That(t, inProgress.CreatedAt.IsZero()).Equals(false)
 		assert.ThatOrdered(t, inProgress.Expires).GreaterThan(0)
@@ -85,7 +85,7 @@ func TestPaymentService(t *testing.T) {
 			ExternalID:  processor.SessionID,
 			Method:      inboxuser.Stripe,
 			UserAddress: testAddr,
-			Plan:        inboxuser.Deluxe,
+			Plan:        inboxuser.Annual,
 			CreatedAt:   time.Now(),
 			Status:      open,
 			Expires:     time.Now().Add(time.Minute).Unix(),
@@ -98,7 +98,7 @@ func TestPaymentService(t *testing.T) {
 	t.Run("verify payment, success", func(t *testing.T) {
 		pmt, err := service.VerifyPayment(authedCtx)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, pmt.Plan).Equals(inboxuser.Deluxe)
+		assert.That(t, pmt.Plan).Equals(inboxuser.Annual)
 		assert.That(t, pmt.ValidUntil.IsZero()).Equals(false)
 		assert.That(t, pmt.StartedAt.Day()).Equals(time.Now().Day())
 		assert.That(t, pmt.StartedAt.Month()).Equals(time.Now().Month())
@@ -107,7 +107,7 @@ func TestPaymentService(t *testing.T) {
 	})
 
 	t.Run("initiate payment, cannot pay when a payment is active, failure", func(t *testing.T) {
-		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Deluxe)
+		checkoutURL, err := service.InitiatePayment(authedCtx, inboxuser.Annual)
 		assert.ThatError(t, err).Is(mailboxsweep.ErrAlreadyPaid)
 		assert.That(t, checkoutURL).Equals("")
 	})

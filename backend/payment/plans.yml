@@ -11,7 +11,7 @@ BASIC:
   allowed_scans: 3
   duration_days: 30
 
-DELUXE:
+ANNUAL:
   display_name: MailboxSweep Annual
   description: "A year of access to keep your inbox organized long-term."
   price_in_cents: 3999

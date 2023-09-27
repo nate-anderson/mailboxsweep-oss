@@ -200,6 +200,7 @@ export default function Home(props: IStaticProps) {
               alignItems="center"
             >
               <Typography
+                variant="h2"
                 fontFamily="Roboto"
                 sx={{
                   textAlign: {
@@ -358,6 +359,7 @@ export default function Home(props: IStaticProps) {
             >
               <Typography
                 fontFamily="Roboto"
+                variant="h2"
                 sx={{
                   textAlign: {
                     xs: "center",
@@ -438,8 +440,10 @@ export default function Home(props: IStaticProps) {
             }}
           >
             <Typography
+              data-testid="header-how-it-works"
               ref={howItWorksRef}
               fontSize="2em"
+              variant="h2"
             >
               How it Works
             </Typography>
@@ -553,6 +557,7 @@ export default function Home(props: IStaticProps) {
             }}
           >
             <Typography
+              variant="h2"
               fontSize="2em"
               ref={plansRef}
               align="center"
@@ -610,7 +615,9 @@ export default function Home(props: IStaticProps) {
             }}
           >
             <Typography
+              data-testid="header-plans"
               fontSize="2em"
+              variant="h2"
               ref={plansRef}
               align="center"
             >

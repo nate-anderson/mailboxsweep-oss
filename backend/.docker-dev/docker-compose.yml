@@ -10,12 +10,18 @@ services:
     volumes:
       - "./volumes/localstack:/tmp/localstack"
 
-  # greenmail:
-  #   container_name: greenmail
-  #   image: greenmail/standalone:1.6.11
-  #   network_mode: "host"
-  #   ports:
-  #     - "3993:3993" # IMAP w/SSL
-  #     - "3143:3143" # IMAP
-  #     - "8085:8080" # GreenMail HTTP API
-  #     - "3025:3025" # SMTP
+  mailserver:
+    container_name: mailserver
+    image: foxcpp/maddy:0.7
+    ports:
+      - "3025:25" # SMTP inbound
+      - "465:465" # SMTP submission
+      - "587:587" # SMTP submission
+      - "993:993" # IMAP4
+      - "143:143" # IMAP4
+    volumes:
+      - ./volumes/maddy:/data
+    environment:
+      - MADDY_DOMAIN=mailboxsweep.local
+      - MADDY_HOSTNAME=mx.mailboxsweep.local
+    restart: always
