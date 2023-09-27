@@ -90,7 +90,8 @@ jobs:
     name: Build and upload web frontend artifacts
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [test-e2e]
+    # all tests must pass before deploying new frontend artifacts
+    needs: [test-e2e, build-backend]
     steps:
       - uses: actions/checkout@v3
 
