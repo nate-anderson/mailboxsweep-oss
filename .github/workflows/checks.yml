@@ -10,16 +10,16 @@ on:
 
 jobs:
   build-backend:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
 
   build-web:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
     secrets:
-      AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
-      AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-      STRIPE_API_KEY: "${{ secrets.STRIPE_API_KEY }}"
-      GOOGLE_OAUTH_CLIENT_ID: "${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}"
-      GOOGLE_OAUTH_CLIENT_SECRET: "${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}"
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
