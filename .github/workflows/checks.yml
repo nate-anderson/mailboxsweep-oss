@@ -11,12 +11,12 @@ on:
 jobs:
   build-backend:
     runs-on: ubuntu-latest
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@8cb80d53bab9f0cd759f1f94553ccddf0087c247
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
 
   build-web:
     runs-on: ubuntu-latest
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@8cb80d53bab9f0cd759f1f94553ccddf0087c247
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
 
   test-e2e:
     runs-on: ubuntu-latest
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@8cb80d53bab9f0cd759f1f94553ccddf0087c247
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@85fc604e1e19fca662235d459b566e7d5c4a759b
