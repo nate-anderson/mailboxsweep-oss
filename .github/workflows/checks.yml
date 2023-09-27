@@ -17,10 +17,4 @@ jobs:
 
   test-e2e:
     uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@8bf06a5f9edbbdad8dde81baf2f679063e66f6ed
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-      GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-      SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+    secrets: inherit
