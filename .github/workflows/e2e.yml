@@ -95,9 +95,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./web/package-lock.json
 
-      - name: Install dependencies
-        working-directory: web
-        run: npm install
+      - uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
+      - run: npm ci
 
       - name: Generate API client
         working-directory: web
@@ -107,9 +112,10 @@ jobs:
         working-directory: web
         run: npm run build:e2e
 
-      - name: Install Playwright browser(s)
-        working-directory: web
-        run: npx playwright install
+      - run: npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Run E2E tests
         working-directory: web
