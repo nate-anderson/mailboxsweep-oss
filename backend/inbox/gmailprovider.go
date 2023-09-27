@@ -91,7 +91,7 @@ func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Tok
 
 	info, err := oauthService.Tokeninfo().Do()
 	if err != nil {
-		if strings.Contains(err.Error(), `invalid_grant`) {
+		if strings.Contains(err.Error(), "invalid_grant") || strings.Contains(err.Error(), "token expired") {
 			return mailboxsweep.GoogleReauthenticationRequiredError()
 		}
 		return fmt.Errorf("failed to verify Gmail credential permissions: %w", err)
