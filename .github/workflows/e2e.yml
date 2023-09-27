@@ -4,7 +4,17 @@ name: E2E
 on:
   workflow_call:
     inputs: {}
-    secrets: {}
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      STRIPE_API_KEY:
+        required: true
+      GOOGLE_OAUTH_CLIENT_ID:
+        required: true
+      GOOGLE_OAUTH_CLIENT_SECRET:
+        required: true
 
 jobs:
   test-e2e:
