@@ -10,13 +10,13 @@ on:
 
 jobs:
   build-backend:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@2debb7ed59896dec07516ca5555d9df02d04c986
 
   build-web:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@2debb7ed59896dec07516ca5555d9df02d04c986
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@792320f95b947dca0bdc001e13d316d3ea40d68e
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@2debb7ed59896dec07516ca5555d9df02d04c986
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
