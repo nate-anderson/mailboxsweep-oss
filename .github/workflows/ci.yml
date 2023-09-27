@@ -16,6 +16,10 @@ jobs:
   build-backend:
     uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@7e715ce6d3ae607887bf71daa0c7b0cad26e3643
 
+  test-e2e:
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@7e715ce6d3ae607887bf71daa0c7b0cad26e3643
+    secrets: inherit
+
   build-push-server-image:
     name: Build and push server image to ECR
     timeout-minutes: 10
