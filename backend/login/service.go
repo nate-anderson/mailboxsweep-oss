@@ -110,7 +110,7 @@ func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string)
 		s.log.
 			WithField("token", token).
 			WithField("has_signature", len(strings.TrimSpace(signature)) > 0).
-			Errorf("magic link login failed: (error %w) ", err)
+			Errorf("magic link login failed: (error %s) ", err)
 		return nil, nil, err
 	}
 
