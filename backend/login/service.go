@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"errors"
+	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/pkg/slice"
@@ -48,7 +49,7 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 		allowedAddressesStr := os.Getenv("STAGING_ALLOWED_USERS")
 		allowedAddresses := strings.Split(allowedAddressesStr, ",")
 		if !slice.Contains(allowedAddresses, address) {
-			return res, mailboxsweep.UnauthenticatedError(errors.New("user is not in test user list"))
+			return res, mailboxsweep.UnauthenticatedError(fmt.Errorf("user is not in test user list: %s", address))
 		}
 	}
 
@@ -106,7 +107,10 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 func (s Service) CompleteLinkLogin(ctx context.Context, token, signature string) (*inboxuser.InboxUser, *session.Session, error) {
 	userUUID, err := s.linkService.ValidateLoginLink(ctx, token, signature)
 	if err != nil {
-		s.log.Error("magic link login failed: ", err)
+		s.log.
+			WithField("token", token).
+			WithField("has_signature", len(strings.TrimSpace(signature)) > 0).
+			Errorf("magic link login failed: (error %w) ", err)
 		return nil, nil, err
 	}
 
