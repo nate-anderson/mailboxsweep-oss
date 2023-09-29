@@ -432,7 +432,7 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 
 		t.Run("classify request is marked 'executed'", func(t *testing.T) {
-			requests, err := classifyRequestService.FindCompletedRequests(authedCtx)
+			requests, err := classifyRequestService.FindClassifiedRequests(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(requests)).Equals(1)
 			assert.That(t, requests[0].ExecutedAtUnix).NotEqual(nil)
@@ -512,7 +512,7 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 
 		t.Run("classify request is marked 'executed'", func(t *testing.T) {
-			requests, err := classifyRequestService.FindCompletedRequests(authedCtx)
+			requests, err := classifyRequestService.FindClassifiedRequests(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(requests)).Equals(2)
 			assert.That(t, requests[0].ExecutedAtUnix).NotEqual(nil)
