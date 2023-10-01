@@ -11,8 +11,14 @@ import (
 
 type Service interface {
 	RecordRequest(ctx context.Context) error
-	FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error)
-	FindCompletedRequests(ctx context.Context) ([]ClassifyRequest, error)
+
+	// Find the most recent request that has work yet to do
+	FindLatestIncompleteRequest(ctx context.Context) (*ClassifyRequest, error)
+
+	// Find the current request to show the user
+	FindLatestRequest(ctx context.Context) (*ClassifyRequest, error)
+
+	FindClassifiedRequests(ctx context.Context) ([]ClassifyRequest, error)
 
 	// classification has finished, ready for user to create a change set
 	MarkCompletedSuccess(ctx context.Context) error
@@ -96,7 +102,7 @@ func (s DefaultService) RecordRequest(ctx context.Context) error {
 	return s.requestRepo.Store(ctx, req)
 }
 
-func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest, error) {
+func (s DefaultService) findOpenRequests(ctx context.Context) ([]ClassifyRequest, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -108,7 +114,7 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 	}
 
 	if len(list) == 0 {
-		return nil, ErrNoOpenRequests
+		return nil, ErrNoClassifyingRequests
 	}
 
 	results := []ClassifyRequest{}
@@ -124,7 +130,7 @@ func (s DefaultService) FindOpenRequests(ctx context.Context) ([]ClassifyRequest
 
 // incurs an expensive consistent read
 // this method is used to ensure plan limits are respected
-func (s DefaultService) FindCompletedRequests(ctx context.Context) ([]ClassifyRequest, error) {
+func (s DefaultService) FindClassifiedRequests(ctx context.Context) ([]ClassifyRequest, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -146,7 +152,11 @@ func (s DefaultService) FindCompletedRequests(ctx context.Context) ([]ClassifyRe
 	return completed, nil
 }
 
-var ErrNoOpenRequests = errors.New("no open classify requests")
+var (
+	ErrNoClassifyingRequests = errors.New("no open classify requests")
+	ErrNoIncompleteRequests  = errors.New("no incomplete classify requests")
+	ErrNoRequests            = errors.New("no classify requests")
+)
 
 func (s DefaultService) MarkCompletedSuccess(ctx context.Context) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
@@ -167,7 +177,7 @@ func (s DefaultService) MarkCompletedSuccess(ctx context.Context) error {
 		}
 	}
 	if selected.Inbox == "" {
-		return ErrNoOpenRequests
+		return ErrNoClassifyingRequests
 	}
 
 	_, err = s.requestRepo.MarkCompleted(ctx, addr, selected.RequestedAt, nil)
@@ -193,7 +203,7 @@ func (s DefaultService) MarkCompletedError(ctx context.Context, classifyErr erro
 		}
 	}
 	if selected.Inbox == "" {
-		return ErrNoOpenRequests
+		return ErrNoClassifyingRequests
 	}
 
 	msg := classifyErr.Error()
@@ -329,4 +339,86 @@ func (s DefaultService) MarkExecutedError(ctx context.Context, count int, execut
 	errMsg := executeError.Error()
 	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, &errMsg)
 	return err
+}
+
+func (s DefaultService) FindLatestIncompleteRequest(ctx context.Context) (*ClassifyRequest, error) {
+	classifiedRequests, err := s.FindClassifiedRequests(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		result      ClassifyRequest
+		maxStatus   ClassifyRequestStatus
+		lastTouched int64
+		found       bool
+	)
+
+	for _, request := range classifiedRequests {
+		if status, touched := request.Status(); status >= maxStatus && status != StatusExecuted && status != StatusErrored && touched >= lastTouched {
+			result = request
+			maxStatus = status
+			lastTouched = touched
+			found = true
+		}
+	}
+
+	if found {
+		return &result, nil
+	}
+
+	// if no classified requests, find in-progress
+	classifyingRequests, err := s.findOpenRequests(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, request := range classifyingRequests {
+		if status, touched := request.Status(); status > maxStatus &&
+			status != StatusExecuted &&
+			status != StatusErrored &&
+			touched >= lastTouched {
+			result = request
+			maxStatus = status
+			lastTouched = touched
+			found = true
+		}
+	}
+
+	if found {
+		return &result, nil
+	}
+
+	return nil, ErrNoIncompleteRequests
+
+}
+
+func (s DefaultService) FindLatestRequest(ctx context.Context) (*ClassifyRequest, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	requests, err := s.requestRepo.List(ctx, addr, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(requests) == 0 {
+		return nil, ErrNoRequests
+	}
+
+	var (
+		latest        ClassifyRequest
+		latestTouched int64
+	)
+
+	for _, req := range requests {
+		if _, touched := req.Status(); touched > latestTouched {
+			latest = req
+			latestTouched = touched
+		}
+	}
+
+	return &latest, nil
 }

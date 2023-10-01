@@ -116,8 +116,8 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	// confirm there is an outstanding request from the
-	_, err = s.classifyRequestService.FindOpenRequests(ctx)
+	// confirm there is an outstanding classify request from the user
+	_, err = s.classifyRequestService.FindLatestIncompleteRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	if err != nil {
 		return err
 	}
-	completedScans, err := s.classifyRequestService.FindCompletedRequests(ctx)
+	completedScans, err := s.classifyRequestService.FindClassifiedRequests(ctx)
 	if err != nil {
 		return err
 	}

@@ -20,18 +20,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type testRequest struct {
-	started        int64
-	completed      *int64
-	executeStarted *int64
-	executed       *int64
-	err            error
-	count          int
-	operation      *string
-}
-
 type testRequestRecorder struct {
-	requests map[string][]testRequest
+	requests map[string][]classifyrequest.ClassifyRequest
 }
 
 func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
@@ -39,8 +29,8 @@ func (r *testRequestRecorder) RecordRequest(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	r.requests[addr] = append(r.requests[addr], testRequest{
-		started: time.Now().Unix(),
+	r.requests[addr] = append(r.requests[addr], classifyrequest.ClassifyRequest{
+		RequestedAt: time.Now().Unix(),
 	})
 	return nil
 }
@@ -56,18 +46,18 @@ func (r *testRequestRecorder) FindOpenRequests(ctx context.Context) ([]classifyr
 	}
 	var reqs []classifyrequest.ClassifyRequest
 	for _, l := range list {
-		if l.completed == nil {
+		if l.CompletedAtUnix == nil {
 			reqs = append(reqs, classifyrequest.ClassifyRequest{
 				Inbox:       addr,
 				UserUUID:    "UNIMPLEMENTED_FOR_TEST",
-				RequestedAt: l.started,
+				RequestedAt: l.RequestedAt,
 			})
 		}
 	}
 	return reqs, nil
 }
 
-func (r *testRequestRecorder) FindCompletedRequests(ctx context.Context) ([]classifyrequest.ClassifyRequest, error) {
+func (r *testRequestRecorder) FindClassifiedRequests(ctx context.Context) ([]classifyrequest.ClassifyRequest, error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -78,12 +68,12 @@ func (r *testRequestRecorder) FindCompletedRequests(ctx context.Context) ([]clas
 	}
 	var reqs []classifyrequest.ClassifyRequest
 	for _, l := range list {
-		if l.completed != nil {
+		if l.CompletedAtUnix != nil {
 			reqs = append(reqs, classifyrequest.ClassifyRequest{
 				Inbox:           addr,
 				UserUUID:        "UNIMPLEMENTED_FOR_TEST",
-				RequestedAt:     l.started,
-				CompletedAtUnix: l.completed,
+				RequestedAt:     l.RequestedAt,
+				CompletedAtUnix: &l.RequestedAt,
 			})
 		}
 	}
@@ -100,9 +90,9 @@ func (r *testRequestRecorder) MarkCompletedSuccess(ctx context.Context) error {
 		return mailboxsweep.ErrNotFound
 	}
 	for i, l := range list {
-		if l.completed == nil {
+		if l.CompletedAtUnix == nil {
 			updated := l
-			updated.completed = aws.Int64(time.Now().Unix())
+			updated.CompletedAtUnix = aws.Int64(time.Now().Unix())
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -121,10 +111,10 @@ func (r *testRequestRecorder) MarkCompletedError(ctx context.Context, classifyEr
 		return mailboxsweep.ErrNotFound
 	}
 	for i, l := range list {
-		if l.completed == nil {
+		if l.CompletedAtUnix == nil {
 			updated := l
-			updated.completed = aws.Int64(time.Now().Unix())
-			updated.err = classifyErr
+			updated.CompletedAtUnix = aws.Int64(time.Now().Unix())
+			updated.Error = ptr(classifyErr.Error())
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -143,16 +133,69 @@ func (r *testRequestRecorder) MarkExecuting(ctx context.Context, operation strin
 		return mailboxsweep.ErrNotFound
 	}
 	for i, l := range list {
-		if l.completed != nil {
+		if l.CompletedAtUnix != nil {
 			updated := l
-			updated.executeStarted = aws.Int64(time.Now().Unix())
-			updated.operation = &operation
+			updated.ExecuteStartedAtUnix = aws.Int64(time.Now().Unix())
+			updated.Operation = &operation
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
 		}
 	}
 	return mailboxsweep.ErrNotFound
+}
+
+func (r *testRequestRecorder) FindLatestIncompleteRequest(ctx context.Context) (*classifyrequest.ClassifyRequest, error) {
+	var (
+		result      classifyrequest.ClassifyRequest
+		maxStatus   classifyrequest.ClassifyRequestStatus
+		lastTouched int64
+		found       bool
+	)
+
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, request := range r.requests[addr] {
+		if status, touched := request.Status(); status >= maxStatus &&
+			status != classifyrequest.StatusExecuted &&
+			status != classifyrequest.StatusErrored &&
+			touched >= lastTouched {
+			result = request
+			maxStatus = status
+			lastTouched = touched
+			found = true
+		}
+	}
+
+	if found {
+		return &result, nil
+	}
+
+	return nil, classifyrequest.ErrNoIncompleteRequests
+}
+
+func (r *testRequestRecorder) FindLatestRequest(ctx context.Context) (*classifyrequest.ClassifyRequest, error) {
+	var (
+		result      classifyrequest.ClassifyRequest
+		lastTouched int64
+	)
+
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, request := range r.requests[addr] {
+		if _, touched := request.Status(); touched >= lastTouched {
+			result = request
+			lastTouched = touched
+		}
+	}
+
+	return &result, nil
 }
 
 func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int) error {
@@ -165,10 +208,10 @@ func (r *testRequestRecorder) MarkExecutedSuccess(ctx context.Context, count int
 		return mailboxsweep.ErrNotFound
 	}
 	for i, l := range list {
-		if l.completed != nil {
+		if l.CompletedAtUnix != nil {
 			updated := l
-			updated.executed = aws.Int64(time.Now().Unix())
-			updated.count = count
+			updated.ExecutedAtUnix = aws.Int64(time.Now().Unix())
+			updated.Count = ptr(count)
 
 			list[i] = updated
 			r.requests[addr] = list
@@ -188,11 +231,11 @@ func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, 
 		return mailboxsweep.ErrNotFound
 	}
 	for i, l := range list {
-		if l.completed != nil {
+		if l.CompletedAtUnix != nil {
 			updated := l
-			updated.executed = aws.Int64(time.Now().Unix())
-			updated.err = classifyErr
-			updated.count = count
+			updated.ExecutedAtUnix = aws.Int64(time.Now().Unix())
+			updated.Error = ptr(classifyErr.Error())
+			updated.Count = ptr(count)
 			list[i] = updated
 			r.requests[addr] = list
 			return nil
@@ -230,7 +273,7 @@ func TestClassificationService(t *testing.T) {
 	publisher := &mailboxsweep.TestEventPublisher[ClassifyQueueItem]{}
 
 	classifyRequestService := testRequestRecorder{
-		requests: make(map[string][]testRequest),
+		requests: make(map[string][]classifyrequest.ClassifyRequest),
 	}
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
 	userService, err := inboxuser.NewService(userRepo)
@@ -368,10 +411,10 @@ func TestClassificationService(t *testing.T) {
 			assert.ThatError(t, err).IsNil()
 			for i := 0; i <= plan.AllowedScans; i++ {
 				completed := time.Now().Add(time.Hour*-1).Unix() + int64(i)
-				r := testRequest{
-					started:   time.Now().Add(time.Minute * -1 * time.Duration(i)).Unix(),
-					completed: &completed,
-					err:       nil,
+				r := classifyrequest.ClassifyRequest{
+					RequestedAt:     time.Now().Add(time.Minute * -1 * time.Duration(i)).Unix(),
+					CompletedAtUnix: &completed,
+					Error:           nil,
 				}
 				classifyRequestService.requests[tooManyAddr] = append(classifyRequestService.requests[tooManyAddr], r)
 			}
@@ -477,9 +520,9 @@ func TestClassificationService(t *testing.T) {
 			assert.That(t, ok).Equals(true)
 			assert.That(t, len(reqList)).Equals(1)
 			r := reqList[0]
-			assert.ThatError(t, r.err).IsNotNil()
-			assert.That(t, r.err.Error()).Equals("intentional failure")
-			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
+			assert.That(t, r.Error).NotEqual(nil)
+			assert.That(t, *r.Error).Equals("intentional failure")
+			assert.ThatOrdered(t, *r.CompletedAtUnix).GreaterThan(0)
 		})
 
 		senderCounts := map[string]int{
@@ -532,18 +575,18 @@ func TestClassificationService(t *testing.T) {
 			reqs, ok := classifyRequestService.requests[testAddress]
 			assert.That(t, ok).Equals(true)
 			assert.That(t, len(reqs)).Equals(2)
-			var r testRequest
+			var r classifyrequest.ClassifyRequest
 			numErrs := 0
 			for _, req := range reqs {
-				if req.err == nil {
+				if req.Error == nil {
 					r = req
 					numErrs++
 				}
 			}
 			assert.That(t, numErrs).Equals(1)
-			assert.ThatOrdered(t, *r.completed).GreaterThan(0)
-			assert.ThatError(t, r.err).IsNil()
-			assert.That(t, r.operation).Equals(nil)
+			assert.ThatOrdered(t, *r.CompletedAtUnix).GreaterThan(0)
+			assert.That(t, r.Error).Equals(nil)
+			assert.That(t, r.Operation).Equals(nil)
 
 			// metadata is updated with unread count
 			meta, err := inboxMetadataService.Get(authedCtx)
