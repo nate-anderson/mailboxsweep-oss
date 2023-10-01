@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"net/http"
@@ -147,6 +148,30 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		return
 	}
 	resBody.Status.StartedAt = time.Unix(latestClassifyRequest.RequestedAt, 0).Format(time.RFC3339)
+	status, _ := latestClassifyRequest.Status()
+	switch status {
+	case classifyrequest.StatusClassifying:
+		resBody.Status.Status = Classifying
+	case classifyrequest.StatusClassified:
+		resBody.Status.Status = Classified
+	case classifyrequest.StatusExecuting:
+		resBody.Status.Status = Executing
+	case classifyrequest.StatusExecuted:
+		resBody.Status.Status = Errored
+	default:
+		resBody.Status.Status = Errored
+	}
+
+	if latestClassifyRequest.Error != nil {
+		resBody.Status.Details = latestClassifyRequest.Error
+	}
+
+	if latestClassifyRequest.Operation != nil {
+		resBody.Status.Operation = ptr(Delete)
+		if *latestClassifyRequest.Operation == string(changeset.MarkRead) {
+			resBody.Status.Operation = ptr(MarkRead)
+		}
+	}
 
 	c.respond(w, http.StatusOK, resBody)
 }

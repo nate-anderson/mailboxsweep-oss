@@ -36,7 +36,7 @@ const renderClassificationStatus = (
   );
 
   switch (status) {
-    case ClassificationStatus.status.IN_PROGRESS:
+    case ClassificationStatus.status.CLASSIFYING:
       return boxify(
         <Alert
           severity="info"
@@ -53,7 +53,7 @@ const renderClassificationStatus = (
         </Alert>
       );
 
-    case ClassificationStatus.status.COMPLETE:
+    case ClassificationStatus.status.CLASSIFIED:
       return boxify(
         <Alert
           severity="success"
@@ -147,9 +147,9 @@ const renderClassificationStatus = (
 
 const renderActionPrompt = (status: ClassificationStatus.status | undefined) => {
   switch (status) {
-    case ClassificationStatus.status.IN_PROGRESS:
+    case ClassificationStatus.status.CLASSIFYING:
       return <BackupPrompt1 />;
-    case ClassificationStatus.status.COMPLETE:
+    case ClassificationStatus.status.CLASSIFIED:
       return <BackupPrompt2 />;
   }
 }

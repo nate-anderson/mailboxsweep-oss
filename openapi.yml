@@ -111,8 +111,8 @@ components:
         status:
           type: string
           enum:
-            - in_progress
-            - complete
+            - classifying
+            - classified
             - errored
             - executing
             - executed
