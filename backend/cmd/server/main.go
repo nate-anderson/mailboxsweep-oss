@@ -271,7 +271,7 @@ func main() {
 	commitQueuePublisher := mailboxsweep.NewSQSEventPublisher[changeset.CommitQueueMessage](queue, cfg.SQSCommitQueueURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, log)
 	if err != nil {
 		log.Fatalf("failed to initialize inboxuser service: %s", err)
 	}

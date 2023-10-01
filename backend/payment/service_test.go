@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func TestPaymentService(t *testing.T) {
@@ -19,7 +20,7 @@ func TestPaymentService(t *testing.T) {
 
 	cartRepo := NewCartRepository(db, table)
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	processor := NewTestProcessor()

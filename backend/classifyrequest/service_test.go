@@ -8,6 +8,8 @@ import (
 	"mailboxsweep/inboxuser"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func TestClassifyRequestService(t *testing.T) {
@@ -18,7 +20,7 @@ func TestClassifyRequestService(t *testing.T) {
 
 	repo := NewDynamoRequestRepository(cl, table)
 	userRepo := inboxuser.NewDynamoInboxUserRepository(cl, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	timeBetweenOpenRequests := time.Minute * 60

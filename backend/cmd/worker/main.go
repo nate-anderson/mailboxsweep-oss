@@ -172,7 +172,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize user repo: %s", err)
 	}
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, log)
 	if err != nil {
 		log.Fatal(err)
 	}

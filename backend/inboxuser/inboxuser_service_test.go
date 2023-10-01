@@ -7,6 +7,8 @@ import (
 	"mailboxsweep/pkg/slice"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func TestInboxUserService(t *testing.T) {
@@ -16,7 +18,7 @@ func TestInboxUserService(t *testing.T) {
 	defer teardown()
 
 	repo := NewDynamoInboxUserRepository(db, table)
-	service, err := NewService(repo)
+	service, err := NewService(repo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 	testAddr := "beans@bacon.net"
 

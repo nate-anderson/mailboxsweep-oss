@@ -408,7 +408,7 @@ var gmailMessageSummary = &cobra.Command{
 		}
 
 		inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
-		inboxUserService, err := inboxuser.NewService(inboxUserRepo)
+		inboxUserService, err := inboxuser.NewService(inboxUserRepo, logrus.New())
 		if err != nil {
 			log.Fatal(err)
 		}

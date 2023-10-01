@@ -88,7 +88,7 @@ func TestWorker(t *testing.T) {
 	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](client, *dlqURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, log)
 	assert.ThatError(t, err).IsNil()
 
 	// store user

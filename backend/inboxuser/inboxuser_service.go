@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
+	"github.com/sirupsen/logrus"
 )
 
 type Service interface {
@@ -24,7 +25,7 @@ type Service interface {
 	StorePayment(ctx context.Context, payment Payment) error
 }
 
-func NewService(repo InboxUserRepository) (DefaultService, error) {
+func NewService(repo InboxUserRepository, log *logrus.Logger) (DefaultService, error) {
 	agreements, err := readAgreements()
 	if err != nil {
 		return DefaultService{}, err
@@ -32,12 +33,14 @@ func NewService(repo InboxUserRepository) (DefaultService, error) {
 	return DefaultService{
 		repo:       repo,
 		agreements: agreements,
+		log:        log,
 	}, nil
 }
 
 type DefaultService struct {
 	repo       InboxUserRepository
 	agreements map[Agreement]AgreementDocument
+	log        *logrus.Logger
 }
 
 func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, error) {
@@ -54,6 +57,10 @@ func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, 
 	if _, err = s.repo.Store(ctx, *user); err != nil {
 		return nil, err
 	}
+
+	s.log.
+		WithField("address", user.Address).
+		Info("user created")
 
 	return s.repo.FindByAddress(ctx, address)
 }

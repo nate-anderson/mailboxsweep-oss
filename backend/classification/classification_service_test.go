@@ -276,7 +276,7 @@ func TestClassificationService(t *testing.T) {
 		requests: make(map[string][]classifyrequest.ClassifyRequest),
 	}
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	_, err = userService.Store(ctx, testAddress)

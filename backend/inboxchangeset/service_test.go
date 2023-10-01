@@ -50,7 +50,7 @@ func TestInboxChangesetService(t *testing.T) {
 	classificationRepo := classification.NewS3ClassificationRepository(s3Client, bucketName, 10)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, table)
@@ -67,9 +67,6 @@ func TestInboxChangesetService(t *testing.T) {
 
 	classifyPublisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
 	commitPublisher := &mailboxsweep.TestEventPublisher[changeset.CommitQueueMessage]{}
-
-	inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	inboxUserService, err := inboxuser.NewService(inboxUserRepo)
 	assert.ThatError(t, err).IsNil()
 
 	classificationService := classification.NewService(
@@ -79,7 +76,7 @@ func TestInboxChangesetService(t *testing.T) {
 		classifyRequestService,
 		paymentService,
 		metadataService,
-		inboxUserService,
+		userService,
 		logrus.New(),
 		classifyPublisher,
 		5,
