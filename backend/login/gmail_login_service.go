@@ -138,9 +138,14 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 		return "", err
 	}
 
-	// store the user
-	user, err := s.userService.Store(ctx, profile.address)
-	if err != nil {
+	// if user doesn't exist, store the user
+	user, err := s.userService.FindByAddress(ctx, profile.address)
+	if errors.Is(err, mailboxsweep.ErrNotFound) {
+		user, err = s.userService.Store(ctx, profile.address)
+		if err != nil {
+			return "", err
+		}
+	} else if err != nil {
 		return "", err
 	}
 

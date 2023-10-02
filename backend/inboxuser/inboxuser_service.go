@@ -43,17 +43,22 @@ type DefaultService struct {
 	log        *logrus.Logger
 }
 
+var ErrUserExists = errors.New("user already exists")
+
 func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, error) {
-	_, err := emailaddress.Parse(address)
+	cleanAddr := strings.TrimSpace(address)
+
+	_, err := emailaddress.Parse(cleanAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := NewInboxUser(strings.TrimSpace(address))
+	user, err := NewInboxUser(cleanAddr)
 	if err != nil {
 		return nil, err
 	}
 
+	// Store will fail if user already exists (constraint fails)
 	if _, err = s.repo.Store(ctx, *user); err != nil {
 		return nil, err
 	}

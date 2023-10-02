@@ -23,13 +23,22 @@ func TestInboxUserService(t *testing.T) {
 	testAddr := "beans@bacon.net"
 
 	t.Run("store user", func(t *testing.T) {
-		ctx := context.Background()
-		user, err := service.Store(ctx, testAddr)
-		assert.ThatError(t, err).IsNil()
-		assert.That(t, user.Address).Equals(testAddr)
-		assert.That(t, user.UUID).NotEqual("")
-		assert.That(t, user.NameFirst).Equals("")
-		assert.That(t, user.NameLast).Equals("")
+		t.Run("success", func(t *testing.T) {
+			ctx := context.Background()
+			user, err := service.Store(ctx, testAddr)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, user.Address).Equals(testAddr)
+			assert.That(t, user.UUID).NotEqual("")
+			assert.That(t, user.NameFirst).Equals("")
+			assert.That(t, user.NameLast).Equals("")
+		})
+
+		t.Run("user exists: return ErrNotFound", func(t *testing.T) {
+			ctx := context.Background()
+			user, err := service.Store(ctx, testAddr)
+			assert.ThatError(t, err).Is(ErrUserExists)
+			assert.That(t, user).Equals(nil)
+		})
 	})
 
 	authedCtx := mailboxsweep.AuthorizeAPIContext(ctx, testAddr)
@@ -42,6 +51,22 @@ func TestInboxUserService(t *testing.T) {
 		assert.That(t, user.Address).Equals(testAddr)
 		assert.That(t, user.NameFirst).Equals("First")
 		assert.That(t, user.NameLast).Equals("Last")
+	})
+
+	t.Run("find user", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			user, err := service.FindByAddress(ctx, testAddr)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, user.Address).Equals(testAddr)
+			assert.That(t, user.NameFirst).Equals("First")
+			assert.That(t, user.NameLast).Equals("Last")
+		})
+
+		t.Run("not found, failure", func(t *testing.T) {
+			user, err := service.FindByAddress(ctx, "nonsense@example.com")
+			assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
+			assert.That(t, user).Equals(nil)
+		})
 	})
 
 	t.Run("user agreement", func(t *testing.T) {
