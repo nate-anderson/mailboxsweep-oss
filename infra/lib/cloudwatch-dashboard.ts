@@ -16,7 +16,7 @@ type CloudwatchDashboardProps = InfraStackProps & {
     loadBalancer: ElasticLoadBalancingV2.ApplicationLoadBalancer,
 }
 
-export class CloudwatchDashboard extends cdk.Stack {
+export class CloudwatchDashboardStack extends cdk.Stack {
     public readonly dashboard: CloudWatch.Dashboard;
     constructor(scope: Construct, id: string, props: CloudwatchDashboardProps) {
         super(scope, id, props);
@@ -123,13 +123,65 @@ export class CloudwatchDashboard extends cdk.Stack {
             ]
         })
 
-        // const loadbalancerErrorsMetric = new CloudWatch.Metric({
-        //     namespace: 'AWS/ApplicationELB',
-        //     metricName: "HTTPCode_ELB_4XX_Count",
-        //     dimensionsMap: {
-        //         LoadBalancer: props.loadBalancer.loadBalancerArn,
-        //     }
-        // });
+        const loadbalancer4xxErrorsMetric = new CloudWatch.Metric({
+            namespace: 'AWS/ApplicationELB',
+            metricName: "HTTPCode_ELB_4XX_Count",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const httpService4xxErrorsMetric = new CloudWatch.Metric({
+            namespace: 'AWS/ApplicationELB',
+            metricName: "HTTPCode_Target_4XX_Count",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const loadbalancer5xxErrorsMetric = new CloudWatch.Metric({
+            namespace: 'AWS/ApplicationELB',
+            metricName: "HTTPCode_ELB_5XX_Count",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const httpService5xxErrorsMetric = new CloudWatch.Metric({
+            namespace: 'AWS/ApplicationELB',
+            metricName: "HTTPCode_Target_5XX_Count",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const loadBalancerRequestsCountMetric = new CloudWatch.Metric({
+            namespace: 'AWS/ApplicationELB',
+            metricName: "RequestCount",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const errorsGraph4xx = new CloudWatch.GraphWidget({
+            left: [
+                loadbalancer4xxErrorsMetric,
+                httpService4xxErrorsMetric,
+            ]
+        });
+
+        const errorsGraph5xx = new CloudWatch.GraphWidget({
+            left: [
+                loadbalancer5xxErrorsMetric,
+                httpService5xxErrorsMetric,
+            ]
+        })
+
+        const requestsGraph = new CloudWatch.GraphWidget({
+            left: [
+                loadBalancerRequestsCountMetric,
+            ]
+        })
 
         dashboard.addWidgets(
             dbCapacityGraph,
@@ -137,6 +189,9 @@ export class CloudwatchDashboard extends cdk.Stack {
             queueBacklogGraph,
             serverErrorsGraph,
             workerErrorsGraph,
+            errorsGraph4xx,
+            errorsGraph5xx,
+            requestsGraph,
         );
 
         this.dashboard = dashboard;

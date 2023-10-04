@@ -160,6 +160,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 		resBody.Status.Status = Errored
 	default:
 		resBody.Status.Status = Errored
+		resBody.Status.Details = ptr(fmt.Sprintf("Unknown classify status %s", status))
 	}
 
 	if latestClassifyRequest.Error != nil {

@@ -21,7 +21,7 @@ import Resources from "../lib/resources";
 import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
-import { CloudwatchDashboard } from './cloudwatch-dashboard';
+import { CloudwatchDashboardStack } from './cloudwatch-dashboard';
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
 import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
@@ -643,7 +643,7 @@ export class AppStack extends cdk.Stack {
             destinationKeyPrefix: "/",
         });
 
-        const dashboard = new CloudwatchDashboard(this, `dashboard`, {
+        const dashboard = new CloudwatchDashboardStack(this, `dashboard`, {
             ...props,
             table: tableStack.table,
             queue: classifyQueues.queue,
