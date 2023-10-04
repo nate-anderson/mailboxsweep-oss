@@ -157,7 +157,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 	case classifyrequest.StatusExecuting:
 		resBody.Status.Status = Executing
 	case classifyrequest.StatusExecuted:
-		resBody.Status.Status = Errored
+		resBody.Status.Status = Executed
 	default:
 		resBody.Status.Status = Errored
 		resBody.Status.Details = ptr(fmt.Sprintf("Unknown classify status %d", status))
