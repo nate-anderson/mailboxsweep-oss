@@ -38,7 +38,12 @@ migrate_sqs:
 migrate: migrate_db migrate_s3 migrate_sqs
 	
 .PHONY: seed
-seed: go run ./cmd/seed
+seed:
+	go run ./cmd/seed
+
+.PHONY: e2e_seed
+e2e_seed:
+	go run ./cmd/e2e_seed
 
 .PHONY: build_docker_server
 build_docker_server:

@@ -72,6 +72,9 @@ type workerConfig struct {
 
 	ClassificationPageSize        int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
 	ClassificationSubjectPreviews int `fig:"CLASSIFICATION_SUBJECT_PREVIEWS" default:"5"`
+	// "filesystem" or "s3"
+	ClassificationStore               string `fig:"CLASSIFICATION_STORE" default:"s3"`
+	ClassificationFilesystemDirectory string `fig:"CLASSIFICATION_FILESYSTEM_DIRECTORY" default:"./classifications"`
 
 	InboxMetadataTTLMinutes int `fig:"INBOX_METADATA_TTL_MINUTES" default:"120"`
 
@@ -197,7 +200,13 @@ func main() {
 		log.Fatalf("failed to instantiate S3 client: %s", err)
 	}
 
-	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
+	var classificationRepo classification.ClassificationRepository
+	if cfg.ClassificationStore == "filesystem" {
+		log.Println("Using filesystem classification repo")
+		classificationRepo = classification.NewFileClassificationRepository(cfg.ClassificationFilesystemDirectory, cfg.ClassificationPageSize)
+	} else {
+		classificationRepo = classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
+	}
 
 	queueClient, err := mailboxsweep.ConnectAWSService(
 		mailboxsweep.AWSServiceConfig{

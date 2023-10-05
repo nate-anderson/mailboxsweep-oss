@@ -28,7 +28,7 @@ test.describe('signup', () => {
             await expect(page.getByText("Check your email!")).toBeVisible();
 
             // get login link from temporary server
-            const loginLinkRes = await axios.get(`http://localhost:${testLoginLinkServerHTTPPort}`);
+            const loginLinkRes = await axios.get(`http://localhost:${testLoginLinkServerHTTPPort}?address=${testUser}`);
             const link = loginLinkRes.data.link;
             
             await page.goto(link);

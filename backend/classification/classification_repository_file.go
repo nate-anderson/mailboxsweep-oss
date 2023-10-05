@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mailboxsweep"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +70,7 @@ func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox st
 	}
 
 	cl := classification.Classification.withoutMessages()
-
+	classification.TotalPages = int(math.Ceil(float64(len(cl.Children)) / float64(r.pageSize)))
 	pageStart := (page * r.pageSize) + 1
 	pageEnd := r.pageSize * (page + 1)
 
@@ -79,6 +80,8 @@ func (r FileClassificationRepository) FetchSummary(ctx context.Context, inbox st
 		}
 	}
 	classification.Classification = &cl
+	classification.Page = page
+
 	return &classification, err
 }
 

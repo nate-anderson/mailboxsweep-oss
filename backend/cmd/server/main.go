@@ -105,6 +105,9 @@ type serverConfig struct {
 	ClassificationPageSize int `fig:"CLASSIFICATION_PAGE_SIZE" default:"30"`
 	// how many subject previews should be stored in a classification leaf node?
 	ClassificationSubjectPreviews int `fig:"CLASSIFICATION_SUBJECT_PREVIEWS" default:"5"`
+	// "filesystem" or "s3"
+	ClassificationStore               string `fig:"CLASSIFICATION_STORE" default:"s3"`
+	ClassificationFilesystemDirectory string `fig:"CLASSIFICATION_FILESYSTEM_DIRECTORY" default:"./classifications"`
 
 	GoogleClientID        string `fig:"GOOGLE_OAUTH_CLIENT_ID" required:"true"`
 	GoogleClientSecret    string `fig:"GOOGLE_OAUTH_CLIENT_SECRET" required:"true"`
@@ -124,9 +127,9 @@ type serverConfig struct {
 
 	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
 
-	TestLoginServerSenderPort int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
-	TestLoginServerSenderUser string `fig:"TEST_LOGIN_SENDER_SERVER_USER"`
-	AllowInsecureIMAP         *bool  `fig:"ALLOW_INSECURE_IMAP" default:"false"`
+	TestLoginServerSenderPort  int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
+	TestLoginServerSenderUsers string `fig:"TEST_LOGIN_SENDER_SERVER_USERS"`
+	AllowInsecureIMAP          *bool  `fig:"ALLOW_INSECURE_IMAP" default:"false"`
 }
 
 func main() {
@@ -302,7 +305,13 @@ func main() {
 	}
 	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
 
-	classificationRepo := classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
+	var classificationRepo classification.ClassificationRepository
+	if cfg.ClassificationStore == "filesystem" {
+		log.Println("Using filesystem classification repo")
+		classificationRepo = classification.NewFileClassificationRepository(cfg.ClassificationFilesystemDirectory, cfg.ClassificationPageSize)
+	} else {
+		classificationRepo = classification.NewS3ClassificationRepository(s3, cfg.S3Bucket, cfg.ClassificationPageSize)
+	}
 	classificationService := classification.NewService(
 		credentialService,
 		classificationRepo,
@@ -333,11 +342,13 @@ func main() {
 		if cfg.TestLoginServerSenderPort == 0 {
 			log.Fatal("server started with env=e2e but no TestLoginServerSenderPort configured")
 		}
-		if cfg.TestLoginServerSenderUser == "" {
+		var testLoginServerSenderUsers []string
+		if cfg.TestLoginServerSenderUsers == "" {
 			log.Fatal("server started with env=e2e but no TestLoginServerSenderUser configured")
 		}
-		loginSender = login.NewTestServerLoginSender(cfg.TestLoginServerSenderPort, cfg.TestLoginServerSenderUser, cfg.LoginBaseURL, cfg.Env)
-		log.Printf("using temporary login link server for E2E test environment and user %s", cfg.TestLoginServerSenderUser)
+		testLoginServerSenderUsers = strings.Split(cfg.TestLoginServerSenderUsers, ",")
+		loginSender = login.NewTestServerLoginSender(cfg.TestLoginServerSenderPort, testLoginServerSenderUsers, cfg.LoginBaseURL, cfg.Env)
+		log.Printf("using temporary login link server for E2E test environment and user %s", cfg.TestLoginServerSenderUsers)
 	} else {
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.SESHost,
