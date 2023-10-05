@@ -55,9 +55,9 @@ jobs:
         working-directory: backend
         run: make maddy_init_setup
 
-      - name: Run migrations
+      - name: Run migrations and seeds
         working-directory: backend
-        run: make migrate
+        run: make migrate e2e_seed
         env:
           ENV: e2e
           DYNAMODB_HOST: localhost

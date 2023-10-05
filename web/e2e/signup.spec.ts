@@ -35,7 +35,7 @@ test.describe('signup', () => {
 
             await expect(page.getByText("Terms And Conditions")).toBeDefined();
             
-            // click accept
+            // accept terms
             const acceptButton = await page.getByTestId("button-agree-submit");
             await acceptButton.click();
             await page.waitForURL(/plan\/select/);
