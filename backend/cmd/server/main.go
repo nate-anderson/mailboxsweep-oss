@@ -127,9 +127,10 @@ type serverConfig struct {
 
 	XRayEnabled bool `fig:"XRAY_ENABLED" default:"false"`
 
-	TestLoginServerSenderPort  int    `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
-	TestLoginServerSenderUsers string `fig:"TEST_LOGIN_SENDER_SERVER_USERS"`
-	AllowInsecureIMAP          *bool  `fig:"ALLOW_INSECURE_IMAP" default:"false"`
+	TestLoginServerSenderPort  int     `fig:"TEST_LOGIN_SENDER_SERVER_PORT"`
+	TestLoginServerSenderUsers string  `fig:"TEST_LOGIN_SENDER_SERVER_USERS"`
+	AllowInsecureIMAP          *bool   `fig:"ALLOW_INSECURE_IMAP" default:"false"`
+	UserWhitelistConcat        *string `fig:"USER_WHITELIST"`
 }
 
 func main() {
@@ -393,7 +394,12 @@ func main() {
 
 	loginLinkService := login.NewLinkService(loginRepo, userService, loginSender, cert, loginLinkDurationMinutes, cfg.LoginTokenLength)
 	gmailLoginService := login.NewGmailLoginService(gmailTokenRepository, credentialService, userService, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleAuthRedirectURL)
-	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService, log)
+
+	var userWhiteList []string
+	if cfg.UserWhitelistConcat != nil {
+		userWhiteList = strings.Split(*cfg.UserWhitelistConcat, ",")
+	}
+	loginService := login.NewService(loginLinkService, gmailLoginService, userService, sessionService, userWhiteList, log)
 
 	if strings.TrimSpace(cfg.CookieDomain) == "" || strings.TrimSpace(cfg.CookiePath) == "" {
 		log.Fatal("cookie domain and path are not configured")

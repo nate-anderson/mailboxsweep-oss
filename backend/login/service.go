@@ -9,7 +9,6 @@ import (
 	"mailboxsweep/pkg/slice"
 	"mailboxsweep/session"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -22,16 +21,21 @@ type Service struct {
 	userService       inboxuser.Service
 	sessionService    session.Service
 
+	stagingUserWhiteList []string
+	whiteList            bool
+
 	log *logrus.Logger
 }
 
-func NewService(linkService LinkService, gmailLoginService *GmailLoginService, userService inboxuser.Service, sessionService session.Service, log *logrus.Logger) *Service {
+func NewService(linkService LinkService, gmailLoginService *GmailLoginService, userService inboxuser.Service, sessionService session.Service, stagingUserWhiteList []string, log *logrus.Logger) *Service {
 	return &Service{
-		linkService:       linkService,
-		gmailLoginService: gmailLoginService,
-		userService:       userService,
-		sessionService:    sessionService,
-		log:               log,
+		linkService:          linkService,
+		gmailLoginService:    gmailLoginService,
+		userService:          userService,
+		sessionService:       sessionService,
+		stagingUserWhiteList: stagingUserWhiteList,
+		whiteList:            len(stagingUserWhiteList) > 0,
+		log:                  log,
 	}
 }
 
@@ -45,10 +49,8 @@ func (s Service) InitiateLogin(ctx context.Context, address, initiatedByIP strin
 	var res LoginInitResult
 
 	// Temporary login block for Staging environment
-	if os.Getenv("ENV") == "staging" {
-		allowedAddressesStr := os.Getenv("STAGING_ALLOWED_USERS")
-		allowedAddresses := strings.Split(allowedAddressesStr, ",")
-		if !slice.Contains(allowedAddresses, address) {
+	if s.whiteList {
+		if !slice.Contains(s.stagingUserWhiteList, address) {
 			return res, mailboxsweep.UnauthenticatedError(fmt.Errorf("user is not in test user list: %s", address))
 		}
 	}
