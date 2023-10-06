@@ -53,6 +53,9 @@ function ToggleModeSwitch(props: {
           disabled={props.numSelected <= 0}
           onClick={() => props.onClickSubmit(props.isDeleteMode)}
           loading={props.isLoading}
+          aria-label={props.isDeleteMode
+            ? `Delete ${props.numSelected.toLocaleString()} messages`
+            : `Mark ${props.numSelected.toLocaleString()} messages read`}
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()}`
@@ -68,6 +71,9 @@ function ToggleModeSwitch(props: {
             checked={props.isDeleteMode}
             color={props.isDeleteMode ? "error" : "primary"}
             sx={{ marginLeft: 0 }}
+            inputProps={{
+              "aria-label": `Switch from ${props.isDeleteMode ? "delete mode" : "mark read mode"} to ${props.isDeleteMode ? "mark read mode" : "delete mode"}`
+            }}
           />
           <IconDeleteForever
             style={{
@@ -90,6 +96,7 @@ interface ListProps {
   pathPrefix: string[];
   classificationTree: ClassificationTree | undefined;
   selectedNodes: Selection;
+  isDeleteMode: boolean;
 }
 
 function List(props: ListProps) {
@@ -138,6 +145,7 @@ function List(props: ListProps) {
               isChildChecked={isChildChecked}
               onCheck={(v: boolean) => {}}
               classification={props.classificationTree}
+              isDeleteMode={props.isDeleteMode}
             />
           );
         })}
@@ -427,6 +435,7 @@ export default function Select() {
                   pathPrefix={currentPath}
                   classificationTree={classificationRoot}
                   selectedNodes={getSelection()}
+                  isDeleteMode={isDeleteMode}
                 />
 
                 <Box
