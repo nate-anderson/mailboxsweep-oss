@@ -156,8 +156,8 @@ func InsufficientPermissionsError(parent error) error {
 	return fmt.Errorf("%w: %w", ErrInsufficientPermissions, parent)
 }
 
-func GoogleReauthenticationRequiredError() error {
-	return ErrGoogleReauthenticationRequired
+func GoogleReauthenticationRequiredError(parent error) error {
+	return fmt.Errorf("%w: %w", ErrGoogleReauthenticationRequired, parent)
 }
 
 func TermsAndConditionsNotAgreedError() error {

@@ -91,7 +91,7 @@ func (s *TestServerLoginSender) hasRemainingLinks() bool {
 	return has
 }
 
-func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error {
+func (s *TestServerLoginSender) Send(ctx context.Context, req SendRequest) error {
 	if s.env != "e2e" {
 		panic("cannot create test server login sender with environment other than 'e2e'")
 	}
@@ -116,16 +116,16 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 
 	s.registerLoginLink(req.Address, link)
 
-	go func() {
-		handler := s.GetHTTPHandler(finish)
+	if !s.isServing() {
+		go func() {
+			handler := s.GetHTTPHandler(finish)
 
-		addr := fmt.Sprintf(":%d", s.port)
-		srv := http.Server{
-			Addr:    addr,
-			Handler: handler,
-		}
+			addr := fmt.Sprintf(":%d", s.port)
+			srv := http.Server{
+				Addr:    addr,
+				Handler: handler,
+			}
 
-		if !s.isServing() {
 			go func() {
 				err := srv.ListenAndServe()
 				if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -134,16 +134,16 @@ func (s TestServerLoginSender) Send(ctx context.Context, req SendRequest) error 
 			}()
 			log.Printf("serving login link temporary server at %s for login link %s", addr, link)
 			s.setIsServing(true)
-		}
 
-		<-finish
-		if err = srv.Shutdown(context.Background()); err != nil {
-			log.Printf("failed to shutdown temporary login sender server: %s", err)
-		} else {
-			log.Printf("temporary login link server shut down")
-			s.setIsServing(false)
-		}
-	}()
+			<-finish
+			if err = srv.Shutdown(context.Background()); err != nil {
+				log.Printf("failed to shutdown temporary login sender server: %s", err)
+			} else {
+				log.Printf("temporary login link server shut down")
+				s.setIsServing(false)
+			}
+		}()
+	}
 
 	return nil
 }
