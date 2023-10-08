@@ -304,7 +304,7 @@ func main() {
 		err = errors.New("InboxMetadataTTLMinutes must be greater than zero")
 		log.Fatal(err)
 	}
-	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
+	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialService, log, time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute)
 
 	var classificationRepo classification.ClassificationRepository
 	if cfg.ClassificationStore == "filesystem" {

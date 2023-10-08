@@ -63,7 +63,7 @@ func TestInboxChangesetService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	metadataRepo := inbox.NewMetadataRepository(db, table)
-	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, time.Hour)
+	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, logrus.New(), time.Hour)
 
 	classifyPublisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
 	commitPublisher := &mailboxsweep.TestEventPublisher[changeset.CommitQueueMessage]{}

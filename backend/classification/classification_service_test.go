@@ -293,7 +293,7 @@ func TestClassificationService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	inboxMetadataRepo := inbox.NewMetadataRepository(db, table)
-	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, time.Minute)
+	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, logrus.New(), time.Minute)
 
 	service := NewService(
 		credentialReadService,

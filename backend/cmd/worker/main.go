@@ -241,6 +241,7 @@ func main() {
 		metadataRepo,
 		providerService,
 		credentialService,
+		log,
 		time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute,
 	)
 
