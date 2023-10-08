@@ -67,7 +67,7 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 
 	tokenSource := oauth2.ReuseTokenSource(
 		oauthToken,
-		oauth2.StaticTokenSource(oauthToken),
+		p.oauthConfig.TokenSource(ctx, oauthToken),
 	)
 	client, err := gmail.NewService(
 		context.Background(),
