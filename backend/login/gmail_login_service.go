@@ -11,7 +11,6 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/pkg/slice"
-	"strconv"
 	"strings"
 	"time"
 
@@ -56,9 +55,6 @@ func (s GmailLoginService) makeToken() (string, error) {
 	return strings.ToLower(base64.URLEncoding.EncodeToString(buf)), nil
 }
 
-// 12 hours
-const maxTokenExpirySeconds = 12 * 60 * 60
-
 func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, cookie string, err error) {
 	stateToken, err := s.makeToken()
 	if err != nil {
@@ -84,7 +80,6 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, coo
 	return s.oauthConfig.AuthCodeURL(
 		stateToken,
 		oauth2.AccessTypeOffline,
-		oauth2.SetAuthURLParam("expires_in", strconv.Itoa(maxTokenExpirySeconds)),
 	), cookie, nil
 }
 
