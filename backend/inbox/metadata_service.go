@@ -85,7 +85,7 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 
 	// @TODO: remove this! 10-08-2023
 	if gmailDecrypted, ok := password.(*inboxcredential.GmailInboxCredential); ok {
-		s.log.Infof("pre-decrypt credential refresh token empty? %v (len = %d, encrypted = %v)", gmailDecrypted.RefreshToken == "", len(gmailDecrypted.RefreshToken), gmailDecrypted.Encrypted)
+		s.log.Infof("post-decrypt credential refresh token empty? %v (len = %d, encrypted = %v)", gmailDecrypted.RefreshToken == "", len(gmailDecrypted.RefreshToken), gmailDecrypted.Encrypted)
 	}
 
 	mailbox, err := provider.Login(ctx, addr, password)
