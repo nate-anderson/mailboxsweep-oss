@@ -6,7 +6,6 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/pkg/slice"
-	"net/http"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -64,14 +63,22 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)
 	}
 
-	httpClient := p.oauthConfig.Client(ctx, oauthToken)
+	// httpClient := p.oauthConfig.Client(ctx, oauthToken)
 
-	client, err := gmail.NewService(context.Background(), option.WithHTTPClient(httpClient))
+	tokenSource := oauth2.ReuseTokenSource(
+		oauthToken,
+		oauth2.StaticTokenSource(oauthToken),
+	)
+	client, err := gmail.NewService(
+		context.Background(),
+		// option.WithHTTPClient(httpClient),
+		option.WithTokenSource(tokenSource),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := p.verifyPermissions(ctx, oauthToken, httpClient); err != nil {
+	if err := p.verifyPermissions(ctx, tokenSource); err != nil {
 		return nil, err
 	}
 
@@ -83,8 +90,12 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 	}, nil
 }
 
-func (p *GmailProvider) verifyPermissions(ctx context.Context, token *oauth2.Token, client *http.Client) error {
-	oauthService, err := googleoauth.NewService(ctx, option.WithScopes(mailboxsweep.FullGoogleAPIScopes...), option.WithHTTPClient(client))
+func (p *GmailProvider) verifyPermissions(ctx context.Context, tokenSource oauth2.TokenSource) error {
+	oauthService, err := googleoauth.NewService(
+		ctx,
+		option.WithScopes(mailboxsweep.FullGoogleAPIScopes...),
+		option.WithTokenSource(tokenSource),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to initiate Oauth service for Google permission check: %w", err)
 	}

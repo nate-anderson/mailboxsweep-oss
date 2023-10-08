@@ -11,6 +11,7 @@ import (
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
 	"mailboxsweep/pkg/slice"
+	"strconv"
 	"strings"
 	"time"
 
@@ -55,6 +56,9 @@ func (s GmailLoginService) makeToken() (string, error) {
 	return strings.ToLower(base64.URLEncoding.EncodeToString(buf)), nil
 }
 
+// 12 hours
+const maxTokenExpirySeconds = 12 * 60 * 60
+
 func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, cookie string, err error) {
 	stateToken, err := s.makeToken()
 	if err != nil {
@@ -77,7 +81,11 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, coo
 		return "", "", err
 	}
 
-	return s.oauthConfig.AuthCodeURL(stateToken, oauth2.AccessTypeOffline), cookie, nil
+	return s.oauthConfig.AuthCodeURL(
+		stateToken,
+		oauth2.AccessTypeOffline,
+		oauth2.SetAuthURLParam("expires_in", strconv.Itoa(maxTokenExpirySeconds)),
+	), cookie, nil
 }
 
 type GmailLoginRedirectData struct {
@@ -109,7 +117,7 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	}
 
 	// exchange code for real credentials
-	token, err := s.oauthConfig.Exchange(ctx, data.Code)
+	token, err := s.oauthConfig.Exchange(ctx, data.Code, oauth2.AccessTypeOffline)
 	if err != nil {
 		err := fmt.Errorf("failed to exchange with Google for login: %w", err)
 		return "", mailboxsweep.BadGatewayError(err)

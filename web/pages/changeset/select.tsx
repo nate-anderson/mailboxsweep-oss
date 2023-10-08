@@ -56,6 +56,7 @@ function ToggleModeSwitch(props: {
           aria-label={props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()} messages`
             : `Mark ${props.numSelected.toLocaleString()} messages read`}
+          data-testid="button-commit"
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()}`
@@ -74,6 +75,7 @@ function ToggleModeSwitch(props: {
             inputProps={{
               "aria-label": `Switch from ${props.isDeleteMode ? "delete mode" : "mark read mode"} to ${props.isDeleteMode ? "mark read mode" : "delete mode"}`
             }}
+            data-testid="toggle-selection-mode"
           />
           <IconDeleteForever
             style={{

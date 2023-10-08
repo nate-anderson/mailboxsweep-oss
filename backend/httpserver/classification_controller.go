@@ -139,14 +139,18 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 
 	resBody := ClassificationStatusResponse{
 		Address: addr,
-		Status:  &ClassificationStatus{},
 	}
 
 	latestClassifyRequest, err := c.classifyRequestService.FindLatestRequest(ctx)
 	if err != nil {
+		if errors.Is(err, classifyrequest.ErrNoRequests) {
+			c.respond(w, http.StatusOK, resBody)
+			return
+		}
 		c.respondAuthError(w, err)
 		return
 	}
+	resBody.Status = &ClassificationStatus{}
 	resBody.Status.StartedAt = time.Unix(latestClassifyRequest.RequestedAt, 0).Format(time.RFC3339)
 	status, _ := latestClassifyRequest.Status()
 	switch status {
