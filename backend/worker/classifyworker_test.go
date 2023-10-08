@@ -163,7 +163,7 @@ func TestWorker(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	inboxMetadataRepo := inbox.NewMetadataRepository(db, table)
-	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, time.Minute)
+	inboxMetadataService := inbox.NewMetadataService(inboxMetadataRepo, providerService, credentialReadService, log, time.Minute)
 
 	eventPublisher := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](client, *queueURL)
 	classificationService := classification.NewService(
