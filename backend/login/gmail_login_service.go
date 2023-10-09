@@ -161,6 +161,9 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	}
 
 	// store the Gmail credentials
+	if token.RefreshToken == "" {
+		return "", errors.New("google Oauth2 token did not contain a refresh token: cannot continue")
+	}
 	gmailCred := inboxcredential.NewGmailInboxCredential(profile.address, token.AccessToken, token.RefreshToken, token.Expiry)
 	err = s.credentialService.StoreCredential(authedCtx, gmailCred)
 	if err != nil {
