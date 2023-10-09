@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mailboxsweep"
 	"time"
 
@@ -100,12 +99,11 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 		return err
 	}
 	c.APIToken = string(tokenBuf)
-	log.Printf("API token decrypted: %s\n", string(tokenBuf))
+
 	refreshBuf, err := decryptor.Open(nil, decodedNonce, decodedRefreshTokenCipher, nil)
 	if err != nil {
 		return err
 	}
-	log.Printf("Refresh token decrypted: %s\n", string(refreshBuf))
 	c.RefreshToken = string(refreshBuf)
 	c.Encrypted = false
 

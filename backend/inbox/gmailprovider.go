@@ -58,7 +58,6 @@ func (p *GmailProvider) Login(ctx context.Context, username string, credential i
 		return nil, fmt.Errorf("expected Gmail credential: got %T", credential)
 	}
 
-	p.logger.Infof("credential refresh token empty? %v (length = %d, encrypted = %v)", gmailCred.RefreshToken == "", len(gmailCred.RefreshToken), gmailCred.Encrypted)
 	oauthToken, err := gmailCred.OAuth2Token()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Gmail OAuth2 token: %w", err)

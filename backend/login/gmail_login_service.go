@@ -80,6 +80,7 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, coo
 	return s.oauthConfig.AuthCodeURL(
 		stateToken,
 		oauth2.AccessTypeOffline,
+		oauth2.ApprovalForce,
 	), cookie, nil
 }
 
