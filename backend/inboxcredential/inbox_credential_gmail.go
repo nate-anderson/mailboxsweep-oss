@@ -100,7 +100,7 @@ func (c *GmailInboxCredential) decrypt(decryptor cipher.AEAD) error {
 		return err
 	}
 	c.APIToken = string(tokenBuf)
-
+	log.Printf("API token decrypted: %s\n", string(tokenBuf))
 	refreshBuf, err := decryptor.Open(nil, decodedNonce, decodedRefreshTokenCipher, nil)
 	if err != nil {
 		return err
