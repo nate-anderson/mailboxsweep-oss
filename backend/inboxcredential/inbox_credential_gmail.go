@@ -117,9 +117,16 @@ func (c GmailInboxCredential) OAuth2Token() (*oauth2.Token, error) {
 		return nil, errors.New("cannot turn credential into oauth token without decrypting")
 	}
 
-	return &oauth2.Token{
+	tok := &oauth2.Token{
 		AccessToken:  c.APIToken,
 		RefreshToken: c.RefreshToken,
 		Expiry:       c.TokenExpiry,
-	}, nil
+	}
+
+	if c.TokenExpiry.Before(time.Now()) {
+		// don't include expired tokens
+		tok.AccessToken = ""
+	}
+
+	return tok, nil
 }
