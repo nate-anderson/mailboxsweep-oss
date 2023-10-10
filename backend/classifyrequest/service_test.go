@@ -171,7 +171,7 @@ func TestClassifyRequestService(t *testing.T) {
 		t.Run("authorized, no executing requests, failure", func(t *testing.T) {
 			err := service.MarkExecutedSuccess(authedCtx, count)
 			assert.ThatError(t, err).IsNotNil()
-			assert.ThatString(t, err.Error()).Contains("no completed requests found")
+			assert.ThatError(t, err).Is(ErrNoExecutingRequests)
 		})
 
 		t.Run("success", func(t *testing.T) {
@@ -212,7 +212,7 @@ func TestClassifyRequestService(t *testing.T) {
 		t.Run("authorized, no completed requests, failure", func(t *testing.T) {
 			err := service.MarkExecutedError(authedCtx2, count, testErr)
 			assert.ThatError(t, err).IsNotNil()
-			assert.ThatString(t, err.Error()).Contains("no completed requests found")
+			assert.ThatError(t, err).Is(ErrNoExecutingRequests)
 		})
 
 		// mark it executing
