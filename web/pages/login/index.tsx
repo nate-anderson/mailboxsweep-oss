@@ -7,12 +7,16 @@ import { useRouter } from "next/router";
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
+import Image from "next/image";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import ImageLogo from "../../components/image-logo";
 import Alert from "@mui/material/Alert";
 import LoadingButton from "@mui/lab/LoadingButton";
+import GoogleBtn from "../../public/google-btn.svg";
+import GoogleBtnDisabled from "../../public/google-btn-disabled.svg";
+import { validateEmail } from "../../lib/email";
 
 function StagingWarning(props: { environment: string | undefined }) {
   if (props.environment === "prod") {
@@ -29,9 +33,53 @@ function StagingWarning(props: { environment: string | undefined }) {
   </Alert>
 }
 
+function GoogleIcon(props: { disabled: boolean }) {
+  const imageUrl = props.disabled ? GoogleBtnDisabled : GoogleBtn;
+  return <Image
+    alt="Google Sign-In Logo"
+    src={imageUrl}
+    priority
+    style={{
+      height: "30px",
+      marginTop: "0",
+      marginBottom: "0",
+      margin: "-10px",
+    }}
+  />
+}
+
+// Conditionally display Google branding if the user will be signing in with a Google account
+function LoginButton(props: { isGoogle: boolean, isLoading: boolean, disabled: boolean }) {
+  const text = props.isGoogle ? "Sign in with Google" : "Sign in"; 
+  return <LoadingButton
+    startIcon={props.isGoogle ? <GoogleIcon disabled={props.disabled} /> : undefined}
+    variant="contained"
+    size="large"
+    sx={{
+      marginY: 3,
+      backgroundColor: "var(--color-accent)",
+      color: "white",
+      fontFamily: "Roboto",
+    }}
+    type="submit"
+    loading={props.isLoading}
+  >
+    {text}
+  </LoadingButton>
+}
+
+const isGmail = (email: string) =>
+  Boolean(
+    email
+    .trim()
+    .toLowerCase()
+    .match(/\@gmail\./)
+  );
+
 export default function Login() {
   const router = useRouter();
   const [email, changeEmail] = useState("");
+  const [emailInvalid, setEmailInvalid] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [redirectPromptSnackbar, showRedirectSnackbar] = useConstantSnackbar(
     "Please log in to continue.",
@@ -45,6 +93,10 @@ export default function Login() {
     setMagicLinkModalOpen: (open: boolean) => void
   ) => {
     try {
+      setEmailInvalid(false);
+      if (!validateEmail(email)) {
+        setEmailInvalid(true);
+      }
       setIsLoading(true);
       const res = await API.initiateLogin({
         address,
@@ -114,32 +166,23 @@ export default function Login() {
         >
           Log in or sign up
         </Typography>
-        <StagingWarning environment={process.env.ENV}/>
-          <TextField
-            label="Email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => changeEmail(e.target.value)}
-            sx={{
-              marginX: 20,
-              maxWidth: 300,
-              width: "100%",
-            }}
-          ></TextField>
-          <LoadingButton
-            variant="contained"
-            size="large"
-            sx={{
-              marginY: 3,
-              backgroundColor: "var(--color-accent)",
-              color: "white",
-            }}
-            type="submit"
-            loading={isLoading}
-          >
-            Sign in
-          </LoadingButton>
+          <StagingWarning environment={process.env.ENV}/>
+            <TextField
+              error={emailInvalid}
+              helperText={emailInvalid ? "Email address is not valid." : undefined}
+              label="Email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => changeEmail(e.target.value)}
+              sx={{
+                marginX: 20,
+                maxWidth: 300,
+                width: "100%",
+              }}
+            ></TextField>
+            <LoginButton isLoading={isLoading} isGoogle={isGmail(email)} disabled={isLoading} />
         </Box>
       </form>
     </Container>
