@@ -290,12 +290,14 @@ func (s DefaultService) MarkExecutedSuccess(ctx context.Context, count int) erro
 	}
 
 	if !found {
-		return errors.New("no completed requests found")
+		return ErrNoExecutingRequests
 	}
 
 	_, err = s.requestRepo.MarkExecuted(ctx, addr, oldestClosedRequest.RequestedAt, count, nil)
 	return err
 }
+
+var ErrNoExecutingRequests = errors.New("no executing requests")
 
 func (s DefaultService) MarkExecutedError(ctx context.Context, count int, executeError error) error {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
@@ -333,7 +335,7 @@ func (s DefaultService) MarkExecutedError(ctx context.Context, count int, execut
 	}
 
 	if !found {
-		return errors.New("no completed requests found")
+		return ErrNoExecutingRequests
 	}
 
 	errMsg := executeError.Error()

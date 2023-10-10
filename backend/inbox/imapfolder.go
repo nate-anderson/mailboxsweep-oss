@@ -132,7 +132,6 @@ func firstNotEqual[T comparable](not T, list ...T) T {
 	return not
 }
 
-// @TODO: test this
 func (f IMAPFolder) Delete(_ context.Context, uids []string) error {
 	set := imap.SeqSet{}
 	for _, uid := range uids {
