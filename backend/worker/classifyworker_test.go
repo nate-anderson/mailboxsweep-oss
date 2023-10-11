@@ -31,7 +31,6 @@ import (
 // worker failing work results in same data on DLQ
 
 func TestWorker(t *testing.T) {
-	// t.Skip() // @TODO - figure out how to get this test working
 	ctx := context.Background()
 	log := logrus.New()
 
@@ -85,6 +84,9 @@ func TestWorker(t *testing.T) {
 	table, teardown := mailboxsweep.SetupDynamoTestTable(ctx, t, db)
 	defer teardown()
 
+	s3Client, bucket, teardown := mailboxsweep.SetupTestBucket(ctx, t)
+	defer teardown()
+
 	dlqPub := mailboxsweep.NewSQSEventPublisher[classification.ClassifyQueueItem](client, *dlqURL)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
@@ -125,7 +127,7 @@ func TestWorker(t *testing.T) {
 	err = paymentService.CompletePayment(authedCtx, inboxuser.PaymentMethod("Test"), testProcessor.SessionID)
 	assert.ThatError(t, err).IsNil()
 
-	classificationRepo := classification.NewFileClassificationRepository(t.TempDir(), 50)
+	classificationRepo := classification.NewS3ClassificationRepository(s3Client, bucket, 50)
 	providerService := inboxtesting.NewTestProviderService()
 	numMessages := 100
 	userNames := []string{

@@ -18,6 +18,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -39,6 +40,10 @@ var (
 	folderName string
 	path       []string
 )
+
+func ptr[T any](val T) *T {
+	return &val
+}
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&username, "username", "u", "", "IMAP username")
@@ -231,7 +236,22 @@ var classifyMessagesCmd = &cobra.Command{
 		count := folder.Count()
 		log.Printf("Messages: %d\n", count)
 
-		repo := classification.NewFileClassificationRepository("testdata", 50)
+		s3, err := mailboxsweep.ConnectAWSService(
+			mailboxsweep.AWSServiceConfig{
+				ServiceHost:   ptr("localhost"),
+				ServicePort:   4566,
+				ServiceRegion: "us-west-2",
+				Environment:   "local",
+			},
+			s3.NewFromConfig,
+			func(o *s3.Options) {
+				o.UsePathStyle = true
+			},
+		)
+		if err != nil {
+			log.Fatalf("failed to instantiate S3 client: %s", err)
+		}
+		repo := classification.NewS3ClassificationRepository(s3, "testdata", 50)
 		organizer := classification.NewOrganizer(mailbox, repo, []string{folderName}, []classification.Classifier{
 			classification.NewSenderDomainClassifier(),
 			classification.NewSenderUsernameClassifier(),
@@ -253,8 +273,19 @@ var queryCmd = &cobra.Command{
 		if username == "" {
 			log.Fatal("username is required")
 		}
-
-		repo := classification.NewFileClassificationRepository("testdata", 50)
+		s3, err := mailboxsweep.ConnectAWSService(
+			mailboxsweep.AWSServiceConfig{
+				ServiceHost:   ptr("localhost"),
+				ServicePort:   4566,
+				ServiceRegion: "us-west-2",
+				Environment:   "local",
+			},
+			s3.NewFromConfig,
+			func(o *s3.Options) {
+				o.UsePathStyle = true
+			},
+		)
+		repo := classification.NewS3ClassificationRepository(s3, "testdata", 50)
 		classification, err := repo.FetchSummary(context.Background(), username, 0)
 		if err != nil {
 			log.Fatal(err)
