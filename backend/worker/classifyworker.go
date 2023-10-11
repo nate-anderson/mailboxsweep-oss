@@ -113,12 +113,14 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			err := json.Unmarshal([]byte(*m.Body), &queueItem)
 			if err != nil {
 				log.Errorf("failed to unmarshal queue item: %s", err)
+				wg.Done()
 				continue
 			}
 
 			body := queueItem.Body
 			if strings.TrimSpace(body.Address) == "" {
 				log.Errorf("no address in queue item %+v", body)
+				wg.Done()
 				continue
 			}
 			jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
@@ -133,6 +135,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 				cl, err := srcl.Classifier()
 				if err != nil {
 					log.Errorf("invalid classifier %v: %s", srcl, err)
+					wg.Done()
 					continue
 				}
 				classifiers[i] = cl
