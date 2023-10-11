@@ -285,6 +285,10 @@ var queryCmd = &cobra.Command{
 				o.UsePathStyle = true
 			},
 		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		repo := classification.NewS3ClassificationRepository(s3, "testdata", 50)
 		classification, err := repo.FetchSummary(context.Background(), username, 0)
 		if err != nil {
