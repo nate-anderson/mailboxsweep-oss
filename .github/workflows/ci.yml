@@ -14,10 +14,10 @@ on:
 
 jobs:
   build-backend:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@3906188e2864c23a427cf0ac2e5390ebe38a59c3
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@3906188e2864c23a427cf0ac2e5390ebe38a59c3
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
     secrets: inherit
 
   build-push-server-image:
