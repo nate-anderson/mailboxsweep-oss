@@ -2086,15 +2086,15 @@
             "domain=test10.com": {
                 "dimension": "sender_domain",
                 "typeKey": "SENDER_DOMAIN",
-                "label": "dtest10.com",
+                "label": "test10.com",
                 "subjectPreviews": null,
                 "count": 1,
                 "unreadCount": 1,
                 "children": {
-                    "sender=birds@dtest10.com": {
+                    "sender=birds@test10.com": {
                         "dimension": "sender",
                         "typeKey": "SENDER_USERNAME",
-                        "label": "The Cornell Lab of Ornithology (birds@dtest10.com)",
+                        "label": "The Cornell Lab of Ornithology (birds@test10.com)",
                         "subjectPreviews": null,
                         "count": 1,
                         "unreadCount": 1,
@@ -2109,10 +2109,10 @@
                                         "uid": "17cfc0b606be0860",
                                         "folder": "INBOX",
                                         "sender": {
-                                            "address": "birds@dtest10.com",
+                                            "address": "birds@test10.com",
                                             "name": "The Cornell Lab of Ornithology",
                                             "username": "birds",
-                                            "domain": "dtest10.com"
+                                            "domain": "test10.com"
                                         },
                                         "inReplyTo": "17cfc0b606be0860",
                                         "sendDate": "2021-11-07T15:16:15-05:00",
