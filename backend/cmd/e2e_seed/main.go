@@ -15,7 +15,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -44,41 +43,18 @@ func main() {
 	// flags:
 	// allow specifying configuration file
 	var (
-		envFile     string
-		ssmHostFlag string
-		ssmPort     int
+		envFile string
 	)
 	flag.StringVar(&envFile, "envFile", ".env", "specify .env configuration file to load")
-	flag.StringVar(&ssmHostFlag, "ssmHost", "", "specify host of SSM (for ParamStore)")
-	flag.IntVar(&ssmPort, "ssmPort", 0, "specify port of SSM (for ParamStore)")
 	flag.Parse()
-
-	var ssmHost *string
-	if ssmHostFlag != "" {
-		ssmHost = &ssmHostFlag
-	}
 
 	envDriver, err := fig.NewOptionalFileEnvironmentDriver(envFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	paramstoreClient, err := mailboxsweep.ConnectAWSService(
-		mailboxsweep.AWSServiceConfig{
-			ServiceRegion: "us-west-2",
-			ServiceHost:   ssmHost,
-			ServicePort:   ssmPort,
-		},
-		ssm.NewFromConfig,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ssmDriver := mailboxsweep.NewSSMConfigDriver(paramstoreClient)
-
 	// default to env then paramstore
-	conf := fig.New(envDriver, ssmDriver)
+	conf := fig.New(envDriver)
 
 	cfg := seedConfig{}
 	if err := conf.Unmarshal(&cfg); err != nil {
