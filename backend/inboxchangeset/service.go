@@ -362,7 +362,11 @@ func (s DefaultService) FindByOperation(ctx context.Context, operation changeset
 			return nil, 0, err
 		}
 
-		n += int(leaf.Count)
+		if operation == changeset.Delete {
+			n += int(leaf.Count)
+		} else {
+			n += int(leaf.UnreadCount)
+		}
 	}
 
 	return changeSet, n, nil
