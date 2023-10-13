@@ -48,25 +48,55 @@ test.describe("return after classification complete", () => {
         await expect(checkBox1).toBeChecked();
         await expect(commitButton).toHaveText("Mark 154 read");
 
+        // add and remove root node
         await page.getByLabel("Select messages in group test4.com to mark read").click();
         await expect(commitButton).toHaveText("Mark 154 read");
 
         await page.getByLabel("Select messages in group test1.com to mark read").click();
         await expect(commitButton).toHaveText("Mark 209 read");
-        await page.getByLabel("Select messages in group test1.com to mark read").click();
+        await page.getByLabel("Deselect messages in group test1.com to mark read").click();
         await expect(commitButton).toHaveText("Mark 154 read");
+
+        // root node selects children
+        await page.getByLabel("Expand category test4.com").click();
+        await expect(page.getByLabel("Deselect messages in group Notifications (notifications@test4.com) to mark read")).toBeChecked();
+        await page.getByLabel("Go back one level").click();
+        await expect(page.getByText("Select Messages", { exact: true })).toBeVisible();
+
+        // add and remove leaf node
+        await page.getByLabel("Expand category test8.com", { exact: true }).click();
+        await expect(page.getByText("test8.com", { exact: true })).toBeVisible();
+        await page.getByLabel("Expand category  (save@test8.com)", { exact: true }).click();
+        await expect(page.getByText("(save@test8.com)", { exact: true })).toBeVisible();
+        await page.getByLabel("Select messages in group On or after 01-01-2020 to mark read", { exact: true }).click();
+        await expect(commitButton).toHaveText("Mark 155 read");
+        await page.getByLabel("Deselect messages in group On or after 01-01-2020 to mark read", { exact: true }).click();
+        await expect(commitButton).toHaveText("Mark 154 read");
+        await page.getByLabel("Go back one level").click();
+        await page.getByLabel("Go back one level").click();
 
         // add delete messages
         await toggle.click();
         await expect(commitButton).toHaveText("Delete 0");
         await expect(commitButton).toBeDisabled();
 
+        // add and remove top-level node
         await page.getByLabel("Select messages in group test3.com to delete").click();
         await expect(commitButton).toHaveText("Delete 17");
 
         await page.getByLabel("Select messages in group test4.com to delete").click();
         await expect(commitButton).toHaveText("Delete 26");
-        await page.getByLabel("Select messages in group test4.com to delete").click();
+        await page.getByLabel("Deselect messages in group test4.com to delete").click();
+        await expect(commitButton).toHaveText("Delete 17");
+
+        // add and remove leaf
+        await page.getByLabel("Expand category test1.com", { exact: true }).click();
+        await expect(page.getByText("test1.com", { exact: true })).toBeVisible();
+        await page.getByLabel("Expand category Google (no-reply@test1.com)", { exact: true }).click();
+        await expect(page.getByText("Google (no-reply@test1.com)", { exact: true })).toBeVisible();
+        await page.getByLabel("Select messages in group Before 01-01-2020 to delete", { exact: true }).click();
+        await expect(commitButton).toHaveText("Delete 24");
+        await page.getByLabel("Deselect messages in group Before 01-01-2020 to delete", { exact: true }).click();
         await expect(commitButton).toHaveText("Delete 17");
         
         // delete - confirm page

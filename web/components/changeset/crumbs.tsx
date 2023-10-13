@@ -51,6 +51,7 @@ function BackHomeBar(props: CrumbsProps) {
         sx={{
           marginRight: 0,
         }}
+        aria-label="Go back one level"
       >
         <IconBack />
       </IconButton>
