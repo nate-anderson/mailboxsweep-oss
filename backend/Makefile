@@ -45,6 +45,10 @@ seed:
 e2e_seed:
 	go run ./cmd/e2e_seed
 
+.PHONY: e2e_seed_ci
+e2e_seed_ci:
+	go run ./cmd/e2e_seed --envFile=.env.e2e
+
 .PHONY: build_docker_server
 build_docker_server:
 	cd .. && docker build -f ./backend/Dockerfile.server .
