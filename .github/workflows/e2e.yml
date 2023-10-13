@@ -57,7 +57,7 @@ jobs:
 
       - name: Run migrations and seeds
         working-directory: backend
-        run: make migrate e2e_seed
+        run: make migrate e2e_seed_ci
 
       - name: Start API server (background)
         working-directory: backend
