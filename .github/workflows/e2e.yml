@@ -58,6 +58,23 @@ jobs:
       - name: Run migrations and seeds
         working-directory: backend
         run: make migrate e2e_seed_ci
+        env:
+          ENV: e2e
+          DYNAMODB_HOST: localhost
+          DYNAMODB_PORT: 4566
+          DYNAMODB_REGION: us-west-2
+          DYNAMODB_TABLE: mailboxsweep
+          S3_HOST: localhost
+          S3_PORT: 4566
+          S3_REGION: us-west-2
+          S3_BUCKET: mailboxsweep
+          SQS_HOST: localhost
+          SQS_PORT: 4566
+          SQS_REGION: us-west-2
+          SQS_CLASSIFY_QUEUE: mailboxsweep_classify.fifo
+          SQS_CLASSIFY_DLQ: mailboxsweep_classify_dlq.fifo
+          SQS_COMMIT_QUEUE: mailboxsweep_commit.fifo
+          SQS_COMMIT_DLQ: mailboxsweep_commit_dlq.fifo
 
       - name: Start API server (background)
         working-directory: backend
