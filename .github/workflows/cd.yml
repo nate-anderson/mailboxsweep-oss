@@ -15,7 +15,7 @@ on:
 
 jobs:
   build-backend:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@3906188e2864c23a427cf0ac2e5390ebe38a59c3
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@${GITHUB_SHA}
 
   build-push-server-image:
     name: Build and push server image to ECR
