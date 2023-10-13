@@ -5,7 +5,6 @@ const testUser = "test.classified@mailboxsweep.local";
 const testLoginLinkServerHTTPPort = 8082;
 
 test.describe("return after classification complete", () => {
-    test.skip(); // @TODO: finish the test
     test("imap user", async ({ page }) => {
         // log console messages
         page.on('console', msg => console.log(msg.text()));
@@ -35,7 +34,7 @@ test.describe("return after classification complete", () => {
         const commitButton = await page.getByTestId("button-commit");
         await expect(commitButton).toHaveText("Mark 0 read");
         await expect(commitButton).toBeDisabled();
-        const toggle = await page.getByLabel("toggle-selection-mode");
+        const toggle = await page.getByTestId("toggle-selection-mode");
         await toggle.click();
         await expect(commitButton).toHaveText("Delete 0");
         await expect(commitButton).toBeDisabled();
@@ -44,15 +43,59 @@ test.describe("return after classification complete", () => {
         await expect(commitButton).toBeDisabled();
         
         // add mark read messages
-        await page.getByLabel("Select messages in group test9.com to mark read").click();
+        const checkBox1 = await page.getByLabel("Select messages in group test9.com to mark read")
+        await checkBox1.click();
+        await expect(checkBox1).toBeChecked();
+        await expect(commitButton).toHaveText("Mark 154 read");
+
+        await page.getByLabel("Select messages in group test4.com to mark read").click();
+        await expect(commitButton).toHaveText("Mark 154 read");
+
+        await page.getByLabel("Select messages in group test1.com to mark read").click();
+        await expect(commitButton).toHaveText("Mark 209 read");
+        await page.getByLabel("Select messages in group test1.com to mark read").click();
         await expect(commitButton).toHaveText("Mark 154 read");
 
         // add delete messages
         await toggle.click();
         await expect(commitButton).toHaveText("Delete 0");
         await expect(commitButton).toBeDisabled();
-        await page.getByLabel("Select messages in group test3.com to mark read").click();
-        await expect(commitButton).toHaveText("Delete 12");
+
+        await page.getByLabel("Select messages in group test3.com to delete").click();
+        await expect(commitButton).toHaveText("Delete 17");
+
+        await page.getByLabel("Select messages in group test4.com to delete").click();
+        await expect(commitButton).toHaveText("Delete 26");
+        await page.getByLabel("Select messages in group test4.com to delete").click();
+        await expect(commitButton).toHaveText("Delete 17");
         
+        // delete - confirm page
+        await commitButton.click();
+        await page.waitForURL(/changeset\/confirm\/delete/);
+
+        await expect(page.getByText("Deleting 17 messages")).toBeVisible();
+        
+        // delete button is disabled until box is checked
+        const deleteButton = await page.getByLabel("Permanently delete the 17 messages you have selected", { exact: true });
+        await expect(deleteButton).toBeDisabled();
+        const confirmationCheckBox = await page.getByLabel("Check to confirm you want to permanently delete the 17 messages you have selected", { exact: true });
+        await confirmationCheckBox.click();
+        await expect(deleteButton).toBeEnabled();
+
+        // mark read - confirm page
+        await page.goBack();
+        const newCommitButton = await page.getByText("Mark 154 read", { exact: true });
+        await expect(newCommitButton).toBeEnabled();
+        await newCommitButton.click();
+        await page.waitForURL(/changeset\/confirm\/mark\-read/);
+
+        await expect(page.getByText("Marking 154 messages read")).toBeVisible();
+        
+        // mark read button is disabled until box is checked
+        const markReadButton = await page.getByLabel("Permanently mark read the 154 messages you have selected", { exact: true });
+        await expect(markReadButton).toBeDisabled();
+        const confirmationCheckBoxMarkRead = await page.getByLabel("Check to confirm you want to permanently mark read the 154 messages you have selected", { exact: true });
+        await confirmationCheckBoxMarkRead.click();
+        await expect(markReadButton).toBeEnabled();
     })
 })

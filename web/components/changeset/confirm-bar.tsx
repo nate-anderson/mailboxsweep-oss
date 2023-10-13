@@ -16,6 +16,7 @@ interface ConfirmBarProps {
     onCheckEnabled: (enabled: boolean) => void;
     onSubmit: () => void;
     isLoading: boolean;
+    count: number;
 }
 
 export default function ConfirmBar(props: ConfirmBarProps) {
@@ -34,7 +35,12 @@ export default function ConfirmBar(props: ConfirmBarProps) {
                         {props.label}
                     </Typography>
                 }
-                control={<Checkbox onChange={(_, enabled) => props.onCheckEnabled(enabled)}/>}
+                control={<Checkbox
+                    onChange={(_, enabled) => props.onCheckEnabled(enabled)}
+                    inputProps={{
+                        "aria-label": `Check to confirm you want to permanently ${props.deleteMode ? "delete" : "mark read"} the ${props.count} messages you have selected`
+                    }}
+                />}
             />
             <Toolbar
                 sx={{
@@ -55,6 +61,7 @@ export default function ConfirmBar(props: ConfirmBarProps) {
                     </Button>
                 </Link>
                 <LoadingButton
+                    aria-label={`Permanently ${props.deleteMode ? "delete" : "mark read"} the ${props.count} messages you have selected`}
                     loading={props.isLoading}
                     disabled={!props.confirmButtonEnabled}
                     sx={{

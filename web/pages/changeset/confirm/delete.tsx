@@ -107,6 +107,7 @@ export default function ConfirmDelete() {
                         </>
                         }
                     <ConfirmBar
+                        count={selectedCount}
                         isLoading={submitIsLoading}
                         deleteMode={true}
                         confirmButtonEnabled={isConfirmed}

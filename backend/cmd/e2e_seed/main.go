@@ -2,13 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"mailboxsweep"
+	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
 	"mailboxsweep/inboxuser"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
@@ -23,6 +29,13 @@ type seedConfig struct {
 	DynamoDBTable  string  `fig:"DYNAMODB_TABLE" required:"true"`
 
 	ClassifyCompleteTestUser string `fig:"CLASSIFY_COMPLETE_TEST_USER" default:"test.classified@mailboxsweep.local"`
+
+	ClassificationTestDataDir string  `fig:"CLASSIFICATION_TEST_DATA_DIR" default:".testdata/classifications"`
+	S3Host                    *string `fig:"S3_HOST"`
+	S3Port                    int     `fig:"S3_PORT"`
+	S3Region                  string  `fig:"S3_REGION" default:"us-west-2"`
+	ClassificationBucket      string  `fig:"CLASSIFICATION_BUCKET"`
+	ClassificationPageSize    int     `fig:"CLASSIFICATION_PAGE_SIZE"`
 }
 
 func main() {
@@ -85,8 +98,28 @@ func main() {
 		log.Fatal(err)
 	}
 
+	s3, err := mailboxsweep.ConnectAWSService(
+		mailboxsweep.AWSServiceConfig{
+			ServiceHost:   cfg.S3Host,
+			ServicePort:   cfg.S3Port,
+			ServiceRegion: cfg.S3Region,
+			Environment:   cfg.Env,
+		},
+		s3.NewFromConfig,
+		func(o *s3.Options) {
+			o.UsePathStyle = true
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	ctx := context.Background()
 	if err := seedClassifiedTestUser(ctx, cfg, db, log); err != nil {
+		panic(err)
+	}
+
+	if err := seedClassifications(ctx, cfg, s3, log); err != nil {
 		panic(err)
 	}
 }
@@ -139,6 +172,36 @@ func seedClassifiedTestUser(ctx context.Context, cfg seedConfig, db *dynamodb.Cl
 	// mark request completed
 	if err = classifyRequestService.MarkCompletedSuccess(authedCtx); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func seedClassifications(ctx context.Context, cfg seedConfig, s3 *s3.Client, log *logrus.Logger) error {
+	files, err := os.ReadDir(cfg.ClassificationTestDataDir)
+	if err != nil {
+		return fmt.Errorf("failed to read test data dir %s: %w", cfg.ClassificationTestDataDir, err)
+	}
+
+	store := classification.NewS3ClassificationRepository(s3, cfg.ClassificationBucket, cfg.ClassificationPageSize)
+
+	for _, fi := range files {
+		fp := filepath.Join(cfg.ClassificationTestDataDir, fi.Name())
+		file, err := os.Open(fp)
+		if err != nil {
+			return fmt.Errorf("failed to read test data file %s: %w", fp, err)
+		}
+
+		var c classification.ClassificationDocument
+		err = json.NewDecoder(file).Decode(&c)
+		if err != nil {
+			return fmt.Errorf("failed to decode JSON from test data file %s: %w", fp, err)
+		}
+
+		err = store.Store(ctx, cfg.ClassifyCompleteTestUser, c.Classification, map[string]uint32{"INBOX": 0})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

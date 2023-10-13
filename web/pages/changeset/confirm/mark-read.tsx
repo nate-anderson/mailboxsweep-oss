@@ -107,6 +107,7 @@ export default function ConfirmMarkRead() {
                         </>
                         }
                     <ConfirmBar
+                        count={selectedCount}
                         deleteMode={false}
                         isLoading={submitIsLoading}
                         confirmButtonEnabled={isConfirmed}
