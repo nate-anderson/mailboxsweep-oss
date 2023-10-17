@@ -183,6 +183,20 @@ export class CloudwatchDashboardStack extends cdk.Stack {
             ]
         })
 
+        const latencyMetric = new CloudWatch.Metric({
+            namespace: "AWS/ApplicationELB",
+            metricName: "TargetResponseTime",
+            dimensionsMap: {
+                LoadBalancer: props.loadBalancer.loadBalancerArn,
+            }
+        });
+
+        const latencyGraph = new CloudWatch.GraphWidget({
+            left: [
+                latencyMetric,
+            ]
+        })
+
         dashboard.addWidgets(
             dbCapacityGraph,
             dbErrorsGraph,
@@ -192,6 +206,7 @@ export class CloudwatchDashboardStack extends cdk.Stack {
             errorsGraph4xx,
             errorsGraph5xx,
             requestsGraph,
+            latencyGraph,
         );
 
         this.dashboard = dashboard;

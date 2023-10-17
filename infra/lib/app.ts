@@ -27,6 +27,7 @@ import * as SNS from "aws-cdk-lib/aws-sns";
 import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
+import { AlarmsStack } from './alarms';
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
@@ -166,7 +167,8 @@ export class AppStack extends cdk.Stack {
         const appConfig: Record<string, string> = {
             // Generic app config
             ENV: props.environmentName,
-            HTTP_PORT: Port.HTTP.toString(), 
+            HTTP_PORT: Port.HTTP.toString(),
+
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
@@ -665,5 +667,15 @@ export class AppStack extends cdk.Stack {
                 }
             }
         })
+
+        const alarms = new AlarmsStack(this, `alarms`, {
+            ...props,
+            emailAddr: "tech@mailboxsweep.com",
+            commitQueue: commitChangesetQueues.queue,
+            commitDLQ: commitChangesetQueues.dlq,
+            classifyQueue: classifyQueues.queue,
+            classifyDLQ: classifyQueues.dlq,
+            loadBalancer: loadBalancedAPIService.loadBalancer,
+        });
     }
 }
