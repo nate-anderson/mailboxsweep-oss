@@ -193,7 +193,7 @@ export default function Login() {
               marginTop="auto"
             >
               MailboxSweep uses Google APIs when you log in with a Gmail account, subject to the Google API Services&nbsp;
-              <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes">User Data Policy</a>&nbsp;including the Limited Use requirements.
+              <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes">User Data Policy</a>, including the Limited Use requirements.
             </Typography>
         </Box>
       </form>
