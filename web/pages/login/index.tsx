@@ -151,10 +151,11 @@ export default function Login() {
       }}>
       <Box
         sx={{
-          marginTop: "20vh",
+          marginTop: "14vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          height: "84vh",
         }}
       >
         <ImageLogo />
@@ -183,6 +184,17 @@ export default function Login() {
               }}
             ></TextField>
             <LoginButton isLoading={isLoading} isGoogle={isGmail(email)} disabled={isLoading} />
+            <Typography
+              fontSize="0.75em"
+              color="var(--color-gray)"
+              align="center"
+              maxWidth="90%"
+              paddingBottom="20px"
+              marginTop="auto"
+            >
+              MailboxSweep uses Google APIs when you log in with a Gmail account, subject to the Google API Services&nbsp;
+              <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes">User Data Policy</a>&nbsp;including the Limited Use requirements.
+            </Typography>
         </Box>
       </form>
     </Container>
