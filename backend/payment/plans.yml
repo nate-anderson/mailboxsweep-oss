@@ -10,6 +10,7 @@ BASIC:
   enabled: true
   allowed_scans: 3
   duration_days: 30
+  display_index: 0
 
 ANNUAL:
   display_name: MailboxSweep Annual
@@ -23,3 +24,4 @@ ANNUAL:
   enabled: true
   allowed_scans: 30
   duration_days: 365
+  display_index: 1

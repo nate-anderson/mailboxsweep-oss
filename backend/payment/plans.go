@@ -15,6 +15,7 @@ type PlanDetails struct {
 	Enabled      bool     `yaml:"enabled"`
 	AllowedScans int      `yaml:"allowed_scans"`
 	DurationDays int      `yaml:"duration_days"`
+	DisplayIndex int      `yaml:"display_index"`
 }
 
 //go:embed plans.yml

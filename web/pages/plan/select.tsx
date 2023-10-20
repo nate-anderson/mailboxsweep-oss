@@ -21,7 +21,7 @@ export default function SelectPlan() {
   useEffect(() => {
     API.listPlans()
       .then((res) => {
-        setPlans(res.plans);
+        setPlans(res.plans.sort((a, b) => a.displayIndex - b.displayIndex));
       })
       .catch((err) => {
         console.log(err);
@@ -42,9 +42,12 @@ export default function SelectPlan() {
         const e = error as ApiError;
         if (e.status == 422) {
           setErrorMessage("Your account already has an active plan.");
+        } else {
+          setErrorMessage(error.message);
         }
+        return;
       }
-      setErrorMessage(error as string);
+      setErrorMessage(JSON.stringify(error));
     });
   };
 

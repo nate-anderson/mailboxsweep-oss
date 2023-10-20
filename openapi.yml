@@ -327,6 +327,7 @@ components:
         - allowedScans
         - durationDays
         - priceInCents
+        - displayIndex
       properties:
         key:
           type: string
@@ -343,6 +344,8 @@ components:
         durationDays:
           type: integer
         priceInCents:
+          type: integer
+        displayIndex:
           type: integer
 
     Sender:
