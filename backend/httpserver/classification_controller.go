@@ -30,6 +30,8 @@ func NewClassificationController(classificationService classification.Service, c
 	}
 }
 
+const maxClassifiers = 10
+
 func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var reqBody StartInboxClassifyRequest
@@ -48,6 +50,11 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 			TypeKey:   cl.TypeKey,
 			InitValue: initValue,
 		}
+	}
+
+	if len(serializedClassifiers) > maxClassifiers {
+		c.respondError(w, fmt.Errorf("cannot classify with more than %d filters", maxClassifiers), withOverrideStatusCode(http.StatusBadRequest))
+		return
 	}
 
 	err := c.classificationService.EnqueueClassify(
