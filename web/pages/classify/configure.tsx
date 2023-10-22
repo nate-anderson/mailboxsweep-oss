@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAPIClient } from "../../client";
-import { ApiError } from "../../client-gen";
+import { ApiError, ClassifierInfo } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -8,13 +8,18 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { SelectedClassifier } from "../../lib/classifier";
 import Button from "../../components/button";
-
+import IconButton from "@mui/material/IconButton";
+import IconPlus from "@mui/icons-material/Add";
 import type {} from "@mui/x-date-pickers/themeAugmentation";
 import SelectedClassifierList from "../../components/classifier-inputs/list";
 import { useConstantSnackbar, useSnackbar } from "../../components/snackbar";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
 import { defaultClassifiers } from "../../lib/classifier";
+import { AddClassifierDialog } from "../../components/classifier-inputs/modal";
+import ChipMultiselect from "../../components/chip-multiselect";
+
+const defaultFolders = ["INBOX", "inbox", "Inbox"];
 
 export default function Configure() {
   const API = useAPIClient();
@@ -23,18 +28,23 @@ export default function Configure() {
   const [selectedClassifiers, setSelectedClassifiers] = useState<
     SelectedClassifier[]
   >([]);
-  const [folders, setFolders] = useState<string[]>([]);
+  const [allClassifiers, setAllClassifiers] = useState<ClassifierInfo[]>([]);
+  const [allFolders, setAllFolders] = useState(new Set<string>());
+  const [selectedFolders, setSelectedFolders] = useState(new Set<string>());
   const [successSnackbar, showSuccessSnackbar] = useConstantSnackbar(
     "Success!",
     "success",
     5000
   );
   const [errorSnackbar, showErrorSnackbar] = useSnackbar("error", 5000);
+
   const router = useRouter();
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   useEffect(() => {
     API.getClassifiers()
       .then((res) => {
+        setAllClassifiers(res.classifiers);
         let hydratedClassifiers: SelectedClassifier[];
 
         try {
@@ -53,7 +63,6 @@ export default function Configure() {
               name: classifier.name,
               description: classifier.description,
               hasInput: classifier.hasInput,
-              enabled: true,
               inputFormat: classifier.inputFormat,
               typeKey: classifier.typeKey,
             };
@@ -69,7 +78,12 @@ export default function Configure() {
 
     API.getInboxMetadata()
       .then((res) => {
-        setFolders(res.folders);
+        setAllFolders(new Set(res.folders));
+        defaultFolders.forEach(defaultFolder => {
+          if (res.folders.includes(defaultFolder)) {
+            setSelectedFolders(f => new Set([...f, defaultFolder]));
+          }
+        })
       })
       .catch((err) => {
         setError(err);
@@ -78,7 +92,7 @@ export default function Configure() {
 
   const submit = () => {
     API.startClassify({
-      folders: ["INBOX"],
+      folders: [...selectedFolders],
       classifiers: selectedClassifiers,
     })
       .then((res) => {
@@ -98,6 +112,19 @@ export default function Configure() {
       <>
         <Navbar />
         <Container component="main">
+          <AddClassifierDialog
+            open={dialogIsOpen}
+            onClose={() => setDialogIsOpen(false)}
+            availableClassifiers={allClassifiers}
+            addClassifier={(cl: ClassifierInfo) => setSelectedClassifiers((current) => ([...current, {
+              typeKey: cl.typeKey,
+              name: cl.name,
+              description: cl.description,
+              hasInput: cl.hasInput,
+              inputLabel: cl.inputLabel,
+              inputFormat: cl.inputFormat,
+            }]))}
+          />
           <CssBaseline />
           {successSnackbar}
           {errorSnackbar}
@@ -137,22 +164,47 @@ export default function Configure() {
             sx={{
               maxWidth: 600,
               width: "auto",
-              marginTop: 3,
+              marginTop: 1,
               marginX: "auto",
             }}
           >
+            <Typography
+              fontWeight="bold"
+              marginLeft="12px"
+            >
+              Folders to sort:
+            </Typography>
+            <ChipMultiselect
+              items={new Set(allFolders)}
+              selectedItems={selectedFolders}
+              onAdd={(name: string) => setSelectedFolders(f => new Set([...f, name]))}
+              onRemove={(name: string) => setSelectedFolders(f => new Set([...f].filter(x => x !== name)))}
+            />
+            <Typography
+              fontWeight="bold"
+              marginLeft="12px"
+              marginTop={2}
+            >
+              Classification filters:
+            </Typography>
             <SelectedClassifierList
               setSelectedClassifiers={setSelectedClassifiers}
               classifiers={selectedClassifiers}
               expandedIndex={expandedIndex}
               setExpandedIndex={setExpandedIndex}
             />
-            <Box display="flex" justifyContent="right">
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              sx={{
+                marginBottom: 3,
+              }}
+            >
+              <IconButton color="primary" onClick={() => setDialogIsOpen(true)}>
+                <IconPlus />
+              </IconButton>
               <Button
                 onClick={submit}
-                sx={{
-                  marginBottom: 3,
-                }}
               >
                 Submit
               </Button>

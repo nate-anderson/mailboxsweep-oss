@@ -8,8 +8,7 @@ import Collapse from "@mui/material/Collapse";
 import DragHandle from "@mui/icons-material/DragHandle";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Checkbox from "@mui/material/Checkbox";
+import IconRemove from "@mui/icons-material/DeleteForever";
 import {
   DraggableProvidedDraggableProps,
   DraggableProvidedDragHandleProps,
@@ -20,10 +19,11 @@ interface Props {
   expanded: boolean;
   toggleExpanded: () => void;
   children?: ReactNode;
-  toggleEnabled: () => void;
+  remove: () => void;
   draggableRef: (element: HTMLElement | null) => void;
   draggableProps: DraggableProvidedDraggableProps;
   dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
+  canRemove: boolean;
 }
 
 export default function ClassifierCard(props: Props) {
@@ -42,23 +42,26 @@ export default function ClassifierCard(props: Props) {
         }}
         {...props.dragHandleProps}
       >
-        <DragHandle
-          data-testid={`classifier-drag-handle-${props.classifier.typeKey}`}
-          sx={{
-            color: "#a3a3a3",
-          }}
-        />
-
-        <ListItemIcon>
-          <Checkbox
-            inputProps={{
-              'aria-label': `Toggle classifier ${props.classifier.name}`,
-              'data-testid': `classifier-checkbox-${props.classifier.typeKey}`,
-            } as React.InputHTMLAttributes<HTMLInputElement>}
-            checked={props.classifier.enabled}
-            onChange={() => props.toggleEnabled()}
+        {
+          props.expanded && props.canRemove
+            ? <IconButton
+              sx={{
+                marginLeft: -1,
+                marginRight: 1,
+              }}
+              onClick={() => props.remove()}
+            >
+              <IconRemove color="error" />
+            </IconButton>
+            : <DragHandle
+            data-testid={`classifier-drag-handle-${props.classifier.typeKey}`}
+            sx={{
+              color: "var(--color-accent)",
+              marginRight: 2,
+            }}
           />
-        </ListItemIcon>
+        }
+        
         {props.children}
 
         <IconButton data-testid={`classifier-expand-toggle-${props.classifier.typeKey}`} onClick={() => props.toggleExpanded()}>

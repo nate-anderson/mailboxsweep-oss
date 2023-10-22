@@ -10,13 +10,14 @@ import {
 interface Props {
   classifier: SelectedClassifier;
   index: number;
-  toggleEnabled: () => void;
+  remove: () => void;
   expanded: boolean;
   toggleExpanded: () => void;
   setInput: (value: string | null) => void;
   draggableRef: (element: HTMLElement | null) => void;
   draggableProps: DraggableProvidedDraggableProps;
   dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
+  canRemove: boolean;
 }
 
 export default function StringClassifierCard(props: Props) {
@@ -28,10 +29,11 @@ export default function StringClassifierCard(props: Props) {
       expanded={props.expanded}
       toggleExpanded={props.toggleExpanded}
       classifier={props.classifier}
-      toggleEnabled={props.toggleEnabled}
+      remove={props.remove}
       draggableRef={props.draggableRef}
       draggableProps={props.draggableProps}
       dragHandleProps={props.dragHandleProps}
+      canRemove={props.canRemove}
     >
       <ListItemText
         sx={{
@@ -42,8 +44,10 @@ export default function StringClassifierCard(props: Props) {
       </ListItemText>
       <TextField
         value={value}
-        sx={{ maxWidth: "140px", marginRight: 1 }}
+        sx={{ maxWidth: "100px", marginRight: 0 }}
         onChange={(e) => props.setInput(e.target.value)}
+        variant="standard"
+        size="small"
       />
     </ClassifierCard>
   );

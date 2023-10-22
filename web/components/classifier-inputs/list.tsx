@@ -38,7 +38,7 @@ export default function SelectedClassifierList(props: Props) {
 
   return (
     <Box
-      minHeight={((88 + 8) * props.classifiers.length) + "px"}
+      minHeight={((88 + 4) * props.classifiers.length) + "px"}
       data-testid="classifier-drag-drop-region"
     >
       <DragDropContext onDragEnd={onDragEnd}>
@@ -51,12 +51,11 @@ export default function SelectedClassifierList(props: Props) {
                     props.expandedIndex === i ? undefined : i
                   );
 
-                const toggleEnabled = () => {
+                const remove = () => {
                   props.setSelectedClassifiers((cls) =>
-                    cls.map((ecl, j) =>
-                      j === i ? { ...ecl, enabled: !ecl.enabled } : ecl
-                    )
+                    cls.filter((cl, j) => j !== i)
                   );
+                  props.setExpandedIndex(undefined);
                 };
 
                 const setDateInput = (date: Date | null) => {
@@ -72,20 +71,35 @@ export default function SelectedClassifierList(props: Props) {
                   );
                 };
 
+                const setTextInput = (text: string | null) => {
+                  if (!text) {
+                    return;
+                  }
+                  props.setSelectedClassifiers((cls) => 
+                    cls.map((ecl, j) =>
+                      j === i
+                        ? { ...ecl, initValue: text}
+                        : ecl
+                    )
+                  )
+                }
+
                 return (
                   <Draggable key={i} draggableId={i.toString()} index={i}>
                     {(provided, snapshot) =>
-                      renderClassifierListItem(
-                        cl,
-                        i,
-                        toggleEnabled,
-                        props.expandedIndex,
-                        toggleExpanded,
-                        provided.innerRef,
-                        provided.draggableProps,
-                        provided.dragHandleProps,
-                        setDateInput
-                      )
+                      <ClassifierListItem
+                        classifier={cl}
+                        index={i}
+                        remove={remove}
+                        expandedIndex={props.expandedIndex}
+                        toggleExpanded={toggleExpanded}
+                        draggableRef={provided.innerRef}
+                        draggableProps={provided.draggableProps}
+                        dragHandleProps={provided.dragHandleProps}
+                        setDateInput={setDateInput}
+                        setTextInput={setTextInput}
+                        selectedLength={props.classifiers.length}
+                      />
                     }
                   </Draggable>
                 );
@@ -98,64 +112,71 @@ export default function SelectedClassifierList(props: Props) {
   );
 }
 
-const renderClassifierListItem = (
+function ClassifierListItem(props: {
   classifier: SelectedClassifier,
   index: number,
-  toggleEnabled: () => void,
+  remove: () => void,
   expandedIndex: number | undefined,
   toggleExpanded: () => void,
   draggableRef: (element: HTMLElement | null) => void,
   draggableProps: DraggableProvidedDraggableProps,
   dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
   setDateInput?: (date: Date | null) => void,
-  setTextInput?: (text: string | null) => void
-) => {
-  switch (classifier.inputFormat) {
+  setTextInput?: (text: string | null) => void,
+  selectedLength: number,
+}) {
+  switch (props.classifier.inputFormat) {
     case undefined:
       return (
         <CheckboxClassifierCard
-          classifier={classifier}
-          index={index}
-          draggableRef={draggableRef}
-          draggableProps={draggableProps}
-          dragHandleProps={dragHandleProps}
-          toggleEnabled={toggleEnabled}
-          toggleExpanded={toggleExpanded}
-          expanded={index === expandedIndex}
+          key={props.index}
+          classifier={props.classifier}
+          index={props.index}
+          draggableRef={props.draggableRef}
+          draggableProps={props.draggableProps}
+          dragHandleProps={props.dragHandleProps}
+          remove={props.remove}
+          toggleExpanded={props.toggleExpanded}
+          expanded={props.index === props.expandedIndex}
+          canRemove={props.selectedLength > 1}
         />
       );
     case InputFormat.DATE:
-      if (!setDateInput) {
+      if (!props.setDateInput) {
         throw new Error(`setDateInput must be set for a date input classifier`);
       }
       return (
         <DateClassifierCard
-          classifier={classifier}
-          index={index}
-          draggableRef={draggableRef}
-          draggableProps={draggableProps}
-          dragHandleProps={dragHandleProps}
-          toggleEnabled={toggleEnabled}
-          toggleExpanded={toggleExpanded}
-          expanded={index === expandedIndex}
-          setInput={setDateInput}
+          key={props.index}
+          classifier={props.classifier}
+          index={props.index}
+          draggableRef={props.draggableRef}
+          draggableProps={props.draggableProps}
+          dragHandleProps={props.dragHandleProps}
+          remove={props.remove}
+          toggleExpanded={props.toggleExpanded}
+          expanded={props.index === props.expandedIndex}
+          setInput={props.setDateInput}
+          canRemove={props.selectedLength > 1}
         />
       );
     case InputFormat.STRING:
-      if (!setTextInput) {
+      if (!props.setTextInput) {
         throw new Error(`setTextInput must be set for a text input classifier`);
       }
       return (
         <StringClassifierCard
-          classifier={classifier}
-          index={index}
-          draggableRef={draggableRef}
-          draggableProps={draggableProps}
-          dragHandleProps={dragHandleProps}
-          toggleEnabled={toggleEnabled}
-          toggleExpanded={toggleExpanded}
-          expanded={index === expandedIndex}
-          setInput={setTextInput}
+        key={props.index}
+          classifier={props.classifier}
+          index={props.index}
+          draggableRef={props.draggableRef}
+          draggableProps={props.draggableProps}
+          dragHandleProps={props.dragHandleProps}
+          remove={props.remove}
+          toggleExpanded={props.toggleExpanded}
+          expanded={props.index === props.expandedIndex}
+          setInput={props.setTextInput}
+          canRemove={props.selectedLength > 1}
         />
       );
   }
