@@ -200,7 +200,7 @@ export default function Configure() {
                 marginBottom: 3,
               }}
             >
-              <IconButton color="primary" onClick={() => setDialogIsOpen(true)}>
+              <IconButton color="primary" onClick={() => setDialogIsOpen(true)} aria-label="Add classification filter to configuration">
                 <IconPlus />
               </IconButton>
               <Button

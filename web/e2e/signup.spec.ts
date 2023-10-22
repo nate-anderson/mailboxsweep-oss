@@ -131,12 +131,6 @@ test.describe('signup', () => {
                 await expect(page.getByText(text)).toBeVisible();
             }
 
-            const classifierTypeKeys = [
-                "SENDER_DOMAIN",
-                "SENDER_USERNAME",
-                "SEND_DATE"
-            ];
-
             // date input responds to input
             const dateInput = await page.getByTestId('classifier-date-input-SEND_DATE');
             await dateInput.focus();
@@ -173,6 +167,44 @@ test.describe('signup', () => {
             const secondY = (await (await newSecond.elementHandle())?.boundingBox())?.y;
             await expect(secondY).toBeGreaterThan(firstY!);
 
+            // INBOX folder is selected by default
+            const inboxFolderChip = await page.getByTestId("select-chip-folder-INBOX");
+            await expect(inboxFolderChip).toBeVisible();
+            await expect(inboxFolderChip).toHaveAttribute("data-selected", "true");
+
+            // selecting folder works
+            const sentFolderChip = await page.getByTestId("select-chip-folder-Sent");
+            await expect(sentFolderChip).toBeVisible();
+            await expect(sentFolderChip).toHaveAttribute("data-selected", "false");
+            await sentFolderChip.click();
+            await expect(sentFolderChip).toHaveAttribute("data-selected", "true");
+            await sentFolderChip.click();
+            await expect(sentFolderChip).toHaveAttribute("data-selected", "false");
+
+            // add classifier
+            const addClassifierButton = await page.getByLabel("Add classification filter to configuration");
+            await addClassifierButton.click();
+            await expect(page.getByText("Add Classification Filter", { exact: true })).toBeVisible();
+            const addKeywordClassifierButton = await page.getByLabel("Add classifier Subject keyword to custom configuration", { exact: true });
+            await addKeywordClassifierButton.click();
+            await expect(await page.getByText("Subject keyword", { exact: true })).toBeVisible();
+
+            // customize keyword classifier
+            const keywordInput = await page.getByTestId("classifier-string-input-SUBJECT_KEYWORD");
+            const keyword = "promotion";
+            await keywordInput.type(keyword);
+            await expect(keywordInput).toHaveValue(keyword);
+
+            // remove keyword classifier
+            const keywordExpandToggle = await page.getByTestId("classifier-expand-toggle-SUBJECT_KEYWORD");
+            await keywordExpandToggle.click();
+            const removeKeywordButton = await page.getByLabel("Remove classifier Subject keyword from custom configuration", { exact: true });
+            await expect(removeKeywordButton).toBeVisible();
+            await removeKeywordButton.click();
+            await expect(removeKeywordButton).not.toBeVisible();
+            await expect(removeKeywordButton).not.toBeDefined();
+
+            // basic classify
             await page.goBack();
             await page.getByText("Start").click();
             await page.waitForURL(/home/);

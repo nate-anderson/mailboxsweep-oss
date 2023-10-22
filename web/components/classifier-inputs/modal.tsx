@@ -4,14 +4,9 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemButton from "@mui/material/ListItemButton";
-import Collapse from "@mui/material/Collapse";
 import IconPlusBox from "@mui/icons-material/AddBox";
-import IconHelp from "@mui/icons-material/HelpOutline";
-import IconClose from "@mui/icons-material/Close";
 import { ClassifierInfo } from "../../client-gen";
 import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 import IconPerson from "@mui/icons-material/Person";
 import IconGlobe from "@mui/icons-material/Public";
 import IconCalendar from "@mui/icons-material/CalendarToday";
@@ -59,7 +54,8 @@ export function DialogOption(props: DialogOptionProps) {
                         props.onClose()
                         }
                     }
-                    >
+                    aria-label={`Add classifier ${props.classifier.name} to custom configuration`}
+                >
                     <IconPlusBox color="primary" />
                 </IconButton>
             }

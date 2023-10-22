@@ -50,6 +50,7 @@ export default function ClassifierCard(props: Props) {
                 marginRight: 1,
               }}
               onClick={() => props.remove()}
+              aria-label={`Remove classifier ${props.classifier.name} from custom configuration`}
             >
               <IconRemove color="error" />
             </IconButton>

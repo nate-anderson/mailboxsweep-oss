@@ -48,6 +48,9 @@ export default function StringClassifierCard(props: Props) {
         onChange={(e) => props.setInput(e.target.value)}
         variant="standard"
         size="small"
+        inputProps={{
+          'data-testid': `classifier-string-input-${props.classifier.typeKey}`
+        } as React.InputHTMLAttributes<HTMLInputElement>}
       />
     </ClassifierCard>
   );
