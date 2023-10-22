@@ -202,7 +202,6 @@ test.describe('signup', () => {
             await expect(removeKeywordButton).toBeVisible();
             await removeKeywordButton.click();
             await expect(removeKeywordButton).not.toBeVisible();
-            await expect(removeKeywordButton).not.toBeDefined();
 
             // basic classify
             await page.goBack();
