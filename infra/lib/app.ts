@@ -260,7 +260,7 @@ export class AppStack extends cdk.Stack {
             ],
             healthCheck: {
                 command: [ `curl localhost/healthcheck` ],
-                interval: cdk.Duration.seconds(300),  
+                interval: cdk.Duration.seconds(120),  
             },
         });
 
@@ -505,7 +505,7 @@ export class AppStack extends cdk.Stack {
             taskDefinition: serverTaskDefinition,
             cpu: 256,
             memoryReservationMiB: 512,
-            desiredCount: 1,
+            desiredCount: 2,
             protocol: LoadBalancingV2.ApplicationProtocol.HTTPS,
             openListener: true,
             domainZone: hostedZone,
@@ -524,7 +524,7 @@ export class AppStack extends cdk.Stack {
             path: "/healthcheck",
             port: 'traffic-port',
             protocol: LoadBalancingV2.Protocol.HTTP,
-            interval: cdk.Duration.seconds(300),
+            interval: cdk.Duration.seconds(120),
             healthyThresholdCount: 2,
             unhealthyThresholdCount: 2,
         });
