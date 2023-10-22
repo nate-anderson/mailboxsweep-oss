@@ -187,10 +187,10 @@ test.describe('signup', () => {
             await expect(page.getByText("Add Classification Filter", { exact: true })).toBeVisible();
             const addKeywordClassifierButton = await page.getByLabel("Add classifier Subject keyword to custom configuration", { exact: true });
             await addKeywordClassifierButton.click();
-            await expect(await page.getByText("Subject keyword", { exact: true })).toBeVisible();
+            const keywordInput = await page.getByTestId("classifier-string-input-SUBJECT_KEYWORD");
+            await expect(keywordInput).toBeVisible();
 
             // customize keyword classifier
-            const keywordInput = await page.getByTestId("classifier-string-input-SUBJECT_KEYWORD");
             const keyword = "promotion";
             await keywordInput.type(keyword);
             await expect(keywordInput).toHaveValue(keyword);
