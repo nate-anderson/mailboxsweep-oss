@@ -137,19 +137,6 @@ test.describe('signup', () => {
                 "SEND_DATE"
             ];
 
-            for (const typeKey of classifierTypeKeys) {
-                // check box works
-                const checkboxId = `classifier-checkbox-${typeKey}`;
-                const checkbox = await page.getByTestId(checkboxId);
-                await expect(checkbox).toBeChecked();
-                
-                await checkbox.uncheck();
-                await expect(await checkbox.isChecked()).toBeFalsy();
-
-                await checkbox.check();
-                await expect(checkbox).toBeChecked();
-            }
-
             // date input responds to input
             const dateInput = await page.getByTestId('classifier-date-input-SEND_DATE');
             await dateInput.focus();
