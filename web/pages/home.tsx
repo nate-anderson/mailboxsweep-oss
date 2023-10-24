@@ -17,6 +17,7 @@ import ActionLink from "../components/action-link";
 import BackupPrompt1 from "../components/prompt/backup-1";
 import BackupPrompt2 from "../components/prompt/backup-2";
 import LinearProgress from "@mui/material/LinearProgress";
+import Divider from "@mui/material/Divider";
 
 const renderClassificationStatus = (
   status: ClassificationStatus.status | undefined,
@@ -159,6 +160,9 @@ export default function Home() {
   const [errorSnackbar, setErrorMessage] = useSnackbar("error");
   const [allMessagesCount, setAllMessagesCount] = useState<number>(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+  const [deletedMessagesCount, setDeletedMessagesCount] = useState(0);
+  const [markedReadMessagesCount, setmarkedReadMessagesCount] = useState(0); 
+  const [executedRequests, setExecutedRequests] = useState(0);
   const [classificationStatus, setClassificationStatus] = useState<
     ClassificationStatus.status | undefined
   >();
@@ -223,6 +227,13 @@ export default function Home() {
         } else {
           console.log(err);
         }
+      })
+
+    API.getClassifyRequestSummary()
+      .then((res) => {
+        setDeletedMessagesCount(res.deleted);
+        setmarkedReadMessagesCount(res.markedRead);
+        setExecutedRequests(res.executedRequests);
       })
   }, []);
 
@@ -315,13 +326,43 @@ export default function Home() {
                   >
                     Expires {planExpires}
                   </Typography>
-                  <Typography
-                    sx={{
-                      color: "var(--color-accent)",
-                    }}
-                  >
-                    120k messages deleted
-                  </Typography>
+                  {deletedMessagesCount > 0 
+                    ? <Typography
+                        sx={{
+                          color: "var(--color-accent)",
+                        }}
+                      >
+                        {Intl.NumberFormat('en', { notation: 'compact' }).format(deletedMessagesCount)} messages deleted
+                      </Typography>
+                        : <></>
+                  }
+                  {markedReadMessagesCount > 0
+                    ? <Typography
+                        sx={{
+                          color: "var(--color-gray)"
+                        }}
+                      >
+                        {Intl.NumberFormat('en', { notation: 'compact' }).format(markedReadMessagesCount)} messages marked read
+                      </Typography>
+                   : <></>
+                  }
+                  {subscribedPlan
+                    ? <>
+                        <Divider
+                          sx={{
+                            marginY: 1,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            color: "var(--color-accent)"
+                          }}
+                        >
+                          {subscribedPlan.allowedScans - executedRequests} remaining inbox scans
+                        </Typography>
+                      </>
+                    : <></>
+                  }
                 </CardContent>
               : <></>
             }
