@@ -778,7 +778,7 @@ paths:
 
   /inbox/classification/requests:
     get:
-      operationId: getClassificationRequestSummary
+      operationId: getClassifyRequestSummary
       description: Get sums of executed changesets
       responses:
         "200":

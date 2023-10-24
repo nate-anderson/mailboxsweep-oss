@@ -188,7 +188,7 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c ClassificationController) GetClassificationRequestSummary(w http.ResponseWriter, req *http.Request) {
+func (c ClassificationController) GetClassifyRequestSummary(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	summary, err := c.classifyRequestService.SummarizeRequests(ctx)
