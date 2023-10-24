@@ -30,6 +30,9 @@ type Service interface {
 	// change set has been executed, a new scan is needed to do anything else
 	MarkExecutedSuccess(ctx context.Context, count int) error
 	MarkExecutedError(ctx context.Context, count int, err error) error
+
+	// get sums of messages affected by executed changesets
+	SummarizeRequests(ctx context.Context) (*RequestOverview, error)
 }
 
 type DefaultService struct {
@@ -423,4 +426,42 @@ func (s DefaultService) FindLatestRequest(ctx context.Context) (*ClassifyRequest
 	}
 
 	return &latest, nil
+}
+
+type RequestOverview struct {
+	DeletedCount         int
+	MarkedReadCount      int
+	ExecutedRequestCount int
+}
+
+func (s DefaultService) SummarizeRequests(ctx context.Context) (*RequestOverview, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result RequestOverview
+
+	requests, err := s.requestRepo.List(ctx, addr, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range requests {
+		if r.Count == nil {
+			continue
+		}
+		if r.Operation == nil {
+			continue
+		}
+		switch *r.Operation {
+		case "DELETE":
+			result.DeletedCount += *r.Count
+		case "MARK_READ":
+			result.MarkedReadCount += *r.Count
+		}
+		result.ExecutedRequestCount++
+	}
+
+	return &result, nil
 }

@@ -472,6 +472,31 @@ func TestClassifyRequestService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("GetChangesetSums", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			summary, err := service.SummarizeRequests(authedCtx3)
+			assert.ThatError(t, err).IsNil()
+
+			assert.That(t, summary.DeletedCount).Equals(30)
+			assert.That(t, summary.MarkedReadCount).Equals(0)
+			assert.That(t, summary.ExecutedRequestCount).Equals(1)
+		})
+
+		t.Run("failure, unauthenticated", func(t *testing.T) {
+			summary, err := service.SummarizeRequests(ctx)
+			assert.ThatError(t, err).Is(mailboxsweep.ErrUnauthenticated)
+			assert.That(t, summary).Equals(nil)
+		})
+
+		t.Run("no diff", func(t *testing.T) {
+			summary, err := service.SummarizeRequests(authedCtx2)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, summary.DeletedCount).Equals(0)
+			assert.That(t, summary.MarkedReadCount).Equals(0)
+			assert.That(t, summary.ExecutedRequestCount).Equals(0)
+		})
+	})
 }
 
 func ptr[T any](val T) *T {

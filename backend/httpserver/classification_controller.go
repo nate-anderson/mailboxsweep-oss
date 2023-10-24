@@ -188,6 +188,24 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 	c.respond(w, http.StatusOK, resBody)
 }
 
+func (c ClassificationController) GetClassificationRequests(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	summary, err := c.classifyRequestService.SummarizeRequests(ctx)
+	if err != nil {
+		c.respondError(w, err)
+		return
+	}
+
+	resBody := ClassifyRequestsSummary{
+		Deleted:      summary.DeletedCount,
+		MarkedRead:   summary.MarkedReadCount,
+		RequestCount: summary.ExecutedRequestCount,
+	}
+
+	c.respond(w, http.StatusOK, resBody)
+}
+
 func convertClassification(cl classification.Classification) Classification {
 	children := map[string]Classification{}
 	for key, child := range cl.Children {

@@ -244,6 +244,32 @@ func (r *testRequestRecorder) MarkExecutedError(ctx context.Context, count int, 
 	return mailboxsweep.ErrNotFound
 }
 
+func (r *testRequestRecorder) SummarizeRequests(ctx context.Context) (*classifyrequest.RequestOverview, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	list, ok := r.requests[addr]
+	if !ok {
+		return nil, mailboxsweep.ErrNotFound
+	}
+
+	var result classifyrequest.RequestOverview
+
+	for _, r := range list {
+		if *r.Operation == "MARK_READ" && r.Count != nil {
+			result.MarkedReadCount += *r.Count
+			result.ExecutedRequestCount++
+		}
+		if *r.Operation == "DELETED" && r.Count != nil {
+			result.DeletedCount += *r.Count
+			result.ExecutedRequestCount++
+		}
+	}
+
+	return &result, nil
+}
+
 /*
 This is a big ugly test,
 but at least it's effectively a true unit test!
