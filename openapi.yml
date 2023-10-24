@@ -148,13 +148,13 @@ components:
       required:
         - deleted
         - markedRead
-        - requestCount
+        - executedRequests
       properties:
         deleted:
           type: integer
         markedRead:
           type: integer
-        requestCount:
+        executedRequests:
           type: integer
 
     CommitRequest:

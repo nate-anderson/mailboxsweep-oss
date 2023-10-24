@@ -198,9 +198,9 @@ func (c ClassificationController) GetClassificationRequestSummary(w http.Respons
 	}
 
 	resBody := ClassifyRequestsSummary{
-		Deleted:      summary.DeletedCount,
-		MarkedRead:   summary.MarkedReadCount,
-		RequestCount: summary.ExecutedRequestCount,
+		Deleted:          summary.DeletedCount,
+		MarkedRead:       summary.MarkedReadCount,
+		ExecutedRequests: summary.ExecutedRequestCount,
 	}
 
 	c.respond(w, http.StatusOK, resBody)
