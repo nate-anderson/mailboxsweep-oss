@@ -94,6 +94,8 @@ type workerConfig struct {
 
 	// Used to split changesets up among documents
 	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
+
+	ClassifyWorkerPoolSize int `fig:"CLASSIFY_WORKER_POOL_SIZE" default:"5"`
 }
 
 func main() {
@@ -300,6 +302,7 @@ func main() {
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
 		userService,
+		cfg.ClassifyWorkerPoolSize,
 		cfg.ClassifySelectURL,
 	)
 

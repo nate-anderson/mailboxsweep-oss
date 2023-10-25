@@ -183,7 +183,7 @@ func TestWorker(t *testing.T) {
 
 	emailSender := email.TestSender{}
 	completeTemplate := "test_complete_template"
-	wrk := NewClassifyWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService, &emailSender, completeTemplate, userService, "localhost")
+	wrk := NewClassifyWorker(log, client, *queueURL, dlqPub, *dlqURL, classificationService, &emailSender, completeTemplate, userService, 2, "localhost")
 
 	go func() {
 		err = wrk.Work(ctx)
