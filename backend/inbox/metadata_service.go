@@ -6,6 +6,8 @@ import (
 	"mailboxsweep"
 	"mailboxsweep/inboxcredential"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type MetadataService interface {
@@ -20,6 +22,7 @@ type DefaultMetadataService struct {
 	repo              MetadataRepository
 	providerService   ProviderService
 	credentialService inboxcredential.CredentialReadService
+	log               *logrus.Logger
 	recordTTL         time.Duration
 }
 
@@ -27,12 +30,14 @@ func NewMetadataService(
 	repo MetadataRepository,
 	providerService ProviderService,
 	credentialService inboxcredential.CredentialReadService,
+	logger *logrus.Logger,
 	recordTTL time.Duration,
 ) *DefaultMetadataService {
 	return &DefaultMetadataService{
 		repo,
 		providerService,
 		credentialService,
+		logger,
 		recordTTL,
 	}
 }
@@ -53,20 +58,34 @@ func (s DefaultMetadataService) Get(ctx context.Context) (*Metadata, error) {
 		return nil, err
 	}
 
-	credential, err := s.credentialService.FindCredential(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// cache miss
 	provider, err := s.providerService.GetProvider(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
 
+	credential, err := s.credentialService.FindCredential(ctx)
+	if err != nil {
+		if errors.Is(err, mailboxsweep.ErrNoStoredCredential) {
+			// add context so frontend can decide where to redirect
+			return nil, provider.WrapError(err)
+		}
+		return nil, err
+	}
+
+	// @TODO: remove this! 10-08-2023
+	if gmailCred, ok := credential.(*inboxcredential.GmailInboxCredential); ok {
+		s.log.Infof("pre-decrypt credential refresh token empty? %v (len = %d, encrypted = %v)", gmailCred.RefreshToken == "", len(gmailCred.RefreshToken), gmailCred.Encrypted)
+	}
+
 	password, err := s.credentialService.DecryptCredential(ctx, credential)
 	if err != nil {
 		return nil, err
+	}
+
+	// @TODO: remove this! 10-08-2023
+	if gmailDecrypted, ok := password.(*inboxcredential.GmailInboxCredential); ok {
+		s.log.Infof("post-decrypt credential refresh token empty? %v (len = %d, encrypted = %v)", gmailDecrypted.RefreshToken == "", len(gmailDecrypted.RefreshToken), gmailDecrypted.Encrypted)
 	}
 
 	mailbox, err := provider.Login(ctx, addr, password)

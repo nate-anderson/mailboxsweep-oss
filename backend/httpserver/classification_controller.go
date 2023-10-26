@@ -30,6 +30,8 @@ func NewClassificationController(classificationService classification.Service, c
 	}
 }
 
+const maxClassifiers = 10
+
 func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var reqBody StartInboxClassifyRequest
@@ -48,6 +50,11 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 			TypeKey:   cl.TypeKey,
 			InitValue: initValue,
 		}
+	}
+
+	if len(serializedClassifiers) > maxClassifiers {
+		c.respondError(w, fmt.Errorf("cannot classify with more than %d filters", maxClassifiers), withOverrideStatusCode(http.StatusBadRequest))
+		return
 	}
 
 	err := c.classificationService.EnqueueClassify(
@@ -139,87 +146,62 @@ func (c ClassificationController) GetClassificationStatus(w http.ResponseWriter,
 
 	resBody := ClassificationStatusResponse{
 		Address: addr,
-		Status:  &ClassificationStatus{},
 	}
 
-	openRequests, err := c.classifyRequestService.FindOpenRequests(ctx)
-	if err == nil {
-		// if there is an open request, respond with that
-		var open classifyrequest.ClassifyRequest
-		if len(openRequests) == 1 {
-			open = openRequests[0]
-			// otherwise return the most recent
-		} else {
-			for _, r := range openRequests {
-				if r.RequestedAt > open.RequestedAt {
-					open = r
-				}
-			}
-		}
-
-		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
-
-		if open.Operation != nil {
-			o, err := operationToAPI(changeset.UpdateOperation(*open.Operation))
-			if err != nil {
-				c.respondError(w, err)
-				return
-			}
-			resBody.Status.Operation = &o
-		}
-
-		if open.Error != nil {
-			resBody.Status.Status = Errored
-			resBody.Status.Details = open.Error
-		} else if open.CompletedAtUnix != nil {
-			resBody.Status.Status = Complete
-		} else {
-			resBody.Status.Status = InProgress
-		}
-		resBody.Status.StartedAt = time.Unix(open.RequestedAt, 0).Format(time.RFC3339)
-		c.respond(w, http.StatusOK, resBody)
-		return
-
-	} else {
-		if !errors.Is(err, classifyrequest.ErrNoOpenRequests) {
-			c.respondError(w, err)
+	latestClassifyRequest, err := c.classifyRequestService.FindLatestRequest(ctx)
+	if err != nil {
+		if errors.Is(err, classifyrequest.ErrNoRequests) {
+			c.respond(w, http.StatusOK, resBody)
 			return
 		}
+		c.respondAuthError(w, err)
+		return
+	}
+	resBody.Status = &ClassificationStatus{}
+	resBody.Status.StartedAt = time.Unix(latestClassifyRequest.RequestedAt, 0).Format(time.RFC3339)
+	status, _ := latestClassifyRequest.Status()
+	switch status {
+	case classifyrequest.StatusClassifying:
+		resBody.Status.Status = Classifying
+	case classifyrequest.StatusClassified:
+		resBody.Status.Status = Classified
+	case classifyrequest.StatusExecuting:
+		resBody.Status.Status = Executing
+	case classifyrequest.StatusExecuted:
+		resBody.Status.Status = Executed
+	default:
+		resBody.Status.Status = Errored
+		resBody.Status.Details = ptr(fmt.Sprintf("Unknown classify status %d", status))
 	}
 
-	closedRequests, err := c.classifyRequestService.FindCompletedRequests(ctx)
+	if latestClassifyRequest.Error != nil {
+		resBody.Status.Details = latestClassifyRequest.Error
+	}
+
+	if latestClassifyRequest.Operation != nil {
+		resBody.Status.Operation = ptr(Delete)
+		if *latestClassifyRequest.Operation == string(changeset.MarkRead) {
+			resBody.Status.Operation = ptr(MarkRead)
+		}
+	}
+
+	c.respond(w, http.StatusOK, resBody)
+}
+
+func (c ClassificationController) GetClassifyRequestSummary(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	summary, err := c.classifyRequestService.SummarizeRequests(ctx)
 	if err != nil {
 		c.respondError(w, err)
 		return
 	}
 
-	var closed classifyrequest.ClassifyRequest
-	if len(closedRequests) == 0 {
-		resBody.Status = nil
-		c.respond(w, http.StatusOK, resBody)
-		return
-	} else if len(closedRequests) == 1 {
-		closed = closedRequests[0]
-	} else {
-		// if multiple completed requests, use the most recent
-		for _, r := range closedRequests {
-			if r.RequestedAt > closed.RequestedAt {
-				closed = r
-			}
-		}
+	resBody := ClassifyRequestsSummary{
+		Deleted:          summary.DeletedCount,
+		MarkedRead:       summary.MarkedReadCount,
+		ExecutedRequests: summary.ExecutedRequestCount,
 	}
-
-	if closed.Error != nil {
-		resBody.Status.Status = Errored
-		resBody.Status.Details = closed.Error
-	} else if closed.ExecutedAtUnix != nil {
-		resBody.Status.Status = Executed
-	} else if closed.ExecuteStartedAtUnix != nil {
-		resBody.Status.Status = Executing
-	} else {
-		resBody.Status.Status = Complete
-	}
-	resBody.Status.StartedAt = time.Unix(closed.RequestedAt, 0).Format(time.RFC3339)
 
 	c.respond(w, http.StatusOK, resBody)
 }

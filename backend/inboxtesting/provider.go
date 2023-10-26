@@ -2,6 +2,7 @@ package inboxtesting
 
 import (
 	"context"
+	"fmt"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 )
@@ -47,4 +48,8 @@ func (t *TestProvider) Login(_ context.Context, username string, credential inbo
 
 	t.Inboxes[username] = inbox
 	return inbox, nil
+}
+
+func (t *TestProvider) WrapError(err error) error {
+	return fmt.Errorf("test provider error: %w", err)
 }

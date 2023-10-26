@@ -94,6 +94,8 @@ type workerConfig struct {
 
 	// Used to split changesets up among documents
 	ChangeSetPageIDHashMod int64 `fig:"CHANGESET_PAGE_ID_HASH_MOD" default:"11"`
+
+	ClassifyWorkerPoolSize int `fig:"CLASSIFY_WORKER_POOL_SIZE" default:"5"`
 }
 
 func main() {
@@ -166,13 +168,13 @@ func main() {
 		ListMessagesCallCost: cfg.GmailListMessagesCallCost,
 		GetMessageCallCost:   cfg.GmailGetMessageCallCost,
 	}
-	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, log)
+	providerService := inbox.NewProviderService(imapServerService, usageRepo, cfg.GoogleClientID, cfg.GoogleClientSecret, gmailRateLimits, false, log)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, cfg.DynamoDBTable)
 	if err != nil {
 		log.Fatalf("failed to initialize user repo: %s", err)
 	}
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, log)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -232,12 +234,12 @@ func main() {
 		metadataRepo,
 		providerService,
 		credentialService,
+		log,
 		time.Duration(cfg.InboxMetadataTTLMinutes)*time.Minute,
 	)
 
 	classificationService := classification.NewService(
 		credentialService,
-		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,
@@ -256,10 +258,11 @@ func main() {
 	if cfg.Env == "staging" || cfg.Env == "prod" {
 		log.WithField("environment", cfg.Env).Info("using SES email sender")
 		sesClient, err := mailboxsweep.ConnectAWSService(mailboxsweep.AWSServiceConfig{
-			ServiceHost:   cfg.SQSHost,
-			ServicePort:   cfg.SQSPort,
-			ServiceRegion: cfg.SQSRegion,
+			ServiceHost:   cfg.SESHost,
+			ServicePort:   cfg.SESPort,
+			ServiceRegion: cfg.SESRegion,
 			Environment:   cfg.Env,
+			XRayEnabled:   false,
 		}, sesv2.NewFromConfig)
 		if err != nil {
 			log.Fatal(err)
@@ -267,6 +270,9 @@ func main() {
 		}
 
 		emailSender = email.NewSESSender(sesClient, cfg.EmailReplyToAddress, cfg.EmailSenderName, cfg.SESConfigSetName)
+	} else {
+		log.WithField("environment", cfg.Env).Info("using log email sender")
+		emailSender = email.NewLogSender(log)
 	}
 
 	changesetRepo, err := changeset.NewDynamoChangesetRepository(db, cfg.DynamoDBTable, uint64(cfg.ChangeSetPageIDHashMod))
@@ -296,6 +302,7 @@ func main() {
 		emailSender,
 		cfg.SESClassifyCompleteEmailTemplateName,
 		userService,
+		cfg.ClassifyWorkerPoolSize,
 		cfg.ClassifySelectURL,
 	)
 

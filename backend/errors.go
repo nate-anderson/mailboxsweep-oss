@@ -156,10 +156,52 @@ func InsufficientPermissionsError(parent error) error {
 	return fmt.Errorf("%w: %w", ErrInsufficientPermissions, parent)
 }
 
-func GoogleReauthenticationRequiredError() error {
-	return ErrGoogleReauthenticationRequired
+func GoogleReauthenticationRequiredError(parent error) error {
+	return fmt.Errorf("%w: %w", ErrGoogleReauthenticationRequired, parent)
 }
 
 func TermsAndConditionsNotAgreedError() error {
 	return ErrTermsAndConditionsNotAgreed
+}
+
+// Provider-specific errors
+type ProviderError struct {
+	Parent   error
+	Provider string
+}
+
+func (e ProviderError) Error() string {
+	return fmt.Sprintf("%s error: %s", e.Provider, e.Parent.Error())
+}
+
+func (e ProviderError) Unwrap() []error {
+	var pErr error
+	switch e.Provider {
+	case "gmail":
+		pErr = ProviderErrorGmail
+	case "imap":
+		pErr = ProviderErrorIMAP
+	default:
+		pErr = errors.New("error from unknown provider")
+	}
+	return []error{e.Parent, pErr}
+}
+
+var (
+	ProviderErrorGmail = errors.New("gmail error")
+	ProviderErrorIMAP  = errors.New("imap error")
+)
+
+func GmailError(parent error) error {
+	return &ProviderError{
+		Parent:   parent,
+		Provider: "gmail",
+	}
+}
+
+func IMAPError(parent error) error {
+	return &ProviderError{
+		Parent:   parent,
+		Provider: "imap",
+	}
 }

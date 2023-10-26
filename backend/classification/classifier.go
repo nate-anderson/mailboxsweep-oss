@@ -243,7 +243,7 @@ func (c SubjectKeywordClassifier) Info() ClassifierInfo {
 	return ClassifierInfo{
 		Name:        "Subject keyword",
 		TypeKey:     TypeKeySubjectKeyword,
-		Description: "Classify messages by subject keyword",
+		Description: "Classify messages by whether their subject contains a specified keyword",
 		TakesInput:  true,
 		InputFormat: ptr(InputString),
 		InputLabel:  ptr("Keyword"),

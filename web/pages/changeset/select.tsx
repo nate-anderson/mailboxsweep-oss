@@ -27,7 +27,7 @@ import { Selection } from "../../lib/selection";
 import debounce from "debounce";
 import { useRouter } from "next/router";
 import PrivatePage from "../../auth";
-import CircularProgress from "@mui/material/CircularProgress";
+import { LoadingSpinner } from "../../components/loading-spinner";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 function ToggleModeSwitch(props: {
@@ -53,6 +53,10 @@ function ToggleModeSwitch(props: {
           disabled={props.numSelected <= 0}
           onClick={() => props.onClickSubmit(props.isDeleteMode)}
           loading={props.isLoading}
+          aria-label={props.isDeleteMode
+            ? `Delete ${props.numSelected.toLocaleString()} messages`
+            : `Mark ${props.numSelected.toLocaleString()} messages read`}
+          data-testid="button-commit"
         >
           {props.isDeleteMode
             ? `Delete ${props.numSelected.toLocaleString()}`
@@ -68,6 +72,10 @@ function ToggleModeSwitch(props: {
             checked={props.isDeleteMode}
             color={props.isDeleteMode ? "error" : "primary"}
             sx={{ marginLeft: 0 }}
+            inputProps={{
+              "aria-label": `Switch from ${props.isDeleteMode ? "delete mode" : "mark read mode"} to ${props.isDeleteMode ? "mark read mode" : "delete mode"}`
+            }}
+            data-testid="toggle-selection-mode"
           />
           <IconDeleteForever
             style={{
@@ -90,6 +98,7 @@ interface ListProps {
   pathPrefix: string[];
   classificationTree: ClassificationTree | undefined;
   selectedNodes: Selection;
+  isDeleteMode: boolean;
 }
 
 function List(props: ListProps) {
@@ -138,6 +147,7 @@ function List(props: ListProps) {
               isChildChecked={isChildChecked}
               onCheck={(v: boolean) => {}}
               classification={props.classificationTree}
+              isDeleteMode={props.isDeleteMode}
             />
           );
         })}
@@ -145,18 +155,7 @@ function List(props: ListProps) {
   );
 }
 
-function LoadingSpinner() {
-  return <Box
-    sx={{
-      marginTop: "25vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    }}
-  >
-    <CircularProgress />
-  </Box>
-}
+
 
 export default function Select() {
   const [classificationRoot, setClassificationRoot] = useState<
@@ -322,6 +321,7 @@ export default function Select() {
           const apiError = error as ApiError;
           setError(apiError.message);
         }
+        console.log({ error });
       })
       .finally(() => {
         setIsLoadingClassificationSummary(false);
@@ -437,6 +437,7 @@ export default function Select() {
                   pathPrefix={currentPath}
                   classificationTree={classificationRoot}
                   selectedNodes={getSelection()}
+                  isDeleteMode={isDeleteMode}
                 />
 
                 <Box

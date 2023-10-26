@@ -128,7 +128,7 @@ func (s DefaultLinkService) ValidateLoginLink(ctx context.Context, token, signat
 
 	link, err := s.repo.Find(ctx, token)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to find link by token: %w", err)
 	}
 
 	err = s.repo.InvalidateByUserUUID(ctx, link.UserUUID)

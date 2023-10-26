@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classifyrequest"
-	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxcredential"
 	"mailboxsweep/inboxuser"
@@ -26,7 +25,6 @@ type Service interface {
 
 type DefaultService struct {
 	credentialService      inboxcredential.CredentialReadService
-	imapServerService      imapserver.Service
 	repo                   ClassificationRepository
 	providerService        inbox.ProviderService
 	classifyRequestService classifyrequest.Service
@@ -40,7 +38,6 @@ type DefaultService struct {
 
 func NewService(
 	credentialService inboxcredential.CredentialReadService,
-	imapServerService imapserver.Service,
 	repo ClassificationRepository,
 	providerService inbox.ProviderService,
 	classifyRequestService classifyrequest.Service,
@@ -53,7 +50,6 @@ func NewService(
 ) *DefaultService {
 	return &DefaultService{
 		credentialService,
-		imapServerService,
 		repo,
 		providerService,
 		classifyRequestService,
@@ -91,7 +87,11 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 					err,
 				)
 		} else {
-			log.Info("completed classification")
+			if err != nil {
+				log.WithError(err).Error("completed classification with error")
+			} else {
+				log.Info("completed classification")
+			}
 		}
 	}()
 
@@ -116,8 +116,8 @@ func (s DefaultService) Classify(ctx context.Context, folders []string, classifi
 		return err
 	}
 
-	// confirm there is an outstanding request from the
-	_, err = s.classifyRequestService.FindOpenRequests(ctx)
+	// confirm there is an outstanding classify request from the user
+	_, err = s.classifyRequestService.FindLatestIncompleteRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (s DefaultService) EnqueueClassify(ctx context.Context, folders []string, c
 	if err != nil {
 		return err
 	}
-	completedScans, err := s.classifyRequestService.FindCompletedRequests(ctx)
+	completedScans, err := s.classifyRequestService.FindClassifiedRequests(ctx)
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func TestMetadataService(t *testing.T) {
@@ -54,6 +56,7 @@ func TestMetadataService(t *testing.T) {
 		repo,
 		providerService,
 		credentialService,
+		logrus.New(),
 		time.Minute,
 	)
 

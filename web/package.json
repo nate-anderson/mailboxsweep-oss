@@ -7,12 +7,15 @@
     "build": "next build",
     "build:prod": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.mailboxsweep.com ENV=prod next build",
     "build:staging": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.staging.mailboxsweep.com ENV=staging next build",
+    "build:e2e": "MAILBOXSWEEP_API_PORT=8080 MAILBOXSWEEP_API_HOST=localhost MAILBOXSWEEP_API_PROTO=http ENV=dev next build",
     "robots:staging": "cp staging.robots.txt ./out/robots.txt",
     "robots:prod": "cp prod.robots.txt ./out/robots.txt",
     "start": "next start",
     "lint": "next lint",
     "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "serve": "serve -p 3000 out"
   },
   "dependencies": {
     "@date-io/date-fns": "^2.16.0",
@@ -21,8 +24,9 @@
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.134",
     "@mui/material": "^5.13.1",
-    "@mui/x-date-pickers": "5.0.15",
+    "@mui/x-date-pickers": "6.16.3",
     "@next/font": "13.4.10",
+    "axios": "^1.5.0",
     "currency.js": "^2.0.4",
     "date-fns": "^2.30.0",
     "debounce": "^1.2.1",
@@ -37,6 +41,7 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.37.1",
     "@types/debounce": "^1.2.1",
     "@types/node": "20.2.5",
     "@types/react": "18.2.12",
@@ -46,6 +51,7 @@
     "eslint-config-next": "^13.4.10",
     "openapi-typescript-codegen": "^0.24.0",
     "prettier": "^2.8.8",
+    "serve": "^14.2.1",
     "yaml": "^2.3.1"
   }
 }

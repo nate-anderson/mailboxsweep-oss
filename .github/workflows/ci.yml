@@ -1,76 +1,30 @@
 name: CI
 
+#
+# Continuous Integration
+# Branch `develop` shall always represent the version of the app deployed in the staging environment,
+# and be considered the release candidate for production.
+# When a branch is merged into develop, run every linting tool and test against it,
+# then deploy it automatically to staging.
+#
+
 on:
   push:
     branches: [develop]
 
 jobs:
   build-backend:
-    name: Build, lint and test backend
-    runs-on: ubuntu-latest
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
 
-    services:
-      localstack:
-        image: localstack/localstack
-        ports:
-          - "4566:4566" # LocalStack Gateway
-          - "4510-4559:4510-4559" # external services port range
-        volumes:
-          - "localstack:/tmp/localstack"
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-go@v4
-        with:
-          go-version: "^1.20.0"
-          cache-dependency-path: backend/go.sum
-
-      - name: Install server generator
-        working-directory: backend
-        run: make install_openapi_generator
-
-      - name: Generate server code
-        working-directory: backend
-        run: make http_scaffold
-
-      - name: Lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          working-directory: backend
-          version: latest
-          skip-pkg-cache: true
-          skip-build-cache: true
-          args: --timeout=10m
-
-      - name: Test
-        working-directory: backend
-        run: go test ./... -timeout=3m
-        env:
-          AWS_ACCESS_KEY_ID: test_none
-          AWS_SECRET_ACCESS_KEY: test_none
-          TEST_ADDRESS: ${{ secrets.TEST_ADDRESS }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-          TEST_IMAP_HOST: imap.gmail.com
-          TEST_SMTP_HOST: smtp.gmail.com
-          TEST_IMAP_PORT: 993
-          TEST_SMTP_PORT: 587
-          DYNAMODB_HOST: localhost
-          S3_HOST: localhost
-
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/golang@master
-        continue-on-error: true
-        with:
-          args: --all-projects
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  test-e2e:
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+    secrets: inherit
 
   build-push-server-image:
     name: Build and push server image to ECR
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [build-backend]
+    needs: [build-backend, test-e2e]
     steps:
       - uses: actions/checkout@v3
 
@@ -101,7 +55,7 @@ jobs:
     name: Build and push worker image to ECR
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [build-backend]
+    needs: [build-backend, test-e2e]
     steps:
       - uses: actions/checkout@v3
 
@@ -136,6 +90,8 @@ jobs:
     name: Build and upload web frontend artifacts
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    # all tests must pass before deploying new frontend artifacts
+    needs: [test-e2e, build-backend]
     steps:
       - uses: actions/checkout@v3
 

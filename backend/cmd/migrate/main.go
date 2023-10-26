@@ -40,7 +40,7 @@ type migrateConfig struct {
 func main() {
 	cmd := os.Args[1]
 
-	envDriver, err := fig.NewEnvironmentDriver(".env")
+	envDriver, err := fig.NewOptionalFileEnvironmentDriver(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,8 +75,8 @@ func main() {
 		}
 		log.Printf("Created table %s!\n", cfg.DynamoDBTable)
 	case "s3":
-		if cfg.Env != "dev" {
-			log.Fatal("cannot create bucket this way unless ENV == dev")
+		if cfg.Env != "dev" && cfg.Env != "e2e" {
+			log.Fatal("cannot create bucket this way unless ENV in (dev|e2e)")
 		}
 		awsCfg := mailboxsweep.AWSServiceConfig{
 			ServiceHost:   cfg.S3Host,

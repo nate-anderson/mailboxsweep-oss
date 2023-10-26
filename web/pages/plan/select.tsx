@@ -1,5 +1,5 @@
 import { API } from "../../client";
-import { Plan } from "../../client-gen";
+import { ApiError, Plan } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -11,16 +11,17 @@ import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";
 import PrivatePage from "../../auth";
 import PageHeader from "../../components/page-header";
+import { useSnackbar } from "../../components/snackbar";
 
 export default function SelectPlan() {
   const [plans, setPlans] = useState<Plan[] | undefined>();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [errorSnackbar, setErrorMessage] = useSnackbar("error", 5000);
 
   useEffect(() => {
     API.listPlans()
       .then((res) => {
-        setPlans(res.plans);
+        setPlans(res.plans.sort((a, b) => a.displayIndex - b.displayIndex));
       })
       .catch((err) => {
         console.log(err);
@@ -28,16 +29,26 @@ export default function SelectPlan() {
   }, []);
 
   const submit = async (plan: string) => {
-    try {
-      const res = await API.initiatePayment({
-        plan,
-      });
-      setErrorMessage(undefined);
+    API.initiatePayment({
+      plan,
+    })
+    .then((res) => {
+      setErrorMessage("");
       setShowSuccess(true);
-      window.location.href = res.checkoutUrl!;
-    } catch (error) {
-      setErrorMessage(error as string);
-    }
+      setTimeout(() => document.location.href = res.checkoutUrl!, 250);
+    })
+    .catch((error) => {
+      if (error instanceof ApiError) {
+        const e = error as ApiError;
+        if (e.status == 422) {
+          setErrorMessage("Your account already has an active plan.");
+        } else {
+          setErrorMessage(error.message);
+        }
+        return;
+      }
+      setErrorMessage(JSON.stringify(error));
+    });
   };
 
   return (
@@ -51,6 +62,7 @@ export default function SelectPlan() {
           }}
         >
           <CssBaseline />
+          {errorSnackbar}
           <PageHeader
             showStepper={true}
             title="Choose a Plan"

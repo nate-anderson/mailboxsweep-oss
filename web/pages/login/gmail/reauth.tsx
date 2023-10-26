@@ -24,7 +24,7 @@ export default function Reauth() {
         }
       })
       .catch(console.error)
-  }, [router.isReady, router.query, router, API]);
+  }, []);
 
   return (
     <Container component="main">

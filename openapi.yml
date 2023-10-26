@@ -111,8 +111,8 @@ components:
         status:
           type: string
           enum:
-            - in_progress
-            - complete
+            - classifying
+            - classified
             - errored
             - executing
             - executed
@@ -142,6 +142,20 @@ components:
         initValue:
           type: string
           description: the optional initializer for thie classifier
+
+    ClassifyRequestsSummary:
+      type: object
+      required:
+        - deleted
+        - markedRead
+        - executedRequests
+      properties:
+        deleted:
+          type: integer
+        markedRead:
+          type: integer
+        executedRequests:
+          type: integer
 
     CommitRequest:
       type: object
@@ -327,6 +341,7 @@ components:
         - allowedScans
         - durationDays
         - priceInCents
+        - displayIndex
       properties:
         key:
           type: string
@@ -343,6 +358,8 @@ components:
         durationDays:
           type: integer
         priceInCents:
+          type: integer
+        displayIndex:
           type: integer
 
     Sender:
@@ -758,6 +775,18 @@ paths:
           description: Bad or unconfirmed request
         "500":
           description: Internal server error
+
+  /inbox/classification/requests:
+    get:
+      operationId: getClassifyRequestSummary
+      description: Get sums of executed changesets
+      responses:
+        "200":
+          description: Success, sums
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassifyRequestsSummary"
 
   /inbox/classification:
     post:

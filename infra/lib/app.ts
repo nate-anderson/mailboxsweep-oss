@@ -21,13 +21,13 @@ import Resources from "../lib/resources";
 import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
 import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
-import { CloudwatchDashboard } from './cloudwatch-dashboard';
-import * as ServiceDiscovery from "aws-cdk-lib/aws-servicediscovery";
+import { CloudwatchDashboardStack } from './cloudwatch-dashboard';
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
 import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
+import { AlarmsStack } from './alarms';
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
@@ -168,22 +168,12 @@ export class AppStack extends cdk.Stack {
             // Generic app config
             ENV: props.environmentName,
             HTTP_PORT: Port.HTTP.toString(),
-            STAGING_ALLOWED_USERS: [
-                "nathanid95@gmail.com",
-                "camerah91@gmail.com",
-                "citrusnewsletter@gmail.com",
-                "vanover0333@gmail.com",
-                "oauthtest121@gmail.com",
-                "duanerobbi@gmail.com",
-                "vcsoaringeagle@gmail.com",
-                "robbi.anderson@gmail.com",
-                "robbi.anderson@yahoo.com"
-            ].join(","), 
+
             DEV_MODE: "false",
             CHANGESET_PAGE_ID_HASH_MOD: "11",
             INBOX_METADATA_TTL_MINUTES: "30",
             CLASSIFICATION_PAGE_SIZE: "30",
-            CORS_ALLOWED_ORIGIN: `https://${webUrl}`,
+            CORS_ALLOWED_ORIGINS: `https://${webUrl}`,
             MINUTES_BETWEEN_OPEN_REQUESTS: "120",
             MINUTES_BETWEEN_CLOSED_REQUESTS: "10",
 
@@ -270,7 +260,7 @@ export class AppStack extends cdk.Stack {
             ],
             healthCheck: {
                 command: [ `curl localhost/healthcheck` ],
-                interval: cdk.Duration.seconds(300),  
+                interval: cdk.Duration.seconds(120),  
             },
         });
 
@@ -515,7 +505,7 @@ export class AppStack extends cdk.Stack {
             taskDefinition: serverTaskDefinition,
             cpu: 256,
             memoryReservationMiB: 512,
-            desiredCount: 1,
+            desiredCount: 2,
             protocol: LoadBalancingV2.ApplicationProtocol.HTTPS,
             openListener: true,
             domainZone: hostedZone,
@@ -534,7 +524,7 @@ export class AppStack extends cdk.Stack {
             path: "/healthcheck",
             port: 'traffic-port',
             protocol: LoadBalancingV2.Protocol.HTTP,
-            interval: cdk.Duration.seconds(300),
+            interval: cdk.Duration.seconds(120),
             healthyThresholdCount: 2,
             unhealthyThresholdCount: 2,
         });
@@ -642,7 +632,7 @@ export class AppStack extends cdk.Stack {
             destinationKeyPrefix: "/",
         });
 
-        const dashboard = new CloudwatchDashboard(this, `dashboard`, {
+        const dashboard = new CloudwatchDashboardStack(this, `dashboard`, {
             ...props,
             table: tableStack.table,
             queue: classifyQueues.queue,
@@ -677,5 +667,15 @@ export class AppStack extends cdk.Stack {
                 }
             }
         })
+
+        const alarms = new AlarmsStack(this, `alarms`, {
+            ...props,
+            emailAddr: "tech@mailboxsweep.com",
+            commitQueue: commitChangesetQueues.queue,
+            commitDLQ: commitChangesetQueues.dlq,
+            classifyQueue: classifyQueues.queue,
+            classifyDLQ: classifyQueues.dlq,
+            loadBalancer: loadBalancedAPIService.loadBalancer,
+        });
     }
 }

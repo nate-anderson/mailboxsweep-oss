@@ -21,6 +21,7 @@ export interface LeafProps {
   isChecked: boolean;
   isChildChecked: boolean;
   classification: ClassificationTree | undefined;
+  isDeleteMode: boolean;
 }
 
 export default function Leaf(props: LeafProps) {
@@ -56,6 +57,9 @@ export default function Leaf(props: LeafProps) {
           }}
           checked={props.isChecked}
           indeterminate={props.isChildChecked}
+          inputProps={{
+            "aria-label": `${props.isChecked ? "Deselect" : "Select"} messages in group ${props.label} to ${props.isDeleteMode ? "delete" : "mark read"}`,
+          }}
         />
 
         <Stack
@@ -113,7 +117,10 @@ export default function Leaf(props: LeafProps) {
           </span>
         </Stack>
         {props.childCount > 0 ? (
-          <IconButton onClick={() => props.onClickExpand(props.id)}>
+          <IconButton 
+            aria-label={`Expand category ${props.label}`}
+            onClick={() => props.onClickExpand(props.id)}
+          >
             <IconChevronRight />
           </IconButton>
         ) : undefined}

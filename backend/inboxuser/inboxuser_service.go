@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mcnijman/go-emailaddress"
+	"github.com/sirupsen/logrus"
 )
 
 type Service interface {
@@ -24,7 +25,7 @@ type Service interface {
 	StorePayment(ctx context.Context, payment Payment) error
 }
 
-func NewService(repo InboxUserRepository) (DefaultService, error) {
+func NewService(repo InboxUserRepository, log *logrus.Logger) (DefaultService, error) {
 	agreements, err := readAgreements()
 	if err != nil {
 		return DefaultService{}, err
@@ -32,28 +33,39 @@ func NewService(repo InboxUserRepository) (DefaultService, error) {
 	return DefaultService{
 		repo:       repo,
 		agreements: agreements,
+		log:        log,
 	}, nil
 }
 
 type DefaultService struct {
 	repo       InboxUserRepository
 	agreements map[Agreement]AgreementDocument
+	log        *logrus.Logger
 }
 
+var ErrUserExists = errors.New("user already exists")
+
 func (s DefaultService) Store(ctx context.Context, address string) (*InboxUser, error) {
-	_, err := emailaddress.Parse(address)
+	cleanAddr := strings.TrimSpace(address)
+
+	_, err := emailaddress.Parse(cleanAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := NewInboxUser(strings.TrimSpace(address))
+	user, err := NewInboxUser(cleanAddr)
 	if err != nil {
 		return nil, err
 	}
 
+	// Store will fail if user already exists (constraint fails)
 	if _, err = s.repo.Store(ctx, *user); err != nil {
 		return nil, err
 	}
+
+	s.log.
+		WithField("address", user.Address).
+		Info("user created")
 
 	return s.repo.FindByAddress(ctx, address)
 }

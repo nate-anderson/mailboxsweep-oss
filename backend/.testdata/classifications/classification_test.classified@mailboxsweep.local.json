@@ -1,0 +1,2229 @@
+{
+    "meta": {
+        "created": "2023-10-04T20:08:19.098420135-04:00",
+        "validity_keys": {
+            "INBOX": 0
+        }
+    },
+    "classification": {
+        "dimension": "",
+        "typeKey": "",
+        "label": "All Messages",
+        "subjectPreviews": null,
+        "count": 3894,
+        "unreadCount": 3550,
+        "children": {
+            "domain=test1.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test1.com",
+                "subjectPreviews": null,
+                "count": 61,
+                "unreadCount": 55,
+                "children": {
+                    "sender=no-reply@test1.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Google (no-reply@test1.com)",
+                        "subjectPreviews": null,
+                        "count": 61,
+                        "unreadCount": 55,
+                        "children": {
+                            "before_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "Before 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "16f50243a9a05fd6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16f50243a9a05fd6",
+                                        "sendDate": "2019-12-28T20:43:12-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16e517c20ef89b7b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16e517c20ef89b7b",
+                                        "sendDate": "2019-11-09T13:45:18-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16d83670430f4915",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16d83670430f4915",
+                                        "sendDate": "2019-09-30T14:20:28-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16d7365981bccae0",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16d7365981bccae0",
+                                        "sendDate": "2019-09-26T21:43:07-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16d61804dcd6fff8",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16d61804dcd6fff8",
+                                        "sendDate": "2019-09-24T00:21:00-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16d61805370c1974",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16d61804dcd6fff8",
+                                        "sendDate": "2019-09-24T00:20:55-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "16d61804c3a71393",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "16d61804c3a71393",
+                                        "sendDate": "2019-09-24T00:21:00-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 7,
+                                "unreadCount": 7,
+                                "rank_index": null
+                            },
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "18af0c980453ddb3",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "accounts.google.com"
+                                        },
+                                        "inReplyTo": "18aee51a0ccabb39",
+                                        "sendDate": "2023-10-02T10:27:31-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18afd280b70429d4",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18afd280b70429d4",
+                                        "sendDate": "2023-10-04T20:06:13-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18af5d25b43ee8ab",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18af5d25b43ee8ab",
+                                        "sendDate": "2023-10-03T09:55:17-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18acd24a08c10bbf",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18acd24a08c10bbf",
+                                        "sendDate": "2023-09-25T12:20:40-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18ac2935c935bba3",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18ac2935c935bba3",
+                                        "sendDate": "2023-09-23T11:05:50-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18aee528ee6a3192",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "The Google Account Team",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18aee528ee6a3192",
+                                        "sendDate": "2023-10-01T22:58:22-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18a8c508b531a957",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18a8c508b531a957",
+                                        "sendDate": "2023-09-12T22:13:21-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18aee51a0ccabb39",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18aee51a0ccabb39",
+                                        "sendDate": "2023-10-01T22:57:19-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18a4a61854a96a2b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18a4a61854a96a2b",
+                                        "sendDate": "2023-08-31T02:56:58-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "189fb1d439d1b307",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189fb1d439d1b307",
+                                        "sendDate": "2023-08-15T17:32:24-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "189e7ce8e6b93252",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189e7ce8e6b93252",
+                                        "sendDate": "2023-08-11T23:33:39-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "189e2026a954247d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189e2026a954247d",
+                                        "sendDate": "2023-08-10T20:32:34-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "189b97c0ac0366f6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google Accounts Team",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189b97c0ac0366f6",
+                                        "sendDate": "2023-08-02T23:41:00-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "189b380d596556f4",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189b380d596556f4",
+                                        "sendDate": "2023-08-01T19:48:31-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "189a5b5218229efc",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189a5b5218229efc",
+                                        "sendDate": "2023-07-30T03:30:57-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "189a2eb88d2e1657",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "189a2eb88d2e1657",
+                                        "sendDate": "2023-07-29T14:31:31-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "188e1d3f6b304c06",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "188e1d3f6b304c06",
+                                        "sendDate": "2023-06-22T02:39:03-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "188b33ad32b5894b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "188b33ad32b5894b",
+                                        "sendDate": "2023-06-13T01:29:15-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "188a25298d8a32a5",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "188a25298d8a32a5",
+                                        "sendDate": "2023-06-09T18:41:41-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1887e890d6174639",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1887e890d6174639",
+                                        "sendDate": "2023-06-02T19:54:49-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1883552e5b7fbc18",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18835504e1d34168",
+                                        "sendDate": "2023-05-19T14:43:23-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18835504e1d34168",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18835504e1d34168",
+                                        "sendDate": "2023-05-19T14:40:31-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1880668f542d75dc",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1880668f542d75dc",
+                                        "sendDate": "2023-05-10T12:05:19-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1879d4f8d68b956b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1879d4f8d68b956b",
+                                        "sendDate": "2023-04-20T02:17:27-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1878d2693a975ca7",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1878d2693a975ca7",
+                                        "sendDate": "2023-04-16T22:58:46-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18783c411f3be991",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18783c411f3be991",
+                                        "sendDate": "2023-04-15T03:14:36-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187780cf902ab02c",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "187780cf902ab02c",
+                                        "sendDate": "2023-04-12T20:38:46-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187738cf4569e379",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "187738cf4569e379",
+                                        "sendDate": "2023-04-11T23:40:29-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1876c50a9f5e2059",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1876c50a9f5e2059",
+                                        "sendDate": "2023-04-10T13:57:16-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1876e49b599d0be9",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1876c50a9f5e2059",
+                                        "sendDate": "2023-04-10T23:08:55-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187644450b6d5c2a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "187644450b6d5c2a",
+                                        "sendDate": "2023-04-09T00:26:50-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1875ce13ae671cc7",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1875ce13ae671cc7",
+                                        "sendDate": "2023-04-07T14:01:15-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "186152c39a4bfb17",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "186152c39a4bfb17",
+                                        "sendDate": "2023-02-02T21:40:11-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18484578cdbf198d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18484578cdbf198d",
+                                        "sendDate": "2022-11-17T01:47:20-05:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "18482bb0969f86f5",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18482bb0969f86f5",
+                                        "sendDate": "2022-11-16T18:16:44-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18465b00c45c50bf",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "18465b00c45c50bf",
+                                        "sendDate": "2022-11-11T02:55:46-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1815d581f3e16e3f",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1815d581f3e16e3f",
+                                        "sendDate": "2022-06-13T09:54:24-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "181540698345d139",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "181540698345d139",
+                                        "sendDate": "2022-06-11T14:28:46-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17f8a1f65315ae5a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17f8a1f65315ae5a",
+                                        "sendDate": "2022-03-14T16:29:46-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17f721708c1b6f6a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17f721708c1b6f6a",
+                                        "sendDate": "2022-03-09T23:29:45-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17ea77dffaf4481b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17ea77dffaf4481b",
+                                        "sendDate": "2022-01-29T15:19:18-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17dc5a6edd7302bc",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17dc59966a46604c",
+                                        "sendDate": "2021-12-16T18:49:49-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17dc59966a46604c",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17dc59966a46604c",
+                                        "sendDate": "2021-12-16T18:35:03-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17d05c94d658a00a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17d05c94d658a00a",
+                                        "sendDate": "2021-11-09T12:39:56-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17ce10474ef0c6cf",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17ce10474ef0c6cf",
+                                        "sendDate": "2021-11-01T21:43:11-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17bea46d43ef8190",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17bea46d43ef8190",
+                                        "sendDate": "2021-09-15T12:25:14-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17b224cdc2102ddb",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17b224cdc2102ddb",
+                                        "sendDate": "2021-08-07T16:27:43-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1793f9105c7d19b3",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1793f9105c7d19b3",
+                                        "sendDate": "2021-05-05T22:45:38-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "178443d05b0a9bd1",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "178443d05b0a9bd1",
+                                        "sendDate": "2021-03-17T21:43:06-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1778f5e5e3449932",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1778f5e5e3449932",
+                                        "sendDate": "2021-02-10T23:34:21-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1778f5f5610d46ca",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1778f5f5610d46ca",
+                                        "sendDate": "2021-02-10T23:35:25-05:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1767090365ab315d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "1767090365ab315d",
+                                        "sendDate": "2020-12-16T20:43:08-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17400da53bc6b924",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17400da53bc6b924",
+                                        "sendDate": "2020-08-17T21:43:09-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17221a2a1abe69bb",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test1.com",
+                                            "name": "Google",
+                                            "username": "no-reply",
+                                            "domain": "test1.com"
+                                        },
+                                        "inReplyTo": "17221a2a1abe69bb",
+                                        "sendDate": "2020-05-16T21:43:08-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 54,
+                                "unreadCount": 48,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 1
+            },
+            "domain=test2.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test2.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 0,
+                "children": {
+                    "sender=no-reply@test2.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": " (no-reply@test2.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1836679c394770f7",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test2.com",
+                                            "name": "",
+                                            "username": "no-reply",
+                                            "domain": "test2.com"
+                                        },
+                                        "inReplyTo": "1836679c394770f7",
+                                        "sendDate": "2022-09-22T14:33:18-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 2
+            },
+            "domain=test3.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test3.com",
+                "subjectPreviews": null,
+                "count": 17,
+                "unreadCount": 12,
+                "children": {
+                    "sender=nothing@test3.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Nothing, Nobody",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "183e72004730dd64",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "nothing@test3.com",
+                                            "name": "Nothing, Nobody",
+                                            "username": "mahalram",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "183e72004730dd64",
+                                        "sendDate": "2022-10-17T14:06:13-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=ngyenbp@test3.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Bones (bones@test3.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "182eca1b633adce0",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "hammer@test3.com",
+                                            "name": "Hammer",
+                                            "username": "hammer",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "182eca1b633adce0",
+                                        "sendDate": "2022-08-29T22:43:13-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=classic@test3.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Classic (classic@test3.com)",
+                        "subjectPreviews": null,
+                        "count": 13,
+                        "unreadCount": 10,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "18aedf55a47f933b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "18aedf55a47f933b",
+                                        "sendDate": "2023-10-01T21:16:33-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "188e13916d8f8f80",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "188e13916d8f8f80",
+                                        "sendDate": "2023-06-21T23:49:54-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "188e13916c87e76e",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "188e13916c87e76e",
+                                        "sendDate": "2023-06-21T23:49:54-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1889e1fcab110edd",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1889e1fcab110edd",
+                                        "sendDate": "2023-06-08T23:07:43-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1886b2ea659ae4fb",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1886b2ea659ae4fb",
+                                        "sendDate": "2023-05-30T01:43:18-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1886b2ea2b76334a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1886b2ea2b76334a",
+                                        "sendDate": "2023-05-30T01:43:17-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18831f828fb26d37",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "18831f828fb26d37",
+                                        "sendDate": "2023-05-18T23:05:26-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187da9aed90fa2b8",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "187da9aed90fa2b8",
+                                        "sendDate": "2023-05-01T23:56:37-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1861996d671d628e",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1861996d671d628e",
+                                        "sendDate": "2023-02-03T18:22:40-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1847a317e1330db5",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1847a317e1330db5",
+                                        "sendDate": "2022-11-15T02:29:33-05:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "181a8ea418d6f3b0",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "181a8ea418d6f3b0",
+                                        "sendDate": "2022-06-28T02:05:33-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "181a8ea3c1be0b5f",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "181a8ea3c1be0b5f",
+                                        "sendDate": "2022-06-28T02:05:31-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "181659bea498edc6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "classic@test3.com",
+                                            "name": "Classic",
+                                            "username": "classic",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "181659bea498edc6",
+                                        "sendDate": "2022-06-15T00:25:25-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 13,
+                                "unreadCount": 10,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=housers@test3.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Outback, White (housers@test3.com)",
+                        "subjectPreviews": null,
+                        "count": 2,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1839e829a90fb5de",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "housers@test3.com",
+                                            "name": "Outback, White",
+                                            "username": "housers",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1839e829a90fb5de",
+                                        "sendDate": "2022-10-03T11:41:34-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1839e571013eaca2",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "housers@test3.com",
+                                            "name": "Outback, White",
+                                            "username": "housers",
+                                            "domain": "test3.com"
+                                        },
+                                        "inReplyTo": "1839e571013eaca2",
+                                        "sendDate": "2022-10-03T10:54:02-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 2,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 3
+            },
+            "domain=test4.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test4.com",
+                "subjectPreviews": null,
+                "count": 9,
+                "unreadCount": 0,
+                "children": {
+                    "sender=notifications@test4.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Notifications (notifications@test4.com)",
+                        "subjectPreviews": null,
+                        "count": 9,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1815d2be08996f93",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d2be08996f93",
+                                        "sendDate": "2022-06-13T09:06:04-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d2b1832024b4",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d2b1832024b4",
+                                        "sendDate": "2022-06-13T09:05:12-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d9fd4db3e441",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d9fd4db3e441",
+                                        "sendDate": "2022-06-13T11:12:43-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d2a8dc5a6c18",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d2a8dc5a6c18",
+                                        "sendDate": "2022-06-13T09:04:16-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d2a81e9ed6f9",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d2a81e9ed6f9",
+                                        "sendDate": "2022-06-13T09:04:01-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d29963ba3dab",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d29963ba3dab",
+                                        "sendDate": "2022-06-13T09:03:34-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1815d2bc490d1b18",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1815d2bc490d1b18",
+                                        "sendDate": "2022-06-13T09:05:27-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "18154085c0dd69b5",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "18154085c0dd69b5",
+                                        "sendDate": "2022-06-11T14:30:42-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1814ca2e70f6189b",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "notifications@test4.com",
+                                            "name": "Notifications",
+                                            "username": "notifications",
+                                            "domain": "test4.com"
+                                        },
+                                        "inReplyTo": "1814ca2e70f6189b",
+                                        "sendDate": "2022-06-10T04:02:08-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 9,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 4
+            },
+            "domain=test5.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test5.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 1,
+                "children": {
+                    "sender=noreply@test5.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Sender (noreply@test5.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1802aa7083501c24",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply@test5.com",
+                                            "name": "Sender",
+                                            "username": "noreply",
+                                            "domain": "test5.com"
+                                        },
+                                        "inReplyTo": "1802aa7083501c24",
+                                        "sendDate": "2022-04-14T20:37:05-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 5
+            },
+            "domain=test6.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test6.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 1,
+                "children": {
+                    "sender=noreply@test6.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Nobody (noreply@test6.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "188e011326dd08d0",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply@test6.com",
+                                            "name": "Nobody",
+                                            "username": "noreply",
+                                            "domain": "test6.com"
+                                        },
+                                        "inReplyTo": "188e011326dd08d0",
+                                        "sendDate": "2023-06-21T18:26:36-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 6
+            },
+            "domain=test7.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test7.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 0,
+                "children": {
+                    "sender=sell@test7.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Wilmore (sell@test7.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "17c87f13d1b7655e",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "sell@test7.com",
+                                            "name": "Wilmore",
+                                            "username": "sell",
+                                            "domain": "test7.com"
+                                        },
+                                        "inReplyTo": "17c87f13d1b7655e",
+                                        "sendDate": "2021-10-16T03:11:44-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 7
+            },
+            "domain=test8.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test8.com",
+                "subjectPreviews": null,
+                "count": 2,
+                "unreadCount": 2,
+                "children": {
+                    "sender=Save@test8.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Whester (Save@test8.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1871de867d479d9d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "Save@test8.com",
+                                            "name": "Whester",
+                                            "username": "Save",
+                                            "domain": "test8.com"
+                                        },
+                                        "inReplyTo": "1871de867d479d9d",
+                                        "sendDate": "2023-03-26T08:33:01-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=save@test8.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": " (save@test8.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "186b8dc9dd1ed8f7",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "save@test8.com",
+                                            "name": "",
+                                            "username": "save",
+                                            "domain": "test8.com"
+                                        },
+                                        "inReplyTo": "186b8dc9dd1ed8f7",
+                                        "sendDate": "2023-03-06T16:38:30-05:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 8
+            },
+            "domain=test9.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test9.com",
+                "subjectPreviews": null,
+                "count": 157,
+                "unreadCount": 154,
+                "children": {
+                    "sender=yikes@test9.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "The Cornell Lab of Ornithology (yikes@test9.com)",
+                        "subjectPreviews": null,
+                        "count": 27,
+                        "unreadCount": 27,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1853f21628922f95",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "yikes@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "yikes",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "1853f21628922f95",
+                                        "sendDate": "2022-12-23T08:14:49-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18520872a02cefde",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "yikes@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "yikes",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18520872a02cefde",
+                                        "sendDate": "2022-12-17T09:40:07-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "184fc302eca0552d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "yikes@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "yikes",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "184fc302eca0552d",
+                                        "sendDate": "2022-12-10T08:18:42-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "184b02bbf5bab545",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "yikes@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "yikes",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "184b02bbf5bab545",
+                                        "sendDate": "2022-11-25T14:01:05-05:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 27,
+                                "unreadCount": 27,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=videos@test9.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Bramble Klipple, Cornell Lab of Ornithology (videos@test9.com)",
+                        "subjectPreviews": null,
+                        "count": 106,
+                        "unreadCount": 103,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "188e458e8da518cc",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Bramble Klipple, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "188e458e8da518cc",
+                                        "sendDate": "2023-06-22T14:23:31-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "18859205d3009be6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Ian Owens, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18859205d3009be6",
+                                        "sendDate": "2023-05-26T13:34:11-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18816f85d623436d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Jessica Cassidy,  Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18816f85d623436d",
+                                        "sendDate": "2023-05-13T17:15:27-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18816404f5068ee6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Peter Kopp, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18816404f5068ee6",
+                                        "sendDate": "2023-05-13T13:54:33-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "18814d66f6133c48",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18814d66f6133c48",
+                                        "sendDate": "2023-05-13T07:19:12-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "188122abf0cffd56",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Bramble Klipple, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "188122abf0cffd56",
+                                        "sendDate": "2023-05-12T18:52:40-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1880cb197258f9f4",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Osvel Hinojosa-Huerta, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "1880cb197258f9f4",
+                                        "sendDate": "2023-05-11T17:20:24-04:00",
+                                        "read": true
+                                    },
+                                    {
+                                        "uid": "1880feaec4a90e9d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Jessica Cassidy,  Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "1880feaec4a90e9d",
+                                        "sendDate": "2023-05-12T08:23:48-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "1880a8cb683a04df",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "1880a8cb683a04df",
+                                        "sendDate": "2023-05-11T07:21:07-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187ed2917a1d2530",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Ian Owens, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "187ed2917a1d2530",
+                                        "sendDate": "2023-05-05T14:24:34-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187e2687e92a7973",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Peter Kopp, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "187e2687e92a7973",
+                                        "sendDate": "2023-05-03T12:18:20-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "187dd0f2bff4b454",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "videos@test9.com",
+                                            "name": "Bramble Klipple, Cornell Lab of Ornithology",
+                                            "username": "videos",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "187dd0f2bff4b454",
+                                        "sendDate": "2023-05-02T11:22:45-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 106,
+                                "unreadCount": 103,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=cornellbirds@test9.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "The Cornell Lab of Ornithology (cornellbirds@test9.com)",
+                        "subjectPreviews": null,
+                        "count": 5,
+                        "unreadCount": 5,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "17ce2d7af6016e8e",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "cornellbirds@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17ce2d7af6016e8e",
+                                        "sendDate": "2021-11-02T18:49:18-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17cc917d86694908",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "cornellbirds@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17cc917d86694908",
+                                        "sendDate": "2021-10-28T18:49:15-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17caf57ff56b1bd6",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "cornellbirds@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17caf57ff56b1bd6",
+                                        "sendDate": "2021-10-23T18:49:12-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17c959830d7dee6c",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "cornellbirds@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17c959830d7dee6c",
+                                        "sendDate": "2021-10-18T18:49:11-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17c7bd85d546d0db",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "cornellbirds@test9.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17c7bd85d546d0db",
+                                        "sendDate": "2021-10-13T18:49:08-04:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 5,
+                                "unreadCount": 5,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=gbbc@test9.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Cornell Lab of Ornithology (gbbc@test9.com)",
+                        "subjectPreviews": null,
+                        "count": 4,
+                        "unreadCount": 4,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1865dd9cda0fa052",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "gbbc@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "gbbc",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "1865dd9cda0fa052",
+                                        "sendDate": "2023-02-17T00:29:42-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17f1cf9b81c049c5",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "gbbc@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "gbbc",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17f1cf9b81c049c5",
+                                        "sendDate": "2022-02-21T10:49:54-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17f0d07e1b91685f",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "gbbc@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "gbbc",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17f0d07e1b91685f",
+                                        "sendDate": "2022-02-18T08:31:16-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "17efd96191b19eeb",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "gbbc@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "gbbc",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "17efd96191b19eeb",
+                                        "sendDate": "2022-02-15T08:32:47-05:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 4,
+                                "unreadCount": 4,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    },
+                    "sender=noreply-cornellbirds@test9.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "Birds of the World | The Cornell Lab (noreply-cornellbirds@test9.com)",
+                        "subjectPreviews": null,
+                        "count": 15,
+                        "unreadCount": 15,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "18891ab405fda88d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply-cornellbirds@test9.com",
+                                            "name": "Birds of the World | The Cornell Lab",
+                                            "username": "noreply-cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "18891ab405fda88d",
+                                        "sendDate": "2023-06-06T13:04:40-04:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "186459981c816c2a",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply-cornellbirds@test9.com",
+                                            "name": "Birds of the World | The Cornell Lab",
+                                            "username": "noreply-cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "186459981c816c2a",
+                                        "sendDate": "2023-02-12T07:28:40-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "186376db729df369",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply-cornellbirds@test9.com",
+                                            "name": "Cornell Lab of Ornithology",
+                                            "username": "noreply-cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "186376db729df369",
+                                        "sendDate": "2023-02-09T13:25:46-05:00",
+                                        "read": false
+                                    },
+                                    {
+                                        "uid": "185ee75c6c5ae2b4",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "noreply-cornellbirds@test9.com",
+                                            "name": "Birds of the World | The Cornell Lab",
+                                            "username": "noreply-cornellbirds",
+                                            "domain": "test9.com"
+                                        },
+                                        "inReplyTo": "185ee75c6c5ae2b4",
+                                        "sendDate": "2023-01-26T09:22:29-05:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 15,
+                                "unreadCount": 15,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 9
+            },
+            "domain=test10.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test10.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 1,
+                "children": {
+                    "sender=birds@test10.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": "The Cornell Lab of Ornithology (birds@test10.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 1,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "17cfc0b606be0860",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "birds@test10.com",
+                                            "name": "The Cornell Lab of Ornithology",
+                                            "username": "birds",
+                                            "domain": "test10.com"
+                                        },
+                                        "inReplyTo": "17cfc0b606be0860",
+                                        "sendDate": "2021-11-07T15:16:15-05:00",
+                                        "read": false
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 1,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 10
+            },
+            "domain=test11.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test11.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 0,
+                "children": {
+                    "sender=emails@test11.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": " (emails@test11.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "1880be607feabd2d",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "emails@test11.com",
+                                            "name": "",
+                                            "username": "emails",
+                                            "domain": "test11.com"
+                                        },
+                                        "inReplyTo": "1880be607feabd2d",
+                                        "sendDate": "2023-05-11T13:40:04-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 11
+            },
+            "domain=test12.com": {
+                "dimension": "sender_domain",
+                "typeKey": "SENDER_DOMAIN",
+                "label": "test12.com",
+                "subjectPreviews": null,
+                "count": 1,
+                "unreadCount": 0,
+                "children": {
+                    "sender=no-reply@test12.com": {
+                        "dimension": "sender",
+                        "typeKey": "SENDER_USERNAME",
+                        "label": " (no-reply@test12.com)",
+                        "subjectPreviews": null,
+                        "count": 1,
+                        "unreadCount": 0,
+                        "children": {
+                            "on_or_after_01-01-2020": {
+                                "dimension": "send_date_before_or_after_01-01-2020",
+                                "typeKey": "SEND_DATE",
+                                "label": "On or after 01-01-2020",
+                                "subjectPreviews": null,
+                                "messages": [
+                                    {
+                                        "uid": "188207cf037e24ae",
+                                        "folder": "INBOX",
+                                        "sender": {
+                                            "address": "no-reply@test12.com",
+                                            "name": "",
+                                            "username": "no-reply",
+                                            "domain": "test12.com"
+                                        },
+                                        "inReplyTo": "188207cf037e24ae",
+                                        "sendDate": "2023-05-15T13:37:18-04:00",
+                                        "read": true
+                                    }
+                                ],
+                                "count": 1,
+                                "unreadCount": 0,
+                                "rank_index": null
+                            }
+                        },
+                        "rank_index": null
+                    }
+                },
+                "rank_index": 12
+            }
+        },
+        "rank_index": null
+    },
+    "page": 0,
+    "total_pages": 2
+}

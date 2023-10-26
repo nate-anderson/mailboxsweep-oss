@@ -3,6 +3,7 @@ package mailboxsweep
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -51,7 +52,7 @@ func (s SSMConfigDriver) Get(key string) (string, error) {
 		if errors.As(err, &notFound) {
 			return "", fig.ErrConfigNotFound
 		}
-		return "", err
+		return "", fmt.Errorf("ssm-driver error in fig (key='%s'): %w", prefixedKey, err)
 	}
 
 	return *result.Parameter.Value, nil

@@ -1,5 +1,5 @@
 name: Terms And Conditions
-updated: 2023/08/03
+updated: 2023/10/17
 description: Terms and conditions for using MailboxSweep
 body: >
   # AGREEMENT TO OUR LEGAL TERMS
@@ -279,6 +279,12 @@ body: >
   or through your account settings (if applicable). We will attempt to delete any information stored on our servers that
   was obtained through such Third-Party Account, except the username and profile picture that become associated with
   your account.
+
+  ### Google APIs
+
+  For users logging in with a Gmail account, MailboxSweep uses the Google APIs, subject to the [Google API Services User
+  Data Policy](https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes),
+  including the Limited Use requirements.
 
   ## 11. THIRD-PARTY WEBSITES AND CONTENT
 

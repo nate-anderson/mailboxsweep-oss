@@ -48,8 +48,8 @@ func TestLeafClassifications(t *testing.T) {
 	c4 := NewClassification("none", "level 4 right", "LEVEL_4")
 	c4.Messages = append(c4.Messages, inbox.Message{UID: "3"})
 
-	c.Children["child"] = c1
-	c1.Children["child"] = c2
+	c.Children["child1"] = c1
+	c1.Children["child2"] = c2
 	c2.Children["left"] = c3
 	c2.Children["right"] = c4
 
@@ -59,11 +59,11 @@ func TestLeafClassifications(t *testing.T) {
 		t.Errorf("should have 2 leaf nodes, got %d", len(leaves))
 	}
 
-	if uid := leaves["/child/child/left"].Messages[0].UID; uid != "2" {
+	if uid := leaves["/child1/child2/left"].Messages[0].UID; uid != "2" {
 		t.Errorf("expected a message with ID message2: got %s", uid)
 	}
 
-	if uid := leaves["/child/child/right"].Messages[0].UID; uid != "3" {
+	if uid := leaves["/child1/child2/right"].Messages[0].UID; uid != "3" {
 		t.Errorf("expected a message with ID message3: got %s", uid)
 	}
 }

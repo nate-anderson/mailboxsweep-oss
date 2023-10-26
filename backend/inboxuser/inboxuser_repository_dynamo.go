@@ -76,10 +76,18 @@ func (r DynamoInboxUserRepository) Store(ctx context.Context, user InboxUser) (s
 		attrs,
 	)
 	_, err = r.db.PutItem(ctx, &dynamodb.PutItemInput{
-		TableName: &r.tableName,
-		Item:      item,
+		TableName:           &r.tableName,
+		Item:                item,
+		ConditionExpression: aws.String("attribute_not_exists(#pk)"),
+		ExpressionAttributeNames: map[string]string{
+			"#pk": mailboxsweep.DynamoPK,
+		},
 	})
 	if err != nil {
+		var ccfErr *types.ConditionalCheckFailedException
+		if errors.As(err, &ccfErr) {
+			return "", ErrUserExists
+		}
 		return "", err
 	}
 	return user.UUID, nil

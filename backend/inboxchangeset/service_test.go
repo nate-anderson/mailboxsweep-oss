@@ -2,14 +2,12 @@ package inboxchangeset
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/assert"
 	"mailboxsweep/changeset"
 	"mailboxsweep/classification"
 	"mailboxsweep/classifyrequest"
-	"mailboxsweep/imapserver"
 	"mailboxsweep/inbox"
 	"mailboxsweep/inboxtesting"
 	"mailboxsweep/inboxuser"
@@ -22,41 +20,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
-
-type testImapServerService struct {
-	t              *testing.T
-	expectedDomain string
-	wasCalled      bool
-}
-
-func (s *testImapServerService) Find(ctx context.Context) (*imapserver.Server, error) {
-	addr, err := mailboxsweep.UserAddressFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	domain, err := mailboxsweep.DomainFromEmail(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	assert.That(s.t, domain).Equals(domain)
-	s.wasCalled = true
-	return &imapserver.Server{
-		Domain: s.expectedDomain,
-		Host:   "imap." + s.expectedDomain,
-		Port:   993,
-	}, nil
-}
-
-func (s testImapServerService) Store(ctx context.Context, server imapserver.Server) error {
-	s.t.Fatalf("don't call Store on testImapServerService")
-	return nil
-}
-
-func (s testImapServerService) FindByUserAddress(ctx context.Context) (*imapserver.Server, error) {
-	return nil, errors.New("testImapServerService does not implement FindByUserAddress")
-}
 
 func TestInboxChangesetService(t *testing.T) {
 	db := mailboxsweep.SetupTestDynamoClient()
@@ -82,17 +45,12 @@ func TestInboxChangesetService(t *testing.T) {
 		Password: testPass,
 	}
 
-	imapServerService := &testImapServerService{
-		expectedDomain: "mailboxsweep.com",
-		t:              t,
-	}
-
 	providerService := inboxtesting.NewTestProviderService()
 
 	classificationRepo := classification.NewS3ClassificationRepository(s3Client, bucketName, 10)
 
 	userRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	userService, err := inboxuser.NewService(userRepo)
+	userService, err := inboxuser.NewService(userRepo, logrus.New())
 	assert.ThatError(t, err).IsNil()
 
 	classifyRequestRepo := classifyrequest.NewDynamoRequestRepository(db, table)
@@ -105,24 +63,20 @@ func TestInboxChangesetService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	metadataRepo := inbox.NewMetadataRepository(db, table)
-	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, time.Hour)
+	metadataService := inbox.NewMetadataService(metadataRepo, providerService, credentialReadService, logrus.New(), time.Hour)
 
 	classifyPublisher := &mailboxsweep.TestEventPublisher[classification.ClassifyQueueItem]{}
 	commitPublisher := &mailboxsweep.TestEventPublisher[changeset.CommitQueueMessage]{}
-
-	inboxUserRepo := inboxuser.NewDynamoInboxUserRepository(db, table)
-	inboxUserService, err := inboxuser.NewService(inboxUserRepo)
 	assert.ThatError(t, err).IsNil()
 
 	classificationService := classification.NewService(
 		credentialReadService,
-		imapServerService,
 		classificationRepo,
 		providerService,
 		classifyRequestService,
 		paymentService,
 		metadataService,
-		inboxUserService,
+		userService,
 		logrus.New(),
 		classifyPublisher,
 		5,
@@ -475,7 +429,7 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 
 		t.Run("classify request is marked 'executed'", func(t *testing.T) {
-			requests, err := classifyRequestService.FindCompletedRequests(authedCtx)
+			requests, err := classifyRequestService.FindClassifiedRequests(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(requests)).Equals(1)
 			assert.That(t, requests[0].ExecutedAtUnix).NotEqual(nil)
@@ -555,7 +509,7 @@ func TestInboxChangesetService(t *testing.T) {
 		})
 
 		t.Run("classify request is marked 'executed'", func(t *testing.T) {
-			requests, err := classifyRequestService.FindCompletedRequests(authedCtx)
+			requests, err := classifyRequestService.FindClassifiedRequests(authedCtx)
 			assert.ThatError(t, err).IsNil()
 			assert.That(t, len(requests)).Equals(2)
 			assert.That(t, requests[0].ExecutedAtUnix).NotEqual(nil)

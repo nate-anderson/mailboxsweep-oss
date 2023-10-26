@@ -1,0 +1,123 @@
+# Reusable workflow for end to end testing
+name: E2E
+
+on:
+  workflow_call:
+    inputs: {}
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      STRIPE_API_KEY:
+        required: true
+      GOOGLE_OAUTH_CLIENT_ID:
+        required: true
+      GOOGLE_OAUTH_CLIENT_SECRET:
+        required: true
+      SIGNING_KEY:
+        required: true
+
+jobs:
+  test-e2e:
+    name: Run end-to-end tests
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    # @TODO: uncomment this once caching is figured out
+    # needs:
+    #   - build-backend
+    #   - build-web
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "^1.21.0"
+          cache-dependency-path: backend/go.sum
+
+      - name: Install server generator
+        working-directory: backend
+        run: make install_openapi_generator
+
+      - name: Generate server code
+        working-directory: backend
+        run: make http_scaffold
+
+      # This is needed to prevent the SSM client from trying to get credentials using EC2 magic
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Start containers
+        working-directory: backend
+        run: make maddy_init_setup
+
+      - name: Run migrations and seeds
+        working-directory: backend
+        run: make migrate e2e_seed_ci
+        env:
+          ENV: e2e
+          DYNAMODB_HOST: localhost
+          DYNAMODB_PORT: 4566
+          DYNAMODB_REGION: us-west-2
+          DYNAMODB_TABLE: mailboxsweep
+          S3_HOST: localhost
+          S3_PORT: 4566
+          S3_REGION: us-west-2
+          S3_BUCKET: mailboxsweep
+          SQS_HOST: localhost
+          SQS_PORT: 4566
+          SQS_REGION: us-west-2
+          SQS_CLASSIFY_QUEUE: mailboxsweep_classify.fifo
+          SQS_CLASSIFY_DLQ: mailboxsweep_classify_dlq.fifo
+          SQS_COMMIT_QUEUE: mailboxsweep_commit.fifo
+          SQS_COMMIT_DLQ: mailboxsweep_commit_dlq.fifo
+
+      - name: Start API server (background)
+        working-directory: backend
+        run: make start_e2e_server
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          # Version Spec of the version to use in SemVer notation.
+          # It also emits such aliases as lts, latest, nightly and canary builds
+          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: "18.16.0"
+          cache: "npm"
+          cache-dependency-path: ./web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Generate API client
+        working-directory: web
+        run: npm run openapi
+
+      - name: Build
+        working-directory: web
+        run: npm run build:e2e
+
+      - name: Install Playwright browser(s)
+        working-directory: web
+        run: npx playwright install
+
+      - name: Run E2E tests
+        working-directory: web
+        run: npm run test:e2e
+
+      - name: Upload E2E test results as GitHub Actions Artifacts
+        uses: actions/upload-artifact@v3
+        if: failure() # results should be uploaded if tests fail
+        with:
+          name: test-results
+          path: ./web/test-results

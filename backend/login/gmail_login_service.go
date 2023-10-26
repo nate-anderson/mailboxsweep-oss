@@ -77,7 +77,11 @@ func (s GmailLoginService) GetAuthURL(ctx context.Context) (redirect string, coo
 		return "", "", err
 	}
 
-	return s.oauthConfig.AuthCodeURL(stateToken, oauth2.AccessTypeOffline), cookie, nil
+	return s.oauthConfig.AuthCodeURL(
+		stateToken,
+		oauth2.AccessTypeOffline,
+		oauth2.ApprovalForce,
+	), cookie, nil
 }
 
 type GmailLoginRedirectData struct {
@@ -109,7 +113,7 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	}
 
 	// exchange code for real credentials
-	token, err := s.oauthConfig.Exchange(ctx, data.Code)
+	token, err := s.oauthConfig.Exchange(ctx, data.Code, oauth2.AccessTypeOffline)
 	if err != nil {
 		err := fmt.Errorf("failed to exchange with Google for login: %w", err)
 		return "", mailboxsweep.BadGatewayError(err)
@@ -138,9 +142,14 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 		return "", err
 	}
 
-	// store the user
-	user, err := s.userService.Store(ctx, profile.address)
-	if err != nil {
+	// if user doesn't exist, store the user
+	user, err := s.userService.FindByAddress(ctx, profile.address)
+	if errors.Is(err, mailboxsweep.ErrNotFound) {
+		user, err = s.userService.Store(ctx, profile.address)
+		if err != nil {
+			return "", err
+		}
+	} else if err != nil {
 		return "", err
 	}
 
@@ -153,6 +162,9 @@ func (s GmailLoginService) CompleteLogin(ctx context.Context, data GmailLoginRed
 	}
 
 	// store the Gmail credentials
+	if token.RefreshToken == "" {
+		return "", errors.New("google Oauth2 token did not contain a refresh token: cannot continue")
+	}
 	gmailCred := inboxcredential.NewGmailInboxCredential(profile.address, token.AccessToken, token.RefreshToken, token.Expiry)
 	err = s.credentialService.StoreCredential(authedCtx, gmailCred)
 	if err != nil {

@@ -107,8 +107,10 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 	}
 
 	_, err = s.VerifyPayment(ctx)
-	if !errors.Is(err, mailboxsweep.ErrNeedsPayment) {
+	if err == nil {
 		return "", mailboxsweep.ErrAlreadyPaid
+	} else if !errors.Is(err, mailboxsweep.ErrNeedsPayment) {
+		return "", fmt.Errorf("failed to check for existing active payments: %w", err)
 	}
 
 	planDetails, ok := s.plans[plan]

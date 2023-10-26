@@ -1,5 +1,5 @@
 import { CssBaseline } from "@mui/material";
-import { Router, useRouter } from "next/router";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { API } from "../../client";
 import { UserAgreement } from "../../client-gen";
@@ -57,6 +57,7 @@ const renderAgreementForm = (
     >
       <Typography>I agree to the terms above</Typography>
       <Button
+        data-testid="button-agree-submit"
         sx={{
           marginY: 2,
         }}

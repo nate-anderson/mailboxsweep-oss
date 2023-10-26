@@ -9,12 +9,10 @@ import (
 	"mailboxsweep/email"
 	"mailboxsweep/inboxuser"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -33,6 +31,8 @@ type ClassifyWorker struct {
 	classifyCompleteTemplate string
 	inboxUserService         inboxuser.Service
 
+	poolSize int
+
 	changesetSelectURL string
 }
 
@@ -46,8 +46,13 @@ func NewClassifyWorker(
 	emailSender email.Sender,
 	classifyCompleteTemplate string,
 	inboxUserService inboxuser.Service,
+	poolSize int,
 	changesetSelectURL string,
 ) *ClassifyWorker {
+	if poolSize <= 0 {
+		panic("cannot start worker with pool size < 1")
+	}
+
 	return &ClassifyWorker{
 		log,
 		queue,
@@ -58,6 +63,7 @@ func NewClassifyWorker(
 		emailSender,
 		classifyCompleteTemplate,
 		inboxUserService,
+		poolSize,
 		changesetSelectURL,
 	}
 }
@@ -65,8 +71,20 @@ func NewClassifyWorker(
 const classifyVisibilityTimeoutMinutes = 5
 
 func (w ClassifyWorker) Work(ctx context.Context) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovered in ClassifyWorker.Work: %v", r)
+		}
+	}()
+
 	log := w.log.WithField("worker", "classify")
 	log.Infof("Listening to classify queue %s...\n", w.queueURL)
+
+	// populate worker pool
+	pool := make(chan bool, w.poolSize)
+	for i := 0; i < w.poolSize; i++ {
+		pool <- true
+	}
 
 	for {
 		retrieveID, err := uuid.NewUUID()
@@ -80,6 +98,7 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			ReceiveRequestAttemptId: aws.String(retrieveID.String()),
 			WaitTimeSeconds:         20,
 			VisibilityTimeout:       60 * (classifyVisibilityTimeoutMinutes + 1),
+			MaxNumberOfMessages:     1,
 		})
 		if err != nil {
 			log.
@@ -88,17 +107,10 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			continue
 		}
 
-		/*
-			@TODO improvement
-			This is a simple loop queue reader
-			This should use a Pool to allow concurrent queue worker
-			goroutines
-		*/
+		//if len(batch.Messages) > 0 {
+		log.Infof("read %d messages from the queue (%d workers available)", len(batch.Messages), len(pool))
+		// }
 
-		log.Infof("read %d messages from the queue", len(batch.Messages))
-
-		wg := sync.WaitGroup{}
-		wg.Add(len(batch.Messages))
 		for _, m := range batch.Messages {
 			start := time.Now()
 			queueItem := mailboxsweep.EventBody[classification.ClassifyQueueItem]{}
@@ -113,126 +125,147 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 				log.Errorf("no address in queue item %+v", body)
 				continue
 			}
-			jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
-			log := log.
-				WithField("address", body.Address).
-				WithField("num_classifiers", len(body.Classifiers))
 
-			log.Info("starting inbox classification")
+			// wait for resource
+			<-pool
+			go func(ctx context.Context, eventBody classification.ClassifyQueueItem, receiptHandle, messageID string) {
+				defer func() {
+					pool <- true
+				}()
 
-			classifiers := make([]classification.Classifier, len(body.Classifiers))
-			for i, srcl := range body.Classifiers {
-				cl, err := srcl.Classifier()
-				if err != nil {
-					log.Errorf("invalid classifier %v: %s", srcl, err)
-					continue
-				}
-				classifiers[i] = cl
-			}
-
-			errChan := make(chan error)
-			// keep the message handle active while the process runs
-			go func(address string, m types.Message) {
-				ticker := time.NewTicker(time.Minute * 5)
-				defer ticker.Stop()
-				defer wg.Done()
-				for {
-					select {
-					case <-ticker.C:
-						// mark message as being processed
-						_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
-							QueueUrl:          &w.queueURL,
-							ReceiptHandle:     m.ReceiptHandle,
-							VisibilityTimeout: 60 * classifyVisibilityTimeoutMinutes,
-						})
-						if err != nil {
-							log.
-								WithField("address", address).
-								WithError(err).
-								Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
-							return
-						}
-					case err := <-errChan:
-						if err != nil {
-							log.
-								WithField("address", address).
-								WithError(err).
-								Errorf("got error for message %s (receipt handle %s)", *m.MessageId, *m.ReceiptHandle)
-							return
-						}
-					}
-				}
-			}(body.Address, m)
-
-			err = w.service.Classify(jobCtx, body.Folders, classifiers)
-			end := time.Now()
-			if err != nil {
-				errChan <- err
-				log.
-					WithError(err).
-					WithField("execution_time_seconds", end.Sub(start).Seconds()).
-					Error("classify failed")
-				// push to DLQ
-				err = w.dlqPub.PublishEvent(ctx, queueItem)
-				if err != nil {
-					log.
-						WithError(err).
-						Error("failed to push to DLQ after failure")
-				} else {
-					_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
-						QueueUrl:      &w.queueURL,
-						ReceiptHandle: m.ReceiptHandle,
-					})
-					if err != nil {
-						log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
-					}
-				}
-				continue
-			} else {
-				errChan <- nil
-			}
-
-			_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
-				QueueUrl:      &w.queueURL,
-				ReceiptHandle: m.ReceiptHandle,
-			})
-			if err != nil {
-				log.
+				jobCtx := mailboxsweep.AuthorizeJobContext(ctx, body.Address)
+				log := log.
 					WithField("address", body.Address).
-					Errorf("failed to delete message after classify: %s", err.Error())
-			}
-			log.
-				WithField("address", body.Address).
-				WithField("execution_time_seconds", end.Sub(start).Seconds()).
-				Info("classify complete")
+					WithField("num_classifiers", len(body.Classifiers))
 
-			var greeting string
-			user, err := w.inboxUserService.FindByAddress(ctx, body.Address)
-			// this user must exist, this failure can only be temporary
-			// default to the generic greeting
-			if err != nil {
-				greeting = "Hi there,"
-			} else if user.NameFirst != "" {
-				greeting = fmt.Sprintf("Hi, %s,", user.NameFirst)
-			}
+				log.Info("starting inbox classification")
 
-			if w.emailSender != nil {
-				log.Infof("going to send completion email (template %s, recipient %s)", w.classifyCompleteTemplate, body.Address)
-				if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
-					"greeting":       greeting,
-					"changeset_link": w.changesetSelectURL,
-				}); err != nil {
-					log.
-						WithField("address", body.Address).
-						WithError(err).
-						Error("failed to send notification email for classification completion")
-				} else {
-					log.Info("sent notification email")
+				classifiers := make([]classification.Classifier, len(body.Classifiers))
+				for i, srcl := range body.Classifiers {
+					cl, err := srcl.Classifier()
+					if err != nil {
+						log.Errorf("invalid classifier %v: %s", srcl, err)
+						continue
+					}
+					classifiers[i] = cl
 				}
-			} else {
-				log.Infoln("skipping email notification - no sender configured")
-			}
+
+				errChan := make(chan error)
+				// keep the message handle active while the process runs
+				go func(address string, receiptHandle string) {
+					ticker := time.NewTicker(time.Minute * 1)
+					failedAttempts := 0
+					defer ticker.Stop()
+					for {
+						select {
+						case <-ticker.C:
+							// mark message as being processed
+							_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
+								QueueUrl:          &w.queueURL,
+								ReceiptHandle:     &receiptHandle,
+								VisibilityTimeout: 60 * classifyVisibilityTimeoutMinutes,
+							})
+							if err != nil {
+								log.
+									WithError(err).
+									Errorf("failed to ChangeMessageVisibility for message %s (receipt handle %s)", messageID, receiptHandle)
+								failedAttempts++
+								if failedAttempts >= 3 {
+									log.WithError(err).Error("failed 3 attempts to change message visibility, aborting")
+									return
+								}
+
+							}
+						case err := <-errChan:
+							if err != nil {
+								log.Errorf("got error for message %s, releasing handle %s", messageID, receiptHandle)
+								_, err = w.queue.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
+									QueueUrl:          &w.queueURL,
+									ReceiptHandle:     &receiptHandle,
+									VisibilityTimeout: 0,
+								})
+								if err != nil {
+									log.Errorf("failed to release handle %s after error: %s", receiptHandle, err)
+								}
+							}
+							return
+						}
+					}
+				}(body.Address, receiptHandle)
+
+				end := time.Now()
+				err = w.service.Classify(jobCtx, body.Folders, classifiers)
+				if err != nil {
+					errChan <- err
+					log.
+						WithError(err).
+						WithField("execution_time_seconds", end.Sub(start).Seconds()).
+						Error("classify failed")
+						// push to DLQ
+						/*
+									err = w.dlqPub.PublishEvent(ctx, queueItem)
+									if err != nil {
+										log.
+											WithError(err).
+											Error("failed to push to DLQ after failure")
+									} else {
+
+							_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+								QueueUrl:      &w.queueURL,
+								ReceiptHandle: m.ReceiptHandle,
+							})
+							if err != nil {
+								log.Errorf("failed to delete message after failed classify + DLQ enqueue: %s", err.Error())
+							}
+							}
+						*/
+					return
+				} else {
+					errChan <- nil
+				}
+
+				_, err = w.queue.DeleteMessage(jobCtx, &sqs.DeleteMessageInput{
+					QueueUrl:      &w.queueURL,
+					ReceiptHandle: &receiptHandle,
+				})
+				if err != nil {
+					log.
+						WithError(err).
+						Errorf("failed to delete message after classify")
+				}
+
+				log.
+					WithField("execution_time_seconds", end.Sub(start).Seconds()).
+					Info("classify complete")
+
+				var greeting string
+				user, err := w.inboxUserService.FindByAddress(jobCtx, body.Address)
+				// this user must exist, this failure can only be temporary
+				// default to the generic greeting
+				if err != nil {
+					log.
+						WithError(err).
+						Error("failed to find user after completing classification - continuing with generic email greeting")
+
+					greeting = "Hi there,"
+				} else if user.NameFirst != "" {
+					greeting = fmt.Sprintf("Hi, %s,", user.NameFirst)
+				}
+
+				if w.emailSender != nil {
+					if err := w.emailSender.Send(ctx, body.Address, w.classifyCompleteTemplate, map[string]string{
+						"greeting":       greeting,
+						"changeset_link": w.changesetSelectURL,
+					}); err != nil {
+						log.
+							WithField("address", body.Address).
+							WithError(err).
+							Error("failed to send notification email for classification completion")
+					}
+				} else {
+					log.Infof("skipping email notification - no sender configured (w.emailSender == %+v)", w.emailSender)
+				}
+			}(ctx, body, *m.ReceiptHandle, *m.MessageId)
 		}
-		wg.Wait()
 	}
 }

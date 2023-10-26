@@ -1,0 +1,20 @@
+name: PR Checks
+
+#
+# Pull request checks to be run against every branch that may be merged into develop
+#
+
+on:
+  push:
+    branches-ignore: [develop, main]
+
+jobs:
+  build-backend:
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+
+  build-web:
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+
+  test-e2e:
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+    secrets: inherit

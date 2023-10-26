@@ -1,0 +1,41 @@
+# Reusable workflow to build the web frontend
+name: Build & lint web frontend
+
+on:
+  workflow_call:
+    inputs: {}
+    secrets: {}
+
+jobs:
+  build-web:
+    name: Build web frontend artifacts
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          # Version Spec of the version to use in SemVer notation.
+          # It also emits such aliases as lts, latest, nightly and canary builds
+          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: "18.16.0"
+          cache: "npm"
+          cache-dependency-path: ./web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Generate API client
+        working-directory: web
+        run: npm run openapi
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      - name: Build
+        working-directory: web
+        run: npm run build

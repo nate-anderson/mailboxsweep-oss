@@ -45,7 +45,7 @@ type Plan string
 
 var (
 	Basic  Plan = "BASIC"
-	Deluxe Plan = "DELUXE"
+	Annual Plan = "ANNUAL"
 )
 
 func ParsePlan(str string) (Plan, error) {
@@ -56,8 +56,8 @@ func ParsePlan(str string) (Plan, error) {
 	switch Plan(clean) {
 	case Basic:
 		return Basic, nil
-	case Deluxe:
-		return Deluxe, nil
+	case Annual:
+		return Annual, nil
 	default:
 		return "", fmt.Errorf("unknown plan code '%s'", str)
 	}

@@ -26,7 +26,8 @@ func TestIMAPFolder(t *testing.T) {
 		panic(err)
 	}
 
-	sender := mailboxsweep.NewTestSMTPSender(testConf)
+	sender, err := mailboxsweep.NewTestSMTPSender(testConf)
+	assert.ThatError(t, err).IsNil()
 
 	n := 5
 	for i := 0; i < n; i++ {
@@ -48,6 +49,7 @@ func TestIMAPFolder(t *testing.T) {
 		usageRepo,
 		nil,
 		logrus.New(),
+		false,
 	)
 	assert.ThatError(t, err).IsNil()
 
@@ -154,7 +156,10 @@ func TestIMAPFolder(t *testing.T) {
 				case err := <-errChan:
 					wg.Done()
 					if err != nil {
-						panic(err)
+						// no messages matched is ok: test IMAP server throws this when there's nothing to return
+						if err.Error() != "No messages matched" {
+							panic(err)
+						}
 					}
 				}
 			}
