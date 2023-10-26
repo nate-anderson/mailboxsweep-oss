@@ -22,7 +22,7 @@ require (
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/stripe/stripe-go/v74 v74.26.0
+	github.com/stripe/stripe-go/v74 v74.30.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	golang.org/x/oauth2 v0.10.0
 	golang.org/x/sync v0.4.0
