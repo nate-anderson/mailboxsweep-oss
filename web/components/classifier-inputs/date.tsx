@@ -2,7 +2,7 @@ import { SelectedClassifier, dateFormat } from "../../lib/classifier";
 import ClassifierCard from "./card";
 import ListItemText from "@mui/material/ListItemText";
 import { parse } from "date-fns";
-import { Unstable_DateField as DateField } from "@mui/x-date-pickers/DateField";
+import { DateField } from "@mui/x-date-pickers/DateField";
 import {
   DraggableProvidedDraggableProps,
   DraggableProvidedDragHandleProps,
@@ -58,7 +58,7 @@ export default function DateClassifierCard(props: Props) {
         onChange={props.setInput}
         label={props.classifier.inputLabel}
         format="MM/dd/yy"
-        
+        formatDensity="dense"
         margin="dense"
         size="small"
         variant="standard"
