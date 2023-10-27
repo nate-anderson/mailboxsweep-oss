@@ -72,7 +72,7 @@ export default function SelectedClassifierList(props: Props) {
                 };
 
                 const setTextInput = (text: string | null) => {
-                  if (!text) {
+                  if (text === null) {
                     return;
                   }
                   props.setSelectedClassifiers((cls) => 
