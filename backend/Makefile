@@ -51,11 +51,16 @@ e2e_seed_ci:
 
 .PHONY: build_docker_server
 build_docker_server:
-	cd .. && docker build -f ./backend/Dockerfile.server .
+	cd .. && docker build -f ./backend/Dockerfile.server -t mailboxsweep/mailboxsweep .
 
 .PHONY: build_docker_worker
 build_docker_worker:
-	cd .. && docker build -f ./backend/Dockerfile.worker .
+	cd .. && docker build -f ./backend/Dockerfile.worker -t mailboxsweep/worker .
+
+# Build an image to run migrations
+.PHONY: build_docker_migrate
+build_docker_migrate:
+	cd .. && docker build -f ./backend/Dockerfile.migrate -t mailboxsweep/migrate .
 
 .PHONY: start_e2e_server
 start_e2e_server:

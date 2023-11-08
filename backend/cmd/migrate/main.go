@@ -59,6 +59,7 @@ func main() {
 			ServiceHost:   cfg.DynamoDBHost,
 			ServicePort:   cfg.DynamoDBPort,
 			ServiceRegion: cfg.DynamoDBRegion,
+			Environment:   cfg.Env,
 		}
 		tableDef := mailboxsweep.CreateDynamoDBTableDefinition(cfg.DynamoDBTable)
 		cl, err := mailboxsweep.ConnectAWSService(
@@ -82,6 +83,7 @@ func main() {
 			ServiceHost:   cfg.S3Host,
 			ServicePort:   cfg.S3Port,
 			ServiceRegion: cfg.S3Region,
+			Environment:   cfg.Env,
 		}
 		fmt.Printf("Initializing S3 with addr %s:%d (bucket %s)\n", *cfg.S3Host, cfg.S3Port, cfg.S3Bucket)
 
@@ -113,6 +115,7 @@ func main() {
 				ServiceHost:   cfg.SQSHost,
 				ServicePort:   cfg.SQSPort,
 				ServiceRegion: cfg.SQSRegion,
+				Environment:   cfg.Env,
 			},
 			sqs.NewFromConfig,
 		)
