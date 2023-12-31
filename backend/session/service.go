@@ -129,6 +129,7 @@ func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, do
 		HttpOnly: true,
 		Secure:   true,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	l := &http.Cookie{
@@ -139,6 +140,7 @@ func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, do
 		HttpOnly: false,
 		Secure:   true,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 	return c, l, nil
 }

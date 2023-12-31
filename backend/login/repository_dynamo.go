@@ -138,7 +138,7 @@ func (r DynamoLinkRepository) Find(ctx context.Context, token string) (*Link, er
 
 	l := Link{}
 	if len(res.Item) == 0 {
-		return nil, mailboxsweep.NotFoundError(errors.New("user not found"))
+		return nil, mailboxsweep.NotFoundError(errors.New("link not found"))
 	}
 	err = attributevalue.UnmarshalMap(res.Item, &l)
 	return &l, err

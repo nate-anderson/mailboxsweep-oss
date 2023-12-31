@@ -60,6 +60,7 @@ func (c LoginController) InitiateLogin(w http.ResponseWriter, req *http.Request)
 			HttpOnly: true,
 			Secure:   true,
 			Expires:  time.Now().Add(externalAuthCookieDuration),
+			SameSite: http.SameSiteStrictMode,
 		}
 		http.SetCookie(w, &cookie)
 	}

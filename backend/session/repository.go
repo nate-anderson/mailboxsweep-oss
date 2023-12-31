@@ -115,6 +115,7 @@ func (s Session) AuthCookie(isDev bool, domain string) *http.Cookie {
 		HttpOnly: true,
 		Secure:   !isDev,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 	return cookie
 }
@@ -131,5 +132,6 @@ func (s Session) IsLoggedInCookie(domain string) *http.Cookie {
 		HttpOnly: false,
 		Secure:   true,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 }
