@@ -5,7 +5,6 @@ import StepLabel from "@mui/material/StepLabel";
 import { useEffect, useState } from "react";
 
 export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, profileComplete: boolean): string | undefined {
-    console.log( {hasAgreedToTerms, hasPaid, profileComplete});
     const steps = getSteps();
     if (!steps) {
         return undefined;

@@ -97,7 +97,7 @@ export default function Navbar(props: NavbarProps) {
     { text: "Logout", icon: <IconLogout />, action: () => {
         API.logout()
           .then(() => router.push("/"))
-          .catch((err) => console.log(err))
+          .catch((err) => console.log("Logout failed, please try again momentarily."));
       }
     }
   ];

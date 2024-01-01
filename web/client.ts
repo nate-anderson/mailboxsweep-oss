@@ -8,7 +8,6 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
   }
 
   private maybeNavigate(dest: string): void {
-    console.log({ href: window.location.href });
     if (!window.location.href.endsWith(dest)) {
       window.location.href = dest;
     }
@@ -22,7 +21,6 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
       } catch(error) {
         if (error instanceof ApiError) {
           const e = error as ApiError;
-          console.log({ apiErr: e });
           // if error has a well-defined error code, that will be more useful than
           // the status code. try that first.
           switch (e.body.code) {
@@ -41,7 +39,7 @@ class HTTPRequestWithErrorHandling extends BaseHttpRequest {
               return null as T;
             default:
               if (process.env.ENV === "dev") {
-                console.log("unknown or undefined body code in error: ", e.body);
+                // console.log("unknown or undefined body code in error: ", e.body);
               }
           }
 

@@ -41,7 +41,9 @@ export default function CompleteProfile() {
           changeNameLast(res.nameLast);
         }
       })
-      .catch(console.error);
+      .catch((error) => {
+        setError("Failed to fetch user data, please try again momentarily.");
+      });
   }, [API]);
 
   const submitProfileData = (nameFirst: string, nameLast: string) => {

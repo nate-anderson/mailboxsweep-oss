@@ -232,7 +232,7 @@ export default function Select() {
       }
     })
     .catch((error)=>{
-      console.log({ addLeafError: error });
+      setError("Failed to add selected group, please try again momentarily.");
     })
     .finally(() => {
       setIsLoadingSelectionChange(false);
@@ -286,7 +286,7 @@ export default function Select() {
       }
     })
     .catch((error) => {
-      console.log({ removeLeafError: error });
+      setError("Failed to remove group, please try again momentarily.");
     })
     .finally(() => {
       setIsLoadingSelectionChange(false);
@@ -321,7 +321,7 @@ export default function Select() {
           const apiError = error as ApiError;
           setError(apiError.message);
         }
-        console.log({ error });
+        setError("Failed to get classification summary, please try again momentarily.");
       })
       .finally(() => {
         setIsLoadingClassificationSummary(false);

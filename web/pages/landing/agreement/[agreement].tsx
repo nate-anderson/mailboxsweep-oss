@@ -34,8 +34,6 @@ export const getStaticProps = async ({ params }: { params: { agreement: string }
     const yamlData = await readFile(filePath, { encoding: "utf-8" });
     const agreement = parseYaml(yamlData)
 
-    console.log(Object.keys(agreement));
-
     return {
         props: { agreement },
     };

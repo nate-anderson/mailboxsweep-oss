@@ -24,7 +24,7 @@ export default function SelectPlan() {
         setPlans(res.plans.sort((a, b) => a.displayIndex - b.displayIndex));
       })
       .catch((err) => {
-        console.log(err);
+        setErrorMessage("Failed to retrieve plans, please try again momentarily.");
       });
   }, []);
 

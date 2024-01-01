@@ -186,7 +186,6 @@ export default function Home() {
               return;
           }
         }
-        console.log(err.toString());
         setErrorMessage("Something went wrong");
       });
 
@@ -204,8 +203,6 @@ export default function Home() {
         if (err instanceof ApiError) {
           const e = err as ApiError;
           setErrorMessage(e.message);
-        } else {
-          console.log(err);
         }
       });
 
@@ -224,8 +221,6 @@ export default function Home() {
         if (err instanceof ApiError) {
           const e = err as ApiError;
           setErrorMessage(e.message);
-        } else {
-          console.log(err);
         }
       })
 
