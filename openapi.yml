@@ -662,7 +662,7 @@ paths:
         "400":
           description: Bad request
         "500":
-          Description: Internal server error
+          description: Internal server error
 
   /user/agreements/{agreementSlug}:
     get:
