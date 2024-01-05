@@ -11,7 +11,6 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import IconAccountCircle from "@mui/icons-material/AccountCircle";
 import IconEnvelope from "@mui/icons-material/Email";
 import IconCreditCard from "@mui/icons-material/CreditCard";
 import IconClose from "@mui/icons-material/Close";
@@ -20,6 +19,15 @@ import Link from "next/link";
 import IconLogout from "@mui/icons-material/Logout";
 import { useAPIClient } from "../client";
 import { useRouter } from "next/router";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from "@mui/material/Button";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+
 
 const renderDrawerItem = (props: {
   text: string;
@@ -83,8 +91,16 @@ interface NavbarProps {
 
 export default function Navbar(props: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [logoutAllDevices, setLogoutAllDevices] = useState(true);
   const API = useAPIClient();
   const router = useRouter();
+
+  const doLogout = () => {
+    API.logout(logoutAllDevices ? 1 : 0)
+      .then(() => router.push("/"))
+      .catch((err) => console.log("Logout failed, please try again momentarily."));
+  }
 
   const drawerItems: DrawerItem[] = [
     { text: "Home", icon: <IconHome />, path: "/home" },
@@ -94,12 +110,7 @@ export default function Navbar(props: NavbarProps) {
       path: "/email-account/login",
     },
     { text: "Payment & Plan", icon: <IconCreditCard />, path: "/plan" },
-    { text: "Logout", icon: <IconLogout />, action: () => {
-        API.logout()
-          .then(() => router.push("/"))
-          .catch((err) => console.log("Logout failed, please try again momentarily."));
-      }
-    }
+    { text: "Logout", icon: <IconLogout />, action: () => setLogoutModalOpen(true) }
   ];
 
   return (
@@ -175,6 +186,52 @@ export default function Navbar(props: NavbarProps) {
           )}
         </Drawer>
       </AppBar>
+      <Dialog
+        open={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">
+          Log out of MailboxSweep
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            You'll need to sign in again to use the app. You can also log out on any other devices you've used.
+          </DialogContentText>
+        </DialogContent>
+        <Box
+          marginY={0}
+          display="flex"
+          justifyContent="end"
+        >
+          <FormControlLabel
+            labelPlacement="start"
+            
+            control={<Checkbox
+              sx={{
+                paddingY: 0,
+              }}
+              checked={logoutAllDevices}
+              onChange={(_, checked) => setLogoutAllDevices(checked)}
+            />}
+            label="Log all of my devices out"
+            sx={{
+              marginRight: 1,
+              color: "var(--color-gray)"
+            }}
+          />
+        </Box>
+        <DialogActions
+          sx={{
+            margin: 1,
+          }}
+        >
+          <Button onClick={() => doLogout()} autoFocus startIcon={<IconLogout />}>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
