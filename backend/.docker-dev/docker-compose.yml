@@ -9,6 +9,17 @@ services:
       - "4510-4559:4510-4559" # external services port range
     volumes:
       - "./volumes/localstack:/tmp/localstack"
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - awslocal dynamodb list-tables
+          && awslocal s3 ls
+          && awslocal sqs list-queues
+      interval: 5s
+      timeout: 10s
+      start_period: 10s
 
   mailserver:
     container_name: mailserver
