@@ -150,14 +150,20 @@ func (c LoginController) SubmitGmailStateToken(w http.ResponseWriter, req *http.
 	c.respond(w, http.StatusOK, resBody)
 }
 
-func (c LoginController) Logout(w http.ResponseWriter, req *http.Request) {
+func (c LoginController) Logout(w http.ResponseWriter, req *http.Request, param LogoutParams) {
 	cookie, err := req.Cookie(session.SessionAuthCookie)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return
 	}
 
-	clearSessionCookie, clearLoggedInCookie, err := c.service.GenerateEndSessionCookie(req.Context(), cookie.Value, c.cookieDomain)
+	// should all sessions be ended, or just the current one?
+	var includeAllSessions bool
+	if param.AllSessions != nil && *param.AllSessions > 0 {
+		includeAllSessions = true
+	}
+
+	clearSessionCookie, clearLoggedInCookie, err := c.service.EndSession(req.Context(), cookie.Value, c.cookieDomain, includeAllSessions)
 	if err != nil {
 		c.respondAuthError(w, err)
 		return

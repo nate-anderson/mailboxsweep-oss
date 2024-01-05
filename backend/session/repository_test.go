@@ -16,7 +16,9 @@ func TestSession(t *testing.T) {
 
 	repo := NewDynamoSessionRepository(db, table)
 
-	token, err := DefaultService.makeToken(DefaultService{})
+	token, err := DefaultService{
+		sessionKeyLen: 16,
+	}.makeToken()
 	assert.ThatError(t, err).IsNil()
 	expires := time.Now().Add(time.Minute)
 
@@ -46,5 +48,39 @@ func TestSession(t *testing.T) {
 		ret, err := repo.Get(ctx, sess.Token)
 		assert.ThatError(t, err).Is(mailboxsweep.ErrNotFound)
 		assert.That(t, ret).Equals(nil)
+	})
+
+	t.Run("list by user", func(t *testing.T) {
+		t.Run("no active sessions", func(t *testing.T) {
+			sessions, err := repo.ListByUser(ctx, sess.UserAddress)
+			assert.That(t, len(sessions)).Equals(0)
+			assert.ThatError(t, err).IsNil()
+		})
+
+		t.Run("multiple active sessions", func(t *testing.T) {
+			nSessions := 3
+			tokens := []string{}
+			for i := 0; i < nSessions; i++ {
+				token, err := DefaultService{
+					sessionKeyLen: 16,
+				}.makeToken()
+				assert.ThatError(t, err).IsNil()
+				s := Session{
+					UserAddress: sess.UserAddress,
+					Token:       token,
+					Expires:     expires.Unix(),
+				}
+				err = repo.Store(ctx, s)
+				assert.ThatError(t, err)
+				tokens = append(tokens, token)
+			}
+
+			list, err := repo.ListByUser(ctx, sess.UserAddress)
+			assert.ThatError(t, err).IsNil()
+			assert.That(t, len(list)).Equals(nSessions)
+			for _, s := range list {
+				assert.ThatSlice(t, tokens).Contains(s)
+			}
+		})
 	})
 }

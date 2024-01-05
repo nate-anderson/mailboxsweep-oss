@@ -1041,6 +1041,12 @@ paths:
     get:
       operationId: logout
       description: Log out
+      parameters:
+        - in: query
+          name: allSessions
+          schema:
+            type: integer
+          required: false
       responses:
         "200":
           description: Success
