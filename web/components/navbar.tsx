@@ -217,7 +217,9 @@ export default function Navbar(props: NavbarProps) {
               }}
               checked={logoutAllDevices}
               onChange={(_, checked) => setLogoutAllDevices(checked)}
-              data-testid="logout-all-checkbox"
+              inputProps={{
+                "data-testid": "logout-all-checkbox",
+              } as any}
             />}
             label="Log all of my devices out"
             sx={{
