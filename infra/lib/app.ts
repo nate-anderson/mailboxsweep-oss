@@ -492,12 +492,33 @@ export class AppStack extends cdk.Stack {
                 },
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesLinuxRuleSet',
-                    excludedRules: [],
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesLinuxRuleSet',
+                        excludedRules: [],
                     },
                 },
             },
+
+            // Blocks bot interations
+            {
+                name: 'AWS-BotControl',
+                priority: 60,
+                statement: {
+                    managedRuleGroupStatement: {
+                        vendorName: "AWS",
+                        name: "AWSManagedRulesBotControlRuleSet",
+                        excludedRules: [],
+                    },
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: "AWS-AWSBotControl",
+                },
+                overrideAction: {
+                    none: {},
+                },
+            }
         ];
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {

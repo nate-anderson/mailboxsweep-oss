@@ -87,16 +87,16 @@ func main() {
 		},
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	ctx := context.Background()
 	if err := seedClassifiedTestUser(ctx, cfg, db, log); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if err := seedClassifications(ctx, cfg, s3, log); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

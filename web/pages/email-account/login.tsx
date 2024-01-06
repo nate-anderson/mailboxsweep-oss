@@ -184,12 +184,12 @@ export default function Login() {
                 setCredentialType(GetCredentialResponse.type.IMAP);
               })
               .catch((err) => {
-                console.error({ getUserDataError: err });
+                setError("Failed to get user data. Please try again momentarily.");
               });
             return;
           }
         }
-        console.log({ getInboxCredentialError: error });
+        setError("Failed to get user inbox credential. Please try again momentarily.");
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

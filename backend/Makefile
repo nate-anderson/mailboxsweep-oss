@@ -51,11 +51,16 @@ e2e_seed_ci:
 
 .PHONY: build_docker_server
 build_docker_server:
-	cd .. && docker build -f ./backend/Dockerfile.server .
+	cd .. && docker build -f ./backend/Dockerfile.server -t mailboxsweep/mailboxsweep .
 
 .PHONY: build_docker_worker
 build_docker_worker:
-	cd .. && docker build -f ./backend/Dockerfile.worker .
+	cd .. && docker build -f ./backend/Dockerfile.worker -t mailboxsweep/worker .
+
+# Build an image to run migrations
+.PHONY: build_docker_migrate
+build_docker_migrate:
+	cd .. && docker build -f ./backend/Dockerfile.migrate -t mailboxsweep/migrate .
 
 .PHONY: start_e2e_server
 start_e2e_server:
@@ -96,3 +101,7 @@ maddy_gen_certs:
 
 .PHONY: maddy_init_setup
 maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds
+
+.PHONY: up_pentest
+up_pentest:
+	docker compose -f ./.docker-dev/docker-compose-pentest.yml up -d

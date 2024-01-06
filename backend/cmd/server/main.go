@@ -480,6 +480,8 @@ func main() {
 
 	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 
-	log.Infof("Starting Mailboxsweep HTTP server at %s", addr)
+	log.
+		WithField("env", cfg.Env).
+		Infof("Starting Mailboxsweep HTTP server at %s", addr)
 	log.Fatal(http.ListenAndServe(addr, srv))
 }

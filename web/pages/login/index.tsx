@@ -23,13 +23,26 @@ function StagingWarning(props: { environment: string | undefined }) {
     return <></>;
   }
 
+  let siteEnv: string;
+  switch (props.environment) {
+    case "dev":
+      siteEnv = "Development";
+    case "qa":
+    case "staging":
+    case "stage":
+      siteEnv = "Testing";
+    default:
+      siteEnv = "unknown";
+      
+  }
+
   return <Alert
     severity="warning"
     sx={{
       marginBottom: 4
     }}
   >
-    This is the MailboxSweep <b>{props.environment}</b> test site, only available to approved test users. Please visit <a href="https://mailboxsweep.com">MailboxSweep.com</a> to sign up for our mailing list.
+    This is the MailboxSweep <b>{siteEnv}</b> test site, only available to approved test users. Please visit <a href="https://mailboxsweep.com">MailboxSweep.com</a> to sign up for our mailing list.
   </Alert>
 }
 
@@ -115,7 +128,6 @@ export default function Login() {
         window.location.href = res.redirectUrl;
       }
     } catch (error) {
-      console.log({ initiateLoginError: error!.toString() });
       setErrorMessage("Sorry, something went wrong. Please try again in a moment.");
     }
   };

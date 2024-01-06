@@ -217,7 +217,7 @@ func SetupTestDynamoClient() *dynamodb.Client {
 	if portStr := os.Getenv("DYNAMODB_PORT"); portStr != "" {
 		port, err = strconv.Atoi(portStr)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 

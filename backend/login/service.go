@@ -166,6 +166,6 @@ func (s Service) CompleteGmailLogin(ctx context.Context, loginData GmailLoginRed
 }
 
 // Generates a cookie to overwrite the session cookie and log the user out
-func (s Service) GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (*http.Cookie, *http.Cookie, error) {
-	return s.sessionService.GenerateEndSessionCookie(ctx, cookie, domain)
+func (s Service) EndSession(ctx context.Context, cookie, domain string, allSessions bool) (*http.Cookie, *http.Cookie, error) {
+	return s.sessionService.EndSession(ctx, cookie, domain, allSessions)
 }

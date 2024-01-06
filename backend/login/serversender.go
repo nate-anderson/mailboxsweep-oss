@@ -25,7 +25,13 @@ type TestServerLoginSender struct {
 	// mux covers two state variables because this is only for testing and i'm being lazy
 	mux             *sync.Mutex
 	isServerRunning bool
-	links           map[string]string
+	links           map[string]linkData
+}
+
+type linkData struct {
+	FrontendURL string `json:"link"`
+	Token       string `json:"token"`
+	Signature   string `json:"signature"`
 }
 
 func NewTestServerLoginSender(port int, testUsers []string, baseURL string, env string) *TestServerLoginSender {
@@ -38,12 +44,8 @@ func NewTestServerLoginSender(port int, testUsers []string, baseURL string, env 
 		baseURL:   baseURL,
 		env:       env,
 		mux:       &sync.Mutex{},
-		links:     make(map[string]string),
+		links:     make(map[string]linkData),
 	}
-}
-
-type JSONResBody struct {
-	Link string `json:"link"`
 }
 
 func (s *TestServerLoginSender) setIsServing(isServing bool) {
@@ -60,7 +62,7 @@ func (s *TestServerLoginSender) isServing() bool {
 	return isServing
 }
 
-func (s *TestServerLoginSender) registerLoginLink(address, link string) {
+func (s *TestServerLoginSender) registerLoginLink(address string, link linkData) {
 	s.mux.Lock()
 	s.links[address] = link
 	s.mux.Unlock()
@@ -72,13 +74,13 @@ func (s *TestServerLoginSender) clearLoginLink(address string) {
 	s.mux.Unlock()
 }
 
-func (s *TestServerLoginSender) getLoginLink(address string) (link string, err error) {
+func (s *TestServerLoginSender) getLoginLink(address string) (link linkData, err error) {
 	s.mux.Lock()
 	var ok bool
 	link, ok = s.links[address]
 	s.mux.Unlock()
 	if !ok {
-		return "", fmt.Errorf("unprepared login address %s", address)
+		return linkData{}, fmt.Errorf("unprepared login address %s", address)
 	}
 	return link, err
 }
@@ -112,7 +114,11 @@ func (s *TestServerLoginSender) Send(ctx context.Context, req SendRequest) error
 
 	finish := make(chan struct{})
 
-	link := u.String()
+	link := linkData{
+		FrontendURL: u.String(),
+		Token:       req.Token,
+		Signature:   req.Signature,
+	}
 
 	s.registerLoginLink(req.Address, link)
 
@@ -125,11 +131,10 @@ func (s *TestServerLoginSender) Send(ctx context.Context, req SendRequest) error
 				Addr:    addr,
 				Handler: handler,
 			}
-
 			go func() {
 				err := srv.ListenAndServe()
 				if err != nil && !errors.Is(err, http.ErrServerClosed) {
-					log.Fatalf("test closed unexpectedly: %s", err)
+					log.Fatalf("test server closed unexpectedly: %s", err)
 				}
 			}()
 			log.Printf("serving login link temporary server at %s for login link %s", addr, link)
@@ -151,7 +156,6 @@ func (s *TestServerLoginSender) Send(ctx context.Context, req SendRequest) error
 func (s TestServerLoginSender) GetHTTPHandler(finish chan struct{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
-
 		address := r.URL.Query().Get("address")
 		link, err := s.getLoginLink(address)
 		if err != nil {
@@ -159,7 +163,7 @@ func (s TestServerLoginSender) GetHTTPHandler(finish chan struct{}) http.Handler
 			return
 		}
 
-		err = json.NewEncoder(w).Encode(JSONResBody{Link: link})
+		err = json.NewEncoder(w).Encode(link)
 		if err != nil {
 			log.Printf("error encoding login link JSON web response in temporary login sender server: %s", err)
 		}

@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+
+# Mailboxsweep HTTP API Migration Command Image
+# To be used in environments where migrations need to be run automatically
+# MUST run in the context of the root of the repository
+# so the OpenAPI spec can be copied
+
+FROM golang:1.21
+
+WORKDIR /opt/build
+
+COPY ./backend/go.mod ./backend/go.sum ./
+
+RUN go mod download
+
+COPY ./backend ./
+
+RUN mkdir -p /opt/mailboxsweep
+RUN GOOS=linux GOARCH=amd64 go build -o /opt/mailboxsweep/migrate ./cmd/migrate
+RUN GOOS=linux GOARCH=amd64 go build -o /opt/mailboxsweep/e2e_seed ./cmd/e2e_seed
+
+
+ENTRYPOINT /opt/mailboxsweep/migrate dynamo && /opt/mailboxsweep/migrate sqs && /opt/mailboxsweep/migrate s3 && /opt/mailboxsweep/e2e_seed
