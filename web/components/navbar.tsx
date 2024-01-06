@@ -41,6 +41,7 @@ const renderDrawerItem = (props: {
     href={props.path}
     passHref
     style={{ textDecoration: "none", color: "black" }}
+    data-testid={`menu-item-${props.text.toLowerCase()}`}
   >
     <ListItem
       sx={{
@@ -50,7 +51,7 @@ const renderDrawerItem = (props: {
       }}
     >
       <ListItemButton selected={props.selected}>
-        <ListItemIcon sx={{ marginLeft: 0 }} data-testid={`menu-item-${props.text.toLowerCase()}`}>{props.icon}</ListItemIcon>
+        <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
         <ListItemText>{props.text}</ListItemText>
       </ListItemButton>
     </ListItem>
@@ -62,6 +63,7 @@ const renderDrawerItem = (props: {
     key={props.text}
     onClick={props.action}
     style={{ textDecoration: "none", color: "black" }}
+    data-testid={`menu-item-${props.text.toLowerCase()}`}
   >
     <ListItem
       sx={{
