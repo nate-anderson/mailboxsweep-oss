@@ -1,6 +1,7 @@
 .PHONY: up
 up:
-	docker compose -f ./.docker-dev/docker-compose.yml up -d
+    # add -d back to this
+	docker compose -f ./.docker-dev/docker-compose.yml up --wait
 
 .PHONY: down
 down:
@@ -104,4 +105,4 @@ maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_
 
 .PHONY: up_pentest
 up_pentest:
-	docker compose -f ./.docker-dev/docker-compose-pentest.yml up -d
+	docker compose -f ./.docker-dev/docker-compose-pentest.yml up -d --wait
