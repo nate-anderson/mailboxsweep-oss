@@ -40,6 +40,7 @@ test.describe("return after classification complete", () => {
         const logoutConfirmButton = await page.getByTestId("logout-confirm-button");
         await expect(logoutConfirmButton).toBeVisible();
         await logoutConfirmButton.click();
+        await page.waitForURL("/");
         const cookies = await context.cookies();
         const sessionCookie = cookies.find(c => c.name === "X-MailboxSweep-Session");
         await expect(sessionCookie?.value).toBeFalsy();
