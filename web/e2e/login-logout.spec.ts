@@ -29,6 +29,7 @@ test.describe("return after classification complete", () => {
         await menuButton.click();
         const logoutButton = await page.getByTestId("menu-item-logout");
         await expect(logoutButton).toBeVisible();
+        await logoutButton.click();
         const logoutConfirmCheckbox = await page.getByTestId("logout-all-checkbox");
         await expect(logoutConfirmCheckbox).toBeVisible();
         await expect(logoutConfirmCheckbox).toBeChecked();
