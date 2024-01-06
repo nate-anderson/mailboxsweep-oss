@@ -2,9 +2,6 @@
 up:
 	docker compose -f ./.docker-dev/docker-compose.yml up -d --wait
 
-.PHONY: up_ci
-	docker compose -f ./.docker-dev/docker-compose.yml up -d --wait || true
-
 .PHONY: down
 down:
 	docker compose -f ./.docker-dev/docker-compose.yml down
@@ -104,9 +101,6 @@ maddy_gen_certs:
 
 .PHONY: maddy_init_setup
 maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_creds
-
-.PHONY: maddy_init_setup_ci
-maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up_ci maddy_creds
 
 .PHONY: up_pentest
 up_pentest:

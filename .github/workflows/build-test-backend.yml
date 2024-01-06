@@ -37,7 +37,7 @@ jobs:
 
       - name: Start containers
         working-directory: backend
-        run: make maddy_init_setup_ci
+        run: make maddy_init_setup
 
       - name: Test
         working-directory: backend
