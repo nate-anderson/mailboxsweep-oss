@@ -49,8 +49,8 @@ const renderDrawerItem = (props: {
         color: "inherit",
       }}
     >
-      <ListItemButton selected={props.selected} aria-label="Log out of MailboxSweep">
-        <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
+      <ListItemButton selected={props.selected}>
+        <ListItemIcon sx={{ marginLeft: 0 }} data-testid={`menu-item-${props.text.toLowerCase()}`}>{props.icon}</ListItemIcon>
         <ListItemText>{props.text}</ListItemText>
       </ListItemButton>
     </ListItem>

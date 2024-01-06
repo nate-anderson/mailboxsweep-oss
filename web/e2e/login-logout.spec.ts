@@ -27,7 +27,7 @@ test.describe("return after classification complete", () => {
         
         const menuButton = await page.getByTestId("sidebar-menu-button");
         await menuButton.click();
-        const logoutButton = await page.getByLabel("Log out of MailboxSweep", {exact: true});
+        const logoutButton = await page.getByTestId("menu-item-logout");
         await expect(logoutButton).toBeVisible();
         const logoutConfirmCheckbox = await page.getByTestId("logout-all-checkbox");
         await expect(logoutConfirmCheckbox).toBeVisible();
