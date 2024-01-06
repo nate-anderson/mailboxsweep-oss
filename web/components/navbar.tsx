@@ -49,7 +49,7 @@ const renderDrawerItem = (props: {
         color: "inherit",
       }}
     >
-      <ListItemButton selected={props.selected}>
+      <ListItemButton selected={props.selected} aria-label="Log out of MailboxSweep">
         <ListItemIcon sx={{ marginLeft: 0 }}>{props.icon}</ListItemIcon>
         <ListItemText>{props.text}</ListItemText>
       </ListItemButton>
@@ -146,6 +146,7 @@ export default function Navbar(props: NavbarProps) {
               color="inherit"
               aria-label="menu"
               onClick={() => setDrawerOpen(!drawerOpen)}
+              data-testid="sidebar-menu-button"
             >
               <IconMenu />
             </IconButton>
@@ -214,6 +215,7 @@ export default function Navbar(props: NavbarProps) {
               }}
               checked={logoutAllDevices}
               onChange={(_, checked) => setLogoutAllDevices(checked)}
+              data-testid="logout-all-checkbox"
             />}
             label="Log all of my devices out"
             sx={{
@@ -227,7 +229,7 @@ export default function Navbar(props: NavbarProps) {
             margin: 1,
           }}
         >
-          <Button onClick={() => doLogout()} autoFocus startIcon={<IconLogout />}>
+          <Button onClick={() => doLogout()} autoFocus startIcon={<IconLogout />} data-testid="logout-confirm-button">
             Logout
           </Button>
         </DialogActions>
