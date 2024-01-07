@@ -23,6 +23,7 @@ COPY openapi.yml ../
 
 RUN npm run openapi
 RUN npm run build:docker
+COPY web/serve.json ./out
 
 EXPOSE 3000
 
