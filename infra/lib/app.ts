@@ -246,7 +246,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "truer",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -300,7 +300,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "truer",
+                FORCE_BUILD_REFRESH: "true",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -418,8 +418,8 @@ export class AppStack extends cdk.Stack {
                 priority: 10,
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesAmazonIpReputationList',
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesAmazonIpReputationList',
                     },
                 },
                 overrideAction: {
@@ -518,6 +518,24 @@ export class AppStack extends cdk.Stack {
                 overrideAction: {
                     none: {},
                 },
+            },
+            {
+                name: 'RateLimit',
+                priority: 70,
+                action: {
+                    block: {},
+                },
+                statement: {
+                    rateBasedStatement: {
+                        limit: 200,
+                        aggregateKeyType: "IP",
+                    }
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: "LimitRequests200"
+                }
             }
         ];
 
