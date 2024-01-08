@@ -80,11 +80,26 @@ func SetupTestBucket(ctx context.Context, t *testing.T) (*s3.Client, string, fun
 	}
 
 	teardown := func() {
-		_, err := client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		objects, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 			Bucket: &bucket,
 		})
 		if err != nil {
-			log.Printf("error tearing down test bucket %s: %s", bucket, err)
+			log.Fatalf("error listing test bucket '%s' contents to clear: %s", bucket, err)
+		}
+		for _, o := range objects.Contents {
+			_, err := client.DeleteObject(ctx, &s3.DeleteObjectInput{
+				Bucket: &bucket,
+				Key:    o.Key,
+			})
+			if err != nil {
+				log.Fatalf("error deleting object %s from test bucket '%s': %s", *o.Key, bucket, err)
+			}
+		}
+		_, err = client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+			Bucket: &bucket,
+		})
+		if err != nil {
+			log.Printf("error tearing down test bucket '%s': %s", bucket, err)
 		}
 	}
 
