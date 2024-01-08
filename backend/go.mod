@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.48.0
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.18.3
-	github.com/aws/aws-sdk-go-v2/service/sqs v1.24.7
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.29.7
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.44.6
 	github.com/aws/aws-xray-sdk-go v1.8.1
 	github.com/aws/smithy-go v1.19.0
