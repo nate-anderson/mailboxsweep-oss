@@ -101,7 +101,7 @@ export function getSteps(): Step[] | undefined {
     } else if (provider === "IMAP") {
         return stepsIMAP;
     } else {
-        console.log(`cannot select a step for provider ${provider}`);
+        // console.log(`cannot select a step for provider ${provider}`);
         return undefined;
     }
 }
@@ -126,8 +126,6 @@ export function nextStep(): string | undefined {
         } else {
             setStep(undefined);
         }
-    } else {
-        console.log({ step, steps });
     }
     return undefined;
 }

@@ -418,8 +418,8 @@ export class AppStack extends cdk.Stack {
                 priority: 10,
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesAmazonIpReputationList',
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesAmazonIpReputationList',
                     },
                 },
                 overrideAction: {
@@ -492,12 +492,51 @@ export class AppStack extends cdk.Stack {
                 },
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesLinuxRuleSet',
-                    excludedRules: [],
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesLinuxRuleSet',
+                        excludedRules: [],
                     },
                 },
             },
+
+            // Blocks bot interations
+            {
+                name: 'AWS-BotControl',
+                priority: 60,
+                statement: {
+                    managedRuleGroupStatement: {
+                        vendorName: "AWS",
+                        name: "AWSManagedRulesBotControlRuleSet",
+                        excludedRules: [],
+                    },
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: "AWS-AWSBotControl",
+                },
+                overrideAction: {
+                    none: {},
+                },
+            },
+            {
+                name: 'RateLimit',
+                priority: 70,
+                action: {
+                    block: {},
+                },
+                statement: {
+                    rateBasedStatement: {
+                        limit: 200,
+                        aggregateKeyType: "IP",
+                    }
+                },
+                visibilityConfig: {
+                    sampledRequestsEnabled: true,
+                    cloudWatchMetricsEnabled: true,
+                    metricName: "LimitRequests200"
+                }
+            }
         ];
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {

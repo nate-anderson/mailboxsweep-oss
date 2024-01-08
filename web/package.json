@@ -8,6 +8,7 @@
     "build:prod": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.mailboxsweep.com ENV=prod next build",
     "build:staging": "MAILBOXSWEEP_API_PORT=443 MAILBOXSWEEP_API_HOST=api.staging.mailboxsweep.com ENV=staging next build",
     "build:e2e": "MAILBOXSWEEP_API_PORT=8080 MAILBOXSWEEP_API_HOST=localhost MAILBOXSWEEP_API_PROTO=http ENV=dev next build",
+    "build:docker": "MAILBOXSWEEP_API_PORT=8081 MAILBOXSWEEP_API_HOST=localhost MAILBOXSWEEP_API_PROTO=http ENV=dev next build",
     "robots:staging": "cp staging.robots.txt ./out/robots.txt",
     "robots:prod": "cp prod.robots.txt ./out/robots.txt",
     "start": "next start",
@@ -37,19 +38,20 @@
     "react-markdown": "^8.0.7",
     "remark-gfm": "^3.0.1",
     "sharp": "^0.32.1",
-    "typescript": "5.1.6"
+    "typescript": "5.3.3",
+    "webpack-subresource-integrity": "^5.2.0-rc.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.37.1",
     "@types/debounce": "^1.2.1",
     "@types/node": "20.2.5",
-    "@types/react": "18.2.12",
+    "@types/react": "18.2.46",
     "@types/react-beautiful-dnd": "^13.1.4",
-    "@types/react-dom": "18.2.13",
-    "eslint": "8.43.0",
+    "@types/react-dom": "18.2.18",
+    "eslint": "8.56.0",
     "eslint-config-next": "^14.0.0",
     "openapi-typescript-codegen": "^0.25.0",
-    "prettier": "^2.8.8",
+    "prettier": "^3.1.1",
     "serve": "^14.2.1",
     "yaml": "^2.3.1",
     "yaml-loader": "^0.8.0"

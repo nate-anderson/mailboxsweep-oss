@@ -26,4 +26,4 @@ EXPOSE 8000
 EXPOSE 8080
 EXPOSE 80
 
-CMD ["/opt/mailboxsweep/server"]
+ENTRYPOINT ["/opt/mailboxsweep/server"]

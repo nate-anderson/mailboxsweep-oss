@@ -1,0 +1,17 @@
+{
+    "headers": [
+        {
+            "source": "*",
+            "headers": [
+                {
+                    "key": "x-frame-options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "Content-Security-Policy",
+                    "value": "frame-ancestors 'none'"
+                }
+            ]
+        }
+    ]
+}

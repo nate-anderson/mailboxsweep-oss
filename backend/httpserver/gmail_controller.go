@@ -45,6 +45,7 @@ func (c GmailReauthController) ReauthenticateGmail(w http.ResponseWriter, req *h
 		HttpOnly: true,
 		Secure:   true,
 		Expires:  time.Now().Add(externalAuthCookieDuration),
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	http.SetCookie(w, cookie)

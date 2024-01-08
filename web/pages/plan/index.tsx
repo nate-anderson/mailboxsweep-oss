@@ -171,7 +171,7 @@ export default function ShowPlan() {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("Failed to get user payment status, please try again momentarily.");
       })
       .finally(() => {
         setReady(true);

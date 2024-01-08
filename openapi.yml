@@ -662,7 +662,7 @@ paths:
         "400":
           description: Bad request
         "500":
-          Description: Internal server error
+          description: Internal server error
 
   /user/agreements/{agreementSlug}:
     get:
@@ -1041,6 +1041,12 @@ paths:
     get:
       operationId: logout
       description: Log out
+      parameters:
+        - in: query
+          name: allSessions
+          schema:
+            type: integer
+          required: false
       responses:
         "200":
           description: Success

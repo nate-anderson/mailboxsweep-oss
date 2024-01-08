@@ -17,7 +17,7 @@ type Service interface {
 	StartSession(ctx context.Context, userAddress string) (*Session, error)
 	// lookup session and return authorized context
 	Authorize(ctx context.Context, cookieValue string) (context.Context, error)
-	GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (session *http.Cookie, isLoggedIn *http.Cookie, err error)
+	EndSession(ctx context.Context, cookie, domain string, allSessions bool) (session *http.Cookie, isLoggedIn *http.Cookie, err error)
 }
 
 type DefaultService struct {
@@ -112,14 +112,29 @@ func (a AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, domain string) (*http.Cookie, *http.Cookie, error) {
-	_, err := mailboxsweep.UserAddressFromContext(ctx)
+func (s DefaultService) EndSession(ctx context.Context, cookie, domain string, allSessions bool) (*http.Cookie, *http.Cookie, error) {
+	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if err = s.repo.Invalidate(ctx, cookie); err != nil {
-		return nil, nil, err
+	if allSessions {
+		tokens, err := s.repo.ListByUser(ctx, addr)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// invalidate all stored sessions, including the one the user just passed.
+		// invalidate is idempotent, so there's no harm possibly doing it twice
+		for _, c := range append(tokens, cookie) {
+			if err = s.repo.Invalidate(ctx, c); err != nil {
+				return nil, nil, err
+			}
+		}
+	} else {
+		if err = s.repo.Invalidate(ctx, cookie); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	c := &http.Cookie{
@@ -129,6 +144,7 @@ func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, do
 		HttpOnly: true,
 		Secure:   true,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	l := &http.Cookie{
@@ -139,6 +155,7 @@ func (s DefaultService) GenerateEndSessionCookie(ctx context.Context, cookie, do
 		HttpOnly: false,
 		Secure:   true,
 		Domain:   domain,
+		SameSite: http.SameSiteStrictMode,
 	}
 	return c, l, nil
 }
