@@ -52,8 +52,7 @@ jobs:
           aws-region: us-west-2
 
       - name: Build frontend docker image
-        working-directory: web
-        run: docker build . -t mailboxsweep/frontend:latest
+        run: docker build -f web/Dockerfile . -t mailboxsweep/frontend:latest
 
       - name: Start containers
         working-directory: backend
