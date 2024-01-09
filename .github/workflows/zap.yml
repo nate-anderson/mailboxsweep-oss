@@ -1,0 +1,98 @@
+# Reusable workflow for end to end testing
+name: ZAP Security Scan
+
+on:
+  workflow_call:
+    inputs: {}
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      STRIPE_API_KEY:
+        required: true
+      GOOGLE_OAUTH_CLIENT_ID:
+        required: true
+      GOOGLE_OAUTH_CLIENT_SECRET:
+        required: true
+      SIGNING_KEY:
+        required: true
+
+jobs:
+  zap-scan:
+    name: Run ZAP security scan
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    # @TODO: uncomment this once caching is figured out
+    # needs:
+    #   - build-backend
+    #   - build-web
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "^1.21.0"
+          cache-dependency-path: backend/go.sum
+
+      - name: Install server generator
+        working-directory: backend
+        run: make install_openapi_generator
+
+      - name: Generate server code
+        working-directory: backend
+        run: make http_scaffold
+
+      # This is needed to prevent the SSM client from trying to get credentials using EC2 magic
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Start containers
+        working-directory: backend
+        run: make up_pentest_ci
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          # Version Spec of the version to use in SemVer notation.
+          # It also emits such aliases as lts, latest, nightly and canary builds
+          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: "20.9.0"
+          cache: "npm"
+          cache-dependency-path: ./web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Generate API client
+        working-directory: web
+        run: npm run openapi
+
+      - name: Build
+        working-directory: web
+        run: npm run build:e2e
+
+      - name: Start static webserver (background)
+        working-directory: web
+        run: npm run serve &
+
+      # Initially I am configuring this step to use the Google-provided CASA
+      # scan config, but in the future, this can be expanded to include
+      - name: Run scan
+        uses: zaproxy/action-full-scan@latest
+        working-directory: backend/.docker-dev/security
+        with:
+          target: "http://localhost:3000"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cmd_options: -cmd -autorun ../zap-automation.yml
+
+      # - name: Upload ZAP scan results as GitHub Actions Artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: test-results
+      #     path: ./web/test-results
