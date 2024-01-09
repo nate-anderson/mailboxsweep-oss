@@ -84,7 +84,7 @@ jobs:
       # Initially I am configuring this step to use the Google-provided CASA
       # scan config, but in the future, this can be expanded to include
       - name: Run scan
-        uses: zaproxy/action-full-scan@latest
+        uses: zaproxy/action-full-scan@v0.8.0
         with:
           target: "http://localhost:3000"
           token: ${{ secrets.GITHUB_TOKEN }}
