@@ -81,6 +81,10 @@ jobs:
         working-directory: web
         run: npm run serve &
 
+      - name: Build frontend docker image
+        working-directory: web
+        run: docker build . -t mailboxsweep/frontend:latest
+
       # Initially I am configuring this step to use the Google-provided CASA
       # scan config, but in the future, this can be expanded to include
       - name: Run scan
