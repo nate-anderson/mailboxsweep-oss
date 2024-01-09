@@ -105,3 +105,6 @@ maddy_init_setup: maddy_make_tls_dir maddy_init_config maddy_gen_certs up maddy_
 .PHONY: up_pentest
 up_pentest:
 	docker compose -f ./.docker-dev/docker-compose-pentest.yml up -d
+
+.PHONY: up_pentest_ci
+up_pentest_ci: maddy_make_tls_dir maddy_init_config maddy_gen_certs up_pentest maddy_creds

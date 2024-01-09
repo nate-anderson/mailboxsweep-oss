@@ -147,6 +147,10 @@ jobs:
           DISTRIBUTION: E12RGUT06QPULN
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
 
+  zap-scan:
+    uses:
+      nate-anderson/mailboxsweep/.github/workflows/zap.yml@7d97f0600e184d0c7899556255dc7446ab691ada
+
       # - name: Build (prod)
       #   working-directory: web
       #   run: npm run build:prod
