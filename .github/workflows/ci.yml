@@ -148,7 +148,7 @@ jobs:
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
 
   zap-scan:
-    uses: nate-anderson/mailboxsweep/.github/workflows/zap.yml@b3cb6ec1e1dea482dbedcb976b1349f3164fb759
+    uses: nate-anderson/mailboxsweep/.github/workflows/zap.yml@f48801368ba1ade9d5afa6d9e377ef74d18c06bc
     secrets: inherit
 
   # - name: Build (prod)
