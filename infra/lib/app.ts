@@ -645,7 +645,24 @@ export class AppStack extends cdk.Stack {
                         function: rewriteURIFunc,
                         eventType: CloudFront.FunctionEventType.VIEWER_REQUEST,
                     }
-                ]
+                ],
+                responseHeadersPolicy: new CloudFront.ResponseHeadersPolicy(this, "add-anti-clickjacking-headers", {
+                    responseHeadersPolicyName: "add-anti-clickjacking-headers",
+                    customHeadersBehavior: {
+                        customHeaders: [
+                            {
+                                header: "x-frame-options",
+                                override: true,
+                                value: "DENY"
+                            },
+                            {
+                                header: "Content-Security-Policy",
+                                override: true,
+                                value: "frame-ancestors 'none'"
+                            }
+                        ]
+                    }
+                }),
             },
             errorResponses:[
                 {

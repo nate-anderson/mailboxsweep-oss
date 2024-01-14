@@ -20,11 +20,5 @@ function handler(event) {
         }
     }
 
-    var response = event.response;
-    var headers = resposne.headers;
-    headers['x-frame-options'] = "DENY";
-    headers['Content-Security-Policy'] = "frame-ancestors 'none'";
-
-
     return request;
 }
