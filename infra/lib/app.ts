@@ -246,7 +246,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "trued",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -300,7 +300,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "trued",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -648,19 +648,15 @@ export class AppStack extends cdk.Stack {
                 ],
                 responseHeadersPolicy: new CloudFront.ResponseHeadersPolicy(this, "add-anti-clickjacking-headers", {
                     responseHeadersPolicyName: "add-anti-clickjacking-headers",
-                    customHeadersBehavior: {
-                        customHeaders: [
-                            {
-                                header: "x-frame-options",
-                                override: true,
-                                value: "DENY"
-                            },
-                            {
-                                header: "Content-Security-Policy",
-                                override: true,
-                                value: "frame-ancestors 'none'"
-                            }
-                        ]
+                    securityHeadersBehavior: {
+                        frameOptions: {
+                            override: true,
+                            frameOption: CloudFront.HeadersFrameOption.DENY,
+                        },
+                        contentSecurityPolicy: {
+                            override: true,
+                            contentSecurityPolicy: "frame-ancestors 'none'",
+                        }
                     }
                 }),
             },
