@@ -53,7 +53,7 @@ func (m CSRFMiddleware) respondCSRFError(err error, w http.ResponseWriter) {
 		Key:   "CSRF",
 	}
 	w.WriteHeader(http.StatusForbidden)
-	if writeErr := json.NewEncoder(w).Encode(resErr); err != nil {
+	if writeErr := json.NewEncoder(w).Encode(resErr); writeErr != nil {
 		m.logger.Printf("error writing CSRF error: %s", writeErr)
 	}
 	m.logger.WithField("error_type", "CSRF").Error(err)
