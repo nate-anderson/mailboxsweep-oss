@@ -128,6 +128,8 @@ type serverConfig struct {
 	TestLoginServerSenderUsers string  `fig:"TEST_LOGIN_SENDER_SERVER_USERS"`
 	AllowInsecureIMAP          *bool   `fig:"ALLOW_INSECURE_IMAP" default:"false"`
 	UserWhitelistConcat        *string `fig:"USER_WHITELIST"`
+
+	CSRFHMACKey string `fig:"CSRF_HMAC_KEY"`
 }
 
 func main() {
@@ -454,6 +456,11 @@ func main() {
 		).ServeHTTP,
 	)
 
+	csrf := httpserver.NewCSRFMiddleware(cfg.CSRFHMACKey, time.Minute*30, 20, !cfg.DevMode, log)
+	csrf.SkipCheckPathFunc = func(path string) bool {
+		return strings.HasPrefix("/login", path)
+	}
+
 	loggingFormatter := middleware.DefaultLogFormatter{
 		Logger:  log,
 		NoColor: !cfg.DevMode,
@@ -465,6 +472,7 @@ func main() {
 			middleware.RealIP,
 			middleware.RequestID,
 			auth.Middleware,
+			csrf.Middleware,
 			cors.Middleware,
 			loggingMiddleware,
 			// middleware.Heartbeat("/healthcheck"), // disabled for now because I don't want to make too many changes at once
