@@ -7,7 +7,7 @@ import (
 
 const corsAllowOriginHeader = "Access-Control-Allow-Origin"
 const corsAllowHeadersHeader = "Access-Control-Allow-Headers"
-const corsAllowedHeaders = "Content-Type,Set-Cookie"
+const corsAllowedHeaders = "Content-Type,Set-Cookie,X-Csrf-Token"
 const corsAllowMethodsHeader = "Access-Control-Allow-Methods"
 const corsAllowMethods = "POST, GET, PATCH, OPTIONS, DELETE, PUT"
 const corsAllowCredentialsHeader = "Access-Control-Allow-Credentials"
