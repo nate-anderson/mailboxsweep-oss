@@ -9,6 +9,8 @@ const corsAllowOriginHeader = "Access-Control-Allow-Origin"
 const corsAllowHeadersHeader = "Access-Control-Allow-Headers"
 const corsAllowedHeaders = "Content-Type,Set-Cookie,X-Csrf-Token"
 const corsAllowMethodsHeader = "Access-Control-Allow-Methods"
+const corsExposedHeadersHeader = "Access-Control-Expose-Headers"
+const corsExposedHeaders = "X-Csrf-Token"
 const corsAllowMethods = "POST, GET, PATCH, OPTIONS, DELETE, PUT"
 const corsAllowCredentialsHeader = "Access-Control-Allow-Credentials"
 
@@ -33,6 +35,7 @@ func (m corsHandler) Middleware(next http.Handler) http.Handler {
 		}
 		w.Header().Add(corsAllowHeadersHeader, corsAllowedHeaders)
 		w.Header().Add(corsAllowCredentialsHeader, "true")
+		w.Header().Add(corsExposedHeadersHeader, corsExposedHeaders)
 
 		// handle preflight
 		if req.Method == http.MethodOptions {

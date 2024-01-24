@@ -1,7 +1,7 @@
 import { Configuration, DefaultApi, FetchParams, Middleware, RequestContext, ResponseContext } from "./client-gen";
 
 const csrfTokenKey = "csrf_token";
-const csrfHeader = "X-Csrf-Token";
+const csrfHeader = "x-csrf-token";
 
 const getCsrfToken = () => localStorage.getItem(csrfTokenKey) ?? undefined;
 const setCsrfToken = (token: string) => localStorage.setItem(csrfTokenKey, token);
@@ -26,9 +26,11 @@ const csrfAuthRedirectMiddleware = (redirectOnAuthError: boolean): Middleware =>
     }
   },
   post: async (context: ResponseContext): Promise<Response | void> => {
-    if (csrfHeader in context.response.headers) {
-      const newToken = context.response.headers[csrfHeader];
-      setCsrfToken(newToken as string);
+    for (const header of context.response.headers) {
+      if (header[0] == csrfHeader) {
+        const newToken = header[1] as string;
+        setCsrfToken(newToken);
+      }
     }
 
     if (context.response.status >= 400) {

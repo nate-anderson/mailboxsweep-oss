@@ -9,6 +9,11 @@ components:
       type: apiKey
       in: cookie
       name: X-MailboxSweep-Session
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-Csrf-Token
+      description: All non-idempotent requests should contain this value received from the previous request
   schemas:
     ChangeSet:
       type: object
@@ -541,6 +546,7 @@ components:
 
 security:
   - cookieAuth: []
+  - csrfToken: []
 
 paths:
   /classifiers:
