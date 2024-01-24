@@ -132,7 +132,7 @@ const renderClassificationStatus = (
           }}
         >
           <AlertTitle>
-            Your messages are being {operation === UpdateOperation.DELETE ? "deleted" : "marked read"}.
+            Your messages are being {operation === UpdateOperation.Delete ? "deleted" : "marked read"}.
           </AlertTitle>
           <p style={{ display: "block" }}>
             This can take a few minutes, especially if you've selected a lot of messages. We'll let you know when cleanup is complete!

@@ -9,7 +9,7 @@ import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import IconEnvelope from "@mui/icons-material/Email";
 import { useEffect, useState } from "react";
-import { GetCredentialResponse, ResponseError } from "../../client-gen";
+import { GetCredentialResponse, GetCredentialResponseTypeEnum, ResponseError } from "../../client-gen";
 import { parseISO, format } from "date-fns";
 import { displayFormat } from "../../dates";
 import Dialog from "@mui/material/Dialog";
@@ -114,11 +114,11 @@ function PasswordAndIMAPServerInputs (props: {
   );
 };
 
-const displayCredentialType = (credType: GetCredentialResponse.type | undefined): string => {
+const displayCredentialType = (credType: GetCredentialResponseTypeEnum | undefined): string => {
   switch (credType) {
-    case GetCredentialResponse.type.GMAIL:
+    case GetCredentialResponseTypeEnum.Gmail:
       return "Gmail";
-    case GetCredentialResponse.type.IMAP:
+    case GetCredentialResponseTypeEnum.Imap:
       return "IMAP";
     default:
       return "unknown";
@@ -148,7 +148,7 @@ export default function Login() {
 
   const resetFilledInput = () => setPassword("********");
 
-  const [credentialType, setCredentialType] = useState<GetCredentialResponse.type | undefined>();
+  const [credentialType, setCredentialType] = useState<GetCredentialResponseTypeEnum | undefined>();
 
   useEffect(() => {
     API.getInboxCredential()
@@ -180,7 +180,7 @@ export default function Login() {
                 // if using Gmail, there will always be a credential
                 // unless reauth is required, in which case we won't reach this page anyway
                 // thus, default to IMAP here
-                setCredentialType(GetCredentialResponse.type.IMAP);
+                setCredentialType(GetCredentialResponseTypeEnum.Imap);
               })
               .catch((err) => {
                 setError("Failed to get user data. Please try again momentarily.");
@@ -353,7 +353,7 @@ export default function Login() {
             <></>
           )}
 
-          {credentialType === GetCredentialResponse.type.IMAP
+          {credentialType === GetCredentialResponseTypeEnum.Imap
             ? <Box
                 component="form"
                 sx={{

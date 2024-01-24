@@ -5,7 +5,6 @@ import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import IconCardMembership from "@mui/icons-material/CardMembership";
 import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";

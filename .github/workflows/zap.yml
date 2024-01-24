@@ -74,7 +74,7 @@ jobs:
 
       - name: Generate API client
         working-directory: web
-        run: npm run openapi
+        run: docker run --rm -v \"${PWD}/..:/local\" --name client-generator openapitools/openapi-generator-cli:v7.2.0 generate -i local/openapi.yml -g typescript-fetch -o local/web/client-gen
 
       - name: Build
         working-directory: web

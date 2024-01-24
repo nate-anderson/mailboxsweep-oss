@@ -30,7 +30,7 @@ export default function ConfirmMarkRead() {
 
     useEffect(() => {
         API.getChangeset({
-            operation: UpdateOperation.MARK_READ,
+            operation: UpdateOperation.MarkRead,
         })
         .then((res) => {
             setMarkReadChangeset(res.changeSet);
@@ -50,7 +50,7 @@ export default function ConfirmMarkRead() {
         API.commitChangeset({
             commitRequest: {
                 confirm: isConfirmed,
-                operation: UpdateOperation.MARK_READ,
+                operation: UpdateOperation.MarkRead,
             }
         })
         .then((res) => {

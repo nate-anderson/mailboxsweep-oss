@@ -99,7 +99,9 @@ export default function Navbar(props: NavbarProps) {
   const router = useRouter();
 
   const doLogout = () => {
-    API.logout(logoutAllDevices ? 1 : 0)
+    API.logout({
+      allSessions: logoutAllDevices ? 1 : 0,
+    })
       .then(() => router.push("/"))
       .catch((err) => console.log("Logout failed, please try again momentarily."));
   }

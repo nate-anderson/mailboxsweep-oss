@@ -9,6 +9,7 @@ import { useSnackbar } from "../../components/snackbar";
 import {
   ResponseError,
   ChangeSetRequest,
+  ChangeSetRequestAddOrRemoveEnum,
   Classification,
   UpdateOperation,
 } from "../../client-gen";
@@ -192,8 +193,8 @@ export default function Select() {
 
   const addLeaf = async (path: string[]) => {
     const operation = isDeleteMode
-    ? UpdateOperation.DELETE
-    : UpdateOperation.MARK_READ;
+    ? UpdateOperation.Delete
+    : UpdateOperation.MarkRead;
 
     setIsLoadingSelectionChange(true);
 
@@ -210,7 +211,7 @@ export default function Select() {
       changeSetRequest: {
         operation,
         path,
-        addOrRemove: ChangeSetRequest.addOrRemove.ADD,
+        addOrRemove: ChangeSetRequestAddOrRemoveEnum.Add,
       }
     }).then((res) => {
       if (isDeleteMode) {
@@ -250,8 +251,8 @@ export default function Select() {
 
   const removeLeaf = async (path: string[]) => {
     const operation = isDeleteMode
-    ? UpdateOperation.DELETE
-    : UpdateOperation.MARK_READ;
+    ? UpdateOperation.Delete
+    : UpdateOperation.MarkRead;
     
     setIsLoadingSelectionChange(true);
 
@@ -268,7 +269,7 @@ export default function Select() {
       changeSetRequest: {
         operation,
         path,
-        addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
+        addOrRemove: ChangeSetRequestAddOrRemoveEnum.Remove,
       }
     }).then((res) => {
       if (isDeleteMode) {
@@ -312,7 +313,7 @@ export default function Select() {
       }
     }
 
-    const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
+    const updateOperation = isDeleteMode ? UpdateOperation.Delete : UpdateOperation.MarkRead;
 
     setIsLoadingClassificationSummary(true);
     API.getClassificationSummary({

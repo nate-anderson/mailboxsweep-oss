@@ -30,7 +30,7 @@ export default function ConfirmDelete() {
 
     useEffect(() => {
         API.getChangeset({
-            operation: UpdateOperation.DELETE,
+            operation: UpdateOperation.Delete,
         })
         .then((res) => {
             setDeleteChangeset(res.changeSet);
@@ -50,7 +50,7 @@ export default function ConfirmDelete() {
         API.commitChangeset({
             commitRequest: {
                 confirm: isConfirmed,
-                operation: UpdateOperation.DELETE,
+                operation: UpdateOperation.MarkRead,
             }
         })
         .then((res) => {
