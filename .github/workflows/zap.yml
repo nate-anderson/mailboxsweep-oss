@@ -51,38 +51,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+      - name: Generate API client
+        working-directory: web
+        run: npm run openapi
+
       - name: Build frontend docker image
         run: docker build -f web/Dockerfile . -t mailboxsweep/frontend:latest
 
       - name: Start containers
         working-directory: backend
         run: make up_pentest_ci
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          # Version Spec of the version to use in SemVer notation.
-          # It also emits such aliases as lts, latest, nightly and canary builds
-          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
-          node-version: "20.9.0"
-          cache: "npm"
-          cache-dependency-path: ./web/package-lock.json
-
-      - name: Install dependencies
-        working-directory: web
-        run: npm install
-
-      - name: Generate API client
-        working-directory: web
-        run: docker run --rm -v \"${PWD}/..:/local\" --name client-generator openapitools/openapi-generator-cli:v7.2.0 generate -i local/openapi.yml -g typescript-fetch -o local/web/client-gen
-
-      - name: Build
-        working-directory: web
-        run: npm run build:e2e
-
-      - name: Start static webserver (background)
-        working-directory: web
-        run: npm run serve &
 
       # Initially I am configuring this step to use the Google-provided CASA
       # scan config, but in the future, this can be expanded to include
