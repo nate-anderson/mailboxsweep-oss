@@ -210,6 +210,18 @@ components:
         address:
           type: string
 
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        provider:
+          type: string
+
     GetCredentialResponse:
       type: object
       required:
@@ -532,8 +544,8 @@ security:
 
 paths:
   /classifiers:
-    operationId: getClassifiers
     get:
+      operationId: getClassifiers
       description: List available classifiers
       responses:
         "200":
@@ -562,8 +574,16 @@ paths:
                 $ref: "#/components/schemas/CreateCredentialResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     get:
       operationId: getInboxCredential
@@ -597,8 +617,16 @@ paths:
                 $ref: "#/components/schemas/CreateCredentialResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /user:
     get:
@@ -661,8 +689,16 @@ paths:
                 $ref: "#/components/schemas/SetUserAgreementsResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /user/agreements/{agreementSlug}:
     get:
@@ -715,8 +751,16 @@ paths:
                 $ref: "#/components/schemas/UpdateChangeSetResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     get:
       operationId: getChangeset
@@ -773,8 +817,16 @@ paths:
                 $ref: "#/components/schemas/StatusResponse"
         "400":
           description: Bad or unconfirmed request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /inbox/classification/requests:
     get:
@@ -807,8 +859,16 @@ paths:
                 $ref: "#/components/schemas/StatusResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     get:
       operationId: getClassificationLeaf
@@ -832,6 +892,10 @@ paths:
           description: Inbox or leaf not found
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /inbox/classification/summary:
     get:
@@ -853,8 +917,16 @@ paths:
                 $ref: "#/components/schemas/ClassificationResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /inbox/classification/status:
     get:
@@ -869,6 +941,10 @@ paths:
                 $ref: "#/components/schemas/ClassificationStatusResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /plans:
     get:
@@ -883,6 +959,10 @@ paths:
                 $ref: "#/components/schemas/ListPlansResponse"
         "500":
           description: Internal server errror
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /payment:
     get:
@@ -897,6 +977,10 @@ paths:
                 $ref: "#/components/schemas/UserPaymentStatus"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       description: Initiate payment
@@ -916,6 +1000,10 @@ paths:
                 $ref: "#/components/schemas/InitiatePaymentResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /payment/success:
     get:
@@ -937,6 +1025,10 @@ paths:
                 $ref: "#/components/schemas/StatusResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   # Note:
   # Paths prefixed with /login do not require authentication!
@@ -1036,6 +1128,10 @@ paths:
                 $ref: "#/components/schemas/StartLoginResponse"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /logout:
     get:
@@ -1052,8 +1148,16 @@ paths:
           description: Success
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /healthcheck:
     get:

@@ -48,8 +48,10 @@ export default function CompleteProfile() {
 
   const submitProfileData = (nameFirst: string, nameLast: string) => {
     API.updateUserName({
-      nameFirst,
-      nameLast,
+      setUserNameRequest: {
+        nameFirst,
+        nameLast,
+      }
     })
       .then(() => {
         setShowSuccess(true);

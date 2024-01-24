@@ -90,7 +90,7 @@ export default function Agreement() {
       console.log("agreement code is not string");
     }
 
-    API.getUserAgreement(slug)
+    API.getUserAgreement({ agreementSlug: slug })
       .then((res) => {
         setUserAgreement(res);
       })
@@ -108,7 +108,9 @@ export default function Agreement() {
   const submitAgreement = async (key: string): Promise<void> => {
     try {
       const res = await API.setConsentedAgreements({
-        agreements: [key],
+        setUserAgreementsRequest: {
+          agreements: [key],
+        }
       });
       const agreedDate = formatISO(new Date());
       setShowSuccess(true);

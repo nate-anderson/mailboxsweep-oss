@@ -20,13 +20,18 @@ export default function Login() {
     const loginToken = query["token"] as string;
     const signature = query["sig"] as string;
 
-    API.submitLoginToken(loginToken, signature)
+    API.submitLoginToken({
+      signature,
+      token: loginToken,
+    })
       .then((res) => {
         const provider = getProviderByAddress(res.address);
         setProvider(provider);
         Promise.all([
           API.getPaymentStatus(),
-          API.getUserAgreement("TERMS_AND_CONDITIONS"),
+          API.getUserAgreement({
+            agreementSlug: "TERMS_AND_CONDITIONS",
+          }),
         ])
         .then(([paymentStatus, agreement]) => {
           const stepPath = getInitialStepPath(Boolean(agreement.agreedAt), Boolean(paymentStatus.subscribedAt), res.profileComplete);

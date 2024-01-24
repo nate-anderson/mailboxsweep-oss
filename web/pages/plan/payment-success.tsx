@@ -17,7 +17,9 @@ export default function PaymentSuccess() {
 
     const checkoutSessionId = query["checkoutSessionId"] as string;
 
-    API.completePayment(checkoutSessionId)
+    API.completePayment({
+      checkoutSessionId,
+    })
       .then((res) => {
         const next = nextStep();
         if (next) {

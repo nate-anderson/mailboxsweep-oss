@@ -5,12 +5,11 @@ import Box from "@mui/material/Box";
 import Button from "../../components/button";
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import IconEnvelope from "@mui/icons-material/Email";
 import { useEffect, useState } from "react";
-import { ApiError, GetCredentialResponse } from "../../client-gen";
+import { GetCredentialResponse, ResponseError } from "../../client-gen";
 import { parseISO, format } from "date-fns";
 import { displayFormat } from "../../dates";
 import Dialog from "@mui/material/Dialog";
@@ -172,9 +171,9 @@ export default function Login() {
         resetFilledInput();
       })
       .catch((error) => {
-        if (error instanceof ApiError) {
-          const e = error as ApiError;
-          if (e.status == 404) {
+        if (error instanceof ResponseError) {
+          const e = error as ResponseError;
+          if (e.response.status == 404) {
             API.getUserData()
               .then((res) => {
                 setAddress(res.address);
@@ -205,24 +204,28 @@ export default function Login() {
     setSubmitButtonEnabled(false);
     if (showImapServerForm) {
       API.storeImapServerAndCredentials({
-        password,
-        imapHost,
-        imapPort,
+        storeImapServerAndCredentialsRequest: {
+          password,
+          imapHost,
+          imapPort,
+        }
       })
         .then((res) => {
           showSuccess(true);
           proceed();
         })
         .catch((err) => {
-          if (err instanceof ApiError) {
-            const e = err as ApiError;
+          if (err instanceof ResponseError) {
+            const e = err as ResponseError;
             setError(e.message);
           }
         });
       return;
     }
     API.storeInboxCredential({
-      password,
+      createCredentialRequest: {
+        password,
+      }
     })
       .then(() => {
         showSuccess(true);
@@ -230,9 +233,9 @@ export default function Login() {
         proceed();
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const e = err as ApiError;
-          switch (e.status) {
+        if (err instanceof ResponseError) {
+          const e = err as ResponseError;
+          switch (e.response.status) {
             case 502:
               setError(
                 "We couldn't log into your email provider with this password. Please try again."
@@ -243,7 +246,7 @@ export default function Login() {
               setShowImapServerForm(true);
               break;
             default:
-              setError("Something went wrong: " + e.body);
+              setError("Something went wrong. Please try again in a moment.");
           }
         }
       });

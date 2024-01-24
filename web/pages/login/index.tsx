@@ -112,7 +112,9 @@ export default function Login() {
       }
       setIsLoading(true);
       const res = await API.initiateLogin({
-        address,
+        loginRequest: {
+          address,
+        }
       });
       setIsLoading(false);
   

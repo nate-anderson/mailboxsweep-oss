@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAPIClient } from "../../client";
-import { ApiError, ClassifierInfo } from "../../client-gen";
+import { ClassifierInfo, ResponseError } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -92,16 +92,19 @@ export default function Configure() {
 
   const submit = () => {
     API.startClassify({
-      folders: [...selectedFolders],
-      classifiers: selectedClassifiers,
+      startInboxClassifyRequest: {
+        folders: [...selectedFolders],
+        classifiers: selectedClassifiers,
+      }
     })
       .then((res) => {
         showSuccessSnackbar(true);
         router.push("/home");
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const apiErr = err as ApiError;
+        if (err instanceof ResponseError) {
+          const apiErr = err as ResponseError;
+          apiErr.response
           showErrorSnackbar(err.message);
         }
       });

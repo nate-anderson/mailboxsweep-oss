@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useAPIClient } from "../../client";
-import { ApiError } from "../../client-gen";
+import { ResponseError } from "../../client-gen";
 import { defaultClassifiers } from "../../lib/classifier";
 import FolderTree from "../../public/folder-tree.svg";
 import PrivatePage from "../../auth";
@@ -24,17 +24,19 @@ export default function Classify() {
 
     const submit = () => {
         API.startClassify({
-          folders: ["INBOX"],
-          classifiers: defaultClassifiers,
+            startInboxClassifyRequest: {
+                folders: ["INBOX"],
+                classifiers: defaultClassifiers,
+            }
         })
           .then((res) => {
             showSuccessSnackbar(true);
             router.push("/home");
           })
           .catch((err) => {
-            if (err instanceof ApiError) {
-              const apiErr = err as ApiError;
-              showErrorSnackbar(err.message);
+            if (err instanceof ResponseError) {
+              const apiErr = err as ResponseError;
+              showErrorSnackbar(apiErr.message);
             }
           });
       };

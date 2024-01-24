@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import { ApiError, ClassificationStatus, Plan, UpdateOperation } from "../client-gen";
+import { ResponseError, ClassificationStatusStatusEnum as ClassificationStatus, Plan, UpdateOperation } from "../client-gen";
 import { useAPIClient } from "../client";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
@@ -20,7 +20,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Divider from "@mui/material/Divider";
 
 const renderClassificationStatus = (
-  status: ClassificationStatus.status | undefined,
+  status: ClassificationStatus | undefined,
   operation: UpdateOperation | undefined,
 ) => {
   const boxify = (children: React.ReactNode) => (
@@ -37,7 +37,7 @@ const renderClassificationStatus = (
   );
 
   switch (status) {
-    case ClassificationStatus.status.CLASSIFYING:
+    case ClassificationStatus.Classifying:
       return boxify(
         <Alert
           severity="info"
@@ -54,7 +54,7 @@ const renderClassificationStatus = (
         </Alert>
       );
 
-    case ClassificationStatus.status.CLASSIFIED:
+    case ClassificationStatus.Classified:
       return boxify(
         <Alert
           severity="success"
@@ -80,7 +80,7 @@ const renderClassificationStatus = (
         </Alert>
       );
 
-    case ClassificationStatus.status.ERRORED:
+    case ClassificationStatus.Errored:
       return boxify(
         <Alert
           severity="error"
@@ -102,7 +102,7 @@ const renderClassificationStatus = (
         </Alert>
       );
       
-    case ClassificationStatus.status.EXECUTED:
+    case ClassificationStatus.Executed:
       return boxify(
         <Alert
           severity="info"
@@ -123,7 +123,7 @@ const renderClassificationStatus = (
         </Alert>
       );
 
-    case ClassificationStatus.status.EXECUTING:
+    case ClassificationStatus.Executing:
       return boxify(
         <Alert
           severity="info"
@@ -146,11 +146,11 @@ const renderClassificationStatus = (
   }
 };
 
-const renderActionPrompt = (status: ClassificationStatus.status | undefined) => {
+const renderActionPrompt = (status: ClassificationStatus | undefined) => {
   switch (status) {
-    case ClassificationStatus.status.CLASSIFYING:
+    case ClassificationStatus.Classifying:
       return <BackupPrompt1 />;
-    case ClassificationStatus.status.CLASSIFIED:
+    case ClassificationStatus.Classified:
       return <BackupPrompt2 />;
   }
 }
@@ -164,7 +164,7 @@ export default function Home() {
   const [markedReadMessagesCount, setmarkedReadMessagesCount] = useState(0); 
   const [executedRequests, setExecutedRequests] = useState(0);
   const [classificationStatus, setClassificationStatus] = useState<
-    ClassificationStatus.status | undefined
+    ClassificationStatus | undefined
   >();
   const [subscribedPlan, setSubscribedPlan] = useState<Plan | undefined>();
   const [planExpires, setPlanExpires] = useState<string | undefined>();
@@ -179,9 +179,9 @@ export default function Home() {
         setUnreadMessagesCount(res.unreadCount);
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const e = err as ApiError;
-          switch (e.status) {
+        if (err instanceof ResponseError) {
+          const e = err as ResponseError;
+          switch (e.response.status) {
             case 404:
               return;
           }
@@ -200,8 +200,8 @@ export default function Home() {
         }
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const e = err as ApiError;
+        if (err instanceof ResponseError) {
+          const e = err as ResponseError;
           setErrorMessage(e.message);
         }
       });
@@ -218,8 +218,8 @@ export default function Home() {
         }
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const e = err as ApiError;
+        if (err instanceof ResponseError) {
+          const e = err as ResponseError;
           setErrorMessage(e.message);
         }
       })

@@ -13,10 +13,10 @@
     "robots:prod": "cp prod.robots.txt ./out/robots.txt",
     "start": "next start",
     "lint": "next lint",
-    "openapi": "openapi --client=fetch --input=../openapi.yml --output=./client-gen --name=Mailboxsweep",
     "format": "prettier --write .",
     "test:e2e": "playwright test",
-    "serve": "serve -p 3000 out"
+    "serve": "serve -p 3000 out",
+    "openapi": "docker run --rm -v \"${PWD}/..:/local\" --name client-generator openapitools/openapi-generator-cli:v7.2.0 generate -i local/openapi.yml -g typescript-fetch -o local/web/client-gen"
   },
   "dependencies": {
     "@date-io/date-fns": "^2.16.0",
@@ -50,7 +50,6 @@
     "@types/react-dom": "18.2.18",
     "eslint": "8.56.0",
     "eslint-config-next": "^14.0.0",
-    "openapi-typescript-codegen": "^0.25.0",
     "prettier": "^3.1.1",
     "serve": "^14.2.1",
     "yaml": "^2.3.1",
