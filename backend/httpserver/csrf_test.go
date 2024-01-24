@@ -265,6 +265,7 @@ func TestCSRFMiddleware(t *testing.T) {
 
 						token, err := m.generateToken()
 						assert.ThatError(t, err).IsNil()
+						req.Header.Set(csrfHeader, token)
 
 						setCookie, err := m.Cookie(token)
 						assert.ThatError(t, err).IsNil()
