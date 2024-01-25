@@ -50,7 +50,7 @@ export default function ConfirmDelete() {
         API.commitChangeset({
             commitRequest: {
                 confirm: isConfirmed,
-                operation: UpdateOperation.MarkRead,
+                operation: UpdateOperation.Delete,
             }
         })
         .then((res) => {
