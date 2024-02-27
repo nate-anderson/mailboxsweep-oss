@@ -20,13 +20,18 @@ export default function Login() {
     const stateToken = query["state"] as string;
     const authCode = query["code"] as string;
 
-    API.submitGmailStateToken(stateToken, authCode)
+    API.submitGmailStateToken({
+      stateToken,
+      code: authCode,
+    })
       .then((res) => {
         const provider = getProviderByAddress(res.address);
         setProvider(provider);
         Promise.all([
           API.getPaymentStatus(),
-          API.getUserAgreement("TERMS_AND_CONDITIONS"),
+          API.getUserAgreement({
+            agreementSlug: "TERMS_AND_CONDITIONS"
+          }),
         ])
         .then(([paymentStatus, agreement]) => {
           const stepPath = getInitialStepPath(Boolean(agreement.agreedAt), Boolean(paymentStatus.subscribedAt), res.profileComplete);

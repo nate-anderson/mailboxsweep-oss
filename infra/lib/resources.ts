@@ -39,6 +39,9 @@ const Resources: any = {
         web: {
             dns: {
                 fullyQualifiedDomainName: "mailboxsweep.com"
+            },
+            cdn: {
+                originAccessId: "ENCJF39OKKMAH"
             }
         }
     }

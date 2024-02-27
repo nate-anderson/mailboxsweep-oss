@@ -1,11 +1,10 @@
 import { API } from "../../client";
-import { ApiError, Plan } from "../../client-gen";
+import { ResponseError, Plan } from "../../client-gen";
 import Navbar from "../../components/navbar";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import IconCardMembership from "@mui/icons-material/CardMembership";
 import { useEffect, useState } from "react";
 import PlanCard from "../../components/plan";
@@ -30,7 +29,9 @@ export default function SelectPlan() {
 
   const submit = async (plan: string) => {
     API.initiatePayment({
-      plan,
+      initiatePaymentRequest: {
+        plan,
+      }
     })
     .then((res) => {
       setErrorMessage("");
@@ -38,9 +39,9 @@ export default function SelectPlan() {
       setTimeout(() => document.location.href = res.checkoutUrl!, 250);
     })
     .catch((error) => {
-      if (error instanceof ApiError) {
-        const e = error as ApiError;
-        if (e.status == 422) {
+      if (error instanceof ResponseError) {
+        const e = error as ResponseError;
+        if (e.response.status === 422) {
           setErrorMessage("Your account already has an active plan.");
         } else {
           setErrorMessage(error.message);

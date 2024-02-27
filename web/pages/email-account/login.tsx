@@ -5,12 +5,11 @@ import Box from "@mui/material/Box";
 import Button from "../../components/button";
 import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import IconEnvelope from "@mui/icons-material/Email";
 import { useEffect, useState } from "react";
-import { ApiError, GetCredentialResponse } from "../../client-gen";
+import { GetCredentialResponse, GetCredentialResponseTypeEnum, ResponseError } from "../../client-gen";
 import { parseISO, format } from "date-fns";
 import { displayFormat } from "../../dates";
 import Dialog from "@mui/material/Dialog";
@@ -115,11 +114,11 @@ function PasswordAndIMAPServerInputs (props: {
   );
 };
 
-const displayCredentialType = (credType: GetCredentialResponse.type | undefined): string => {
+const displayCredentialType = (credType: GetCredentialResponseTypeEnum | undefined): string => {
   switch (credType) {
-    case GetCredentialResponse.type.GMAIL:
+    case GetCredentialResponseTypeEnum.Gmail:
       return "Gmail";
-    case GetCredentialResponse.type.IMAP:
+    case GetCredentialResponseTypeEnum.Imap:
       return "IMAP";
     default:
       return "unknown";
@@ -149,7 +148,7 @@ export default function Login() {
 
   const resetFilledInput = () => setPassword("********");
 
-  const [credentialType, setCredentialType] = useState<GetCredentialResponse.type | undefined>();
+  const [credentialType, setCredentialType] = useState<GetCredentialResponseTypeEnum | undefined>();
 
   useEffect(() => {
     API.getInboxCredential()
@@ -172,16 +171,16 @@ export default function Login() {
         resetFilledInput();
       })
       .catch((error) => {
-        if (error instanceof ApiError) {
-          const e = error as ApiError;
-          if (e.status == 404) {
+        if (error instanceof ResponseError) {
+          const e = error as ResponseError;
+          if (e.response.status == 404) {
             API.getUserData()
               .then((res) => {
                 setAddress(res.address);
                 // if using Gmail, there will always be a credential
                 // unless reauth is required, in which case we won't reach this page anyway
                 // thus, default to IMAP here
-                setCredentialType(GetCredentialResponse.type.IMAP);
+                setCredentialType(GetCredentialResponseTypeEnum.Imap);
               })
               .catch((err) => {
                 setError("Failed to get user data. Please try again momentarily.");
@@ -205,24 +204,28 @@ export default function Login() {
     setSubmitButtonEnabled(false);
     if (showImapServerForm) {
       API.storeImapServerAndCredentials({
-        password,
-        imapHost,
-        imapPort,
+        storeImapServerAndCredentialsRequest: {
+          password,
+          imapHost,
+          imapPort,
+        }
       })
         .then((res) => {
           showSuccess(true);
           proceed();
         })
         .catch((err) => {
-          if (err instanceof ApiError) {
-            const e = err as ApiError;
+          if (err instanceof ResponseError) {
+            const e = err as ResponseError;
             setError(e.message);
           }
         });
       return;
     }
     API.storeInboxCredential({
-      password,
+      createCredentialRequest: {
+        password,
+      }
     })
       .then(() => {
         showSuccess(true);
@@ -230,9 +233,9 @@ export default function Login() {
         proceed();
       })
       .catch((err) => {
-        if (err instanceof ApiError) {
-          const e = err as ApiError;
-          switch (e.status) {
+        if (err instanceof ResponseError) {
+          const e = err as ResponseError;
+          switch (e.response.status) {
             case 502:
               setError(
                 "We couldn't log into your email provider with this password. Please try again."
@@ -243,7 +246,7 @@ export default function Login() {
               setShowImapServerForm(true);
               break;
             default:
-              setError("Something went wrong: " + e.body);
+              setError("Something went wrong. Please try again in a moment.");
           }
         }
       });
@@ -350,7 +353,7 @@ export default function Login() {
             <></>
           )}
 
-          {credentialType === GetCredentialResponse.type.IMAP
+          {credentialType === GetCredentialResponseTypeEnum.Imap
             ? <Box
                 component="form"
                 sx={{

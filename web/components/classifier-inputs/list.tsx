@@ -141,7 +141,7 @@ function ClassifierListItem(props: {
           canRemove={props.selectedLength > 1}
         />
       );
-    case InputFormat.DATE:
+    case InputFormat.Date:
       if (!props.setDateInput) {
         throw new Error(`setDateInput must be set for a date input classifier`);
       }
@@ -160,7 +160,7 @@ function ClassifierListItem(props: {
           canRemove={props.selectedLength > 1}
         />
       );
-    case InputFormat.STRING:
+    case InputFormat.String:
       if (!props.setTextInput) {
         throw new Error(`setTextInput must be set for a text input classifier`);
       }

@@ -2,7 +2,7 @@ import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useAPIClient } from "../../../client";
 import Navbar from "../../../components/navbar";
-import { ChangeSet, ChangeSetResponse, UpdateOperation } from "../../../client-gen";
+import { ChangeSet, UpdateOperation } from "../../../client-gen";
 import { useEffect, useState } from "react";
 import { useConstantSnackbar } from "../../../components/snackbar";
 import Box from "@mui/material/Box";
@@ -29,7 +29,9 @@ export default function ConfirmDelete() {
     const [ changesetIsLoading, setChangesetIsLoading ] = useState(true);
 
     useEffect(() => {
-        API.getChangeset(UpdateOperation.DELETE)
+        API.getChangeset({
+            operation: UpdateOperation.Delete,
+        })
         .then((res) => {
             setDeleteChangeset(res.changeSet);
             setSelectedCount(res.size);
@@ -46,8 +48,10 @@ export default function ConfirmDelete() {
     const submit = () => {
         setSubmitIsLoading(true);
         API.commitChangeset({
-            confirm: isConfirmed,
-            operation: UpdateOperation.DELETE,
+            commitRequest: {
+                confirm: isConfirmed,
+                operation: UpdateOperation.Delete,
+            }
         })
         .then((res) => {
             showSuccessSnackbar(true);

@@ -21,7 +21,7 @@ COPY backend/payment/plans.yml ./
 COPY backend/inboxuser/agreements/*.yml ./agreements/
 COPY openapi.yml ../
 
-RUN npm run openapi
+# RUN npm run openapi
 RUN npm run build:docker
 COPY web/serve.json ./out
 

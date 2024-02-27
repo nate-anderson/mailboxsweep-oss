@@ -147,16 +147,20 @@ jobs:
           DISTRIBUTION: E12RGUT06QPULN
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
 
-      # - name: Build (prod)
-      #   working-directory: web
-      #   run: npm run build:prod
+  zap-scan:
+    uses: nate-anderson/mailboxsweep/.github/workflows/zap.yml@3f0a5299dc608f91f606c2302b3afb558649d88b
+    secrets: inherit
 
-      # - name: Compress prod build
-      #   working-directory: web
-      #   run: zip -r prod.zip ./out
+  # - name: Build (prod)
+  #   working-directory: web
+  #   run: npm run build:prod
 
-      # - name: Push to S3 (prod)
-      #   working-directory: web
-      #   env:
-      #     BUCKET: com.mailboxsweep.builds.prod.web
-      #   run: aws s3 put-object prod.zip s3://$BUCKET
+  # - name: Compress prod build
+  #   working-directory: web
+  #   run: zip -r prod.zip ./out
+
+  # - name: Push to S3 (prod)
+  #   working-directory: web
+  #   env:
+  #     BUCKET: com.mailboxsweep.builds.prod.web
+  #   run: aws s3 put-object prod.zip s3://$BUCKET

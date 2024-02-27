@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
 import { useAPIClient } from "../../client";
 import { useSnackbar } from "../../components/snackbar";
 import {
-  ApiError,
+  ResponseError,
   ChangeSetRequest,
+  ChangeSetRequestAddOrRemoveEnum,
   Classification,
   UpdateOperation,
 } from "../../client-gen";
@@ -192,8 +193,8 @@ export default function Select() {
 
   const addLeaf = async (path: string[]) => {
     const operation = isDeleteMode
-    ? UpdateOperation.DELETE
-    : UpdateOperation.MARK_READ;
+    ? UpdateOperation.Delete
+    : UpdateOperation.MarkRead;
 
     setIsLoadingSelectionChange(true);
 
@@ -207,9 +208,11 @@ export default function Select() {
     }
 
     API.updateChangeSet({
-      operation,
-      path,
-      addOrRemove: ChangeSetRequest.addOrRemove.ADD,
+      changeSetRequest: {
+        operation,
+        path,
+        addOrRemove: ChangeSetRequestAddOrRemoveEnum.Add,
+      }
     }).then((res) => {
       if (isDeleteMode) {
         // remove intermediate path
@@ -248,8 +251,8 @@ export default function Select() {
 
   const removeLeaf = async (path: string[]) => {
     const operation = isDeleteMode
-    ? UpdateOperation.DELETE
-    : UpdateOperation.MARK_READ;
+    ? UpdateOperation.Delete
+    : UpdateOperation.MarkRead;
     
     setIsLoadingSelectionChange(true);
 
@@ -263,9 +266,11 @@ export default function Select() {
     }
 
     API.updateChangeSet({
-      operation,
-      path,
-      addOrRemove: ChangeSetRequest.addOrRemove.REMOVE,
+      changeSetRequest: {
+        operation,
+        path,
+        addOrRemove: ChangeSetRequestAddOrRemoveEnum.Remove,
+      }
     }).then((res) => {
       if (isDeleteMode) {
         setDeleteSelection((sel) => {
@@ -308,17 +313,19 @@ export default function Select() {
       }
     }
 
-    const updateOperation = isDeleteMode ? UpdateOperation.DELETE : UpdateOperation.MARK_READ;
+    const updateOperation = isDeleteMode ? UpdateOperation.Delete : UpdateOperation.MarkRead;
 
     setIsLoadingClassificationSummary(true);
-    API.getClassificationSummary(requestPage)
+    API.getClassificationSummary({
+      page: requestPage,
+    })
       .then((classificationRes) => {
         setClassificationRoot(new ClassificationTree(classificationRes.classification));
         setTotalPages(classificationRes.pageCount);
       })
       .catch((error) => {
-        if (error instanceof ApiError) {
-          const apiError = error as ApiError;
+        if (error instanceof ResponseError) {
+          const apiError = error as ResponseError;
           setError(apiError.message);
         }
         setError("Failed to get classification summary, please try again momentarily.");
@@ -328,7 +335,9 @@ export default function Select() {
       });
       
     setIsLoadingSelection(true);
-    API.getChangeset(updateOperation).then((changesetRes) => {
+    API.getChangeset({
+      operation: updateOperation,
+    }).then((changesetRes) => {
       if (isDeleteMode) {
         setDeleteSelection(new Selection(changesetRes.changeSet.paths));
         setDeleteCount(changesetRes.size);
@@ -338,10 +347,10 @@ export default function Select() {
       }
     })
     .catch((error) => {
-      if (error instanceof ApiError) {
-        const apiError = error as ApiError;
+      if (error instanceof ResponseError) {
+        const apiError = error as ResponseError;
         // 404 means no selection has been stored 
-        if (apiError.status !== 404) {
+        if (apiError.response.status !== 404) {
           setError(apiError.message);
         }
       }
