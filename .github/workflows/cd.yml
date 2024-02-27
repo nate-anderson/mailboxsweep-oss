@@ -153,10 +153,5 @@ jobs:
       - name: Push to S3 (prod)
         working-directory: web
         env:
-          BUCKET: com.mailboxsweep.prod.web
-        run: aws s3 sync . s3://$BUCKET --delete
-
-      - name: Invalidate CloudFront distribution
-        env:
-          DISTRIBUTION: E1VQK5RMBJHIS8
-        run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
+          BUCKET: com.mailboxsweep.builds.prod.web
+        run: aws s3 put-object prod.zip s3://$BUCKET
