@@ -677,14 +677,6 @@ export class AppStack extends cdk.Stack {
             recordName: webUrl,
         });
 
-        new S3Deployment.BucketDeployment(this, `deployment`, {
-            sources: [S3Deployment.Source.bucket(buildBucket, `${props.environmentName}.zip`)],
-            destinationBucket: staticSiteBucket,
-            prune: true,
-            distribution: siteDistribution,
-            destinationKeyPrefix: "/",
-        });
-
         const dashboard = new CloudwatchDashboardStack(this, `dashboard`, {
             ...props,
             table: tableStack.table,
