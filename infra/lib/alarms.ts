@@ -76,7 +76,7 @@ class QueueMetricAlarms extends cdk.Stack {
             actionsEnabled: true,
         });
 
-        const topic = new SNS.Topic(scope, `${description}-alarm-topic`, {
+        const topic = new SNS.Topic(scope, `${description}-alarm-topic-${props.environmentName}`, {
             displayName: `${description} Alarm Topic`,
         });
         topic.addSubscription(new Subscriptions.EmailSubscription(props.emailAddr, {
@@ -104,7 +104,7 @@ class QueueMetricAlarms extends cdk.Stack {
                 actionsEnabled: true,
             })
 
-            const dlqTopic = new SNS.Topic(scope, `${description}-dlq-alarm-topic`, {
+            const dlqTopic = new SNS.Topic(scope, `${description}-dlq-alarm-topic-${props.environmentName}`, {
                 displayName: `${description} DLQ Alarm Topic`,
             });
             dlqTopic.addSubscription(new Subscriptions.EmailSubscription(props.emailAddr, {

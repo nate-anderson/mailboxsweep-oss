@@ -617,8 +617,9 @@ export class AppStack extends cdk.Stack {
             code: CloudFront.FunctionCode.fromFile({
                 filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
             }),
-            functionName: "static-site-url-rewrite",
-            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting"
+            functionName: `static-site-url-rewrite-${props.environmentName}`,
+            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting",
+            
         });;
 
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
@@ -647,7 +648,7 @@ export class AppStack extends cdk.Stack {
                     }
                 ],
                 responseHeadersPolicy: new CloudFront.ResponseHeadersPolicy(this, "add-anti-clickjacking-headers", {
-                    responseHeadersPolicyName: "add-anti-clickjacking-headers",
+                    responseHeadersPolicyName: `add-anti-clickjacking-headers-${props.environmentName}`,
                     securityHeadersBehavior: {
                         frameOptions: {
                             override: true,
@@ -696,7 +697,7 @@ export class AppStack extends cdk.Stack {
 
         // SES configuration
         const sesConfigSet = new SES.ConfigurationSet(this, `mailboxsweep_transactional`, {
-            configurationSetName: "MailboxSweep_Transactional",
+            configurationSetName: `MailboxSweep_Transactional_${props.environmentName}`,
             reputationMetrics: true,
             suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
         });
@@ -704,7 +705,7 @@ export class AppStack extends cdk.Stack {
         // send notifications to tech@mailboxsweep.com when render fails, a customer complains, an email bounces or is rejected
         const sesRenderFailureTopic = new SNS.Topic(this, `mailboxsweep_ses_errors`, {
             fifo: false,
-            topicName: "SESErrors",
+            topicName: `SESErrors_${props.environmentName}`,
             displayName: "MailboxSweep SES Failures",
         });
         sesRenderFailureTopic.addSubscription(new SNSSubscriptions.EmailSubscription(errorEmail, {}));
