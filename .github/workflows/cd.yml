@@ -148,13 +148,13 @@ jobs:
 
       - name: Compress prod build
         working-directory: web
-        run: zip -r prod.zip ./out
+        run: cd out && zip -r ../prod.zip .
 
       - name: Push to S3 (prod)
         working-directory: web
         env:
-          BUCKET: com.mailboxsweep.builds.prod.web
-        run: aws s3 put-object prod.zip s3://$BUCKET
+          BUCKET: com.mailboxsweep.prod.web
+        run: aws s3 sync . s3://$BUCKET --delete
 
       - name: Invalidate CloudFront distribution
         env:
