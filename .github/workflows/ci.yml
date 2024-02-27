@@ -150,17 +150,3 @@ jobs:
   zap-scan:
     uses: nate-anderson/mailboxsweep/.github/workflows/zap.yml@3f0a5299dc608f91f606c2302b3afb558649d88b
     secrets: inherit
-
-  # - name: Build (prod)
-  #   working-directory: web
-  #   run: npm run build:prod
-
-  # - name: Compress prod build
-  #   working-directory: web
-  #   run: zip -r prod.zip ./out
-
-  # - name: Push to S3 (prod)
-  #   working-directory: web
-  #   env:
-  #     BUCKET: com.mailboxsweep.builds.prod.web
-  #   run: aws s3 put-object prod.zip s3://$BUCKET
