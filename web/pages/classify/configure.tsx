@@ -18,6 +18,7 @@ import PrivatePage from "../../auth";
 import { defaultClassifiers } from "../../lib/classifier";
 import { AddClassifierDialog } from "../../components/classifier-inputs/modal";
 import ChipMultiselect from "../../components/chip-multiselect";
+import { LoadingSpinner } from "../../components/loading-spinner";
 
 const defaultFolders = ["INBOX", "inbox", "Inbox"];
 
@@ -30,6 +31,7 @@ export default function Configure() {
   >([]);
   const [allClassifiers, setAllClassifiers] = useState<ClassifierInfo[]>([]);
   const [allFolders, setAllFolders] = useState(new Set<string>());
+  const [allFoldersLoading, setAllFoldersLoading] = useState(true);
   const [selectedFolders, setSelectedFolders] = useState(new Set<string>());
   const [successSnackbar, showSuccessSnackbar] = useConstantSnackbar(
     "Success!",
@@ -78,12 +80,14 @@ export default function Configure() {
 
     API.getInboxMetadata()
       .then((res) => {
+        setAllFoldersLoading(true);
         setAllFolders(new Set(res.folders));
         defaultFolders.forEach(defaultFolder => {
           if (res.folders.includes(defaultFolder)) {
             setSelectedFolders(f => new Set([...f, defaultFolder]));
           }
-        })
+        });
+        setAllFoldersLoading(false);
       })
       .catch((err) => {
         setError(err);
@@ -177,12 +181,16 @@ export default function Configure() {
             >
               Folders to sort:
             </Typography>
-            <ChipMultiselect
-              items={new Set(allFolders)}
-              selectedItems={selectedFolders}
-              onAdd={(name: string) => setSelectedFolders(f => new Set([...f, name]))}
-              onRemove={(name: string) => setSelectedFolders(f => new Set([...f].filter(x => x !== name)))}
-            />
+            {
+              allFoldersLoading
+                ? <LoadingSpinner />
+                : <ChipMultiselect
+                items={new Set(allFolders)}
+                selectedItems={selectedFolders}
+                onAdd={(name: string) => setSelectedFolders(f => new Set([...f, name]))}
+                onRemove={(name: string) => setSelectedFolders(f => new Set([...f].filter(x => x !== name)))}
+              />
+            }
             <Typography
               fontWeight="bold"
               marginLeft="12px"
@@ -207,6 +215,7 @@ export default function Configure() {
                 <IconPlus />
               </IconButton>
               <Button
+                disabled={allFoldersLoading}
                 onClick={submit}
               >
                 Submit
