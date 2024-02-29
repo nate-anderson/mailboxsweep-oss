@@ -40,6 +40,12 @@ func (c ClassificationController) StartClassify(w http.ResponseWriter, req *http
 		return
 	}
 
+	if len(reqBody.Folders) == 0 {
+		err := errors.New("no folders selected")
+		c.respondError(w, err, withOverrideStatusCode(http.StatusBadRequest))
+		return
+	}
+
 	serializedClassifiers := make([]classification.SerializableClassifier, len(reqBody.Classifiers))
 	for i, cl := range reqBody.Classifiers {
 		initValue := ""
