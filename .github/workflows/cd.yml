@@ -141,17 +141,3 @@ jobs:
         env:
           DISTRIBUTION: E1VQK5RMBJHIS8
         run: aws cloudfront create-invalidation --distribution-id $DISTRIBUTION --paths "/*"
-
-      - name: Build (prod)
-        working-directory: web
-        run: npm run build:prod
-
-      - name: Compress prod build
-        working-directory: web
-        run: cd out && zip -r ../prod.zip .
-
-      - name: Push to S3 (prod)
-        working-directory: web
-        env:
-          BUCKET: com.mailboxsweep.builds.prod.web
-        run: aws s3 put-object prod.zip s3://$BUCKET
