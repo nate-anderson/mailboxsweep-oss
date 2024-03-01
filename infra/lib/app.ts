@@ -63,6 +63,12 @@ export class AppStack extends cdk.Stack {
         });
         const domain: string = Resources[props.environmentName].api.dns.fullyQualifiedDomainName;
         
+        // SES configuration
+        const sesConfigSet = new SES.ConfigurationSet(this, `mailboxsweep_transactional`, {
+            configurationSetName: `MailboxSweep_Transactional_${props.environmentName}`,
+            reputationMetrics: true,
+            suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
+        });
 
         const bucket = new S3.Bucket(this, `classifications-${props.environmentName}`, {
             bucketName: `com.mailboxsweep.${props.environmentName}.classification`,
@@ -220,7 +226,7 @@ export class AppStack extends cdk.Stack {
             STRIPE_CHECKOUT_SESSION_DURATION_MINUTES: "30",
 
             GOOGLE_OAUTH_REDIRECT_URL: `https://${webUrl}/login/gmail`,
-            SES_CONFIGURATION_SET_NAME: "MailboxSweep_Transactional",
+            SES_CONFIGURATION_SET_NAME: sesConfigSet.configurationSetName,
 
             // AWS_XRAY_DAEMON_ADDRESS: `${XRayConfig.containerName}.${namespace}:${XRayConfig.port}`,
             AWS_XRAY_ENABLED: props.xrayEnabled.toString(),
@@ -685,13 +691,6 @@ export class AppStack extends cdk.Stack {
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
             loadBalancer: loadBalancedAPIService.loadBalancer,
-        });
-
-        // SES configuration
-        const sesConfigSet = new SES.ConfigurationSet(this, `mailboxsweep_transactional`, {
-            configurationSetName: `MailboxSweep_Transactional_${props.environmentName}`,
-            reputationMetrics: true,
-            suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
         });
 
         // send notifications to tech@mailboxsweep.com when render fails, a customer complains, an email bounces or is rejected
