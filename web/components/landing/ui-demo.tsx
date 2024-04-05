@@ -18,7 +18,7 @@ export default function UIDemo() {
     return <div className={UIPreviewStyles.device}>
         <Image
             src={images[imgIndex % 3]}
-            alt="UI Demonstration - selecting messages by website, sender and date"
+            alt="Select messages by website, sender and date"
             priority
             style={{
                 width: "50vw",
