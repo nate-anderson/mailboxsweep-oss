@@ -23,7 +23,9 @@ import (
 	"mailboxsweep/session"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -486,8 +488,14 @@ func main() {
 		srv = xray.Handler(xray.NewDynamicSegmentNamer("MailboxSweep", "api.*.mailboxsweep.com"), srv)
 	}
 
-	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGABRT, syscall.SIGHUP, syscall.SIGSEGV)
+	go func() {
+		s := <-sigChan
+		log.Printf("Received signal %s: likely shutting down\n", s.String())
+	}()
 
+	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 	log.
 		WithField("env", cfg.Env).
 		Infof("Starting Mailboxsweep HTTP server at %s", addr)
