@@ -16,6 +16,9 @@ import (
 	"mailboxsweep/metering"
 	"mailboxsweep/payment"
 	"mailboxsweep/worker"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -315,13 +318,31 @@ func main() {
 		cfg.SQSCommitDeadLetterQueueURL,
 	)
 
-	group, workerCtx := errgroup.WithContext(context.Background())
+	// handle shutdown gracefully
+	ctx, cancel := context.WithCancel(context.Background())
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(
+		sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+
+	go func() {
+		s := <-sigc
+		log.Warnf("Got signal %s, shutting down...", s.String())
+		cancel()
+	}()
+
+	group, workerCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		return classifyWorker.Work(workerCtx)
 	})
 	group.Go(func() error {
 		return commitWorker.Work(workerCtx)
 	})
+
 	err = group.Wait()
 	log.Fatal(err)
 }

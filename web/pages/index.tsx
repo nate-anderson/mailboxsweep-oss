@@ -148,7 +148,7 @@ export default function Home(props: IStaticProps) {
     <>
       <Head>
         <title>MailboxSweep cleans your inbox.</title>
-        <meta name="description" content="Free up storage and declutter your digital life." />
+        <meta name="description" content="Free up storage and declutter your digital life. MailboxSweep has simple plans to help you delete thousands of unwanted messages, or mark messages read to get the annoying red badge off your home screen." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <TopBar shadow={false} drawerItems={drawerItems}/>
