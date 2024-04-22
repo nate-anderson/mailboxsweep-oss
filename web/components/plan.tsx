@@ -4,6 +4,8 @@ import Button from "@mui/material/Button";
 import IconArrowForward from "@mui/icons-material/ArrowForward";
 import Card from "@mui/material/Card";
 import { Plan } from "../client-gen";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 
 interface IPlanCardProps {
     plan: Plan;
@@ -103,8 +105,18 @@ export default function PlanCard(props: IPlanCardProps) {
           marginY: 0,
         }}
       >
-        Pay once and use for {props.plan.durationDays} days
+        Pay <b>once</b> and use for {props.plan.durationDays} days
       </Typography>
+      <Chip
+        label="No subscription, one-time payment!"
+        sx={{
+          marginY: 1,
+          backgroundColor: "var(--color-red)",
+          color: "white",
+          fontSize: "0.8em",
+          fontWeight: "bold"
+        }}
+      />
       <ul
         style={{
           maxWidth: "400px",
