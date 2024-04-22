@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
+import CookieDisclosure from "../components/cookiedisclosure";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -13,6 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <title>Mailboxsweep</title>
         </Head>
         <Component {...pageProps} />
+        <CookieDisclosure />
       </LocalizationProvider>
     </>
   );
