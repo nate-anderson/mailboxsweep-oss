@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"mailboxsweep"
 	"mailboxsweep/changeset"
 	"sync"
@@ -69,6 +70,9 @@ func (w CommitWorker) Work(ctx context.Context) error {
 			VisibilityTimeout:       60 * (commitVisibilityTimeoutMinutes + 1),
 		})
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return err
+			}
 			log.
 				WithError(err).
 				Errorf("failed to read message from queue %s", w.queueURL)

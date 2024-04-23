@@ -668,6 +668,12 @@ export default function Home(props: IStaticProps) {
           <small style={{
             color: "var(--color-gray)"
           }}>© 2023 MailboxSweep, LLC</small>
+          <span style={{
+              marginLeft: "5px",
+              marginRight: "5px",
+              color: "var(--color-gray)"
+            }}>|</span>
+          <small><Link sx={{textDecoration: "none"}} href="/cookies">Cookie Policy</Link></small>
         </Grid>
       </Container>
     </>

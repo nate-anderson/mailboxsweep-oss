@@ -3,6 +3,8 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
+import { GoogleTagManager } from '@next/third-parties/google';
+import { GTagManagerID } from "../gtag";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -10,9 +12,10 @@ export default function App({ Component, pageProps }: AppProps) {
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <Head>
           <meta name="viewport" content="initial-scale=1, width=device-width" />
-          <title>Mailboxsweep</title>
+          <title>MailboxSweep</title>
         </Head>
         <Component {...pageProps} />
+        <GoogleTagManager gtmId={GTagManagerID[process.env.ENV ?? "dev"] ?? ""} />
       </LocalizationProvider>
     </>
   );

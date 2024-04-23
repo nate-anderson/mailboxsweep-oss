@@ -48,9 +48,12 @@ const renderClassificationStatus = (
           }}
         >
           <AlertTitle>Inbox Scan In Progress</AlertTitle>
-          We're categorizing your inbox messages now. This requires going
-          through a lot of emails and can take some time. We'll send you a
-          message when we're ready to start cleaning up!
+          <p style={{ display: "block" }}>
+            We're categorizing your inbox messages now. This requires going
+            through a lot of emails and can take some time. We'll send you a
+            message when we're ready to start cleaning up!
+          </p>
+          <LinearProgress />
         </Alert>
       );
 
