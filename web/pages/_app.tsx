@@ -3,7 +3,6 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
-import CookieDisclosure from "../components/cookiedisclosure";
 import { GoogleTagManager } from '@next/third-parties/google';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -15,7 +14,6 @@ export default function App({ Component, pageProps }: AppProps) {
           <title>Mailboxsweep</title>
         </Head>
         <Component {...pageProps} />
-        <CookieDisclosure />
         <GoogleTagManager gtmId={process.env.GOOGLE_TAG_ID ?? ""} />
       </LocalizationProvider>
     </>
