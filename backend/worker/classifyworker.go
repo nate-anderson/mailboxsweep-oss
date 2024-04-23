@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mailboxsweep"
 	"mailboxsweep/classification"
@@ -101,6 +102,9 @@ func (w ClassifyWorker) Work(ctx context.Context) error {
 			MaxNumberOfMessages:     1,
 		})
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return err
+			}
 			log.
 				WithError(err).
 				Errorf("failed to read message from queue %s", w.queueURL)

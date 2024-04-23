@@ -333,6 +333,9 @@ func main() {
 		s := <-sigc
 		log.Warnf("Got signal %s, shutting down...", s.String())
 		cancel()
+		log.Info("Shutting down in <= 10 seconds...")
+		time.Sleep(time.Second * 10)
+		os.Exit(1)
 	}()
 
 	group, workerCtx := errgroup.WithContext(ctx)
