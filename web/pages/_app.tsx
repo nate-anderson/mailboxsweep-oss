@@ -4,6 +4,7 @@ import Head from "next/head";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { GoogleTagManager } from '@next/third-parties/google';
+import { GTagManagerID } from "../gtag";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -14,7 +15,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <title>MailboxSweep</title>
         </Head>
         <Component {...pageProps} />
-        <GoogleTagManager gtmId={process.env.GOOGLE_TAG_ID ?? ""} />
+        <GoogleTagManager gtmId={GTagManagerID[process.env.ENV ?? "dev"] ?? ""} />
       </LocalizationProvider>
     </>
   );
