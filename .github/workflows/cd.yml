@@ -127,6 +127,11 @@ jobs:
         working-directory: web
         run: npm run robots:prod
 
+      - name: Apple Pay (prod)
+        # copy Apple Pay ownership verification to output of build
+        working-directory: web
+        run: npm run applepay:prod
+
       - name: Compress prod build
         working-directory: web
         run: cd out && zip -r ../prod.zip .

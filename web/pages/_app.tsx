@@ -4,8 +4,10 @@ import Head from "next/head";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import CookieDisclosure from "../components/cookiedisclosure";
+import TagManager from 'react-gtm-module';
 
 export default function App({ Component, pageProps }: AppProps) {
+  TagManager.initialize({gtmId: process.env.GOOGLE_TAG_ID ?? ""});
   return (
     <>
       <LocalizationProvider dateAdapter={AdapterDateFns}>

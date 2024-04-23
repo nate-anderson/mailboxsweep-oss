@@ -11,6 +11,7 @@
     "build:docker": "MAILBOXSWEEP_API_PORT=8081 MAILBOXSWEEP_API_HOST=localhost MAILBOXSWEEP_API_PROTO=http ENV=dev next build",
     "robots:staging": "cp staging.robots.txt ./out/robots.txt",
     "robots:prod": "cp prod.robots.txt ./out/robots.txt",
+    "applepay:prod": "cp prod.apple-developer-merchantid-domain-association ./out/apple-developer-merchantid-domain-association",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
