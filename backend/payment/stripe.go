@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stripe/stripe-go/v74"
-	"github.com/stripe/stripe-go/v74/client"
+	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/client"
 )
 
 type Processor interface {
@@ -38,6 +38,7 @@ func ptr[t any](v t) *t {
 func (p StripeProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
 	sess, err := p.client.CheckoutSessions.New(&stripe.CheckoutSessionParams{
 		AllowPromotionCodes: ptr(false),
+		PaymentMethodTypes:  []*string{},
 		SuccessURL:          &p.successURL,
 		// NV does not charge sales tax for digital products
 		// https://tax.nv.gov/FAQs/Sales_Tax_Information___FAQs/

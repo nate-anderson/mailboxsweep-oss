@@ -39,7 +39,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	stripeClient "github.com/stripe/stripe-go/v74/client"
+	stripeClient "github.com/stripe/stripe-go/v78/client"
 	"golang.org/x/time/rate"
 )
 
