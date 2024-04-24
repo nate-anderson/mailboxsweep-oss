@@ -12,6 +12,11 @@ function handler(event) {
         return request;
     }
 
+    // allow apple pay verification
+    if (request.uri.startsWith("/.well-known")) {
+        return request;
+    }
+
     if (!request.uri.endsWith(".html")) {
         if (request.uri.endsWith("/")) {
             request.uri += "index.html"
