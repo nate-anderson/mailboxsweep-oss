@@ -252,7 +252,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-server',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "truer",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
@@ -306,7 +306,7 @@ export class AppStack extends cdk.Stack {
             containerName: 'mailboxsweep-worker',
             environment: {
                 ...appConfig,
-                FORCE_BUILD_REFRESH: "true",
+                FORCE_BUILD_REFRESH: "truer",
             },
             memoryReservationMiB: 1024,
             logging: ECS.LogDrivers.awsLogs({
