@@ -7,6 +7,7 @@ import { Vpc } from "aws-cdk-lib/aws-ec2";
 import * as ECS from "aws-cdk-lib/aws-ecs";
 import * as EC2 from 'aws-cdk-lib/aws-ec2';
 import * as ECR from 'aws-cdk-lib/aws-ecr';
+import * as CloudWatch from 'aws-cdk-lib/aws-cloudwatch';
 import { TableStack } from './table';
 import { ClassificationQueueStack, CommitChangesetQueueStack } from './queues';
 import * as S3 from "aws-cdk-lib/aws-s3";
@@ -28,11 +29,13 @@ import * as SNSSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 import { AlarmsStack } from './alarms';
+import * as AutoScaling from "aws-cdk-lib/aws-autoscaling";
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
     clusterInstanceType: string;
     clusterInstanceCount: number;
+    maxClusterInstanceCount: number;
     xrayEnabled: boolean;
 };
 
@@ -91,11 +94,12 @@ export class AppStack extends cdk.Stack {
         const cluster = new ECS.Cluster(this, `mailboxsweep-cluster`, {
             clusterName: clusterId,
             vpc,
-            capacity: {
-              instanceType: new EC2.InstanceType(props.clusterInstanceType),
-            },
             containerInsights: true,
         });
+
+        const sshEndpoint = new EC2.CfnInstanceConnectEndpoint(this, `ssh-connect-endpoint`, {
+            subnetId: vpc.publicSubnets[0].subnetId,
+        })
 
         /**
          * @TODO retry deployment with DNS namespace
@@ -107,16 +111,115 @@ export class AppStack extends cdk.Stack {
         //     name: namespace,
         //     type: ServiceDiscovery.NamespaceType.DNS_PRIVATE,
         // });
+    
+        const launchTemplateUserData = EC2.UserData.forLinux({
+            shebang: "#!/bin/bash",
+        });
+        launchTemplateUserData.addCommands(
+            "yum install -y containerd docker ecs-init aws-cfn-bootstrap",
+            "systemctl enable --now --no-block ecs.service",
+            `echo "ECS_CLUSTER=${cluster.clusterName}" >> /etc/ecs/ecs.config`,
+            `trap '/opt/aws/bin/cfn-signal -e 1 -stack ${this.stackId} --region ${this.region} --resource app-asg`,
+            `/opt/aws/bin/cfn-init -v --stack ${this.stackId} --resource instance-tmpl --configsets full_install --region ${this.region} &`,
+            `/opt/aws/bin/cfn-signal -v -e 0 --stack ${this.stackId} --region ${this.region} --resource app-asg`,
+        );
+
+        const ecsInstanceSecGroup = new EC2.SecurityGroup(this, `instance-sg`, {
+            vpc,
+            allowAllOutbound: true,
+        });
+        const lbSecGroup = new EC2.SecurityGroup(this, `lb-sg`, {
+            vpc,
+            allowAllOutbound: true,
+        })
+
+        // enable this to SSH into instances
+        // ecsInstanceSecGroup.addIngressRule(EC2.Peer.anyIpv4(), EC2.Port.tcp(22));
+        
+        // application traffic
+        ecsInstanceSecGroup.addIngressRule(EC2.Peer.securityGroupId(lbSecGroup.securityGroupId), EC2.Port.allTcp());
         
 
-        // current cluster doesn't have enough capacity, try with more capacity
-        if (props.clusterInstanceCount > 1) {
-            for (let i = 1; i < props.clusterInstanceCount; i++) {
-                cluster.addCapacity(`cap-${i}`, {
-                    instanceType: new EC2.InstanceType(props.clusterInstanceType),
-                });
-            }
-        }
+        const instanceRole = new IAM.Role(this, `app-instance-role`, {
+            assumedBy: new IAM.ServicePrincipal("ec2.amazonaws.com"),
+        });
+
+        instanceRole.attachInlinePolicy(
+            new IAM.Policy(this, `allow-register-container-inst`, {
+                statements: [
+                    new IAM.PolicyStatement({
+                        effect: IAM.Effect.ALLOW,
+                        actions: [
+                            "ecs:DeregisterContainerInstance",
+                            "ecs:RegisterContainerInstance",
+                            "ecr:GetAuthorizationToken",
+                            "ecs:DiscoverPollEndpoint",
+                            "ecs:Poll",
+                            "ecs:StartTask",
+                            "ecs:Submit*",
+                        ],
+                        resources: ["*"],
+                    })
+                ],
+            })
+        );
+
+        const adminSshKeyPair = new EC2.KeyPair(this, `admin-ssh`, {
+            keyPairName: `admin-ssh-${props.environmentName}`,
+            format: EC2.KeyPairFormat.PEM,
+        })
+
+        const instanceLaunchTemplate = new EC2.LaunchTemplate(this, `instance-tmpl`, {
+            launchTemplateName: "mbxswp-appinst",
+            instanceType: new EC2.InstanceType(props.clusterInstanceType),
+            machineImage: EC2.MachineImage.latestAmazonLinux2023(),
+            userData: launchTemplateUserData,
+            securityGroup: ecsInstanceSecGroup,
+            role: instanceRole,
+            keyPair: adminSshKeyPair,
+            // enable to SSH into instance
+            associatePublicIpAddress: false,
+        });
+        
+
+        const autoScalingGroup = new AutoScaling.AutoScalingGroup(this, `app-asg`, {
+            vpc,
+            minCapacity: 1,
+            maxCapacity: props.maxClusterInstanceCount,
+            launchTemplate: instanceLaunchTemplate,
+            healthCheck: AutoScaling.HealthCheck.ec2({
+                grace: cdk.Duration.minutes(15),
+            }),
+            updatePolicy: AutoScaling.UpdatePolicy.rollingUpdate({
+                maxBatchSize: 2,
+                minInstancesInService: 1,
+            }),
+        })
+        
+
+        const capacityProvider = new ECS.AsgCapacityProvider(this, `cluster-capacity-provider`, {
+            autoScalingGroup: autoScalingGroup,
+            maximumScalingStepSize: 2,
+            minimumScalingStepSize: 1,
+            canContainersAccessInstanceRole: true,
+            enableManagedScaling: true,
+            enableManagedTerminationProtection: false,
+        });
+
+        const capacityProviderStrategy: ECS.CapacityProviderStrategy = {
+            capacityProvider: capacityProvider.capacityProviderName,
+            weight: 1,
+            base: 1,
+        };
+
+        cluster.addAsgCapacityProvider(capacityProvider, {
+            canContainersAccessInstanceRole: true,
+            machineImageType: ECS.MachineImageType.AMAZON_LINUX_2,
+        });
+
+        cluster.addDefaultCapacityProviderStrategy([
+            capacityProviderStrategy,
+        ]);
 
         const serverTaskId = `server-task-${props.environmentName}`
         const serverTaskDefinition = new ECS.TaskDefinition(this, serverTaskId, {
@@ -328,12 +431,83 @@ export class AppStack extends cdk.Stack {
         const workerService = new ECS.Ec2Service(this, workerServiceId, {
             cluster,
             taskDefinition: workerTaskDefinition,
-            desiredCount: 1,
-            // cloudMapOptions: {
-            //     cloudMapNamespace: dnsNamespace,
-            // },
+            // unless there is work to be done, don't run this thing.
+            desiredCount: 0,
         });
-        
+        const autoscalingTask = workerService.autoScaleTaskCount({
+            maxCapacity: 4,
+            minCapacity: 0,
+        });
+
+        const itemsInClassifyQueueMetric = new CloudWatch.Metric({
+            metricName: "ApproximateNumberOfMessagesVisible",
+            namespace: "AWS/SQS",
+            dimensionsMap: {
+                QueueName: classifyQueues.queue.queueName,
+            },
+            period: cdk.Duration.minutes(1),
+        });
+        const inFlightClassifyItemsMetric = new CloudWatch.Metric({
+            metricName: "ApproximateNumberOfMessagesNotVisible",
+            namespace: "AWS/SQS",
+            dimensionsMap: {
+                QueueName: classifyQueues.queue.queueName,
+            },
+            period: cdk.Duration.minutes(1),
+        });
+        const itemsInCommitQueueMetric = new CloudWatch.Metric({
+            metricName: "ApproximateNumberOfMessagesVisible",
+            namespace: "AWS/SQS",
+            dimensionsMap: {
+                QueueName: commitChangesetQueues.queue.queueName,
+            },
+            period: cdk.Duration.minutes(1),
+        });
+        const inFlightCommitItemsMetric = new CloudWatch.Metric({
+            metricName: "ApproximateNumberOfMessagesNotVisible",
+            namespace: "AWS/SQS",
+            dimensionsMap: {
+                QueueName: commitChangesetQueues.queue.queueName,
+            },
+            period: cdk.Duration.minutes(1),
+        });
+
+        // metric that keeps workers alive/spins them up
+        // if there are messages visible, workers should be spun up to process
+        // if messages are not visible but in flight, don't scale down workers
+        const workerHasWorkMetric = new CloudWatch.MathExpression({
+            usingMetrics: {
+                "classifyVisble": itemsInClassifyQueueMetric,
+                "classifyInFlight": inFlightClassifyItemsMetric,
+                "commitVisible": itemsInCommitQueueMetric,
+                "commitInFlight": inFlightCommitItemsMetric,
+            },
+            expression: "classifyVisble + classifyInFlight + commitVisible + commitInFlight"
+        })
+
+        autoscalingTask.scaleOnMetric(`classify-backlog`, {
+            metric: workerHasWorkMetric,
+            adjustmentType: AutoScaling.AdjustmentType.EXACT_CAPACITY,
+            scalingSteps: [
+                {
+                    change: 0,
+                    upper: 0,
+                },
+                {
+                    change: 1,
+                    upper: 10,
+                },
+                {
+                    change: 2,
+                    upper: 30,
+                },
+                {
+                    change: 3,
+                    upper: 50,
+                }
+            ],
+        });
+
         // read from main queue or DLQ
         const readQueuePolicy = new IAM.Policy(this, `worker-sqs-read`, {
             policyName: "read-queue",
@@ -411,11 +585,6 @@ export class AppStack extends cdk.Stack {
 
 
         const cert = CertMan.Certificate.fromCertificateArn(this, `api-cert-${props.environmentName}`, Resources.global.api.cert.arn);
-
-        const securityGroup = new EC2.SecurityGroup(this, `api-security-group`, {
-            vpc,
-        });
-        securityGroup.addIngressRule(EC2.Peer.ipv4('0.0.0.0/0'), EC2.Port.tcp(Port.HTTP));
 
         const managedRules: WAF.CfnWebACL.RuleProperty[] = [
             // AWS IP Reputation list includes known malicious actors/bots and is regularly updated    
@@ -547,10 +716,11 @@ export class AppStack extends cdk.Stack {
 
         const loadBalancedAPIService = new ECSPatterns.ApplicationLoadBalancedEc2Service(this, `server-service`, {
             cluster,
+            healthCheckGracePeriod: cdk.Duration.minutes(5),
             taskDefinition: serverTaskDefinition,
             cpu: 256,
             memoryReservationMiB: 512,
-            desiredCount: 2,
+            desiredCount: 1,
             protocol: LoadBalancingV2.ApplicationProtocol.HTTPS,
             openListener: true,
             domainZone: hostedZone,
@@ -558,6 +728,13 @@ export class AppStack extends cdk.Stack {
             publicLoadBalancer: true,
             maxHealthyPercent: 200,
             minHealthyPercent: 100,
+            capacityProviderStrategies: [
+                {
+                    capacityProvider: capacityProvider.capacityProviderName,
+                    weight: 1,
+                    base: 1,
+                }
+            ],
             // cloudMapOptions: {
             //     cloudMapNamespace: dnsNamespace,
             //     name: `server`,
@@ -565,6 +742,7 @@ export class AppStack extends cdk.Stack {
             //     dnsRecordType: ServiceDiscovery.DnsRecordType.SRV,
             // },
         });
+        loadBalancedAPIService.loadBalancer.addSecurityGroup(lbSecGroup);
         loadBalancedAPIService.targetGroup.configureHealthCheck({
             path: "/healthcheck",
             port: 'traffic-port',
@@ -573,6 +751,16 @@ export class AppStack extends cdk.Stack {
             healthyThresholdCount: 2,
             unhealthyThresholdCount: 2,
         });
+
+        const apiScaling = loadBalancedAPIService.service.autoScaleTaskCount({
+            maxCapacity: 4,
+            minCapacity: 1,
+        });
+        // API containers are more likely to bottleneck on memory, I think, than CPU
+        apiScaling.scaleOnMemoryUtilization(`api-scale-on-requests`, {
+            targetUtilizationPercent: .80,
+        });
+
         const webAcl = new WAF.CfnWebACL(this, `api-rate-limit`, {
             defaultAction: {
                 allow: {
@@ -626,7 +814,16 @@ export class AppStack extends cdk.Stack {
             functionName: `static-site-url-rewrite-${props.environmentName}`,
             comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting",
             
-        });;
+        });
+
+        const cloudfrontLogBucket = new S3.Bucket(this, `access-logging`, {
+            lifecycleRules: [
+                {
+                    expiration: cdk.Duration.days(7),
+                }
+            ],
+           objectOwnership: S3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+        });
 
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
             certificate: cloudFrontCert,
@@ -675,6 +872,10 @@ export class AppStack extends cdk.Stack {
                     ttl: cdk.Duration.minutes(30),
                 }
             ],
+            enableLogging: true,
+            logBucket: cloudfrontLogBucket,
+            geoRestriction: CloudFront.GeoRestriction.allowlist("US"),
+            
         });
 
         new Route53.ARecord(this, `site-record`, {
