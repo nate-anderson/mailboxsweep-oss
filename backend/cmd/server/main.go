@@ -492,7 +492,9 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGABRT, syscall.SIGHUP, syscall.SIGSEGV)
 	go func() {
 		s := <-sigChan
-		log.Printf("Received signal %s: likely shutting down\n", s.String())
+		log.Printf("Received signal %s: shutting down in 10 seconds\n", s.String())
+		time.Sleep(time.Second * 10)
+		os.Exit(1)
 	}()
 
 	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
