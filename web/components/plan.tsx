@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import IconArrowForward from "@mui/icons-material/ArrowForward";
 import Card from "@mui/material/Card";
 import { Plan } from "../client-gen";
-import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 
 interface IPlanCardProps {
@@ -12,66 +12,60 @@ interface IPlanCardProps {
     submit: undefined | (() => void)
 }
 
-function Price(props: { plan: Plan }) {
-    const price = currency(props.plan.priceInCents, { fromCents: true });
-    const cents = String(price.cents()).padStart(2, "0");
-    const commonStyles = {
-      marginBottom: 0,
-    };
+const discountUntil = "5/30/2024";
+
+function Price(props: { priceInCents: number, strikeThrough: boolean, planKey: string }) {
     return (
-      <div>
-        <Typography
-          display="inline"
-          sx={{
-            ...commonStyles,
-            marginRight: 0,
-            display: "inline-block",
-            fontSize: "1.5em",
-            marginY: 1,
-            fontWeight: "light",
-          }}
-        >
-          $
-        </Typography>
-        <Typography
-          data-testid={`price-${props.plan.key.toLowerCase()}-dollars`}
-          display="inline"
-          sx={{
-            ...commonStyles,
-            fontSize: "2.5em",
-            marginY: 1,
-            fontWeight: "light",
-          }}
-        >
-          {price.dollars()}
-        </Typography>
-        <Typography
-          display="inline"
-          sx={{
-            ...commonStyles,
-            fontSize: "2em",
-            marginY: 1,
-            marginLeft: -0.4,
-            fontWeight: "light",
-          }}
-        >
-          .
-        </Typography>
-        <Typography
-          display="inline"
-          sx={{
-            ...commonStyles,
-            display: "inline-block",
-            fontSize: "1.5em",
-            marginY: 1,
-            fontWeight: "light",
-          }}
-        >
-          {cents}
-        </Typography>
-      </div>
+      <Typography
+        data-testid={`price-${props.planKey.toLowerCase()}-dollars`}
+        color={props.strikeThrough ? "var(--color-disabled)" : "var(--color-black)"}
+        fontSize={props.strikeThrough ? "1.25em" : "1.75em"}
+        sx={{
+          textDecoration: props.strikeThrough ? "line-through" : "",
+        }}
+        marginBottom={props.strikeThrough ? 0.25 : 0}
+      >
+        {(props.priceInCents / 100).toLocaleString("en-US", {style:"currency", currency:"USD"})}
+      </Typography>
     );
   };
+
+
+function PriceWithDiscount(props: { plan: Plan }) {
+  if (!props.plan.discountInCents) {
+    return <Price planKey={props.plan.key} priceInCents={props.plan.priceInCents} strikeThrough={false} />;
+  }
+
+  return <>
+    <Stack
+      direction="row"
+      columnGap={1}
+      alignItems="flex-end"
+      marginTop={1}
+    >
+      <Price
+        planKey={props.plan.key}
+        strikeThrough={true}
+        priceInCents={props.plan.priceInCents}
+      />
+      <Price
+        priceInCents={props.plan.priceInCents - props.plan.discountInCents}
+        planKey={props.plan.key + "_DISCOUNT"}
+        strikeThrough={false}
+      />
+    </Stack>
+    <Chip
+      label={`${Math.floor((props.plan.discountInCents / props.plan.priceInCents) * 100)}% off until ${discountUntil}`}
+      size="small"
+      sx={{
+        fontWeight: "bold",
+        backgroundColor: "var(--color-highlight)",
+        color: "white",
+        marginY: 1,
+      }}
+    />
+  </>
+}
 
 export default function PlanCard(props: IPlanCardProps) {
   return (
@@ -98,7 +92,7 @@ export default function PlanCard(props: IPlanCardProps) {
       >
         {props.plan.displayName}
       </Typography>
-      <Price plan={props.plan} />
+      <PriceWithDiscount plan={props.plan}/>
       <Typography
         sx={{
           color: "var(--color-gray)",
@@ -107,16 +101,6 @@ export default function PlanCard(props: IPlanCardProps) {
       >
         Pay <b>once</b> and use for {props.plan.durationDays} days
       </Typography>
-      <Chip
-        label="No subscription, one-time payment!"
-        sx={{
-          marginY: 1,
-          backgroundColor: "var(--color-red)",
-          color: "white",
-          fontSize: "0.8em",
-          fontWeight: "bold"
-        }}
-      />
       <ul
         style={{
           maxWidth: "400px",

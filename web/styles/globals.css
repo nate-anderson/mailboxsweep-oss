@@ -7,6 +7,8 @@
   --color-red: #ff5959;
   --color-accent: #2795f5;
   --color-gray: #6e6e6e;
+  --color-disabled: #969696;
+  --color-highlight: #9021ff;
   --color-info: #2e2e2e;
   --color-warn: #9e7d11;
 }
