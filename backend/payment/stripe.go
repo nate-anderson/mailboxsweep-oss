@@ -10,7 +10,7 @@ import (
 )
 
 type Processor interface {
-	InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error)
+	InitiateCheckout(params CheckoutParams) (checkoutURL string, sessionID string, err error)
 	FindCheckoutSession(sessionID string) (*CompletePayment, error)
 }
 
@@ -35,7 +35,15 @@ func ptr[t any](v t) *t {
 	return &v
 }
 
-func (p StripeProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
+type CheckoutParams struct {
+	RegularPriceInCents int64
+	Email               string
+	Name                string
+	Description         string
+	DiscountInCents     *int64
+}
+
+func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL string, sessionID string, err error) {
 	sess, err := p.client.CheckoutSessions.New(&stripe.CheckoutSessionParams{
 		AllowPromotionCodes: ptr(false),
 		PaymentMethodTypes:  []*string{},
@@ -46,23 +54,23 @@ func (p StripeProcessor) InitiateCheckout(amount int64, email, name, description
 			Enabled: ptr(false),
 		},
 		Currency:      ptr("usd"),
-		CustomerEmail: &email,
+		CustomerEmail: &param.Email,
 		Mode:          ptr("payment"),
-		CustomText: &stripe.CheckoutSessionCustomTextParams{
-			Submit: &stripe.CheckoutSessionCustomTextSubmitParams{
-				Message: ptr("MAILBOXSWEEP CUSTOM TEXT"),
-			},
-		},
+		// CustomText: &stripe.CheckoutSessionCustomTextParams{
+		// 	Submit: &stripe.CheckoutSessionCustomTextSubmitParams{
+		// 		Message: ptr("MAILBOXSWEEP CUSTOM TEXT"),
+		// 	},
+		// },
 		ExpiresAt: ptr(time.Now().Add(p.checkoutExpiration).Unix()),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
 					Currency: ptr("usd"),
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-						Name:        &name,
-						Description: &description,
+						Name:        &param.Name,
+						Description: &param.Description,
 					},
-					UnitAmount:  ptr(amount),
+					UnitAmount:  &param.RegularPriceInCents,
 					TaxBehavior: ptr("inclusive"),
 				},
 				Quantity: ptr[int64](1),

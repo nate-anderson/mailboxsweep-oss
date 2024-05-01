@@ -8,14 +8,15 @@ import (
 )
 
 type PlanDetails struct {
-	PriceInCents int      `yaml:"price_in_cents"`
-	DisplayName  string   `yaml:"display_name"`
-	Description  string   `yaml:"description"`
-	Features     []string `yaml:"features"`
-	Enabled      bool     `yaml:"enabled"`
-	AllowedScans int      `yaml:"allowed_scans"`
-	DurationDays int      `yaml:"duration_days"`
-	DisplayIndex int      `yaml:"display_index"`
+	PriceInCents    int      `yaml:"price_in_cents"`
+	DiscountInCents *int     `yaml:"discount_in_cents"`
+	DisplayName     string   `yaml:"display_name"`
+	Description     string   `yaml:"description"`
+	Features        []string `yaml:"features"`
+	Enabled         bool     `yaml:"enabled"`
+	AllowedScans    int      `yaml:"allowed_scans"`
+	DurationDays    int      `yaml:"duration_days"`
+	DisplayIndex    int      `yaml:"display_index"`
 }
 
 //go:embed plans.yml

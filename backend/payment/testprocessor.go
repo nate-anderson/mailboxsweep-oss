@@ -27,14 +27,18 @@ func (p TestProcessor) FindCheckoutSession(sessionID string) (*CompletePayment, 
 
 var TestCheckoutURL = "localhost:8080/checkout"
 
-func (p *TestProcessor) InitiateCheckout(amount int64, email, name, description string) (checkoutURL string, sessionID string, err error) {
+func (p *TestProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL string, sessionID string, err error) {
 	id := uuid.NewString()
 	if p.SessionID == "" {
 		p.SessionID = id
 	}
+	total := int(param.RegularPriceInCents)
+	if param.DiscountInCents != nil {
+		total -= int(*param.DiscountInCents)
+	}
 	p.sessions[p.SessionID] = CompletePayment{
 		SessionID:    p.SessionID,
-		TotalInCents: int(amount),
+		TotalInCents: total,
 	}
 	return TestCheckoutURL, p.SessionID, nil
 }
