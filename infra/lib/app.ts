@@ -170,7 +170,7 @@ export class AppStack extends cdk.Stack {
         })
 
         const instanceLaunchTemplate = new EC2.LaunchTemplate(this, `instance-tmpl`, {
-            launchTemplateName: "mbxswp-appinst",
+            launchTemplateName: `mbxswp-appinst-${props.environmentName}`,
             instanceType: new EC2.InstanceType(props.clusterInstanceType),
             machineImage: EC2.MachineImage.latestAmazonLinux2023(),
             userData: launchTemplateUserData,
@@ -181,7 +181,6 @@ export class AppStack extends cdk.Stack {
             associatePublicIpAddress: false,
         });
         
-
         const autoScalingGroup = new AutoScaling.AutoScalingGroup(this, `app-asg`, {
             vpc,
             minCapacity: 1,
@@ -482,11 +481,14 @@ export class AppStack extends cdk.Stack {
                 "commitVisible": itemsInCommitQueueMetric,
                 "commitInFlight": inFlightCommitItemsMetric,
             },
-            expression: "classifyVisble + classifyInFlight + commitVisible + commitInFlight"
+            expression: "classifyVisble + classifyInFlight + commitVisible + commitInFlight",
+            label: `worker-${props.environmentName}-has-work`,
         })
 
         autoscalingTask.scaleOnMetric(`classify-backlog`, {
             metric: workerHasWorkMetric,
+            evaluationPeriods: 1,
+            datapointsToAlarm: 1,
             adjustmentType: AutoScaling.AdjustmentType.EXACT_CAPACITY,
             scalingSteps: [
                 {
@@ -758,7 +760,7 @@ export class AppStack extends cdk.Stack {
         });
         // API containers are more likely to bottleneck on memory, I think, than CPU
         apiScaling.scaleOnMemoryUtilization(`api-scale-on-requests`, {
-            targetUtilizationPercent: .80,
+            targetUtilizationPercent: 80,
         });
 
         const webAcl = new WAF.CfnWebACL(this, `api-rate-limit`, {
