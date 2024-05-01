@@ -46,13 +46,14 @@ func (c PaymentController) GetPaymentStatus(w http.ResponseWriter, req *http.Req
 
 	resBody := UserPaymentStatus{
 		Plan: &Plan{
-			AllowedScans: plan.AllowedScans,
-			Description:  plan.Description,
-			DisplayName:  plan.DisplayName,
-			DurationDays: plan.DurationDays,
-			Features:     plan.Features,
-			Key:          string(status.Plan),
-			PriceInCents: plan.PriceInCents,
+			AllowedScans:    plan.AllowedScans,
+			Description:     plan.Description,
+			DisplayName:     plan.DisplayName,
+			DurationDays:    plan.DurationDays,
+			Features:        plan.Features,
+			Key:             string(status.Plan),
+			PriceInCents:    plan.PriceInCents,
+			DiscountInCents: plan.DiscountInCents,
 		},
 		ValidUntil:   ptr(status.ValidUntil.Format(time.RFC3339)),
 		SubscribedAt: ptr(status.StartedAt.Format(time.RFC3339)),
@@ -117,14 +118,15 @@ func (c PaymentController) ListPlans(w http.ResponseWriter, req *http.Request) {
 	resPlans := make([]Plan, 0, len(planMap))
 	for key, plan := range planMap {
 		resPlans = append(resPlans, Plan{
-			AllowedScans: plan.AllowedScans,
-			Description:  plan.Description,
-			DisplayName:  plan.DisplayName,
-			DurationDays: plan.DurationDays,
-			Features:     plan.Features,
-			Key:          string(key),
-			PriceInCents: plan.PriceInCents,
-			DisplayIndex: plan.DisplayIndex,
+			AllowedScans:    plan.AllowedScans,
+			Description:     plan.Description,
+			DisplayName:     plan.DisplayName,
+			DurationDays:    plan.DurationDays,
+			Features:        plan.Features,
+			Key:             string(key),
+			PriceInCents:    plan.PriceInCents,
+			DisplayIndex:    plan.DisplayIndex,
+			DiscountInCents: plan.DiscountInCents,
 		})
 	}
 

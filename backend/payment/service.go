@@ -119,7 +119,17 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 		return "", mailboxsweep.NotFoundError(err)
 	}
 
-	checkoutURL, sessionID, err := s.processor.InitiateCheckout(int64(planDetails.PriceInCents), addr, planDetails.DisplayName, planDetails.Description)
+	checkoutParam := CheckoutParams{
+		RegularPriceInCents: int64(planDetails.PriceInCents),
+		Email:               addr,
+		Description:         planDetails.Description,
+		Name:                planDetails.DisplayName,
+	}
+	if planDetails.DiscountInCents != nil {
+		discount := int64(*planDetails.DiscountInCents)
+		checkoutParam.DiscountInCents = &discount
+	}
+	checkoutURL, sessionID, err := s.processor.InitiateCheckout(checkoutParam)
 	if err != nil {
 		return "", err
 	}
