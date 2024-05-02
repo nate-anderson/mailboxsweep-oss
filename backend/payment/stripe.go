@@ -46,8 +46,7 @@ type CheckoutParams struct {
 
 func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL string, sessionID string, err error) {
 	checkoutParam := &stripe.CheckoutSessionParams{
-		AllowPromotionCodes: ptr(false),
-		SuccessURL:          &p.successURL,
+		SuccessURL: &p.successURL,
 		// NV does not charge sales tax for digital products
 		// https://tax.nv.gov/FAQs/Sales_Tax_Information___FAQs/
 		AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{
