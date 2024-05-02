@@ -17,6 +17,8 @@ type PlanDetails struct {
 	AllowedScans    int      `yaml:"allowed_scans"`
 	DurationDays    int      `yaml:"duration_days"`
 	DisplayIndex    int      `yaml:"display_index"`
+	// Do not expose this field publicly
+	StripeDiscountCode *string `yaml:"stripe_discount_code"`
 }
 
 //go:embed plans.yml

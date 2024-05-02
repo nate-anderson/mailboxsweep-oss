@@ -41,10 +41,11 @@ type CheckoutParams struct {
 	Name                string
 	Description         string
 	DiscountInCents     *int64
+	DiscountCode        *string
 }
 
 func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL string, sessionID string, err error) {
-	sess, err := p.client.CheckoutSessions.New(&stripe.CheckoutSessionParams{
+	checkoutParam := &stripe.CheckoutSessionParams{
 		AllowPromotionCodes: ptr(false),
 		SuccessURL:          &p.successURL,
 		// NV does not charge sales tax for digital products
@@ -75,7 +76,15 @@ func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL str
 				Quantity: ptr[int64](1),
 			},
 		},
-	})
+	}
+
+	if param.DiscountInCents != nil && param.DiscountCode != nil {
+		checkoutParam.Discounts = append(checkoutParam.Discounts, &stripe.CheckoutSessionDiscountParams{
+			Coupon: param.DiscountCode,
+		})
+	}
+
+	sess, err := p.client.CheckoutSessions.New(checkoutParam)
 
 	if err != nil {
 		return "", "", err

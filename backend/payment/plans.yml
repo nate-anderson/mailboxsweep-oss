@@ -3,6 +3,7 @@ BASIC:
   description: "Get an organized view of your inbox, delete and mark read as many emails as you need."
   price_in_cents: 599
   discount_in_cents: 150
+  stripe_discount_code: 25_OFF_BASIC
   features:
     - Scan your inbox up to 3 times
     - Group by website, sender, send date, subject keywords
@@ -18,6 +19,7 @@ ANNUAL:
   description: "A year of access to keep your inbox organized long-term."
   price_in_cents: 3999
   discount_in_cents: 1000
+  stripe_discount_code: 25_OFF_ANNUAL
   features:
     - Scan your inbox up to 30 times
     - Group by website, sender, send date, subject keywords
