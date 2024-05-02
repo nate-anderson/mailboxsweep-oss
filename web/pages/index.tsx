@@ -90,6 +90,7 @@ interface IPlan {
   allowed_scans: number;
   duration_days: number;
   display_index: number;
+  discount_in_cents: number;
 }
 
 const convertPlan = (p: IPlan, key: string): Plan => {
@@ -102,6 +103,7 @@ const convertPlan = (p: IPlan, key: string): Plan => {
     priceInCents: p.price_in_cents,
     durationDays: p.duration_days,
     displayIndex: p.display_index,
+    discountInCents: p.discount_in_cents,
   }
 }
 

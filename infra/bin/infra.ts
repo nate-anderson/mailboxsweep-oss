@@ -39,13 +39,15 @@ new InfraStack(app, 'infra-prod', {
 new AppStack(app, `app-staging`, {
   environmentName: "staging",
   clusterInstanceType: "t2.medium",
-  clusterInstanceCount: 2,
+  clusterInstanceCount: 1,
+  maxClusterInstanceCount: 2,
   xrayEnabled: false,
 });
 
 new AppStack(app, `app-prod`, {
   environmentName: "prod",
   clusterInstanceType: "t2.medium",
-  clusterInstanceCount: 2,
+  clusterInstanceCount: 1,
+  maxClusterInstanceCount: 5,
   xrayEnabled: false,
 });

@@ -28,7 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/nate-anderson/fig/v2"
 	"github.com/sirupsen/logrus"
-	stripeClient "github.com/stripe/stripe-go/v74/client"
+	stripeClient "github.com/stripe/stripe-go/v78/client"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 )
