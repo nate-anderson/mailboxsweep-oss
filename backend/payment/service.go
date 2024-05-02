@@ -128,6 +128,10 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 	if planDetails.DiscountInCents != nil {
 		discount := int64(*planDetails.DiscountInCents)
 		checkoutParam.DiscountInCents = &discount
+
+		if _, isStripe := s.processor.(*StripeProcessor); isStripe && planDetails.StripeDiscountCode != nil {
+			checkoutParam.DiscountCode = planDetails.StripeDiscountCode
+		}
 	}
 	checkoutURL, sessionID, err := s.processor.InitiateCheckout(checkoutParam)
 	if err != nil {
