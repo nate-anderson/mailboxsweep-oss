@@ -95,7 +95,7 @@ export default function Agreement() {
         setUserAgreement(res);
       })
       .catch((error) => {
-        console.log("Failed getting user agreement for slug, please try again momentarily.");
+        setError("Failed getting user agreement for slug, please try again momentarily.");
       });
   }, [router.isReady]);
 
