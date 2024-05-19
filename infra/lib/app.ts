@@ -193,6 +193,7 @@ export class AppStack extends cdk.Stack {
                 maxBatchSize: 2,
                 minInstancesInService: 1,
             }),
+            newInstancesProtectedFromScaleIn: false,
         })
         
 
