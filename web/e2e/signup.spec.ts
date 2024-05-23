@@ -16,7 +16,7 @@ test.describe('signup', () => {
         test('first login', async ({ page }) => {
             // log console messages
             page.on('console', msg => console.log(msg.text()));
-            
+
             await page.goto("/login");
 
             // dialog is invisible
@@ -30,16 +30,10 @@ test.describe('signup', () => {
             // get login link from temporary server
             const loginLinkRes = await axios.get(`http://localhost:${testLoginLinkServerHTTPPort}?address=${testUser}`);
             const link = loginLinkRes.data.link;
-            
+
             await page.goto(link);
 
-            await expect(page.getByText("Terms And Conditions")).toBeDefined();
-            
-            // accept terms
-            const acceptButton = await page.getByTestId("button-agree-submit");
-            await acceptButton.click();
-            await page.waitForURL(/plan\/select/);
-            await expect(page.getByText("Choose a Plan")).toBeDefined();
+            await expect(page.getByText("Checkout")).toBeDefined();
 
             // plan titles, prices, and checkout buttons present
             const plans = ["basic", "annual"];
@@ -56,36 +50,37 @@ test.describe('signup', () => {
 
             const checkout = await page.getByTestId(`plan-basic-checkout`);
             await checkout.click();
-            await page.waitForURL(/checkout.stripe.com/);
 
             // perform checkout
-            const cardNumber = await page.locator("[name='cardNumber']");
+            const cardNumber = await page.locator("[name='number']");
             await expect(cardNumber).toBeDefined();
             await cardNumber.fill(testCardNumber);
 
-            const cardExp = await page.locator("[name='cardExpiry']");
+            const cardExp = await page.locator("[name='expiry']");
             await expect(cardExp).toBeDefined();
             await cardExp.fill(testCardExp);
 
-            const cardCvv = await page.locator("[name='cardCvc']");
+            const cardCvv = await page.locator("[name='cvc']");
             await expect(cardCvv).toBeDefined();
             await cardCvv.fill(testCardCvv);
 
+            /*
             const name = await page.locator("[name='billingName']");
             await expect(name).toBeDefined();
             await name.fill(testUserName);
+            */
 
-            const zip = await page.locator("[name='billingPostalCode']");
+            const zip = await page.locator("[name='postalCode']");
             await expect(zip).toBeDefined();
             await zip.fill("90210");
 
-            const rememberMe = await page.getByRole("checkbox");
+            const rememberMe = await page.locator("[name='linkOptIn']");
             await expect(rememberMe).toBeDefined();
             await rememberMe.uncheck();
 
-            const submit = await page.getByText("Pay", { exact: true });
+            const submit = await page.getByTestId("button-pay");
             await submit.click();
-            
+
             // first redirect submits Stripe data to backend to confirm payment
             await page.waitForURL(/plan\/payment-success/);
 
@@ -115,7 +110,7 @@ test.describe('signup', () => {
 
             // login succeeds
             await page.getByText("Save").click();
-            
+
             // redirected to /classify/
             await page.waitForURL(/classify/);
 
@@ -159,11 +154,11 @@ test.describe('signup', () => {
             const newFirst = await page.getByTestId("classifier-card-SENDER_USERNAME");
             const newSecond = await page.getByTestId("classifier-card-SENDER_DOMAIN");
             const boundingBox = await dropZone.boundingBox();
-            
+
             await dragAndDropSwap(page, firstDragHandle, newFirst);
 
             const firstY = (await (await newFirst.elementHandle())?.boundingBox())?.y;
-            
+
             const secondY = (await (await newSecond.elementHandle())?.boundingBox())?.y;
             await expect(secondY).toBeGreaterThan(firstY!);
 
@@ -229,35 +224,35 @@ test.describe('signup', () => {
                 await expect(newTab).toHaveURL(target);
             }
 
-            
+
         });
     });
 });
 
 const dragAndDropSwap = async (page: Page, subject: Locator, target: Locator) => {
 
-	const subjectElementBound = {
-		x: await subject.boundingBox().then(bound => bound?.x ?? 0),
-		y: await subject.boundingBox().then(bound => bound?.y ?? 0),
-		width: await subject.boundingBox().then(bound => bound?.width ?? 0),
-		height: await subject.boundingBox().then(bound => bound?.height ?? 0),
-	};
+    const subjectElementBound = {
+        x: await subject.boundingBox().then(bound => bound?.x ?? 0),
+        y: await subject.boundingBox().then(bound => bound?.y ?? 0),
+        width: await subject.boundingBox().then(bound => bound?.width ?? 0),
+        height: await subject.boundingBox().then(bound => bound?.height ?? 0),
+    };
 
-	const targetElementBound = {
-		x: await target.boundingBox().then(bound => bound?.x ?? 0),
-		y: await target.boundingBox().then(bound => bound?.y ?? 0),
-		width: await target.boundingBox().then(bound => bound?.width ?? 0),
-		height: await target.boundingBox().then(bound => bound?.height ?? 0),
-	};
+    const targetElementBound = {
+        x: await target.boundingBox().then(bound => bound?.x ?? 0),
+        y: await target.boundingBox().then(bound => bound?.y ?? 0),
+        width: await target.boundingBox().then(bound => bound?.width ?? 0),
+        height: await target.boundingBox().then(bound => bound?.height ?? 0),
+    };
 
-	await page.mouse.move(subjectElementBound.x, subjectElementBound.y, { steps: 10 });
-    
-	await subject.dispatchEvent('mousedown', { button: 0, force: true });
+    await page.mouse.move(subjectElementBound.x, subjectElementBound.y, { steps: 10 });
 
-	const x = targetElementBound.x + targetElementBound.width / 2;
-	const y = targetElementBound.y + targetElementBound.height / 2;
+    await subject.dispatchEvent('mousedown', { button: 0, force: true });
 
-	await page.mouse.move(x, y, { steps: 10 });
+    const x = targetElementBound.x + targetElementBound.width / 2;
+    const y = targetElementBound.y + targetElementBound.height / 2;
 
-	await target.dispatchEvent('mouseup', { button: 0 });
+    await page.mouse.move(x, y, { steps: 10 });
+
+    await target.dispatchEvent('mouseup', { button: 0 });
 }

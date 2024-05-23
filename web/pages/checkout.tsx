@@ -3,17 +3,23 @@ import { Plan } from "../client-gen";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
-import { loadStripe, Stripe, StripeCustomCheckoutOptions } from '@stripe/stripe-js';
+import {
+    loadStripe,
+    Stripe,
+    StripeCustomCheckoutOptions,
+    StripeCustomCheckoutResult,
+    StripeCustomCheckoutConfirmationRequirement,
+} from '@stripe/stripe-js';
 import PrivatePage from "../auth";
 import Navbar from "../components/navbar";
 import CssBaseline from "@mui/material/CssBaseline";
 import Container from "@mui/material/Container";
 import { PaymentElement, CustomCheckoutProvider, useCustomCheckout } from '@stripe/react-stripe-js';
 import Card from "@mui/material/Card";
-import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
 import IconShoppingCart from "@mui/icons-material/ShoppingCart";
-import PlanCard, { Price, PriceWithDiscount } from "../components/plan";
+import PlanCard, { PriceWithDiscount } from "../components/plan";
 import { Typography } from "@mui/material";
 import { LoadingSpinner } from "../components/loading-spinner";
 import Grid from "@mui/material/Grid";
@@ -23,18 +29,25 @@ import FormLabel from '@mui/material/FormLabel';
 import StripeBadge from "../public/stripe_blurple.svg";
 import Image from "next/image";
 import LoadingButton from "@mui/lab/LoadingButton";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Link from "next/link";
+import PageHeader from "../components/page-header";
+import IconCardMembership from "@mui/icons-material/CardMembership";
+import Divider from '@mui/material/Divider';
+import { nextStep, getStepIndex } from "../lib/steps";
 
 export default function Agreement() {
     const router = useRouter();
 
     const [plan, setPlan] = useState<string | undefined>();
-    const [showSuccess, setShowSuccess] = useState(false);
     const [plansLoading, setPlansLoading] = useState(true);
     const [errorSnackbar, setError] = useSnackbar("error");
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null>>();
     const [stripeOptions, setStripeOptions] = useState<StripeCustomCheckoutOptions | undefined>();
     const [stripeSessionId, setStripeSessionId] = useState<string | undefined>();
     const [allPlans, setAllPlans] = useState<Plan[]>([]);
+    const [paymentLoading, setPaymentLoading] = useState(false);
 
     useEffect(() => {
         // on page load, get client secret to initiate Stripe
@@ -53,10 +66,25 @@ export default function Agreement() {
             setError("Failed to fetch available MailboxSweep plans, please try again.");
         });
 
+        API.getPaymentStatus().then((res) => {
+            if (res.validUntil) {
+                if (typeof getStepIndex() !== 'undefined') {
+                    const nextPath = nextStep();
+                    if (nextPath) {
+                        router.push(nextPath);
+                        return;
+                    }
+                    router.push("/plan");
+                }
+            }
+    
+        }).catch((err => console.log(err)))
+
     }, [router.isReady, plan]);
 
     const submitPlanSelection = (planKey: string) => {
         setPlan(planKey);
+        setPaymentLoading(true);
         API.initiatePayment({
             initiatePaymentRequest: {
                 plan: planKey
@@ -75,6 +103,8 @@ export default function Agreement() {
             }
         }).catch((error) => {
             setError(JSON.stringify(error));
+        }).finally(() => {
+            setPaymentLoading(false);
         })
     }
 
@@ -90,22 +120,12 @@ export default function Agreement() {
                 >
                     <CssBaseline />
                     {errorSnackbar}
-                    {
-                        
-                        <Typography
-                            align="center"
-                            sx={{
-                                color: "var(--color-black)",
-                                fontSize: "2em",
-                                fontWeight: 100,
-                                marginY: 3,
-                                paddingX: 3,
-                            }}
-                        >
-                            {Boolean(plan) ? "Checkout" : "Choose a Plan"}
-                        </Typography>
-                            
-                    }
+                    <PageHeader
+                        showStepper={true}
+                        title="Checkout"
+                        icon={<IconCardMembership />}
+                        stepperSlug="CHECKOUT"
+                    />
                     <Grid
                         container
                         item
@@ -122,10 +142,11 @@ export default function Agreement() {
                         justifyContent={"center"}
                         alignItems={"center"}
                         gap={4}
+                        marginTop={3}
                     >
                     {
                         !Boolean(plan) 
-                            ? plansLoading ? <LoadingSpinner /> : allPlans
+                            ? plansLoading ? <CheckoutLoadingSpinner /> : allPlans
                                 .sort((p) => p.priceInCents)
                                 .map((p) => <Box key={p.key}><PlanCard plan={p} submit={() => submitPlanSelection(p.key)} confirmText="Choose Plan"/></Box>) 
                             : <></>
@@ -136,6 +157,9 @@ export default function Agreement() {
                         Boolean(plan)
                             ? <SelectedPlan plan={allPlans.find((p) => p.key === plan)!}></SelectedPlan>
                             : <></>
+                    }
+                    {
+                        paymentLoading ? <LoadingSpinner /> : <></>
                     }
                     {
                         stripePromise && stripeOptions && stripeSessionId && Boolean(plan)
@@ -199,6 +223,17 @@ function SelectedPlan(props: { plan: Plan }) {
     </Card>
 }
 
+function CheckoutLoadingSpinner() {
+    return <Box
+        display="flex"
+        alignItems="center"
+        flexDirection="column"
+        marginY={3}
+    >
+        <Image src={StripeBadge} alt="Secure checkout powered by Stripe" />
+    </Box>
+}
+
 interface CheckoutProps {
     setError: (str: string) => void;
     stripePromise: Promise<Stripe | null>;
@@ -213,7 +248,18 @@ function CheckoutForm(props: CheckoutProps) {
 }
 
 function Checkout(props: { setError: (str: string) => void; stripeSessionId: string }) {
-    const checkout = useCustomCheckout();
+    const { confirm, canConfirm, confirmationRequirements } = useCustomCheckout();
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
+    const handleSubmit = () => {
+        const termsKey = "TERMS_AND_CONDITIONS";
+        API.setConsentedAgreements({setUserAgreementsRequest: {
+            agreements: [termsKey],
+        }})
+        .then((res) => {
+            confirm();
+        })
+        .catch((err) => props.setError(JSON.stringify(err)));
+    }
     return (
         <Box
             display="flex"
@@ -221,7 +267,6 @@ function Checkout(props: { setError: (str: string) => void; stripeSessionId: str
             flexDirection="column"
             marginY={3}
         >
-            <Image src={StripeBadge} alt="Secure checkout powered by Stripe" />
             <Card
                 sx={{
                     maxWidth: "600px",
@@ -231,13 +276,41 @@ function Checkout(props: { setError: (str: string) => void; stripeSessionId: str
                     width: "100%",
                 }}
             >
-                <PaymentElement />
+                <PaymentElement
+                    options={{
+                        fields: {
+                            billingDetails: {
+                                name: 'auto',
+                            }
+                        }
+                    }}
+                />
+                
                 <Box
                     display="flex"
                     flexDirection="column"
-                    alignContent="flex-end"
-                >
-                    <PayButton setError={props.setError} stripeSessionId={props.stripeSessionId} />
+                    alignContent="center"
+                >  
+                    { canConfirm ? <Divider /> : <></>}
+                    <FormGroup>
+                        <FormControlLabel
+                            label={<Typography>I agree to the MailboxSweep <Link href="/agreement/terms-and-conditions/">Terms and Conditions</Link></Typography>}
+                            sx={{ color: "var(--color-black)", paddingTop: 2 }}
+                            control={<Checkbox
+                                sx={{borderColor: "red"}}
+                                checked={agreedToTerms}
+                                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                data-testid="checkbox-agree-terms"
+                            />}
+                        />
+                    </FormGroup>
+                    <PayButton
+                        setError={props.setError}
+                        stripeSessionId={props.stripeSessionId}
+                        canConfirm={canConfirm && agreedToTerms}
+                        confirm={confirm}
+                        confirmationRequirements={confirmationRequirements}
+                    />
                 </Box>
                 
             </Card>
@@ -245,15 +318,22 @@ function Checkout(props: { setError: (str: string) => void; stripeSessionId: str
     );
 }
 
-function PayButton (props: { setError: (str: string) => void, stripeSessionId: string }) {
-    const {confirm, canConfirm, confirmationRequirements} = useCustomCheckout();
+interface PayButtonProps {
+    confirm: (args?: { return_url?: string | undefined } | undefined) => Promise<StripeCustomCheckoutResult>;
+    canConfirm: boolean;
+    confirmationRequirements: StripeCustomCheckoutConfirmationRequirement[];
+    setError: (str: string) => void;
+    stripeSessionId: string
+}
+
+function PayButton (props: PayButtonProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const successUrl = `http://localhost:3000/plan/payment-success?checkoutSessionId=${props.stripeSessionId}`;
   
     const handleClick = () => {
       setLoading(true);
-      confirm({
+      props.confirm({
         return_url: successUrl,
       }).then((result) => {
         setLoading(false);
@@ -271,8 +351,9 @@ function PayButton (props: { setError: (str: string) => void, stripeSessionId: s
   
     return (
       <LoadingButton
+        data-testid="button-pay"
         loading={loading}
-        disabled={!canConfirm || loading}
+        disabled={!props.canConfirm || loading}
         onClick={handleClick}
         variant="contained"
         sx={{
