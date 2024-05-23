@@ -25,7 +25,10 @@ func (p TestProcessor) FindCheckoutSession(sessionID string) (*CompletePayment, 
 	return &pmt, nil
 }
 
-var TestCheckoutURL = "localhost:8080/checkout"
+var (
+	TestCheckoutURL  = "localhost:8080/checkout"
+	TestClientSecret = "fake-client-secret"
+)
 
 func (p *TestProcessor) InitiateCheckout(param CheckoutParams) (checkout *CheckoutData, err error) {
 	id := uuid.NewString()
@@ -42,7 +45,7 @@ func (p *TestProcessor) InitiateCheckout(param CheckoutParams) (checkout *Checko
 	}
 	return &CheckoutData{
 		SessionID:    p.SessionID,
-		ClientSecret: "fake-client-secret",
+		ClientSecret: TestClientSecret,
 		CheckoutURL:  TestCheckoutURL,
 	}, nil
 }

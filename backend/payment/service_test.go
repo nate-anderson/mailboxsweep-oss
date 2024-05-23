@@ -48,9 +48,9 @@ func TestPaymentService(t *testing.T) {
 	})
 
 	t.Run("initiate payment, success", func(t *testing.T) {
-		checkoutURL, sessionID, err := service.InitiatePayment(authedCtx, inboxuser.Annual)
+		clientSecret, sessionID, err := service.InitiatePayment(authedCtx, inboxuser.Annual)
 		assert.ThatError(t, err).IsNil()
-		assert.That(t, checkoutURL).Equals(TestCheckoutURL)
+		assert.That(t, clientSecret).Equals(TestClientSecret)
 		assert.That(t, sessionID).NotEqual("")
 
 		inProgress, err := cartRepo.find(ctx, inboxuser.PaymentMethod("Test"), processor.SessionID)
