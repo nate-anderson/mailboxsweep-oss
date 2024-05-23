@@ -52,15 +52,15 @@ test.describe('signup', () => {
             await checkout.click();
 
             // perform checkout
-            const cardNumber = await page.getByPlaceholder("1234 1234 1234 1234");
+            const cardNumber = await page.frameLocator("[title='Secure payment input frame']").locator("[name='number']");
             await expect(cardNumber).toBeDefined();
             await cardNumber.fill(testCardNumber);
 
-            const cardExp = await page.locator("[name='expiry']");
+            const cardExp = await page.frameLocator("[title='Secure payment input frame']").locator("[name='expiry']");
             await expect(cardExp).toBeDefined();
             await cardExp.fill(testCardExp);
 
-            const cardCvv = await page.locator("[name='cvc']");
+            const cardCvv = await page.frameLocator("[title='Secure payment input frame']").locator("[name='cvc']");
             await expect(cardCvv).toBeDefined();
             await cardCvv.fill(testCardCvv);
 
@@ -70,15 +70,22 @@ test.describe('signup', () => {
             await name.fill(testUserName);
             */
 
-            const zip = await page.locator("[name='postalCode']");
+            const zip = await page.frameLocator("[title='Secure payment input frame']").locator("[name='postalCode']");
             await expect(zip).toBeDefined();
             await zip.fill("90210");
 
-            const rememberMe = await page.locator("[name='linkOptIn']");
+            const rememberMe = await page.frameLocator("[title='Secure payment input frame']").locator("[name='linkOptIn']");
             await expect(rememberMe).toBeDefined();
             await rememberMe.uncheck();
 
             const submit = await page.getByTestId("button-pay");
+            await expect(submit).toBeDisabled();
+
+            const terms = await page.getByTestId("checkbox-agree-terms");
+            await expect(terms).not.toBeChecked();
+            await terms.check();
+            await expect(submit).not.toBeDisabled();
+
             await submit.click();
 
             // first redirect submits Stripe data to backend to confirm payment
