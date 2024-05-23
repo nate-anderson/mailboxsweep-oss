@@ -17,7 +17,7 @@ jobs:
     uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@f0e6bb7a45425382f2db5ad8a7be0196e6417f82
     secrets: inherit
 
   build-push-server-image:
