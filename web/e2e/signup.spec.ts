@@ -52,7 +52,7 @@ test.describe('signup', () => {
             await checkout.click();
 
             // perform checkout
-            const cardNumber = await page.locator("[name='number']");
+            const cardNumber = await page.getByPlaceholder("1234 1234 1234 1234");
             await expect(cardNumber).toBeDefined();
             await cardNumber.fill(testCardNumber);
 
