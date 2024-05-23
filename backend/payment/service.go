@@ -20,7 +20,7 @@ type Service interface {
 	VerifyPayment(ctx context.Context) (*PaymentInfo, error)
 	// returns the checkout redirect URL
 	// returns ErrAlreadyPaid if a payment is current
-	InitiatePayment(ctx context.Context, plan inboxuser.Plan) (checkoutURL string, err error)
+	InitiatePayment(ctx context.Context, plan inboxuser.Plan) (clientSecret, sessionID string, err error)
 	CompletePayment(ctx context.Context, method inboxuser.PaymentMethod, token string) error
 	PlanDetails(code inboxuser.Plan) (*PlanDetails, error)
 	Plans(ctx context.Context) (map[inboxuser.Plan]PlanDetails, error)
@@ -100,37 +100,51 @@ func (c DefaultService) method() (inboxuser.PaymentMethod, error) {
 
 const storeInProgressCartsHours = 1
 
-func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan) (checkoutURL string, err error) {
+func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan) (clientSecret, sessionID string, err error) {
 	addr, err := mailboxsweep.UserAddressFromContext(ctx)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	_, err = s.VerifyPayment(ctx)
 	if err == nil {
-		return "", mailboxsweep.ErrAlreadyPaid
+		return "", "", mailboxsweep.ErrAlreadyPaid
 	} else if !errors.Is(err, mailboxsweep.ErrNeedsPayment) {
-		return "", fmt.Errorf("failed to check for existing active payments: %w", err)
+		return "", "", fmt.Errorf("failed to check for existing active payments: %w", err)
 	}
 
 	planDetails, ok := s.plans[plan]
 	if !ok {
 		err := fmt.Errorf("plan %s not recognized", plan)
-		return "", mailboxsweep.NotFoundError(err)
+		return "", "", mailboxsweep.NotFoundError(err)
 	}
 
-	checkoutURL, sessionID, err := s.processor.InitiateCheckout(int64(planDetails.PriceInCents), addr, planDetails.DisplayName, planDetails.Description)
+	checkoutParam := CheckoutParams{
+		RegularPriceInCents: int64(planDetails.PriceInCents),
+		Email:               addr,
+		Description:         planDetails.Description,
+		Name:                planDetails.DisplayName,
+	}
+	if planDetails.DiscountInCents != nil {
+		discount := int64(*planDetails.DiscountInCents)
+		checkoutParam.DiscountInCents = &discount
+
+		if _, isStripe := s.processor.(*StripeProcessor); isStripe && planDetails.StripeDiscountCode != nil {
+			checkoutParam.DiscountCode = planDetails.StripeDiscountCode
+		}
+	}
+	checkoutData, err := s.processor.InitiateCheckout(checkoutParam)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	method, err := s.method()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	c := cart{
-		ExternalID:  sessionID,
+		ExternalID:  checkoutData.SessionID,
 		Method:      method,
 		UserAddress: addr,
 		Plan:        plan,
@@ -140,10 +154,10 @@ func (s DefaultService) InitiatePayment(ctx context.Context, plan inboxuser.Plan
 	}
 	err = s.cartRepo.store(ctx, c)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return checkoutURL, nil
+	return checkoutData.ClientSecret, checkoutData.SessionID, nil
 }
 
 func (s DefaultService) CompletePayment(ctx context.Context, method inboxuser.PaymentMethod, token string) error {

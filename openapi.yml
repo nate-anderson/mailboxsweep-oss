@@ -277,11 +277,14 @@ components:
     InitiatePaymentResponse:
       type: object
       required:
-        - checkoutUrl
+        - sessionId
+        - clientSecret
       properties:
-        checkoutUrl:
+        clientSecret:
           type: string
           nullable: true
+        sessionId:
+          type: string
 
     InputFormat:
       type: string
@@ -377,6 +380,8 @@ components:
         priceInCents:
           type: integer
         displayIndex:
+          type: integer
+        discountInCents:
           type: integer
 
     Sender:

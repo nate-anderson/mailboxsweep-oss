@@ -139,7 +139,7 @@ func TestInboxChangesetService(t *testing.T) {
 	assert.ThatError(t, err).IsNil()
 
 	// seed payment
-	_, err = paymentService.InitiatePayment(authedCtx, inboxuser.Basic)
+	_, _, err = paymentService.InitiatePayment(authedCtx, inboxuser.Basic)
 	assert.ThatError(t, err).IsNil()
 
 	err = paymentService.CompletePayment(authedCtx, inboxuser.PaymentMethod("Test"), paymentProcessor.SessionID)

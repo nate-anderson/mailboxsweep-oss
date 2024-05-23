@@ -90,6 +90,7 @@ interface IPlan {
   allowed_scans: number;
   duration_days: number;
   display_index: number;
+  discount_in_cents: number;
 }
 
 const convertPlan = (p: IPlan, key: string): Plan => {
@@ -102,6 +103,7 @@ const convertPlan = (p: IPlan, key: string): Plan => {
     priceInCents: p.price_in_cents,
     durationDays: p.duration_days,
     displayIndex: p.display_index,
+    discountInCents: p.discount_in_cents,
   }
 }
 
@@ -637,7 +639,7 @@ export default function Home(props: IStaticProps) {
           >
             {Object.entries(props.plans).filter(([key, plan]) => plan.enabled).map(([key, plan]) => {
               return <Box key={key} marginX={1}>
-                <PlanCard plan={convertPlan(plan, key)} submit={undefined}/>
+                <PlanCard plan={convertPlan(plan, key)} submit={undefined} confirmText={undefined}/>
               </Box>;
             })}
           </Grid>
