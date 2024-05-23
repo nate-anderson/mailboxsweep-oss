@@ -250,15 +250,17 @@ function CheckoutForm(props: CheckoutProps) {
 function Checkout(props: { setError: (str: string) => void; stripeSessionId: string }) {
     const { confirm, canConfirm, confirmationRequirements } = useCustomCheckout();
     const [agreedToTerms, setAgreedToTerms] = useState(false);
-    const handleSubmit = () => {
+    const handleSubmit = async (args?: { return_url?: string | undefined }): Promise<StripeCustomCheckoutResult> => {
         const termsKey = "TERMS_AND_CONDITIONS";
-        API.setConsentedAgreements({setUserAgreementsRequest: {
-            agreements: [termsKey],
-        }})
-        .then((res) => {
-            confirm();
-        })
-        .catch((err) => props.setError(JSON.stringify(err)));
+        try {
+            const res = await API.setConsentedAgreements({setUserAgreementsRequest: {
+                agreements: [termsKey],
+            }});
+            return confirm();
+        } catch (err) {
+            props.setError(JSON.stringify(err))
+            throw err;
+        }
     }
     return (
         <Box
@@ -308,7 +310,7 @@ function Checkout(props: { setError: (str: string) => void; stripeSessionId: str
                         setError={props.setError}
                         stripeSessionId={props.stripeSessionId}
                         canConfirm={canConfirm && agreedToTerms}
-                        confirm={confirm}
+                        confirm={handleSubmit}
                         confirmationRequirements={confirmationRequirements}
                     />
                 </Box>
