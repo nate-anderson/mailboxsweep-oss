@@ -121,7 +121,7 @@ func TestWorker(t *testing.T) {
 	}
 
 	// simulate payment
-	_, err = paymentService.InitiatePayment(authedCtx, inboxuser.Basic)
+	_, _, err = paymentService.InitiatePayment(authedCtx, inboxuser.Basic)
 	assert.ThatError(t, err).IsNil()
 
 	err = paymentService.CompletePayment(authedCtx, inboxuser.PaymentMethod("Test"), testProcessor.SessionID)

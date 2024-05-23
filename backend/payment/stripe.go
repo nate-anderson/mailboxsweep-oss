@@ -3,6 +3,7 @@ package payment
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/stripe/stripe-go/v78"
@@ -10,7 +11,7 @@ import (
 )
 
 type Processor interface {
-	InitiateCheckout(params CheckoutParams) (checkoutURL string, sessionID string, err error)
+	InitiateCheckout(params CheckoutParams) (checkout *CheckoutData, err error)
 	FindCheckoutSession(sessionID string) (*CompletePayment, error)
 }
 
@@ -44,9 +45,16 @@ type CheckoutParams struct {
 	DiscountCode        *string
 }
 
-func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL string, sessionID string, err error) {
+type CheckoutData struct {
+	CheckoutURL  string
+	SessionID    string
+	ClientSecret string
+}
+
+func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkout *CheckoutData, err error) {
+
 	checkoutParam := &stripe.CheckoutSessionParams{
-		SuccessURL: &p.successURL,
+		// SuccessURL: &p.successURL,
 		// NV does not charge sales tax for digital products
 		// https://tax.nv.gov/FAQs/Sales_Tax_Information___FAQs/
 		AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{
@@ -75,6 +83,8 @@ func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL str
 				Quantity: ptr[int64](1),
 			},
 		},
+		UIMode:    ptr("custom"),
+		ReturnURL: &p.successURL,
 	}
 
 	if param.DiscountInCents != nil && param.DiscountCode != nil {
@@ -83,13 +93,21 @@ func (p StripeProcessor) InitiateCheckout(param CheckoutParams) (checkoutURL str
 		})
 	}
 
-	sess, err := p.client.CheckoutSessions.New(checkoutParam)
+	// support for beta custom checkout
+	checkoutParam.Headers = make(http.Header)
+	checkoutParam.Headers.Add("Stripe-Version", "2024-04-10; custom_checkout_beta=v1")
 
+	sess, err := p.client.CheckoutSessions.New(checkoutParam)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return sess.URL, sess.ID, nil
+	cd := CheckoutData{
+		CheckoutURL:  sess.URL,
+		SessionID:    sess.ID,
+		ClientSecret: sess.ClientSecret,
+	}
+	return &cd, nil
 }
 
 type CompletePayment struct {
