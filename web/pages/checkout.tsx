@@ -164,9 +164,19 @@ export default function Agreement() {
                             ? <SelectedPlan plan={allPlans.find((p) => p.key === plan)!}></SelectedPlan>
                             : <></>
                     }
+                        <Grid
+                            container
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            marginTop={3}
+                        >
+                            <Image src={StripeBadge} alt="Secure checkout powered by Stripe" />
+                        </Grid>
                     {
                         paymentLoading ? <LoadingSpinner /> : <></>
                     }
+                    
                     {
                         stripePromise && stripeOptions && stripeSessionId && Boolean(plan)
                         ?   <CheckoutForm
@@ -236,7 +246,6 @@ function CheckoutLoadingSpinner() {
         flexDirection="column"
         marginY={3}
     >
-        <Image src={StripeBadge} alt="Secure checkout powered by Stripe" />
     </Box>
 }
 
@@ -273,7 +282,7 @@ function Checkout(props: { setError: (str: string) => void; stripeSessionId: str
             display="flex"
             alignItems="center"
             flexDirection="column"
-            marginY={3}
+            marginBottom={3}
         >
             <Card
                 sx={{
