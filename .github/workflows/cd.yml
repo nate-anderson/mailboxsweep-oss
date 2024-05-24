@@ -122,6 +122,8 @@ jobs:
       - name: Build (prod)
         working-directory: web
         run: npm run build:prod
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
 
       - name: Robots.txt (prod)
         working-directory: web
