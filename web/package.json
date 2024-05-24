@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --trace on",
     "serve": "serve -p 3000 out",
     "openapi": "docker run --rm -v \"${PWD}/..:/local\" --name client-generator openapitools/openapi-generator-cli:v7.2.0 generate -i local/openapi.yml -g typescript-fetch -o local/web/client-gen"
   },
