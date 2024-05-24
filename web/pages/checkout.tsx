@@ -1,5 +1,5 @@
 import { API } from "../client";
-import { Plan } from "../client-gen";
+import { Plan, ResponseError } from "../client-gen";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useSnackbar } from "../components/snackbar";
@@ -102,7 +102,13 @@ export default function Agreement() {
                 setError("Could not find Stripe session.");
             }
         }).catch((error) => {
-            setError(JSON.stringify(error));
+            const resErr = error as ResponseError;
+            if (resErr.response.status == 422) {
+                setError("You have already paid for a plan.");
+                setTimeout(() => {
+                    router.push("/home");
+                }, 5000);
+            }
         }).finally(() => {
             setPaymentLoading(false);
         })
