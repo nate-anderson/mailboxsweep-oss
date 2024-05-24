@@ -13,8 +13,10 @@ jobs:
     uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
 
   build-web:
-    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+    uses: nate-anderson/mailboxsweep/.github/workflows/build-web.yml@0581d434a92f40c83fd669358082941ea68a4f76
+    secrets:
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_STAGING }}
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@f0e6bb7a45425382f2db5ad8a7be0196e6417f82
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@ecec2707731d3a0cc0f181e969605a9f057f7ec5
     secrets: inherit
