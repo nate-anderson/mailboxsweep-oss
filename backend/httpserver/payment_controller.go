@@ -77,14 +77,15 @@ func (c PaymentController) InitiatePayment(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	checkoutURL, err := c.service.InitiatePayment(ctx, plan)
+	clientSecret, sessionID, err := c.service.InitiatePayment(ctx, plan)
 	if err != nil {
 		c.respondError(w, err)
 		return
 	}
 
 	resBody := InitiatePaymentResponse{
-		CheckoutUrl: &checkoutURL,
+		ClientSecret: &clientSecret,
+		SessionId:    sessionID,
 	}
 
 	c.respond(w, http.StatusOK, resBody)

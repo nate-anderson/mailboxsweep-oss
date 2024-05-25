@@ -1,5 +1,5 @@
 export type Provider =
-    "GMAIL" 
+    "GMAIL"
     | "IMAP";
 
 export interface Step {
@@ -43,22 +43,18 @@ export interface Step {
     hide?: boolean;
 };
 
-export type StepSlug = 
-    "TERMS" | 
+export type StepSlug =
+    "TERMS" |
     "PLAN" |
     "PROVIDER_SIGNIN" |
-    "ORGANIZE";
+    "ORGANIZE" |
+    "CHECKOUT";
 
 const stepsIMAP: Step[] = [
     {
-        label: "Terms & Conditions",
-        path: "/agreement/terms-and-conditions",
-        slug: "TERMS",
-    },
-    {
-        label: "Select Plan",
-        path: "/plan/select",
-        slug: "PLAN",
+        label: "Checkout",
+        path: "/checkout",
+        slug: "CHECKOUT",
     },
     {
         label: "Email Login",
@@ -69,26 +65,21 @@ const stepsIMAP: Step[] = [
         label: "Organize Messages",
         path: "/classify",
         slug: "ORGANIZE",
-        hide: true,
+        //hide: true,
     }
 ];
 
 const stepsGmail: Step[] = [
     {
-        label: "Terms & Conditions",
-        path: "/agreement/terms-and-conditions",
-        slug: "TERMS",
-    },
-    {
-        label: "Select Plan",
-        path: "/plan/select",
-        slug: "PLAN",
+        label: "Checkout",
+        path: "/checkout",
+        slug: "CHECKOUT",
     },
     {
         label: "Organize Messages",
         path: "/classify",
         slug: "ORGANIZE",
-        hide: true,
+        // hide: true,
     }
 ];
 

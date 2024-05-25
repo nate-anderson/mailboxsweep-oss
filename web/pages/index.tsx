@@ -639,7 +639,7 @@ export default function Home(props: IStaticProps) {
           >
             {Object.entries(props.plans).filter(([key, plan]) => plan.enabled).map(([key, plan]) => {
               return <Box key={key} marginX={1}>
-                <PlanCard plan={convertPlan(plan, key)} submit={undefined}/>
+                <PlanCard plan={convertPlan(plan, key)} submit={undefined} confirmText={undefined}/>
               </Box>;
             })}
           </Grid>

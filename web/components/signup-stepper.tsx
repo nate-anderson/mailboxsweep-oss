@@ -10,21 +10,15 @@ export function getInitialStepPath(hasAgreedToTerms: boolean, hasPaid: boolean, 
         return undefined;
     }
 
-    if (!hasAgreedToTerms) {
-        const termsStep = steps.findIndex(step => step.slug === "TERMS");
-        if (termsStep > -1) {
-            setStep(termsStep);
-            return steps[termsStep].path;
-        }
-    }
-
     if (!hasPaid) {
-        const paymentStep = steps.findIndex(step => step.slug === "PLAN");
+        const paymentStep = steps.findIndex(step => step.slug === "CHECKOUT");
         if (paymentStep > -1) {
             setStep(paymentStep);
             return steps[paymentStep].path;
         }
 
+    } else if (!hasAgreedToTerms) {
+        return "/agreement/terms-and-conditions";
     }
 
     return undefined;

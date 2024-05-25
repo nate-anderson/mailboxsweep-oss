@@ -4,7 +4,9 @@ name: Build & lint web frontend
 on:
   workflow_call:
     inputs: {}
-    secrets: {}
+    secrets:
+      STRIPE_PUBLISHABLE_KEY:
+        required: true
 
 jobs:
   build-web:
@@ -39,3 +41,5 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}

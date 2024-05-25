@@ -106,6 +106,8 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build:e2e
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_STAGING }}
 
       - name: Install Playwright browser(s)
         working-directory: web
@@ -114,6 +116,8 @@ jobs:
       - name: Run E2E tests
         working-directory: web
         run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_STAGING }}
 
       - name: Upload E2E test results as GitHub Actions Artifacts
         uses: actions/upload-artifact@v3

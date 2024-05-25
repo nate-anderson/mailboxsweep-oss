@@ -36,7 +36,7 @@ export default function SelectPlan() {
     .then((res) => {
       setErrorMessage("");
       setShowSuccess(true);
-      setTimeout(() => document.location.href = res.checkoutUrl!, 250);
+      // setTimeout(() => document.location.href = res.checkoutUrl!, 250);
     })
     .catch((error) => {
       if (error instanceof ResponseError) {
@@ -90,7 +90,7 @@ export default function SelectPlan() {
           </Box>
           {plans
             ?.sort((p) => p.priceInCents)
-            .map((p) => <PlanCard key={p.key} plan={p} submit={() => submit(p.key)} />) 
+            .map((p) => <PlanCard key={p.key} plan={p} submit={() => submit(p.key)} confirmText={undefined} />) 
             }
         </Container>
       </>

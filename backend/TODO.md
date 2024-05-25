@@ -1,7 +1,7 @@
-Auth:
- Generate a session key, then use it to look up session data in Dynamo
+Signup:
 
- If something critical changes about the session, send a login confirmation email and force the user to log in again
-
-
- add MarkRead to `Folder` interface
+- Remove dedicated TOS agreement page from signup flow
+- Use Stripe custom checkout page to:
+  1. keep users on the site
+  2. Keep theming and UI consistent
+  3. Allow agreeing to TOS by checking a box on the checkout page (with a link to read and agree separately)

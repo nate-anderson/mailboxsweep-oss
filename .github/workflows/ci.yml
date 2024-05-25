@@ -17,7 +17,7 @@ jobs:
     uses: nate-anderson/mailboxsweep/.github/workflows/build-test-backend.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
 
   test-e2e:
-    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@46f11b15af6b7a9168b3f2041733a8cd79e87232
+    uses: nate-anderson/mailboxsweep/.github/workflows/e2e.yml@d33ba2e37cca3413ba6b2b290c084585b8334d2e
     secrets: inherit
 
   build-push-server-image:
@@ -127,6 +127,8 @@ jobs:
       - name: Build (staging)
         working-directory: web
         run: npm run build:staging
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_STAGING }}
 
       - name: Robots.txt (staging)
         working-directory: web

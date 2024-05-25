@@ -9,12 +9,13 @@ import Chip from "@mui/material/Chip";
 
 interface IPlanCardProps {
     plan: Plan;
-    submit: undefined | (() => void)
+    submit: undefined | (() => void);
+    confirmText: string | undefined;
 }
 
 const discountUntil = "5/30/2024";
 
-function Price(props: { priceInCents: number, strikeThrough: boolean, planKey: string }) {
+export function Price(props: { priceInCents: number, strikeThrough: boolean, planKey: string }) {
     return (
       <Typography
         data-testid={`price-${props.planKey.toLowerCase()}-dollars`}
@@ -31,7 +32,7 @@ function Price(props: { priceInCents: number, strikeThrough: boolean, planKey: s
   };
 
 
-function PriceWithDiscount(props: { plan: Plan }) {
+export function PriceWithDiscount(props: { plan: Plan, marginTop: number }) {
   if (!props.plan.discountInCents) {
     return <Price planKey={props.plan.key} priceInCents={props.plan.priceInCents} strikeThrough={false} />;
   }
@@ -41,7 +42,7 @@ function PriceWithDiscount(props: { plan: Plan }) {
       direction="row"
       columnGap={1}
       alignItems="flex-end"
-      marginTop={1}
+      marginTop={props.marginTop}
     >
       <Price
         planKey={props.plan.key}
@@ -92,7 +93,7 @@ export default function PlanCard(props: IPlanCardProps) {
       >
         {props.plan.displayName}
       </Typography>
-      <PriceWithDiscount plan={props.plan}/>
+      <PriceWithDiscount plan={props.plan} marginTop={1}/>
       <Typography
         sx={{
           color: "var(--color-gray)",
@@ -126,15 +127,8 @@ export default function PlanCard(props: IPlanCardProps) {
           onClick={props.submit}
           endIcon={<IconArrowForward />}
         >
-          Confirm & Pay
+          {props.confirmText ?? "Confirm & Pay"}
         </Button>
-        <small
-        style={{
-          color: "var(--color-gray)",
-        }}
-      >
-        Stripe checkout will open in a new tab.
-      </small>
         </> : undefined
       }
       
