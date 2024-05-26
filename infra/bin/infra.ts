@@ -3,12 +3,13 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { InfraStack } from '../lib/infra-stack';
 import { AppStack } from '../lib/app';
+import { TableStack } from '../lib/table';
 
 const environments = ["staging", "prod"];
 
 const app = new cdk.App();
 new InfraStack(app, 'infra-staging', {
-  environmentName: "staging", 
+  environmentName: "staging",
   env: {
     region: "us-west-2",
     account: "968574982400",
@@ -29,12 +30,16 @@ new InfraStack(app, 'infra-staging', {
 });
 
 new InfraStack(app, 'infra-prod', {
-  environmentName: "prod", 
+  environmentName: "prod",
   env: {
     region: "us-west-2",
     account: "968574982400",
   }
 });
+
+const stagingTableStack = new TableStack(app, `table-staging`, {
+  environmentName: "staging",
+})
 
 new AppStack(app, `app-staging`, {
   environmentName: "staging",
@@ -42,7 +47,12 @@ new AppStack(app, `app-staging`, {
   clusterInstanceCount: 1,
   maxClusterInstanceCount: 2,
   xrayEnabled: false,
+  table: stagingTableStack.table,
 });
+
+const prodTableStack = new TableStack(app, `table-prod`, {
+  environmentName: "prod",
+})
 
 new AppStack(app, `app-prod`, {
   environmentName: "prod",
@@ -50,4 +60,5 @@ new AppStack(app, `app-prod`, {
   clusterInstanceCount: 1,
   maxClusterInstanceCount: 5,
   xrayEnabled: false,
+  table: prodTableStack.table,
 });

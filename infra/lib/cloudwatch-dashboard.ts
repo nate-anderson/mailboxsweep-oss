@@ -8,7 +8,7 @@ import * as AWSLogs from 'aws-cdk-lib/aws-logs';
 import * as ElasticLoadBalancingV2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 type CloudwatchDashboardProps = InfraStackProps & {
-    table: DynamoDB.Table,
+    table: DynamoDB.ITable,
     queue: SQS.Queue,
     dlq: SQS.Queue,
     serverLogGroup: AWSLogs.ILogGroup,
