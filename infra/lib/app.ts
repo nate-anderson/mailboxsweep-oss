@@ -8,7 +8,6 @@ import * as ECS from "aws-cdk-lib/aws-ecs";
 import * as EC2 from 'aws-cdk-lib/aws-ec2';
 import * as ECR from 'aws-cdk-lib/aws-ecr';
 import * as CloudWatch from 'aws-cdk-lib/aws-cloudwatch';
-import { TableStack } from './table';
 import { ClassificationQueueStack, CommitChangesetQueueStack } from './queues';
 import * as S3 from "aws-cdk-lib/aws-s3";
 import * as CertMan from "aws-cdk-lib/aws-certificatemanager";
@@ -39,6 +38,7 @@ type AppProps = InfraStackProps & {
     maxClusterInstanceCount: number;
     xrayEnabled: boolean;
     table: DynamoDB.ITable;
+    classificationBucket: S3.IBucket;
 };
 
 const Port = {
@@ -73,18 +73,6 @@ export class AppStack extends cdk.Stack {
             configurationSetName: `MailboxSweep_Transactional_${props.environmentName}`,
             reputationMetrics: true,
             suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
-        });
-
-        const bucket = new S3.Bucket(this, `classifications-${props.environmentName}`, {
-            bucketName: `com.mailboxsweep.${props.environmentName}.classification`,
-            encryption: S3.BucketEncryption.S3_MANAGED,
-            removalPolicy: cdk.RemovalPolicy.RETAIN,
-            lifecycleRules: [
-                {
-                    id: "ttl",
-                    expiration: cdk.Duration.days(30),
-                }
-            ]
         });
 
         const vpc = new Vpc(this, `vpc-${props.environmentName}`, {
@@ -298,7 +286,7 @@ export class AppStack extends cdk.Stack {
 
             // Bucket
             S3_REGION: "us-west-2",
-            S3_BUCKET: bucket.bucketName,
+            S3_BUCKET: props.classificationBucket.bucketName,
 
             // Queues
             SQS_REGION: "us-west-2",
@@ -376,7 +364,7 @@ export class AppStack extends cdk.Stack {
         });
 
         // server must be able to read and serve classification trees
-        bucket.grantRead(serverTaskDefinition.taskRole);
+        props.classificationBucket.grantRead(serverTaskDefinition.taskRole);
 
         // write to DLQ
         const sendEmailPolicy = new IAM.Policy(this, `taskdef-ses-send`, {
@@ -555,7 +543,7 @@ export class AppStack extends cdk.Stack {
         workerTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
 
         // worker must read classification leaves when modifying
-        bucket.grantRead(workerTaskDefinition.taskRole);
+        props.classificationBucket.grantRead(workerTaskDefinition.taskRole);
 
         if (props.xrayEnabled) {
             const xraySidecarTaskDefinition = new ECS.TaskDefinition(this, `xray-sidecar`, {
@@ -790,7 +778,7 @@ export class AppStack extends cdk.Stack {
         props.table.grantReadWriteData(serverTaskDefinition.taskRole);
         props.table.grantReadWriteData(workerTaskDefinition.taskRole);
 
-        bucket.grantPut(workerTaskDefinition.taskRole);
+        props.classificationBucket.grantPut(workerTaskDefinition.taskRole);
 
 
         new Route53.ARecord(this, `api-a-record`, {
@@ -807,7 +795,6 @@ export class AppStack extends cdk.Stack {
 
         // frontend
         const staticSiteBucket = S3.Bucket.fromBucketName(this, `static-site-bucket`, `com.mailboxsweep.${props.environmentName}.web`);
-        const buildBucket = S3.Bucket.fromBucketName(this, `builds-bucket`, `com.mailboxsweep.builds.${props.environmentName}.web`)
 
         const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
 

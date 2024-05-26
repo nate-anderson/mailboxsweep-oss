@@ -4,11 +4,12 @@ import * as cdk from 'aws-cdk-lib';
 import { InfraStack } from '../lib/infra-stack';
 import { AppStack } from '../lib/app';
 import { TableStack } from '../lib/table';
+import { ClassificationBucketStack } from '../lib/classification-bucket';
 
 const environments = ["staging", "prod"];
 
 const app = new cdk.App();
-new InfraStack(app, 'infra-staging', {
+const infraStackStaging = new InfraStack(app, 'infra-staging', {
   environmentName: "staging",
   env: {
     region: "us-west-2",
@@ -29,7 +30,7 @@ new InfraStack(app, 'infra-staging', {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
 
-new InfraStack(app, 'infra-prod', {
+const infraStackProd = new InfraStack(app, 'infra-prod', {
   environmentName: "prod",
   env: {
     region: "us-west-2",
@@ -39,7 +40,11 @@ new InfraStack(app, 'infra-prod', {
 
 const stagingTableStack = new TableStack(app, `table-staging`, {
   environmentName: "staging",
-})
+});
+
+const stagingBucketStack = new ClassificationBucketStack(app, `classification-bucket-staging`, {
+  environmentName: "staging"
+});
 
 new AppStack(app, `app-staging`, {
   environmentName: "staging",
@@ -48,11 +53,17 @@ new AppStack(app, `app-staging`, {
   maxClusterInstanceCount: 2,
   xrayEnabled: false,
   table: stagingTableStack.table,
+  classificationBucket: stagingBucketStack.classificationBucket,
+
 });
 
-const prodTableStack = new TableStack(app, `table-prod`, {
+const prodPermanentStack = new TableStack(app, `table-prod`, {
   environmentName: "prod",
-})
+});
+
+const prodBucketStack = new ClassificationBucketStack(app, `classification-bucket-prod`, {
+  environmentName: "prod"
+});
 
 new AppStack(app, `app-prod`, {
   environmentName: "prod",
@@ -60,5 +71,7 @@ new AppStack(app, `app-prod`, {
   clusterInstanceCount: 1,
   maxClusterInstanceCount: 5,
   xrayEnabled: false,
-  table: prodTableStack.table,
+  table: prodPermanentStack.table,
+  classificationBucket: prodBucketStack.classificationBucket,
+
 });

@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as DynamoDB from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import { InfraStackProps } from './infra-stack';
 
 export type TableStackProps = cdk.StackProps & {
     environmentName: string;
@@ -14,25 +13,6 @@ export class TableStack extends cdk.Stack {
         super(scope, id, props);
 
         const tableName = `mailboxsweep_table_${props.environmentName}`;
-        new DynamoDB.Table(this, "throwaway-table", {
-            tableName: tableName + "throwaway",
-            billingMode: DynamoDB.BillingMode.PROVISIONED,
-            writeCapacity: 10,
-            readCapacity: 10,
-            pointInTimeRecovery: true,
-            partitionKey: {
-                name: "pk",
-                type: DynamoDB.AttributeType.STRING,
-            },
-            sortKey: {
-                name: "sk",
-                type: DynamoDB.AttributeType.STRING,
-            },
-            removalPolicy: cdk.RemovalPolicy.RETAIN,
-            deletionProtection: true,
-            timeToLiveAttribute: "expires_at",
-        });
-
         const table = new DynamoDB.Table(this, tableName, {
             tableName: tableName,
             billingMode: DynamoDB.BillingMode.PROVISIONED,
