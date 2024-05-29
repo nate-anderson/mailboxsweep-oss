@@ -20,7 +20,7 @@ import * as IAM from "aws-cdk-lib/aws-iam";
 import Resources from "../lib/resources";
 import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
-import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
+import * as SQS from 'aws-cdk-lib/aws-sqs';
 import { CloudwatchDashboardStack } from './cloudwatch-dashboard';
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
@@ -39,6 +39,12 @@ type AppProps = InfraStackProps & {
     xrayEnabled: boolean;
     table: DynamoDB.ITable;
     classificationBucket: S3.IBucket;
+
+    classifyQueueArn: string;
+    classifyDlqArn: string;
+
+    changesetQueueArn: string;
+    changesetDlqArn: string;
 };
 
 const Port = {
@@ -53,8 +59,11 @@ export class AppStack extends cdk.Stack {
         super(scope, id, props);
 
         // const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
-        const classifyQueues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
-        const commitChangesetQueues = new CommitChangesetQueueStack(this, `changeset-queues-${props.environmentName}`, props);
+        const classifyQueue = SQS.Queue.fromQueueArn(this, `classify-queue`, props.classifyQueueArn);
+        const classifyDlq = SQS.Queue.fromQueueArn(this, `classify-dlq`, props.classifyDlqArn);
+
+        const commitChangesetQueue = SQS.Queue.fromQueueArn(this, `commit-queue`, props.changesetQueueArn);
+        const commitChangesetDlq = SQS.Queue.fromQueueArn(this, `commit-dlq`, props.changesetDlqArn);
 
         const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = ECR.Repository.fromRepositoryName(this, serverRepoName, serverRepoName);
@@ -245,7 +254,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.queue.queueArn, commitChangesetQueues.queue.queueArn],
+                    resources: [classifyQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         })
@@ -291,15 +300,15 @@ export class AppStack extends cdk.Stack {
             // Queues
             SQS_REGION: "us-west-2",
 
-            SQS_CLASSIFY_QUEUE_URL: classifyQueues.queue.queueUrl,
-            SQS_CLASSIFY_QUEUE: classifyQueues.queue.queueName,
-            SQS_CLASSIFY_DLQ_URL: classifyQueues.dlq.queueUrl,
-            SQS_CLASSIFY_DLQ: classifyQueues.dlq.queueName,
+            SQS_CLASSIFY_QUEUE_URL: classifyQueue.queueUrl,
+            SQS_CLASSIFY_QUEUE: classifyQueue.queueName,
+            SQS_CLASSIFY_DLQ_URL: classifyQueue.queueUrl,
+            SQS_CLASSIFY_DLQ: classifyQueue.queueName,
 
-            SQS_COMMIT_QUEUE_URL: commitChangesetQueues.queue.queueUrl,
-            SQS_COMMIT_QUEUE: commitChangesetQueues.queue.queueName,
-            SQS_COMMIT_DLQ_URL: commitChangesetQueues.dlq.queueUrl,
-            SQS_COMMIT_DLQ: commitChangesetQueues.dlq.queueName,
+            SQS_COMMIT_QUEUE_URL: commitChangesetQueue.queueUrl,
+            SQS_COMMIT_QUEUE: commitChangesetQueue.queueName,
+            SQS_COMMIT_DLQ_URL: commitChangesetQueue.queueUrl,
+            SQS_COMMIT_DLQ: commitChangesetQueue.queueName,
 
 
             SES_REGION: "us-west-2",
@@ -433,7 +442,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: classifyQueues.queue.queueName,
+                QueueName: classifyQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -441,7 +450,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesNotVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: classifyQueues.queue.queueName,
+                QueueName: classifyQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -449,7 +458,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: commitChangesetQueues.queue.queueName,
+                QueueName: commitChangesetQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -457,7 +466,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesNotVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: commitChangesetQueues.queue.queueName,
+                QueueName: commitChangesetQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -516,7 +525,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:DeleteMessage",
                         "sqs:ChangeMessageVisibility",
                     ],
-                    resources: [classifyQueues.queue.queueArn, classifyQueues.dlq.queueArn, commitChangesetQueues.queue.queueArn, commitChangesetQueues.dlq.queueArn],
+                    resources: [classifyQueue.queueArn, classifyQueue.queueArn, commitChangesetQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         });
@@ -534,7 +543,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.dlq.queueArn, commitChangesetQueues.dlq.queueArn],
+                    resources: [classifyQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         });
@@ -780,19 +789,6 @@ export class AppStack extends cdk.Stack {
 
         props.classificationBucket.grantPut(workerTaskDefinition.taskRole);
 
-
-        new Route53.ARecord(this, `api-a-record`, {
-            zone: hostedZone,
-            recordName: domain,
-            target: route53.RecordTarget.fromAlias(new Route53Targets.LoadBalancerTarget(loadBalancedAPIService.loadBalancer)),
-        });
-
-        const cloudFrontCert = new CertMan.DnsValidatedCertificate(this, "web-cert", {
-            domainName: webUrl,
-            hostedZone: hostedZone,
-            region: "us-east-1",  //standard for acm certs
-        });
-
         // frontend
         const staticSiteBucket = S3.Bucket.fromBucketName(this, `static-site-bucket`, `com.mailboxsweep.${props.environmentName}.web`);
 
@@ -815,6 +811,19 @@ export class AppStack extends cdk.Stack {
                 }
             ],
             objectOwnership: S3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+        });
+
+
+        new Route53.ARecord(this, `api-a-record`, {
+            zone: hostedZone,
+            recordName: domain,
+            target: route53.RecordTarget.fromAlias(new Route53Targets.LoadBalancerTarget(loadBalancedAPIService.loadBalancer)),
+        });
+
+        const cloudFrontCert = new CertMan.DnsValidatedCertificate(this, "web-cert", {
+            domainName: webUrl,
+            hostedZone: hostedZone,
+            region: "us-east-1",  //standard for acm certs
         });
 
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
@@ -879,8 +888,8 @@ export class AppStack extends cdk.Stack {
         const dashboard = new CloudwatchDashboardStack(this, `dashboard`, {
             ...props,
             table: props.table,
-            queue: classifyQueues.queue,
-            dlq: classifyQueues.dlq,
+            queue: classifyQueue,
+            dlq: classifyDlq,
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
             loadBalancer: loadBalancedAPIService.loadBalancer,
@@ -908,10 +917,10 @@ export class AppStack extends cdk.Stack {
         const alarms = new AlarmsStack(this, `alarms`, {
             ...props,
             emailAddr: "tech@mailboxsweep.com",
-            commitQueue: commitChangesetQueues.queue,
-            commitDLQ: commitChangesetQueues.dlq,
-            classifyQueue: classifyQueues.queue,
-            classifyDLQ: classifyQueues.dlq,
+            commitQueue: commitChangesetQueue,
+            commitDLQ: commitChangesetQueue,
+            classifyQueue: classifyQueue,
+            classifyDLQ: classifyQueue,
             loadBalancer: loadBalancedAPIService.loadBalancer,
         });
     }

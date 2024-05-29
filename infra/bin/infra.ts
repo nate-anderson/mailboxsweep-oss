@@ -5,6 +5,7 @@ import { InfraStack } from '../lib/infra-stack';
 import { AppStack } from '../lib/app';
 import { TableStack } from '../lib/table';
 import { ClassificationBucketStack } from '../lib/classification-bucket';
+import { QueuesStack } from '../lib/queues';
 
 const environments = ["staging", "prod"];
 
@@ -46,6 +47,10 @@ const stagingBucketStack = new ClassificationBucketStack(app, `classification-bu
   environmentName: "staging"
 });
 
+const queues = new QueuesStack(app, `queues-stack-staging`, {
+  environmentName: "staging",
+});
+
 new AppStack(app, `app-staging`, {
   environmentName: "staging",
   clusterInstanceType: "t2.medium",
@@ -55,6 +60,10 @@ new AppStack(app, `app-staging`, {
   table: stagingTableStack.table,
   classificationBucket: stagingBucketStack.classificationBucket,
 
+  classifyQueueArn: "arn:aws:sqs:us-west-2:968574982400:classify_queue_staging.fifo",
+  classifyDlqArn: "arn:aws:sqs:us-west-2:968574982400:classify_dlq_staging.fifo",
+  changesetQueueArn: "arn:aws:sqs:us-west-2:968574982400:commit_changeset_queue_staging.fifo",
+  changesetDlqArn: "arn:aws:sqs:us-west-2:968574982400:commit_changeset_dlq_staging.fifo"
 });
 
 const prodPermanentStack = new TableStack(app, `table-prod`, {
@@ -63,6 +72,10 @@ const prodPermanentStack = new TableStack(app, `table-prod`, {
 
 const prodBucketStack = new ClassificationBucketStack(app, `classification-bucket-prod`, {
   environmentName: "prod"
+});
+
+const prodQueuesStack = new QueuesStack(app, `queues-stack-prod`, {
+  environmentName: "prod",
 });
 
 new AppStack(app, `app-prod`, {
@@ -74,4 +87,8 @@ new AppStack(app, `app-prod`, {
   table: prodPermanentStack.table,
   classificationBucket: prodBucketStack.classificationBucket,
 
+  classifyQueueArn: "arn:aws:sqs:us-west-2:968574982400:classify_queue_prod.fifo",
+  classifyDlqArn: "arn:aws:sqs:us-west-2:968574982400:classify_dlq_prod.fifo",
+  changesetQueueArn: "arn:aws:sqs:us-west-2:968574982400:commit_changeset_queue_prod.fifo",
+  changesetDlqArn: "arn:aws:sqs:us-west-2:968574982400:commit_changeset_dlq_prod.fifo"
 });

@@ -9,10 +9,10 @@ import * as Subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as LBv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 
 type AlarmsStackProps = InfraStackProps & {
-    classifyQueue: SQS.Queue;
-    commitQueue: SQS.Queue;
-    classifyDLQ: SQS.Queue;
-    commitDLQ: SQS.Queue;
+    classifyQueue: SQS.IQueue;
+    commitQueue: SQS.IQueue;
+    classifyDLQ: SQS.IQueue;
+    commitDLQ: SQS.IQueue;
     emailAddr: string;
     loadBalancer: LBv2.ApplicationLoadBalancer;
 };
@@ -47,8 +47,8 @@ export class AlarmsStack extends cdk.Stack {
 }
 
 type QueueMetricAlarmsStackProps = InfraStackProps & {
-    queue: SQS.Queue;
-    dlq: SQS.Queue | undefined;
+    queue: SQS.IQueue;
+    dlq: SQS.IQueue | undefined;
     maxQueueMessageAgeSeconds: number;
     maxDLQMessageAgeSeconds: number | undefined;
     emailAddr: string;
@@ -96,7 +96,7 @@ class QueueMetricAlarms extends cdk.Stack {
             });
 
             const oldestDlqMessageAlarm = new CloudWatch.Alarm(this, `oldest-${description}-dlq-queue-msg`, {
-                alarmName:`Oldest ${description} DLQ MSG`,
+                alarmName: `Oldest ${description} DLQ MSG`,
                 alarmDescription: `Oldest message in ${description} DLQ`,
                 metric: oldestDlqMessageMetric,
                 threshold: props.maxDLQMessageAgeSeconds!,
@@ -189,7 +189,7 @@ class LoadBalancerAlarms extends cdk.Stack {
         });
         alb5xxTopic.addSubscription(new Subscriptions.EmailSubscription(props.emailAddr, { json: true }));
         loadbalancer5xxErrorsAlarm.addAlarmAction(new Actions.SnsAction(alb5xxTopic));
-        
+
 
         const httpService5xxErrorsMetric = new CloudWatch.Metric({
             namespace: 'AWS/ApplicationELB',
@@ -233,10 +233,10 @@ class LoadBalancerAlarms extends cdk.Stack {
             evaluationPeriods: 1,
             treatMissingData: CloudWatch.TreatMissingData.IGNORE,
             actionsEnabled: true,
-        });   
+        });
         latencyTopic.addSubscription(new Subscriptions.EmailSubscription(props.emailAddr, { json: true }));
         latencyAlarm.addAlarmAction(new Actions.SnsAction(latencyTopic));
 
-        
+
     }
 }

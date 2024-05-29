@@ -9,13 +9,6 @@ import { InfraStackProps } from './infra-stack';
  * to be classified when resources are ready
  */
 export class ClassificationQueueStack extends cdk.Stack {
-  public readonly queue: SQS.Queue;
-  public readonly dlq: SQS.Queue;
-
-  // queue used for 24-hour cooloff when reading from IMAP inboxes with transfer quotas
-  public readonly imapCooloffQueue: SQS.Queue;
-  public readonly imapCooloffDlq: SQS.Queue;
-
   constructor(scope: Construct, id: string, props: InfraStackProps) {
     super(scope, id, props);
 
@@ -23,8 +16,9 @@ export class ClassificationQueueStack extends cdk.Stack {
     const dlq = new SQS.Queue(this, dlqName, {
       queueName: dlqName,
       fifo: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
-    this.dlq = dlq;
+    this.exportValue(dlq.queueArn, { name: `classifydlq-arn` });
 
     const queueName = `classify_queue_${props.environmentName}.fifo`;
     const queue = new SQS.Queue(this, queueName, {
@@ -34,15 +28,17 @@ export class ClassificationQueueStack extends cdk.Stack {
         queue: dlq,
         maxReceiveCount: 3,
       },
-    })
-    this.queue = queue;
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+    this.exportValue(queue.queueArn, { name: `classify-queue-arn` });
 
     const imapCooloffDlqName = `imap_cooloff_dlq_${props.environmentName}.fifo`;
     const imapCooloffDlq = new SQS.Queue(this, imapCooloffDlqName, {
       queueName: imapCooloffDlqName,
       fifo: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
-    this.imapCooloffDlq = imapCooloffDlq;
+    this.exportValue(imapCooloffDlq.queueArn, { name: `imap-cooloff-dlq` });
 
     const imapCooloffQueueName = `imap_cooloff_queue_${props.environmentName}.fifo`;
     const imapCooloffQueue = new SQS.Queue(this, imapCooloffQueueName, {
@@ -51,15 +47,15 @@ export class ClassificationQueueStack extends cdk.Stack {
       deadLetterQueue: {
         queue: imapCooloffDlq,
         maxReceiveCount: 3,
-      }
+      },
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
-    this.imapCooloffQueue = imapCooloffQueue;
+    this.exportValue(imapCooloffQueue.queueArn, { name: `imap-cooloff-queue` });
+
   }
 }
 
 export class CommitChangesetQueueStack extends cdk.Stack {
-  public readonly queue: SQS.Queue;
-  public readonly dlq: SQS.Queue;
 
   constructor(scope: Construct, id: string, props: InfraStackProps) {
     super(scope, id)
@@ -68,8 +64,9 @@ export class CommitChangesetQueueStack extends cdk.Stack {
     const dlq = new SQS.Queue(this, dlqName, {
       queueName: dlqName,
       fifo: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
-    this.dlq = dlq;
+    this.exportValue(dlq.queueArn, { name: `commit-changeset-dlq-arn` });
 
     const queueName = `commit_changeset_queue_${props.environmentName}.fifo`;
     const queue = new SQS.Queue(this, queueName, {
@@ -79,7 +76,18 @@ export class CommitChangesetQueueStack extends cdk.Stack {
         queue: dlq,
         maxReceiveCount: 3,
       },
-    })
-    this.queue = queue;
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    this.exportValue(queue.queueArn, { name: `commit-changeset-queue-arn` });
+  }
+}
+
+export class QueuesStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: InfraStackProps) {
+    super(scope, id, props);
+
+    new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
+    new CommitChangesetQueueStack(this, `changeset-queues-${props.environmentName}`, props);
   }
 }
