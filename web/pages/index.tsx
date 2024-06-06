@@ -676,6 +676,19 @@ export default function Home(props: IStaticProps) {
               color: "var(--color-gray)"
             }}>|</span>
           <small><Link sx={{textDecoration: "none"}} href="/cookies">Cookie Policy</Link></small>
+          <span style={{
+              marginLeft: "5px",
+              marginRight: "5px",
+              color: "var(--color-gray)"
+            }}>|</span>
+          <small><Link sx={{textDecoration: "none"}} href="/landing/agreement/TERMS_AND_CONDITIONS/">Terms of Use</Link></small>
+          <span style={{
+              marginLeft: "5px",
+              marginRight: "5px",
+              color: "var(--color-gray)"
+            }}>|</span>
+          <small><Link sx={{textDecoration: "none"}} href="/landing/agreement/PRIVACY_POLICY/">Privacy Policy</Link></small>
+          
         </Grid>
       </Container>
     </>
