@@ -1,12 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
 import * as DynamoDB from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import { InfraStackProps } from './infra-stack';
+
+export type TableStackProps = cdk.StackProps & {
+    environmentName: string;
+}
 
 export class TableStack extends cdk.Stack {
     public readonly table: DynamoDB.Table;
 
-    constructor(scope: Construct, id: string, props: InfraStackProps) {
+    constructor(scope: Construct, id: string, props: TableStackProps) {
         super(scope, id, props);
 
         const tableName = `mailboxsweep_table_${props.environmentName}`;

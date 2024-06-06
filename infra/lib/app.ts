@@ -8,7 +8,6 @@ import * as ECS from "aws-cdk-lib/aws-ecs";
 import * as EC2 from 'aws-cdk-lib/aws-ec2';
 import * as ECR from 'aws-cdk-lib/aws-ecr';
 import * as CloudWatch from 'aws-cdk-lib/aws-cloudwatch';
-import { TableStack } from './table';
 import { ClassificationQueueStack, CommitChangesetQueueStack } from './queues';
 import * as S3 from "aws-cdk-lib/aws-s3";
 import * as CertMan from "aws-cdk-lib/aws-certificatemanager";
@@ -21,7 +20,7 @@ import * as IAM from "aws-cdk-lib/aws-iam";
 import Resources from "../lib/resources";
 import * as CFOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
-import * as S3Deployment from 'aws-cdk-lib/aws-s3-deployment';
+import * as SQS from 'aws-cdk-lib/aws-sqs';
 import { CloudwatchDashboardStack } from './cloudwatch-dashboard';
 import * as SES from "aws-cdk-lib/aws-ses";
 import * as SNS from "aws-cdk-lib/aws-sns";
@@ -30,6 +29,7 @@ import * as WAF from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 import { AlarmsStack } from './alarms';
 import * as AutoScaling from "aws-cdk-lib/aws-autoscaling";
+import * as DynamoDB from "aws-cdk-lib/aws-dynamodb";
 
 type AppProps = InfraStackProps & {
     subdomain?: string;
@@ -37,6 +37,14 @@ type AppProps = InfraStackProps & {
     clusterInstanceCount: number;
     maxClusterInstanceCount: number;
     xrayEnabled: boolean;
+    table: DynamoDB.ITable;
+    classificationBucket: S3.IBucket;
+
+    classifyQueueArn: string;
+    classifyDlqArn: string;
+
+    changesetQueueArn: string;
+    changesetDlqArn: string;
 };
 
 const Port = {
@@ -50,9 +58,12 @@ export class AppStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: AppProps) {
         super(scope, id, props);
 
-        const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
-        const classifyQueues = new ClassificationQueueStack(this, `classify-queues-${props.environmentName}`, props);
-        const commitChangesetQueues = new CommitChangesetQueueStack(this, `changeset-queues-${props.environmentName}`, props);
+        // const tableStack = new TableStack(this, `app-table-${props.environmentName}`, props);
+        const classifyQueue = SQS.Queue.fromQueueArn(this, `classify-queue`, props.classifyQueueArn);
+        const classifyDlq = SQS.Queue.fromQueueArn(this, `classify-dlq`, props.classifyDlqArn);
+
+        const commitChangesetQueue = SQS.Queue.fromQueueArn(this, `commit-queue`, props.changesetQueueArn);
+        const commitChangesetDlq = SQS.Queue.fromQueueArn(this, `commit-dlq`, props.changesetDlqArn);
 
         const serverRepoName = `mailboxsweep-server-${props.environmentName}`;
         const serverRepo = ECR.Repository.fromRepositoryName(this, serverRepoName, serverRepoName);
@@ -65,24 +76,12 @@ export class AppStack extends cdk.Stack {
             zoneName: Resources.global.dns.fullyQualifiedDomainName,
         });
         const domain: string = Resources[props.environmentName].api.dns.fullyQualifiedDomainName;
-        
+
         // SES configuration
         const sesConfigSet = new SES.ConfigurationSet(this, `mailboxsweep_transactional`, {
             configurationSetName: `MailboxSweep_Transactional_${props.environmentName}`,
             reputationMetrics: true,
             suppressionReasons: SES.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
-        });
-
-        const bucket = new S3.Bucket(this, `classifications-${props.environmentName}`, {
-            bucketName: `com.mailboxsweep.${props.environmentName}.classification`,
-            encryption: S3.BucketEncryption.S3_MANAGED,
-            removalPolicy: cdk.RemovalPolicy.RETAIN,
-            lifecycleRules: [
-                {
-                    id: "ttl",
-                    expiration: cdk.Duration.days(30),
-                }
-            ]
         });
 
         const vpc = new Vpc(this, `vpc-${props.environmentName}`, {
@@ -111,7 +110,7 @@ export class AppStack extends cdk.Stack {
         //     name: namespace,
         //     type: ServiceDiscovery.NamespaceType.DNS_PRIVATE,
         // });
-    
+
         const launchTemplateUserData = EC2.UserData.forLinux({
             shebang: "#!/bin/bash",
         });
@@ -135,10 +134,10 @@ export class AppStack extends cdk.Stack {
 
         // enable this to SSH into instances
         // ecsInstanceSecGroup.addIngressRule(EC2.Peer.anyIpv4(), EC2.Port.tcp(22));
-        
+
         // application traffic
         ecsInstanceSecGroup.addIngressRule(EC2.Peer.securityGroupId(lbSecGroup.securityGroupId), EC2.Port.allTcp());
-        
+
 
         const instanceRole = new IAM.Role(this, `app-instance-role`, {
             assumedBy: new IAM.ServicePrincipal("ec2.amazonaws.com"),
@@ -180,7 +179,7 @@ export class AppStack extends cdk.Stack {
             // enable to SSH into instance
             associatePublicIpAddress: false,
         });
-        
+
         const autoScalingGroup = new AutoScaling.AutoScalingGroup(this, `app-asg`, {
             vpc,
             minCapacity: 1,
@@ -195,7 +194,7 @@ export class AppStack extends cdk.Stack {
             }),
             newInstancesProtectedFromScaleIn: false,
         })
-        
+
 
         const capacityProvider = new ECS.AsgCapacityProvider(this, `cluster-capacity-provider`, {
             autoScalingGroup: autoScalingGroup,
@@ -255,7 +254,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.queue.queueArn, commitChangesetQueues.queue.queueArn],
+                    resources: [classifyQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         })
@@ -292,25 +291,25 @@ export class AppStack extends cdk.Stack {
 
             // DB
             DYNAMODB_REGION: "us-west-2",
-            DYNAMODB_TABLE: tableStack.table.tableName,
+            DYNAMODB_TABLE: props.table.tableName,
 
             // Bucket
             S3_REGION: "us-west-2",
-            S3_BUCKET: bucket.bucketName,
+            S3_BUCKET: props.classificationBucket.bucketName,
 
             // Queues
             SQS_REGION: "us-west-2",
-            
-            SQS_CLASSIFY_QUEUE_URL: classifyQueues.queue.queueUrl,
-            SQS_CLASSIFY_QUEUE: classifyQueues.queue.queueName,
-            SQS_CLASSIFY_DLQ_URL: classifyQueues.dlq.queueUrl,
-            SQS_CLASSIFY_DLQ: classifyQueues.dlq.queueName,
 
-            SQS_COMMIT_QUEUE_URL: commitChangesetQueues.queue.queueUrl,
-            SQS_COMMIT_QUEUE: commitChangesetQueues.queue.queueName,
-            SQS_COMMIT_DLQ_URL: commitChangesetQueues.dlq.queueUrl,
-            SQS_COMMIT_DLQ: commitChangesetQueues.dlq.queueName,
-            
+            SQS_CLASSIFY_QUEUE_URL: classifyQueue.queueUrl,
+            SQS_CLASSIFY_QUEUE: classifyQueue.queueName,
+            SQS_CLASSIFY_DLQ_URL: classifyQueue.queueUrl,
+            SQS_CLASSIFY_DLQ: classifyQueue.queueName,
+
+            SQS_COMMIT_QUEUE_URL: commitChangesetQueue.queueUrl,
+            SQS_COMMIT_QUEUE: commitChangesetQueue.queueName,
+            SQS_COMMIT_DLQ_URL: commitChangesetQueue.queueUrl,
+            SQS_COMMIT_DLQ: commitChangesetQueue.queueName,
+
 
             SES_REGION: "us-west-2",
             SES_LOGIN_EMAIL_TEMPLATE_NAME: "mailboxsweep_login_link",
@@ -368,13 +367,13 @@ export class AppStack extends cdk.Stack {
                 }
             ],
             healthCheck: {
-                command: [ `curl localhost/healthcheck` ],
-                interval: cdk.Duration.seconds(120),  
+                command: [`curl localhost/healthcheck`],
+                interval: cdk.Duration.seconds(120),
             },
         });
 
         // server must be able to read and serve classification trees
-        bucket.grantRead(serverTaskDefinition.taskRole);
+        props.classificationBucket.grantRead(serverTaskDefinition.taskRole);
 
         // write to DLQ
         const sendEmailPolicy = new IAM.Policy(this, `taskdef-ses-send`, {
@@ -443,7 +442,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: classifyQueues.queue.queueName,
+                QueueName: classifyQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -451,7 +450,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesNotVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: classifyQueues.queue.queueName,
+                QueueName: classifyQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -459,7 +458,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: commitChangesetQueues.queue.queueName,
+                QueueName: commitChangesetQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -467,7 +466,7 @@ export class AppStack extends cdk.Stack {
             metricName: "ApproximateNumberOfMessagesNotVisible",
             namespace: "AWS/SQS",
             dimensionsMap: {
-                QueueName: commitChangesetQueues.queue.queueName,
+                QueueName: commitChangesetQueue.queueName,
             },
             period: cdk.Duration.minutes(1),
         });
@@ -526,7 +525,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:DeleteMessage",
                         "sqs:ChangeMessageVisibility",
                     ],
-                    resources: [classifyQueues.queue.queueArn, classifyQueues.dlq.queueArn, commitChangesetQueues.queue.queueArn, commitChangesetQueues.dlq.queueArn],
+                    resources: [classifyQueue.queueArn, classifyQueue.queueArn, commitChangesetQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         });
@@ -544,7 +543,7 @@ export class AppStack extends cdk.Stack {
                         "sqs:GetQueueAttributes",
                         "sqs:ListDeadLetterSourceQueues",
                     ],
-                    resources: [classifyQueues.dlq.queueArn, commitChangesetQueues.dlq.queueArn],
+                    resources: [classifyQueue.queueArn, commitChangesetQueue.queueArn],
                 })
             ]
         });
@@ -553,13 +552,13 @@ export class AppStack extends cdk.Stack {
         workerTaskDefinition.taskRole.attachInlinePolicy(sendEmailPolicy);
 
         // worker must read classification leaves when modifying
-        bucket.grantRead(workerTaskDefinition.taskRole);
- 
+        props.classificationBucket.grantRead(workerTaskDefinition.taskRole);
+
         if (props.xrayEnabled) {
             const xraySidecarTaskDefinition = new ECS.TaskDefinition(this, `xray-sidecar`, {
                 compatibility: ECS.Compatibility.EC2,
             });
-            
+
             xraySidecarTaskDefinition.addContainer('xray-sidecar-task', {
                 containerName: XRayConfig.containerName,
                 image: ContainerImage.fromRegistry("amazon/aws-xray-daemon"),
@@ -609,22 +608,22 @@ export class AppStack extends cdk.Stack {
                     metricName: 'AWSManagedRulesAmazonIpReputationList',
                 },
             },
-            
+
             // Common Rule Set aligns with major portions of OWASP Core Rule Set    
             {
                 name: 'AWS-AWSManagedRulesCommonRuleSet',
                 priority: 20,
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesCommonRuleSet',
-                    // Excluding generic RFI body rule for sns notifications
-                    // https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
-                      excludedRules: [
-                       { name: 'GenericRFI_BODY' },
-                       { name: 'SizeRestrictions_BODY' },
-                       { name: 'SizeRestrictions_URIPATH' },
-                    ],
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesCommonRuleSet',
+                        // Excluding generic RFI body rule for sns notifications
+                        // https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
+                        excludedRules: [
+                            { name: 'GenericRFI_BODY' },
+                            { name: 'SizeRestrictions_BODY' },
+                            { name: 'SizeRestrictions_URIPATH' },
+                        ],
                     },
                 },
                 overrideAction: {
@@ -650,9 +649,9 @@ export class AppStack extends cdk.Stack {
                 },
                 statement: {
                     managedRuleGroupStatement: {
-                    vendorName: 'AWS',
-                    name: 'AWSManagedRulesSQLiRuleSet',
-                    excludedRules: [],
+                        vendorName: 'AWS',
+                        name: 'AWSManagedRulesSQLiRuleSet',
+                        excludedRules: [],
                     },
                 },
             },
@@ -767,7 +766,7 @@ export class AppStack extends cdk.Stack {
         const webAcl = new WAF.CfnWebACL(this, `api-rate-limit`, {
             defaultAction: {
                 allow: {
-                     
+
                 }
             },
             visibilityConfig: {
@@ -784,12 +783,36 @@ export class AppStack extends cdk.Stack {
             resourceArn: loadBalancedAPIService.loadBalancer.loadBalancerArn,
             webAclArn: webAcl.attrArn,
         });
-        
-        tableStack.table.grantReadWriteData(serverTaskDefinition.taskRole);
-        tableStack.table.grantReadWriteData(workerTaskDefinition.taskRole);
 
-        bucket.grantPut(workerTaskDefinition.taskRole);
-        
+        props.table.grantReadWriteData(serverTaskDefinition.taskRole);
+        props.table.grantReadWriteData(workerTaskDefinition.taskRole);
+
+        props.classificationBucket.grantPut(workerTaskDefinition.taskRole);
+
+        // frontend
+        const staticSiteBucket = S3.Bucket.fromBucketName(this, `static-site-bucket`, `com.mailboxsweep.${props.environmentName}.web`);
+
+        const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
+
+        // rewrite request URIs so that `login` becomes `/login/index.html`
+        const rewriteURIFunc = new CloudFront.Function(this, `url-rewrite`, {
+            code: CloudFront.FunctionCode.fromFile({
+                filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
+            }),
+            functionName: `static-site-url-rewrite-${props.environmentName}`,
+            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting",
+
+        });
+
+        const cloudfrontLogBucket = new S3.Bucket(this, `access-logging`, {
+            lifecycleRules: [
+                {
+                    expiration: cdk.Duration.days(7),
+                }
+            ],
+            objectOwnership: S3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+        });
+
 
         new Route53.ARecord(this, `api-a-record`, {
             zone: hostedZone,
@@ -801,31 +824,6 @@ export class AppStack extends cdk.Stack {
             domainName: webUrl,
             hostedZone: hostedZone,
             region: "us-east-1",  //standard for acm certs
-        });
-
-        // frontend
-        const staticSiteBucket = S3.Bucket.fromBucketName(this, `static-site-bucket`, `com.mailboxsweep.${props.environmentName}.web`);
-        const buildBucket = S3.Bucket.fromBucketName(this, `builds-bucket`, `com.mailboxsweep.builds.${props.environmentName}.web`)
-        
-        const originAccessIdentity = CloudFront.OriginAccessIdentity.fromOriginAccessIdentityId(this, `site-origin`, Resources[props.environmentName].web.cdn.originAccessId);
-
-        // rewrite request URIs so that `login` becomes `/login/index.html`
-        const rewriteURIFunc = new CloudFront.Function(this, `url-rewrite`, {
-            code: CloudFront.FunctionCode.fromFile({
-                filePath: join(__dirname, "..", "functions", "cloudfront", "url-rewrite.js")
-            }),
-            functionName: `static-site-url-rewrite-${props.environmentName}`,
-            comment: "Rewrites URL paths to include `/index.html` to be compatible with S3 + CloudFront hosting",
-            
-        });
-
-        const cloudfrontLogBucket = new S3.Bucket(this, `access-logging`, {
-            lifecycleRules: [
-                {
-                    expiration: cdk.Duration.days(7),
-                }
-            ],
-           objectOwnership: S3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
         });
 
         const siteDistribution = new CloudFront.Distribution(this, `distribution`, {
@@ -867,7 +865,7 @@ export class AppStack extends cdk.Stack {
                     }
                 }),
             },
-            errorResponses:[
+            errorResponses: [
                 {
                     httpStatus: 404,
                     responseHttpStatus: 404,
@@ -878,7 +876,7 @@ export class AppStack extends cdk.Stack {
             enableLogging: true,
             logBucket: cloudfrontLogBucket,
             geoRestriction: CloudFront.GeoRestriction.allowlist("US"),
-            
+
         });
 
         new Route53.ARecord(this, `site-record`, {
@@ -889,9 +887,9 @@ export class AppStack extends cdk.Stack {
 
         const dashboard = new CloudwatchDashboardStack(this, `dashboard`, {
             ...props,
-            table: tableStack.table,
-            queue: classifyQueues.queue,
-            dlq: classifyQueues.dlq,
+            table: props.table,
+            queue: classifyQueue,
+            dlq: classifyDlq,
             serverLogGroup: serverLogGroup,
             workerLogGroup: workerLogGroup,
             loadBalancer: loadBalancedAPIService.loadBalancer,
@@ -904,7 +902,7 @@ export class AppStack extends cdk.Stack {
             displayName: "MailboxSweep SES Failures",
         });
         sesRenderFailureTopic.addSubscription(new SNSSubscriptions.EmailSubscription(errorEmail, {}));
-        
+
         new SES.CfnConfigurationSetEventDestination(this, `ses-error-dest`, {
             configurationSetName: sesConfigSet.configurationSetName,
             eventDestination: {
@@ -919,10 +917,10 @@ export class AppStack extends cdk.Stack {
         const alarms = new AlarmsStack(this, `alarms`, {
             ...props,
             emailAddr: "tech@mailboxsweep.com",
-            commitQueue: commitChangesetQueues.queue,
-            commitDLQ: commitChangesetQueues.dlq,
-            classifyQueue: classifyQueues.queue,
-            classifyDLQ: classifyQueues.dlq,
+            commitQueue: commitChangesetQueue,
+            commitDLQ: commitChangesetQueue,
+            classifyQueue: classifyQueue,
+            classifyDLQ: classifyQueue,
             loadBalancer: loadBalancedAPIService.loadBalancer,
         });
     }
