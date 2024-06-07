@@ -346,7 +346,7 @@ interface PayButtonProps {
 function PayButton (props: PayButtonProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const successUrl = `http://localhost:3000/plan/payment-success?checkoutSessionId=${props.stripeSessionId}`;
+    const successUrl = `/plan/payment-success?checkoutSessionId=${props.stripeSessionId}`;
   
     const handleClick = () => {
       setLoading(true);
