@@ -13,7 +13,7 @@ interface IPlanCardProps {
     confirmText: string | undefined;
 }
 
-const discountUntil = "6/30/2024";
+const discountUntil = "8/30/2024";
 
 export function Price(props: { priceInCents: number, strikeThrough: boolean, planKey: string }) {
     return (
