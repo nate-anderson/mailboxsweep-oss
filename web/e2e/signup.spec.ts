@@ -76,7 +76,7 @@ test.describe('signup', () => {
 
             const rememberMe = await page.frameLocator("[title='Secure payment input frame']").locator("[name='linkOptIn']");
             await expect(rememberMe).toBeDefined();
-            await rememberMe.uncheck();
+            await rememberMe.click();
 
             const submit = await page.getByTestId("button-pay");
             await expect(submit).toBeDisabled();
