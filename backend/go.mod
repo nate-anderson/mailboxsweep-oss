@@ -1,6 +1,6 @@
 module mailboxsweep
 
-go 1.21
+go 1.26.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
@@ -21,10 +21,9 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/stripe/stripe-go/v74 v74.30.0
 	github.com/stripe/stripe-go/v78 v78.3.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
-	golang.org/x/oauth2 v0.15.0
+	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/time v0.5.0
 	google.golang.org/api v0.154.0
@@ -33,8 +32,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.23.3 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.266 // indirect
@@ -81,7 +79,6 @@ require (
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231127180814-3a041ad873d4 // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
