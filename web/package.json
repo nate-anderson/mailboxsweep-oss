@@ -19,7 +19,7 @@
     "openapi": "docker run --rm -v \"${PWD}/..:/local\" --name client-generator openapitools/openapi-generator-cli:v7.2.0 generate -i local/openapi.yml -g typescript-fetch -o local/web/client-gen"
   },
   "dependencies": {
-    "@date-io/date-fns": "^2.16.0",
+    "@date-io/date-fns": "^3.2.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.11.0",
