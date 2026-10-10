@@ -1,6 +1,6 @@
 module mailboxsweep
 
-go 1.21
+go 1.23
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
@@ -14,14 +14,13 @@ require (
 	github.com/aws/aws-xray-sdk-go v1.8.1
 	github.com/aws/smithy-go v1.19.0
 	github.com/emersion/go-imap v1.2.1
-	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/google/uuid v1.5.0
 	github.com/mcnijman/go-emailaddress v1.1.1
 	github.com/nate-anderson/fig/v2 v2.3.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
-	github.com/stripe/stripe-go/v74 v74.30.0
 	github.com/stripe/stripe-go/v78 v78.3.0
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	golang.org/x/oauth2 v0.15.0
